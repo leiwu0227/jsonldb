@@ -4,6 +4,7 @@ from typing import Dict, Tuple, List
 import mmap
 from pathlib import Path
 import jsonlines
+import datetime
 
 # --------------------------------------------------------
 # Indexer Function
@@ -68,40 +69,21 @@ def ensure_index_exists(jsonl_file_path: str) -> None:
 def lint_jsonl(jsonl_file_path):
     """
     Loads a JSONL file, sorts by linekey, removes extra whitespace (compacts),
-    rewrites the file using jsonlines for efficiency, and rebuilds the index file.
+    and rewrites the file using optimized save_jsonl.
     """
-    index_file_path = f"{jsonl_file_path}.idx"
-
-    # Load valid records into memory
-    records = {}
-    with open(jsonl_file_path, 'rb') as f:
-        line = f.readline()
-        while line:
-            if line.strip():  # Skip deleted (space-only) lines
-                line_dict = json.loads(line.decode('utf-8').strip())
-                linekey = next(iter(line_dict))
-                records[linekey] = line_dict[linekey]
-            line = f.readline()
-
+    # Load all valid records using load_jsonl
+    records = load_jsonl(jsonl_file_path)
+    
     # Sort records by linekey
-    sorted_records = dict(sorted(records.items(), key=lambda item: item[0]))
-
-    # Rewrite the file compactly and sorted with jsonlines library
-    index = {}
-    with jsonlines.open(jsonl_file_path, mode='w') as writer:
-        for linekey, data in sorted_records.items():
-            pos = writer._fp.tell()  # Direct access to underlying file pointer
-            writer.write({linekey: data})
-            index[linekey] = pos
-
-    # Rebuild index file
-    with open(index_file_path, 'w', encoding='utf-8') as idx_f:
-        json.dump(index, idx_f, indent=2)
+    sorted_records = dict(sorted(records.items(), key=lambda item: str(item[0])))
+    
+    # Save sorted records using optimized save_jsonl
+    save_jsonl(jsonl_file_path, sorted_records)
 
 # --------------------------------------------------------
 # Utility Functions
 # --------------------------------------------------------
-import datetime
+
 def serialize_linekey(linekey):
     """
     Convert a linekey to a string.
