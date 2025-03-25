@@ -134,28 +134,49 @@ def deserialize_linekey(linekey_str,default_format=None):
 # --------------------------------------------------------
 # Core Functions
 # --------------------------------------------------------
-
 def save_jsonl(jsonl_file_path: str, db_dict: Dict[str, Dict]) -> None:
     """
-    Save a dictionary to a JSONL file.
-    Each line will be a JSON object with a linekey and its associated data.
+    Save a dictionary to a JSONL file efficiently using buffering.
+    Each line will be a JSON object with a serialized linekey and its associated data.
+    Also tracks and saves an index mapping linekeys to byte offsets without flushing buffer.
     """
+    index = {}
+
     # Handle empty dictionary case
     if not db_dict:
-        with open(jsonl_file_path, 'w') as f:
-            pass  # Create empty file
-        with open(f"{jsonl_file_path}.idx", 'w') as f:
-            json.dump({}, f, indent=2)
+        with open(jsonl_file_path, 'wb') as jsonl_file:
+            pass  # create empty file
+        with open(f"{jsonl_file_path}.idx", 'w', encoding='utf-8') as idx_file:
+            json.dump({}, idx_file, indent=2)
         return
 
-    with jsonlines.open(jsonl_file_path, mode='w') as writer:
-        for linekey, data in db_dict.items():
-            line_dict = {serialize_linekey(linekey): data}
-            writer.write(line_dict)
-    
-    # Build the index after saving
-    build_jsonl_index(jsonl_file_path)
+    byte_offset = 0  # Manually track byte offsets
 
+    with open(jsonl_file_path, 'wb', buffering=1024*1024*10) as jsonl_file:  # 10MB buffer
+        for linekey, data in db_dict.items():
+            serialized_key = serialize_linekey(linekey)
+            line_dict = {serialized_key: data}
+
+            # Serialize line to JSON string with minimal whitespace
+            line_str = json.dumps(line_dict, separators=(',', ':')) + '\n'
+
+            # Encode line to utf-8 bytes
+            line_bytes = line_str.encode('utf-8')
+
+            # Record byte offset (without flushing)
+            index[serialized_key] = byte_offset
+
+            # Write bytes directly
+            jsonl_file.write(line_bytes)
+
+            # Increment byte_offset manually
+            byte_offset += len(line_bytes)
+
+    # After writing all lines, flush and write index
+    with open(f"{jsonl_file_path}.idx", 'w', encoding='utf-8') as idx_file:
+        json.dump(index, idx_file, indent=2)
+
+        
 def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True) -> Dict[str, Dict]:
     """
     Load a JSONL file into a dictionary.
@@ -171,7 +192,7 @@ def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True) -> Dict[str,
         raise FileNotFoundError(f"The file {jsonl_file_path} does not exist.")
 
     result_dict = {}
-    with open(jsonl_file_path, 'r', encoding='utf-8') as f:
+    with open(jsonl_file_path, 'r', encoding='utf-8', buffering=1024*1024*10) as f:  # 10MB buffer
         for line in f:
             # Strip both leading and trailing whitespace
             line = line.strip()
