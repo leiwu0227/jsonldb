@@ -6,6 +6,9 @@ from pathlib import Path
 import jsonlines
 import datetime
 
+# Global configuration
+BUFFER_SIZE = 1024 * 1024 * 10  # 10MB buffer
+
 # --------------------------------------------------------
 # Indexer Function
 # --------------------------------------------------------
@@ -26,7 +29,7 @@ def build_jsonl_index(jsonl_file_path: str) -> None:
             json.dump(index_dict, f, indent=2)
         return
 
-    with open(jsonl_file_path, 'rb') as f:
+    with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:  # Use global buffer size
         with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
             current_pos = 0
             while True:
@@ -134,7 +137,7 @@ def save_jsonl(jsonl_file_path: str, db_dict: Dict[str, Dict]) -> None:
 
     byte_offset = 0  # Manually track byte offsets
 
-    with open(jsonl_file_path, 'wb', buffering=1024*1024*10) as jsonl_file:  # 10MB buffer
+    with open(jsonl_file_path, 'wb', buffering=BUFFER_SIZE) as jsonl_file:  # Use global buffer size
         for linekey, data in db_dict.items():
             serialized_key = serialize_linekey(linekey)
             line_dict = {serialized_key: data}
@@ -174,7 +177,7 @@ def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True) -> Dict[str,
         raise FileNotFoundError(f"The file {jsonl_file_path} does not exist.")
 
     result_dict = {}
-    with open(jsonl_file_path, 'r', encoding='utf-8', buffering=1024*1024*10) as f:  # 10MB buffer
+    with open(jsonl_file_path, 'r', encoding='utf-8', buffering=BUFFER_SIZE) as f:  # Use global buffer size
         for line in f:
             # Strip both leading and trailing whitespace
             line = line.strip()
@@ -318,8 +321,7 @@ def delete_jsonl(jsonl_file_path: str, linekeys: List[str]) -> None:
 
     # Convert linekeys to their serialized form
     linekeys = [serialize_linekey(key) for key in linekeys]
-
-    with open(jsonl_file_path, 'rb+') as f:
+    with open(jsonl_file_path, 'rb+', buffering=BUFFER_SIZE) as f:
         for linekey in linekeys:
             if linekey in index:
                 pos = index[linekey]
