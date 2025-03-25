@@ -6,8 +6,16 @@ from pathlib import Path
 import jsonlines
 import datetime
 from collections import defaultdict
+import orjson  # Much faster JSON library
+
 # Global configuration
 BUFFER_SIZE = 1024 * 1024 * 10  # 10MB buffer
+
+# JSON encoder/decoder configuration
+JSON_OPTS = {
+    'separators': (',', ':'),  # Remove whitespace
+    'ensure_ascii': False,     # Faster for non-ASCII
+}
 
 # --------------------------------------------------------
 # Indexer Function
@@ -114,7 +122,12 @@ def deserialize_linekey(linekey_str,default_format=None):
     
     return linekey_str
 
-
+def _fast_dumps(obj):
+    """Fast JSON serialization using orjson"""
+    try:
+        return orjson.dumps(obj).decode('utf-8') + '\n'
+    except ImportError:
+        return json.dumps(obj, **JSON_OPTS) + '\n'
 
 # --------------------------------------------------------
 # Core Functions
@@ -136,28 +149,23 @@ def save_jsonl(jsonl_file_path: str, db_dict: Dict[str, Dict]) -> None:
         return
 
     byte_offset = 0  # Manually track byte offsets
+    
+    # Pre-process all lines to avoid repeated JSON encoding
+    lines = []
+    for linekey, data in db_dict.items():
+        serialized_key = serialize_linekey(linekey)
+        line_dict = {serialized_key: data}
+        line = _fast_dumps(line_dict).encode('utf-8')
+        lines.append(line)
+        index[serialized_key] = byte_offset
+        byte_offset += len(line)
 
-    with open(jsonl_file_path, 'wb', buffering=BUFFER_SIZE) as jsonl_file:  # Use global buffer size
-        for linekey, data in db_dict.items():
-            serialized_key = serialize_linekey(linekey)
-            line_dict = {serialized_key: data}
+    # Write all lines at once
+    with open(jsonl_file_path, 'wb', buffering=BUFFER_SIZE) as jsonl_file:
+        for line in lines:
+            jsonl_file.write(line)
 
-            # Serialize line to JSON string with minimal whitespace
-            line_str = json.dumps(line_dict, separators=(',', ':')) + '\n'
-
-            # Encode line to utf-8 bytes
-            line_bytes = line_str.encode('utf-8')
-
-            # Record byte offset (without flushing)
-            index[serialized_key] = byte_offset
-
-            # Write bytes directly
-            jsonl_file.write(line_bytes)
-
-            # Increment byte_offset manually
-            byte_offset += len(line_bytes)
-
-    # After writing all lines, flush and write index
+    # After writing all lines, write index
     with open(f"{jsonl_file_path}.idx", 'w', encoding='utf-8') as idx_file:
         json.dump(index, idx_file, indent=2)
 
@@ -254,68 +262,66 @@ def select_jsonl(jsonl_file_path: str, linekey_range: Tuple[str, str], auto_dese
     return result_dict
 
 def update_jsonl(jsonl_file_path, update_dict):
-
-    
+    """
+    Efficiently updates existing linekeys or inserts new ones using the index file.
+    """
     index_file_path = f"{jsonl_file_path}.idx"
-
-    # Ensure index exists
     ensure_index_exists(jsonl_file_path)
 
     # Load the existing index
-    with open(index_file_path, "r", encoding="utf-8") as idx_f:
+    with open(index_file_path, 'r', encoding='utf-8') as idx_f:
         index = json.load(idx_f)
 
-    # Prepare for bulk operations
-    deleted_offsets = []  # To track space that can be reused
+    # Pre-process updates to avoid repeated JSON encoding
+    updates = []
+    appends = []
+    append_pos = 0
 
-    # Precompute initial file size (to avoid using `f.tell` during appends)
-    current_file_size = os.path.getsize(jsonl_file_path)
-
-    # Open JSONL file in read+write mode
-    with open(jsonl_file_path, "rb+", buffering=BUFFER_SIZE) as f:
-        # Read all lines and cache their byte offsets for bulk processing
-        lines = {}
-        for linekey, offset in index.items():
-            f.seek(offset)
-            original_line = f.readline().decode("utf-8").strip()
-            lines[linekey] = (offset, original_line)
-
+    # Open jsonl file in read+write binary mode
+    with open(jsonl_file_path, 'rb+') as f:
+        # Get file size for appends
+        f.seek(0, os.SEEK_END)
+        append_pos = f.tell()
+        
+        # Process all updates first
         for linekey, data in update_dict.items():
             linekey = serialize_linekey(linekey)
             new_line_dict = {linekey: data}
-            new_line_bytes = (json.dumps(new_line_dict) + "\n").encode("utf-8")
-            new_line_len = len(new_line_bytes)
+            new_line = _fast_dumps(new_line_dict).encode('utf-8')
 
             if linekey in index:
-                # Existing line: Check if we can overwrite in place
-                offset, original_line = lines[linekey]
-                original_line_len = len(original_line.encode("utf-8"))
-
-                if new_line_len <= original_line_len:
-                    # Overwrite in place and pad with spaces if necessary
-                    f.seek(offset)
-                    padding = b" " * (original_line_len - new_line_len)
-                    f.write(new_line_bytes + padding)
+                # Read existing line to get its length
+                f.seek(index[linekey])
+                old_line = f.readline()
+                
+                if len(new_line) <= len(old_line):
+                    # In-place update
+                    updates.append((index[linekey], new_line, len(old_line)))
                 else:
-                    # Mark old record for reuse and append the new line
-                    deleted_offsets.append(offset)
-                    f.write(b' ' * original_line_len)  # Mark as deleted
-                    # Append the new line at the precomputed end position
-                    f.seek(current_file_size)
-                    f.write(new_line_bytes)
-                    index[linekey] = current_file_size
-                    current_file_size += new_line_len  # Update file size manually
+                    # Mark for append and delete old
+                    updates.append((index[linekey], b' ' * (len(old_line) - 1) + b'\n', len(old_line)))
+                    appends.append((linekey, new_line))
             else:
-                # New line: Append it at the precomputed end position
-                f.seek(current_file_size)
-                f.write(new_line_bytes)
-                index[linekey] = current_file_size
-                current_file_size += new_line_len  # Update file size manually
+                # New record, mark for append
+                appends.append((linekey, new_line))
 
-    # Write updated index back to disk
-    index = dict(sorted(index.items()))
-    with open(index_file_path, "w", encoding="utf-8") as idx_f:
-        json.dump(index, idx_f, indent=2)
+        # Process all updates in one pass
+        for pos, line, old_len in updates:
+            f.seek(pos)
+            f.write(line)
+            if len(line) < old_len:
+                f.write(b' ' * (old_len - len(line)))
+
+        # Process all appends in one pass
+        if appends:
+            f.seek(append_pos)
+            for linekey, line in appends:
+                index[linekey] = f.tell()
+                f.write(line)
+
+    # Save updated index
+    with open(index_file_path, 'w', encoding='utf-8') as idx_f:
+        json.dump(dict(sorted(index.items())), idx_f, indent=2)
 
 def delete_jsonl(jsonl_file_path: str, linekeys: List[str]) -> None:
     """
