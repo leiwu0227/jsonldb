@@ -36,38 +36,59 @@ IndexDict = Dict[str, int]
 # --------------------------------------------------------
 
 @jit(nopython=True)
-def _sort_keys(keys: np.ndarray) -> np.ndarray:
-    """
-    Sort string keys using Numba for better performance.
-    Returns indices that would sort the array.
+def _sort_numeric_keys(keys):
+    """Sort array of numeric values (timestamps or converted strings) using Numba.
+    
+    Args:
+        keys (np.ndarray): Array of numeric values to sort
+    
+    Returns:
+        np.ndarray: Array of indices that would sort the array
     """
     return np.argsort(keys)
 
-def _fast_sort_records(records: DataDict) -> DataDict:
-    """
-    Sort records by key using Numba-optimized sorting.
+def _convert_key_to_sortable(key):
+    """Convert a key to a sortable numeric value.
     
     Args:
-        records: Dictionary of records to sort
+        key: String or datetime key
         
     Returns:
-        Sorted dictionary
+        float: Numeric value for sorting
+    """
+    if isinstance(key, datetime.datetime):
+        return key.timestamp()
+    elif isinstance(key, str):
+        # Convert string to numeric value for sorting
+        # Use UTF-8 bytes for consistent ordering
+        return sum(b * 256**i for i, b in enumerate(key.encode('utf-8')))
+    return float(key)  # fallback for numeric keys
+
+def _fast_sort_records(records):
+    """Sort records by converting keys to sortable numeric values.
+    
+    Args:
+        records (dict): Dictionary with string or datetime keys
+        
+    Returns:
+        dict: Sorted dictionary
     """
     if not records:
         return records
         
-    # Convert keys to numpy array for sorting
-    keys = np.array(list(records.keys()))
+    # Convert keys to sortable numeric values
+    keys = list(records.keys())
+    numeric_keys = np.array([_convert_key_to_sortable(k) for k in keys])
     
     # Get sorted indices using Numba
-    sorted_indices = _sort_keys(keys)
+    sorted_indices = _sort_numeric_keys(numeric_keys)
     
     # Create new sorted dictionary
     sorted_dict = {}
     for idx in sorted_indices:
-        key = str(keys[idx])  # Convert back to string
+        key = keys[idx]
         sorted_dict[key] = records[key]
-        
+    
     return sorted_dict
 
 @jit(nopython=True)
