@@ -73,6 +73,24 @@ def _fast_sort_records(records: DataDict) -> DataDict:
         
     return sorted_dict
 
+@jit(nopython=True)
+def _select_keys_in_range(keys: np.ndarray, lower: str, upper: str) -> np.ndarray:
+    """
+    Numba-optimized function to select keys within a range.
+    
+    Args:
+        keys: NumPy array of string keys
+        lower: Lower bound key (inclusive)
+        upper: Upper bound key (inclusive)
+        
+    Returns:
+        Boolean mask array indicating which keys are in range
+    """
+    mask = np.zeros(len(keys), dtype=np.bool_)
+    for i in range(len(keys)):
+        mask[i] = lower <= keys[i] <= upper
+    return mask
+
 # --------------------------------------------------------
 # Indexing Functions
 # --------------------------------------------------------
@@ -335,18 +353,14 @@ def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True) -> DataDict:
     except OSError as e:
         raise OSError(f"Failed to load JSONL file {jsonl_file_path}: {str(e)}")
 
-def select_jsonl(jsonl_file_path: str, linekey_range: Tuple[LineKey, LineKey], 
-                auto_deserialize: bool = True) -> DataDict:
+def select_jsonl(jsonl_file_path: str, linekey_range: Tuple[LineKey, LineKey], auto_deserialize: bool = True) -> DataDict:
     """
-    Select records within a linekey range.
-    
-    Uses the index file for efficient range queries.
-    Supports datetime range queries with auto deserialization.
+    Select records from a JSONL file within a key range.
     
     Args:
         jsonl_file_path: Path to the JSONL file
-        linekey_range: Tuple of (start_key, end_key) for range selection
-        auto_deserialize: Whether to convert datetime strings back to datetime objects
+        linekey_range: Tuple of (start, end) keys
+        auto_deserialize: Whether to auto-deserialize datetime keys
         
     Returns:
         Dictionary of records within the range
@@ -365,8 +379,10 @@ def select_jsonl(jsonl_file_path: str, linekey_range: Tuple[LineKey, LineKey],
         with open(f"{jsonl_file_path}.idx", 'r') as f:
             index_dict = json.load(f)
         
-        # Get keys in range
-        selected_linekeys = [k for k in index_dict if linekey_lower <= k <= linekey_upper]
+        # Get keys in range using Numba-optimized function
+        keys = np.array(list(index_dict.keys()))
+        mask = _select_keys_in_range(keys, linekey_lower, linekey_upper)
+        selected_linekeys = keys[mask]
         
         # Load selected records
         with open(jsonl_file_path, 'r', encoding='utf-8') as f:
