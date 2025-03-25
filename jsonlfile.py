@@ -156,12 +156,16 @@ def save_jsonl(jsonl_file_path: str, db_dict: Dict[str, Dict]) -> None:
     # Build the index after saving
     build_jsonl_index(jsonl_file_path)
 
-def load_jsonl(jsonl_file_path: str) -> Dict[str, Dict]:
+def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True) -> Dict[str, Dict]:
     """
     Load a JSONL file into a dictionary.
     Each line must be a valid JSON object with a single key (linekey) mapping to a dictionary.
     Skips any invalid lines silently.
     Raises FileNotFoundError if the file doesn't exist.
+    
+    Args:
+        jsonl_file_path (str): Path to the JSONL file
+        auto_deserialize (bool, optional): Whether to automatically deserialize datetime keys. Defaults to True.
     """
     if not os.path.exists(jsonl_file_path):
         raise FileNotFoundError(f"The file {jsonl_file_path} does not exist.")
@@ -184,14 +188,29 @@ def load_jsonl(jsonl_file_path: str) -> Dict[str, Dict]:
                 if isinstance(data, dict) and len(data) == 1:
                     linekey = next(iter(data))
                     if isinstance(data[linekey], dict):  # Verify value is a dictionary
-                        result_dict[linekey] = data[linekey]
+                        if auto_deserialize:
+                            if 'T' in linekey and len(linekey) == 19:  # ISO format datetime string
+                                try:
+                                    actual_key = deserialize_linekey(linekey, default_format="datetime")
+                                    result_dict[actual_key] = data[linekey]
+                                except ValueError:
+                                    result_dict[linekey] = data[linekey]
+                            else:
+                                result_dict[linekey] = data[linekey]
+                        else:
+                            result_dict[linekey] = data[linekey]
             except (json.JSONDecodeError, StopIteration):
                 print(f"ERROR: Invalid JSON line at line  {line}")
     return result_dict
 
-def select_jsonl(jsonl_file_path: str, linekey_range: Tuple[str, str]) -> Dict[str, Dict]:
+def select_jsonl(jsonl_file_path: str, linekey_range: Tuple[str, str], auto_deserialize: bool = True) -> Dict[str, Dict]:
     """
     Select lines from JSONL file where linekey is between linekey_lower and linekey_upper.
+    
+    Args:
+        jsonl_file_path (str): Path to the JSONL file
+        linekey_range (Tuple[str, str]): Tuple of (lower_key, upper_key) for range selection
+        auto_deserialize (bool, optional): Whether to automatically deserialize datetime keys. Defaults to True.
     """
     linekey_lower, linekey_upper = linekey_range
     linekey_lower = serialize_linekey(linekey_lower)
@@ -215,7 +234,15 @@ def select_jsonl(jsonl_file_path: str, linekey_range: Tuple[str, str]) -> Dict[s
                 f.seek(index_dict[linekey])
                 line = f.readline()
                 data = json.loads(line.strip())
-                result_dict[linekey] = data[linekey]
+                # Check if the linekey is a datetime string and auto_deserialize is enabled
+                if auto_deserialize and 'T' in linekey and len(linekey) == 19:  # ISO format datetime string
+                    try:
+                        actual_key = deserialize_linekey(linekey, default_format="datetime")
+                        result_dict[actual_key] = data[linekey]
+                    except ValueError:
+                        result_dict[linekey] = data[linekey]
+                else:
+                    result_dict[linekey] = data[linekey]
             except (json.JSONDecodeError, StopIteration):
                 continue
     return result_dict

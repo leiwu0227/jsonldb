@@ -242,13 +242,146 @@ class TestJsonlFile(unittest.TestCase):
             dt2: {"value": 2}
         }
         
-        # Save and load
+        # Test save and load with auto_deserialize=True (default)
         save_jsonl(self.test_file, test_data)
         loaded = load_jsonl(self.test_file)
         
-        # Keys should be serialized to ISO format strings
-        self.assertIn(dt1.isoformat(), loaded)
-        self.assertIn(dt2.isoformat(), loaded)
+        # Keys should be deserialized back to datetime objects
+        self.assertIn(dt1, loaded)
+        self.assertIn(dt2, loaded)
+        self.assertEqual(loaded[dt1], {"value": 1})
+        self.assertEqual(loaded[dt2], {"value": 2})
+        
+        # Test with auto_deserialize=False to get ISO format strings
+        loaded_raw = load_jsonl(self.test_file, auto_deserialize=False)
+        self.assertIn(dt1.isoformat(), loaded_raw)
+        self.assertIn(dt2.isoformat(), loaded_raw)
+        self.assertEqual(loaded_raw[dt1.isoformat()], {"value": 1})
+        self.assertEqual(loaded_raw[dt2.isoformat()], {"value": 2})
+
+    def test_datetime_keys_basic(self):
+        """Test basic operations with datetime keys."""
+        dt1 = datetime.datetime(2024, 1, 1, 12, 0)
+        dt2 = datetime.datetime(2024, 1, 2, 12, 0)
+        
+        test_data = {
+            dt1: {"value": 1},
+            dt2: {"value": 2}
+        }
+        
+        # Test save and load with auto_deserialize=True (default)
+        save_jsonl(self.test_file, test_data)
+        loaded = load_jsonl(self.test_file)
+        
+        # Keys should be deserialized back to datetime objects
+        self.assertIn(dt1, loaded)
+        self.assertIn(dt2, loaded)
+        self.assertEqual(loaded[dt1]["value"], 1)
+        self.assertEqual(loaded[dt2]["value"], 2)
+        
+        # Test load with auto_deserialize=False
+        loaded_raw = load_jsonl(self.test_file, auto_deserialize=False)
+        
+        # Keys should remain as ISO format strings
+        self.assertIn(dt1.isoformat(), loaded_raw)
+        self.assertIn(dt2.isoformat(), loaded_raw)
+        self.assertEqual(loaded_raw[dt1.isoformat()]["value"], 1)
+        self.assertEqual(loaded_raw[dt2.isoformat()]["value"], 2)
+
+    def test_datetime_keys_select(self):
+        """Test range selection with datetime keys."""
+        dt1 = datetime.datetime(2024, 1, 1, 12, 0)
+        dt2 = datetime.datetime(2024, 1, 2, 12, 0)
+        dt3 = datetime.datetime(2024, 1, 3, 12, 0)
+        dt4 = datetime.datetime(2024, 1, 4, 12, 0)
+        
+        test_data = {
+            dt1: {"value": 1},
+            dt2: {"value": 2},
+            dt3: {"value": 3},
+            dt4: {"value": 4}
+        }
+        
+        save_jsonl(self.test_file, test_data)
+        
+        # Test selection with auto_deserialize=True (default)
+        selected = select_jsonl(self.test_file, (dt2, dt3))
+        self.assertEqual(len(selected), 2)
+        self.assertIn(dt2, selected)
+        self.assertIn(dt3, selected)
+        self.assertEqual(selected[dt2]["value"], 2)
+        self.assertEqual(selected[dt3]["value"], 3)
+        
+        # Test selection with auto_deserialize=False
+        selected_raw = select_jsonl(self.test_file, (dt2, dt3), auto_deserialize=False)
+        self.assertEqual(len(selected_raw), 2)
+        self.assertIn(dt2.isoformat(), selected_raw)
+        self.assertIn(dt3.isoformat(), selected_raw)
+        self.assertEqual(selected_raw[dt2.isoformat()]["value"], 2)
+        self.assertEqual(selected_raw[dt3.isoformat()]["value"], 3)
+
+
+    def test_datetime_keys_update(self):
+        """Test updating records with datetime keys."""
+        dt1 = datetime.datetime(2024, 1, 1, 12, 0)
+        dt2 = datetime.datetime(2024, 1, 2, 12, 0)
+        
+        initial_data = {
+            dt1: {"value": 1},
+            dt2: {"value": 2}
+        }
+        
+        save_jsonl(self.test_file, initial_data)
+        
+        # Update existing datetime key
+        update_data = {
+            dt1: {"value": 10}
+        }
+        update_jsonl(self.test_file, update_data)
+        
+        loaded = load_jsonl(self.test_file)
+        self.assertEqual(loaded[dt1]["value"], 10)
+        self.assertEqual(loaded[dt2]["value"], 2)
+        
+        # Add new datetime key
+        dt3 = datetime.datetime(2024, 1, 3, 12, 0)
+        update_data = {
+            dt3: {"value": 3}
+        }
+        update_jsonl(self.test_file, update_data)
+        
+        loaded = load_jsonl(self.test_file)
+        self.assertEqual(len(loaded), 3)
+        self.assertEqual(loaded[dt3]["value"], 3)
+
+    def test_datetime_keys_delete(self):
+        """Test deleting records with datetime keys."""
+        dt1 = datetime.datetime(2024, 1, 1, 12, 0)
+        dt2 = datetime.datetime(2024, 1, 2, 12, 0)
+        dt3 = datetime.datetime(2024, 1, 3, 12, 0)
+        
+        initial_data = {
+            dt1: {"value": 1},
+            dt2: {"value": 2},
+            dt3: {"value": 3}
+        }
+        
+        save_jsonl(self.test_file, initial_data)
+        
+        # Delete single datetime key
+        delete_jsonl(self.test_file, [dt2])
+        
+        loaded = load_jsonl(self.test_file)
+        self.assertEqual(len(loaded), 2)
+        self.assertIn(dt1, loaded)
+        self.assertNotIn(dt2, loaded)
+        self.assertIn(dt3, loaded)
+        
+        # Delete multiple datetime keys
+        delete_jsonl(self.test_file, [dt1, dt3])
+        
+        loaded = load_jsonl(self.test_file)
+        self.assertEqual(len(loaded), 0)
 
 if __name__ == '__main__':
     unittest.main() 
