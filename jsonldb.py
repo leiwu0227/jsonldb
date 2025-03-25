@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Dict, List, Tuple, Union, Optional
+from typing import Dict, Tuple, List
 import mmap
 from pathlib import Path
 import jsonlines
@@ -17,6 +17,13 @@ def build_jsonl_index(jsonl_file_path: str) -> None:
     """
     index_file_path = f"{jsonl_file_path}.idx"
     index_dict = {}
+
+    # Check if file is empty
+    if os.path.getsize(jsonl_file_path) == 0:
+        # Save empty index for empty file
+        with open(index_file_path, 'w', encoding='utf-8') as f:
+            json.dump(index_dict, f, indent=2)
+        return
 
     with open(jsonl_file_path, 'rb') as f:
         with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
@@ -47,6 +54,16 @@ def build_jsonl_index(jsonl_file_path: str) -> None:
     # Save the index to file
     with open(index_file_path, 'w', encoding='utf-8') as f:
         json.dump(index_dict, f, indent=2)
+
+
+def ensure_index_exists(jsonl_file_path: str) -> None:
+    """
+    Check if the .idx file exists for the given JSONL file, and create it if it doesn't.
+    """
+    index_file_path = f"{jsonl_file_path}.idx"
+    if not os.path.exists(index_file_path):
+        build_jsonl_index(jsonl_file_path)
+
 
 def lint_jsonl(jsonl_file_path):
     """
@@ -82,6 +99,39 @@ def lint_jsonl(jsonl_file_path):
         json.dump(index, idx_f, indent=2)
 
 # --------------------------------------------------------
+# Utility Functions
+# --------------------------------------------------------
+import datetime
+def serialize_linekey(linekey):
+    """
+    Convert a linekey to a string.
+    If the linekey is already a string, return it.
+    If the linekey is a datetime object, serialize it to an ISO format string.
+    If the linekey is another object, serialize it using the default function.
+    """
+    if isinstance(linekey, str):
+        return linekey
+    elif isinstance(linekey, datetime.datetime):
+        return linekey.isoformat()
+    else:
+        return str(linekey)
+    
+def deserialize_linekey(linekey_str,default_format=None):
+    """
+    Deserialize a linekey string back to its original object.
+    If the linekey is already a string, return it.
+    If the linekey is an ISO format string, deserialize it to a datetime object.    
+    If the linekey is another object, deserialize it using the default function.
+    """
+    
+    if default_format == "datetime":
+        return datetime.datetime.fromisoformat(linekey_str)
+    
+    return linekey_str
+
+
+
+# --------------------------------------------------------
 # Core Functions
 # --------------------------------------------------------
 
@@ -90,10 +140,17 @@ def save_jsonl(jsonl_file_path: str, db_dict: Dict[str, Dict]) -> None:
     Save a dictionary to a JSONL file.
     Each line will be a JSON object with a linekey and its associated data.
     """
+    # Handle empty dictionary case
+    if not db_dict:
+        with open(jsonl_file_path, 'w') as f:
+            pass  # Create empty file
+        with open(f"{jsonl_file_path}.idx", 'w') as f:
+            json.dump({}, f, indent=2)
+        return
 
     with jsonlines.open(jsonl_file_path, mode='w') as writer:
         for linekey, data in db_dict.items():
-            line_dict = {linekey: data}
+            line_dict = {serialize_linekey(linekey): data}
             writer.write(line_dict)
     
     # Build the index after saving
@@ -102,17 +159,34 @@ def save_jsonl(jsonl_file_path: str, db_dict: Dict[str, Dict]) -> None:
 def load_jsonl(jsonl_file_path: str) -> Dict[str, Dict]:
     """
     Load a JSONL file into a dictionary.
+    Each line must be a valid JSON object with a single key (linekey) mapping to a dictionary.
+    Skips any invalid lines silently.
+    Raises FileNotFoundError if the file doesn't exist.
     """
+    if not os.path.exists(jsonl_file_path):
+        raise FileNotFoundError(f"The file {jsonl_file_path} does not exist.")
+
     result_dict = {}
-    with jsonlines.open(jsonl_file_path, mode='r') as reader:
-        for data in reader:
-            if not data:  # Skip empty lines
+    with open(jsonl_file_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            # Strip both leading and trailing whitespace
+            line = line.strip()
+            
+            # Skip empty or whitespace-only lines
+            if not line:
                 continue
+                
             try:
-                linekey = next(iter(data))
-                result_dict[linekey] = data[linekey]
-            except StopIteration:
-                continue
+                # Try to parse the JSON
+                data = json.loads(line)
+                
+                # Verify the line is a dictionary with a single key
+                if isinstance(data, dict) and len(data) == 1:
+                    linekey = next(iter(data))
+                    if isinstance(data[linekey], dict):  # Verify value is a dictionary
+                        result_dict[linekey] = data[linekey]
+            except (json.JSONDecodeError, StopIteration):
+                print(f"ERROR: Invalid JSON line at line  {line}")
     return result_dict
 
 def select_jsonl(jsonl_file_path: str, linekey_range: Tuple[str, str]) -> Dict[str, Dict]:
@@ -120,10 +194,15 @@ def select_jsonl(jsonl_file_path: str, linekey_range: Tuple[str, str]) -> Dict[s
     Select lines from JSONL file where linekey is between linekey_lower and linekey_upper.
     """
     linekey_lower, linekey_upper = linekey_range
+    linekey_lower = serialize_linekey(linekey_lower)
+    linekey_upper = serialize_linekey(linekey_upper)
     result_dict = {}
     
     # Load the index
     index_file_path = jsonl_file_path + '.idx'
+
+    ensure_index_exists(jsonl_file_path)
+
     with open(index_file_path, 'r') as index_file:
         index_dict = json.load(index_file)
     
@@ -135,7 +214,7 @@ def select_jsonl(jsonl_file_path: str, linekey_range: Tuple[str, str]) -> Dict[s
             try:
                 f.seek(index_dict[linekey])
                 line = f.readline()
-                data = json.loads(line.strip().decode('utf-8'))
+                data = json.loads(line.strip())
                 result_dict[linekey] = data[linekey]
             except (json.JSONDecodeError, StopIteration):
                 continue
@@ -147,6 +226,8 @@ def update_jsonl(jsonl_file_path, update_dict):
     """
     index_file_path = f"{jsonl_file_path}.idx"
 
+    ensure_index_exists(jsonl_file_path)
+
     # Load the existing index
     with open(index_file_path, 'r', encoding='utf-8') as idx_f:
         index = json.load(idx_f)
@@ -154,6 +235,7 @@ def update_jsonl(jsonl_file_path, update_dict):
     # Open jsonl file in read+write binary mode
     with open(jsonl_file_path, 'rb+') as f:
         for linekey, data in update_dict.items():
+            linekey = serialize_linekey(linekey)
             new_line_dict = {linekey: data}
             new_line_bytes = (json.dumps(new_line_dict) + '\n').encode('utf-8')
             new_line_len = len(new_line_bytes)
@@ -192,32 +274,43 @@ def update_jsonl(jsonl_file_path, update_dict):
     with open(index_file_path, 'w', encoding='utf-8') as idx_f:
         json.dump(index, idx_f, indent=2)
 
-def delete_jsonl(jsonl_file_path, linekeys):
+def delete_jsonl(jsonl_file_path: str, linekeys: List[str]) -> None:
     """
     Efficiently deletes lines corresponding to linekeys from JSONL file using the index file.
     Marks deleted lines with spaces and updates the index file accordingly.
     """
     index_file_path = f"{jsonl_file_path}.idx"
+    ensure_index_exists(jsonl_file_path)
 
     # Load index
     with open(index_file_path, 'r', encoding='utf-8') as idx_f:
         index = json.load(idx_f)
+
+    # Convert linekeys to their serialized form
+    linekeys = [serialize_linekey(key) for key in linekeys]
 
     with open(jsonl_file_path, 'rb+') as f:
         for linekey in linekeys:
             if linekey in index:
                 pos = index[linekey]
                 f.seek(pos)
-                original_line_bytes = f.readline()
-                line_length = len(original_line_bytes)
-
-                # Mark the line as deleted by overwriting it with spaces
+                original_line = f.readline()
+                
+                # Ensure we preserve the line ending
+                if not original_line.endswith(b'\n'):
+                    original_line += b'\n'
+                
+                # Mark the line as deleted by overwriting with spaces
+                # Keep the newline at the end
                 f.seek(pos)
-                f.write(b' ' * line_length)
+                f.write(b' ' * (len(original_line) - 1) + b'\n')
 
                 # Remove the key from the index
                 del index[linekey]
 
+    # Sort index by linekey before writing
+    index = dict(sorted(index.items()))
+    
     # Save updated index back to disk
     with open(index_file_path, 'w', encoding='utf-8') as idx_f:
         json.dump(index, idx_f, indent=2)
