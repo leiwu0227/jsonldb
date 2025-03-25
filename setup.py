@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="jsonldb",
+    name="jsonlfile",
     version="0.1.0",
     packages=find_packages(),
     install_requires=[
@@ -13,7 +13,7 @@ setup(
     description="A Python package for efficient JSONL file operations with byte-position indexing",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/jsonldb",
+    url="https://github.com/yourusername/jsonlfile",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
@@ -22,5 +22,5 @@ setup(
         "Topic :: File Formats :: JSON",
     ],
     python_requires=">=3.7",
-    keywords="jsonl, database, index, file storage, json lines",
+    keywords="jsonl, file storage, index, json lines",
 ) 

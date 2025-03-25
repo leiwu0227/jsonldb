@@ -3,7 +3,7 @@ import os
 import json
 import datetime
 import time
-from jsonldb import (
+from jsonlfile import (
     save_jsonl,
     load_jsonl,
     select_jsonl,
@@ -15,7 +15,7 @@ from jsonldb import (
     deserialize_linekey
 )
 
-class TestJsonlDB(unittest.TestCase):
+class TestJsonlFile(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures before each test method."""
         self.test_file = "test_data.jsonl"

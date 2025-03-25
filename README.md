@@ -1,4 +1,4 @@
-# jsonldb
+# jsonlfile
 
 A Python package for efficient JSONL file operations with byte-position indexing. This package maintains an index file (.idx) alongside each JSONL file for O(1) access to records by their linekeys.
 
@@ -21,7 +21,7 @@ The package provides several functions for working with JSONL files:
 ### Basic Operations
 
 ```python
-from jsonldb import save_jsonl, load_jsonl, select_jsonl, update_jsonl, delete_jsonl
+from jsonlfile import save_jsonl, load_jsonl, select_jsonl, update_jsonl, delete_jsonl
 
 # Save data to JSONL file
 data = {
@@ -86,7 +86,7 @@ Requirements:
 
 - Read operations (load, select) use the index file for O(1) access to specific records
 - Write operations (save, update) rebuild the index file
-- Delete operations create a new file without the deleted records and update the index accordingly
+- Delete operations mark deleted records with spaces and update the index accordingly
 - The package is optimized for read operations and moderate write/update operations
 
 ## Error Handling
