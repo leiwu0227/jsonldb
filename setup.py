@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="jsonlfile",
+    name="jsonldb",
     version="0.2.0",
     packages=find_packages(),
     install_requires=[
@@ -9,10 +9,11 @@ setup(
         "numba>=0.57.0",
         "numpy>=1.20.0",
         "orjson>=3.9.0",
+        "pandas>=1.3.0",
     ],
     author="Lei Wu",
-    author_email="leiwu0227@gmail.com   ",
-    description="A Python package for efficient JSONL file operations with byte-position indexing",
+    author_email="leiwu0227@gmail.com",
+    description="A Python package for efficient JSONL file operations with byte-position indexing and DataFrame support",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/leiwu0227/jsonldb",
@@ -26,5 +27,5 @@ setup(
         "Development Status :: 4 - Beta",
     ],
     python_requires=">=3.7",
-    keywords="jsonl, file storage, index, json lines, high performance, numba",
+    keywords="jsonl, file storage, index, json lines, high performance, numba, pandas, dataframe",
 ) 

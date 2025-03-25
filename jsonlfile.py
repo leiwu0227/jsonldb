@@ -7,7 +7,7 @@ from __future__ import annotations
 import json
 import os
 import mmap
-from typing import Dict, Tuple, List, Union, Optional
+from typing import Dict, Tuple, List, Union, Optional, Any
 import datetime
 import orjson
 import numpy as np
@@ -36,8 +36,8 @@ IndexDict = Dict[str, int]
 # --------------------------------------------------------
 
 @jit(nopython=True)
-def _sort_numeric_keys(keys):
-    """Sort array of numeric values (timestamps or converted strings) using Numba.
+def _sort_numeric_keys(keys: np.ndarray) -> np.ndarray:
+    """Sort array of numeric values using Numba.
     
     Args:
         keys (np.ndarray): Array of numeric values to sort
@@ -47,11 +47,11 @@ def _sort_numeric_keys(keys):
     """
     return np.argsort(keys)
 
-def _convert_key_to_sortable(key):
+def _convert_key_to_sortable(key: Union[str, datetime.datetime, float]) -> float:
     """Convert a key to a sortable numeric value.
     
     Args:
-        key: String or datetime key
+        key: String, datetime, or numeric key
         
     Returns:
         float: Numeric value for sorting
@@ -61,10 +61,10 @@ def _convert_key_to_sortable(key):
     elif isinstance(key, str):
         # Convert string to numeric value for sorting
         # Use UTF-8 bytes for consistent ordering
-        return sum(b * 256**i for i, b in enumerate(key.encode('utf-8')))
+        return float(sum(b * 256**i for i, b in enumerate(key.encode('utf-8'))))
     return float(key)  # fallback for numeric keys
 
-def _fast_sort_records(records):
+def _fast_sort_records(records: Dict[str, Any]) -> Dict[str, Any]:
     """Sort records by converting keys to sortable numeric values.
     
     Args:
@@ -78,7 +78,7 @@ def _fast_sort_records(records):
         
     # Convert keys to sortable numeric values
     keys = list(records.keys())
-    numeric_keys = np.array([_convert_key_to_sortable(k) for k in keys])
+    numeric_keys = np.array([_convert_key_to_sortable(k) for k in keys], dtype=np.float64)
     
     # Get sorted indices using Numba
     sorted_indices = _sort_numeric_keys(numeric_keys)
