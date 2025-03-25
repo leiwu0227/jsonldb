@@ -13,6 +13,8 @@ import jsonlines
 import datetime
 from collections import defaultdict
 import orjson
+import numpy as np
+from numba import jit
 
 # --------------------------------------------------------
 # Configuration
@@ -31,6 +33,45 @@ JSON_OPTS: Dict[str, bool] = {
 LineKey = Union[str, datetime.datetime]
 DataDict = Dict[str, dict]
 IndexDict = Dict[str, int]
+
+# --------------------------------------------------------
+# Numba optimized functions
+# --------------------------------------------------------
+
+@jit(nopython=True)
+def _sort_keys(keys: np.ndarray) -> np.ndarray:
+    """
+    Sort string keys using Numba for better performance.
+    Returns indices that would sort the array.
+    """
+    return np.argsort(keys)
+
+def _fast_sort_records(records: DataDict) -> DataDict:
+    """
+    Sort records by key using Numba-optimized sorting.
+    
+    Args:
+        records: Dictionary of records to sort
+        
+    Returns:
+        Sorted dictionary
+    """
+    if not records:
+        return records
+        
+    # Convert keys to numpy array for sorting
+    keys = np.array(list(records.keys()))
+    
+    # Get sorted indices using Numba
+    sorted_indices = _sort_keys(keys)
+    
+    # Create new sorted dictionary
+    sorted_dict = {}
+    for idx in sorted_indices:
+        key = str(keys[idx])  # Convert back to string
+        sorted_dict[key] = records[key]
+        
+    return sorted_dict
 
 # --------------------------------------------------------
 # Indexing Functions
@@ -123,7 +164,7 @@ def lint_jsonl(jsonl_file_path: str) -> None:
     Clean and optimize a JSONL file.
     
     - Loads all valid records
-    - Sorts by linekey
+    - Sorts by linekey using Numba
     - Removes whitespace
     - Rewrites file in optimized format
     - Rebuilds index
@@ -131,8 +172,13 @@ def lint_jsonl(jsonl_file_path: str) -> None:
     Args:
         jsonl_file_path: Path to the JSONL file to optimize
     """
+    # Load all records
     records = load_jsonl(jsonl_file_path)
-    sorted_records = dict(sorted(records.items(), key=lambda item: str(item[0])))
+    
+    # Sort records using Numba-optimized sorting
+    sorted_records = _fast_sort_records(records)
+    
+    # Save sorted records
     save_jsonl(jsonl_file_path, sorted_records)
 
 # --------------------------------------------------------
