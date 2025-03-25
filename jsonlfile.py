@@ -5,7 +5,7 @@ import mmap
 from pathlib import Path
 import jsonlines
 import datetime
-
+from collections import defaultdict
 # Global configuration
 BUFFER_SIZE = 1024 * 1024 * 10  # 10MB buffer
 
@@ -254,57 +254,67 @@ def select_jsonl(jsonl_file_path: str, linekey_range: Tuple[str, str], auto_dese
     return result_dict
 
 def update_jsonl(jsonl_file_path, update_dict):
-    """
-    Efficiently updates existing linekeys or inserts new ones using the index file.
-    """
+
+    
     index_file_path = f"{jsonl_file_path}.idx"
 
+    # Ensure index exists
     ensure_index_exists(jsonl_file_path)
 
     # Load the existing index
-    with open(index_file_path, 'r', encoding='utf-8') as idx_f:
+    with open(index_file_path, "r", encoding="utf-8") as idx_f:
         index = json.load(idx_f)
 
-    # Open jsonl file in read+write binary mode
-    with open(jsonl_file_path, 'rb+') as f:
+    # Prepare for bulk operations
+    deleted_offsets = []  # To track space that can be reused
+
+    # Precompute initial file size (to avoid using `f.tell` during appends)
+    current_file_size = os.path.getsize(jsonl_file_path)
+
+    # Open JSONL file in read+write mode
+    with open(jsonl_file_path, "rb+", buffering=BUFFER_SIZE) as f:
+        # Read all lines and cache their byte offsets for bulk processing
+        lines = {}
+        for linekey, offset in index.items():
+            f.seek(offset)
+            original_line = f.readline().decode("utf-8").strip()
+            lines[linekey] = (offset, original_line)
+
         for linekey, data in update_dict.items():
             linekey = serialize_linekey(linekey)
             new_line_dict = {linekey: data}
-            new_line_bytes = (json.dumps(new_line_dict) + '\n').encode('utf-8')
+            new_line_bytes = (json.dumps(new_line_dict) + "\n").encode("utf-8")
             new_line_len = len(new_line_bytes)
 
             if linekey in index:
-                f.seek(index[linekey])
-                original_line_bytes = f.readline()
-                original_line_len = len(original_line_bytes)
+                # Existing line: Check if we can overwrite in place
+                offset, original_line = lines[linekey]
+                original_line_len = len(original_line.encode("utf-8"))
 
                 if new_line_len <= original_line_len:
-                    # Overwrite in place and pad with spaces
-                    f.seek(index[linekey])
-                    padding = b' ' * (original_line_len - new_line_len)
+                    # Overwrite in place and pad with spaces if necessary
+                    f.seek(offset)
+                    padding = b" " * (original_line_len - new_line_len)
                     f.write(new_line_bytes + padding)
                 else:
-                    # Mark the old record as deleted (spaces)
-                    f.seek(index[linekey])
-                    f.write(b' ' * original_line_len)
-                    # Append the new record at the end
-                    f.seek(0, os.SEEK_END)
-                    new_pos = f.tell()
+                    # Mark old record for reuse and append the new line
+                    deleted_offsets.append(offset)
+                    f.write(b' ' * original_line_len)  # Mark as deleted
+                    # Append the new line at the precomputed end position
+                    f.seek(current_file_size)
                     f.write(new_line_bytes)
-                    # Update index to new position
-                    index[linekey] = new_pos
+                    index[linekey] = current_file_size
+                    current_file_size += new_line_len  # Update file size manually
             else:
-                # Append new line at the end
-                f.seek(0, os.SEEK_END)
-                new_pos = f.tell()
+                # New line: Append it at the precomputed end position
+                f.seek(current_file_size)
                 f.write(new_line_bytes)
-                # Update index to new position
-                index[linekey] = new_pos
+                index[linekey] = current_file_size
+                current_file_size += new_line_len  # Update file size manually
 
-    # Sort index by linekey before writing
+    # Write updated index back to disk
     index = dict(sorted(index.items()))
-    # Save updated index back to disk
-    with open(index_file_path, 'w', encoding='utf-8') as idx_f:
+    with open(index_file_path, "w", encoding="utf-8") as idx_f:
         json.dump(index, idx_f, indent=2)
 
 def delete_jsonl(jsonl_file_path: str, linekeys: List[str]) -> None:
