@@ -312,9 +312,8 @@ class FolderDB:
             # Lint the file
             try:
                 lint_jsonl(file_path)
-                # Update metadata with linted=True
+                # Update metadata with linted=True only if linting succeeds
                 self.update_dbmeta(jsonl_file, linted=True)
             except Exception as e:
                 print(f"Error linting {jsonl_file}: {str(e)}")
-                # Update metadata with linted=False
-                self.update_dbmeta(jsonl_file, linted=False) 
+                # No need to update metadata again since we already set linted=False 

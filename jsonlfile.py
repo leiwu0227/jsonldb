@@ -199,6 +199,7 @@ def lint_jsonl(jsonl_file_path: str) -> None:
     """
     Clean and optimize a JSONL file.
     
+    - Validates each line is valid JSON
     - Loads all valid records
     - Sorts by linekey using Numba
     - Removes whitespace
@@ -207,11 +208,27 @@ def lint_jsonl(jsonl_file_path: str) -> None:
     
     Args:
         jsonl_file_path: Path to the JSONL file to optimize
+        
+    Raises:
+        json.JSONDecodeError: If any line contains invalid JSON
     """
-    # Load all records
-    records = load_jsonl(jsonl_file_path)
+    # First validate all lines
+    with open(jsonl_file_path, 'r', encoding='utf-8') as f:
+        for line_num, line in enumerate(f, 1):
+            line = line.strip()
+            if not line:  # Skip empty lines
+                continue
+            try:
+                json.loads(line)
+            except json.JSONDecodeError as e:
+                raise json.JSONDecodeError(
+                    f"Invalid JSON at line {line_num}: {str(e)}",
+                    line,
+                    e.pos
+                )
     
-    # Sort records using Numba-optimized sorting
+    # If validation passes, load and sort records
+    records = load_jsonl(jsonl_file_path)
     sorted_records = _fast_sort_records(records)
     
     # Save sorted records

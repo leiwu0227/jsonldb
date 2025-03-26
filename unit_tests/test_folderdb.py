@@ -3,6 +3,8 @@ import pandas as pd
 import os
 from datetime import datetime, timedelta
 from folderdb import FolderDB
+import json
+from jsonlfile import select_jsonl
 
 @pytest.fixture
 def test_folder(tmp_path):
@@ -36,6 +38,36 @@ def sample_dict():
         'key2': {'value': 2},
         'key3': {'value': 3}
     }
+
+@pytest.fixture
+def sample_data():
+    """Create sample data for testing."""
+    # Create sample DataFrame
+    df = pd.DataFrame({
+        'name': ['Alice', 'Bob', 'Charlie'],
+        'age': [25, 30, 35],
+        'city': ['New York', 'London', 'Paris']
+    }, index=['user1', 'user2', 'user3'])
+    
+    # Create sample dictionary
+    data_dict = {
+        'prod1': {'name': 'Laptop', 'price': 1000},
+        'prod2': {'name': 'Phone', 'price': 500}
+    }
+    
+    return df, data_dict
+
+@pytest.fixture
+def db_folder(tmp_path):
+    """Create a temporary folder for testing."""
+    folder = tmp_path / "test_db"
+    folder.mkdir()
+    return str(folder)
+
+@pytest.fixture
+def db(db_folder):
+    """Create a FolderDB instance for testing."""
+    return FolderDB(db_folder)
 
 def test_init(test_folder):
     """Test FolderDB initialization"""
@@ -245,4 +277,156 @@ def test_str_representation(test_folder, sample_dict):
     assert "test1.jsonl" in str_rep
     assert "Size:" in str_rep
     assert "Key range:" in str_rep
-    assert "Count:" in str_rep 
+    assert "Count:" in str_rep
+
+def test_build_dbmeta(db, sample_data):
+    """Test building the db.meta file."""
+    df, data_dict = sample_data
+    
+    # Add some data to the database
+    db.upsert_df("users", df)
+    db.upsert_dict("products", data_dict)
+    
+    # Build metadata
+    db.build_dbmeta()
+    
+    # Check if db.meta exists
+    meta_file = os.path.join(db.folder_path, "db.meta")
+    assert os.path.exists(meta_file)
+    
+    # Read and verify metadata
+    metadata = select_jsonl(meta_file)
+    
+    # Verify metadata structure
+    assert "users.jsonl" in metadata
+    assert "products.jsonl" in metadata
+    
+    # Verify users.jsonl metadata
+    users_meta = metadata["users.jsonl"]
+    assert users_meta["name"] == "users"
+    assert users_meta["min_index"] == "user1"
+    assert users_meta["max_index"] == "user3"
+    assert "lint_time" in users_meta
+    assert users_meta["linted"] is False
+    
+    # Verify products.jsonl metadata
+    products_meta = metadata["products.jsonl"]
+    assert products_meta["name"] == "products"
+    assert products_meta["min_index"] == "prod1"
+    assert products_meta["max_index"] == "prod2"
+    assert "lint_time" in products_meta
+    assert products_meta["linted"] is False
+
+def test_update_dbmeta(db, sample_data):
+    """Test updating metadata for a specific file."""
+    df, _ = sample_data
+    
+    # Add data and build initial metadata
+    db.upsert_df("users", df)
+    db.build_dbmeta()
+    
+    # Update metadata for users.jsonl
+    db.update_dbmeta("users", linted=True)
+    
+    # Verify the update
+    meta_file = os.path.join(db.folder_path, "db.meta")
+    metadata = select_jsonl(meta_file)
+    users_meta = metadata["users.jsonl"]
+    assert users_meta["linted"] is True
+    assert "lint_time" in users_meta
+    
+    # Update with linted=False
+    db.update_dbmeta("users", linted=False)
+    
+    # Verify again
+    metadata = select_jsonl(meta_file)
+    users_meta = metadata["users.jsonl"]
+    assert users_meta["linted"] is False
+    assert "lint_time" in users_meta
+
+def test_lint_db(db, sample_data):
+    """Test linting database files and updating metadata."""
+    df, data_dict = sample_data
+    
+    # Add data and build initial metadata
+    db.upsert_df("users", df)
+    db.upsert_dict("products", data_dict)
+    db.build_dbmeta()
+    
+    # Lint the database
+    db.lint_db()
+    
+    # Read and verify metadata
+    meta_file = os.path.join(db.folder_path, "db.meta")
+    metadata = select_jsonl(meta_file)
+    
+    # Verify both files are marked as linted
+    assert metadata["users.jsonl"]["linted"] is True
+    assert metadata["products.jsonl"]["linted"] is True
+    
+    # Verify lint_time was updated
+    assert "lint_time" in metadata["users.jsonl"]
+    assert "lint_time" in metadata["products.jsonl"]
+
+def test_lint_db_with_error(db, sample_data):
+    """Test lint_db behavior when a file has invalid JSON."""
+    df, _ = sample_data
+    
+    # Add valid data
+    db.upsert_df("users", df)
+    
+    # Create an invalid JSONL file
+    invalid_file = os.path.join(db.folder_path, "invalid.jsonl")
+    with open(invalid_file, 'w') as f:
+        f.write('{"key": "value"\n')  # Missing closing brace
+    
+    # Build initial metadata
+    db.build_dbmeta()
+    
+    # Lint the database
+    db.lint_db()
+    
+    # Read and verify metadata
+    meta_file = os.path.join(db.folder_path, "db.meta")
+    metadata = select_jsonl(meta_file)
+    
+    # Verify invalid file is marked as not linted
+    assert metadata["invalid.jsonl"]["linted"] is False
+    # Verify valid file is still marked as linted
+    assert metadata["users.jsonl"]["linted"] is True
+
+def test_metadata_persistence(db, sample_data):
+    """Test that metadata persists between operations."""
+    df, data_dict = sample_data
+    
+    # Initial setup
+    db.upsert_df("users", df)
+    db.upsert_dict("products", data_dict)
+    db.build_dbmeta()
+    
+    # Create a new FolderDB instance
+    new_db = FolderDB(db.folder_path)
+    
+    # Verify metadata is still accessible
+    meta_file = os.path.join(db.folder_path, "db.meta")
+    assert os.path.exists(meta_file)
+    
+    metadata = select_jsonl(meta_file)
+    assert "users.jsonl" in metadata
+    assert "products.jsonl" in metadata
+    
+    # Verify users.jsonl metadata
+    users_meta = metadata["users.jsonl"]
+    assert users_meta["name"] == "users"
+    assert users_meta["min_index"] == "user1"
+    assert users_meta["max_index"] == "user3"
+    assert "lint_time" in users_meta
+    assert users_meta["linted"] is False
+    
+    # Verify products.jsonl metadata
+    products_meta = metadata["products.jsonl"]
+    assert products_meta["name"] == "products"
+    assert products_meta["min_index"] == "prod1"
+    assert products_meta["max_index"] == "prod2"
+    assert "lint_time" in products_meta
+    assert products_meta["linted"] is False 
