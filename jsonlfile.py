@@ -267,6 +267,50 @@ def _fast_dumps(obj: dict) -> str:
     except ImportError:
         return json.dumps(obj, **JSON_OPTS) + '\n'
 
+def check_dict_format(data_dict: Dict[Any, Any]) -> bool:
+    """Check if a dictionary follows the required JSONL format.
+    
+    Required format:
+    {
+        "linekey1": {"value1": 10, "value2": 11},
+        "linekey2": {"value1": 11, "value2": 12}
+    }
+    
+    Args:
+        data_dict (Dict[str, Any]): Dictionary to check
+        
+    Returns:
+        bool: True if format is valid, False otherwise
+        
+    Raises:
+        ValueError: If format is invalid, with specific error message
+    """
+    if not isinstance(data_dict, dict):
+        raise ValueError("Input must be a dictionary")
+        
+    # if not data_dict:
+    #     raise ValueError("Dictionary cannot be empty")
+        
+    # Check each key-value pair
+    for linekey, value in data_dict.items():
+        # Check if linekey is a string
+        # No need to check if linekey is a string
+            
+        # Check if value is a dictionary
+        if not isinstance(value, dict):
+            raise ValueError(f"Value for linekey '{linekey}' must be a dictionary")
+            
+        # Check if value dictionary is not empty
+        if not value:
+            raise ValueError(f"Value dictionary for linekey '{linekey}' cannot be empty")
+            
+    # Check for duplicate linekeys
+    linekeys = list(data_dict.keys())
+    if len(linekeys) != len(set(linekeys)):
+        raise ValueError("Duplicate linekeys found")
+        
+    return True
+
 # --------------------------------------------------------
 # Core CRUD Functions
 # --------------------------------------------------------
@@ -537,3 +581,4 @@ def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey]) -> None:
             
     except OSError as e:
         raise OSError(f"Failed to delete from JSONL file {jsonl_file_path}: {str(e)}")
+
