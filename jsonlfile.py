@@ -234,7 +234,7 @@ def serialize_linekey(linekey: LineKey) -> str:
     if isinstance(linekey, str):
         return linekey
     elif isinstance(linekey, datetime.datetime):
-        return linekey.isoformat()
+        return linekey.isoformat(timespec='seconds')
     return str(linekey)
 
 def deserialize_linekey(linekey_str: str, default_format: Optional[str] = None) -> LineKey:
