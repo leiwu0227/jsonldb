@@ -7,6 +7,8 @@ import json
 import pickle
 from datetime import datetime
 from vercontrol import init_folder, commit as vercontrol_commit, revert as vercontrol_revert, list_version, is_versioned
+import git
+from visual import visualize_folderdb
 
 class FolderDB:
     def __init__(self, folder_path: str):
@@ -375,3 +377,12 @@ class FolderDB:
             git.exc.GitCommandError: If git commands fail
         """
         return list_version(self.folder_path)
+
+    def visualize(self) -> visual.figure:
+        """
+        Create a visualization of the database's data distribution.
+        
+        Returns:
+            Bokeh figure object showing the scatter plot of data distribution
+        """
+        return visual.visualize_folderdb(self.folder_path)
