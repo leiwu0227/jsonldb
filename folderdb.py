@@ -2,9 +2,10 @@ import os
 from typing import Dict, List, Optional, Union, Any
 import pandas as pd
 from jsonldf import save_jsonldf, update_jsonldf, select_jsonldf, delete_jsonldf
-from jsonlfile import save_jsonl, update_jsonl, select_jsonl, delete_jsonl, build_jsonl_index
+from jsonlfile import save_jsonl, update_jsonl, select_jsonl, delete_jsonl, build_jsonl_index, select_line_jsonl, lint_jsonl
 import json
 import pickle
+from datetime import datetime
 
 class FolderDB:
     def __init__(self, folder_path: str):
@@ -203,4 +204,117 @@ class FolderDB:
             lines.append(f"  Key range: {key_range}")
             lines.append(f"  Count: {count}")
         
-        return "\n".join(lines) 
+        return "\n".join(lines)
+
+    def build_dbmeta(self) -> None:
+        """Build or update the db.meta file with information about all JSONL files.
+        
+        The db.meta file contains metadata for each JSONL file including:
+        - name: filename without .jsonl extension
+        - min_index: smallest index from the index file
+        - max_index: biggest index from the index file
+        - lint_time: ISO format timestamp of last lint
+        - linted: boolean indicating if file has been linted
+        """
+        # Get all JSONL files
+        jsonl_files = [f for f in os.listdir(self.folder_path) if f.endswith('.jsonl')]
+        
+        # Initialize metadata dictionary
+        metadata = {}
+        
+        # Process each JSONL file
+        for jsonl_file in jsonl_files:
+            # Get index range from index file
+            index_file = os.path.join(self.folder_path, f"{jsonl_file}.idx")
+            min_index = None
+            max_index = None
+            
+            if os.path.exists(index_file):
+                with open(index_file, 'r') as f:
+                    index = json.load(f)
+                    if index:
+                        keys = list(index.keys())
+                        if keys:
+                            min_index = keys[0]
+                            max_index = keys[-1]
+            
+            # Get name without extension
+            name = os.path.splitext(jsonl_file)[0]
+            
+            # Create metadata entry
+            metadata[jsonl_file] = {
+                "name": name,
+                "min_index": min_index,
+                "max_index": max_index,
+                "lint_time": datetime.now().isoformat(),
+                "linted": False  # Default to False
+            }
+        
+        # Save metadata using jsonlfile
+        meta_file = os.path.join(self.folder_path, "db.meta")
+        save_jsonl(meta_file, metadata)
+
+    def update_dbmeta(self, name: str, linted: bool = False) -> None:
+        """Update the metadata for a specific JSONL file in db.meta.
+        
+        Args:
+            name: Name of the JSONL file (with or without .jsonl extension)
+            linted: Value to set for the linted field
+        """
+        meta_file = os.path.join(self.folder_path, "db.meta")
+        jsonl_file = name if name.endswith('.jsonl') else f"{name}.jsonl"
+        
+        # Load existing metadata
+        metadata = {}
+        if os.path.exists(meta_file):
+            metadata = select_line_jsonl(meta_file, jsonl_file)
+        
+        # Get index range from index file
+        index_file = os.path.join(self.folder_path, f"{jsonl_file}.idx")
+        min_index = None
+        max_index = None
+        
+        if os.path.exists(index_file):
+            with open(index_file, 'r') as f:
+                index = json.load(f)
+                if index:
+                    keys = list(index.keys())
+                    if keys:
+                        min_index = keys[0]
+                        max_index = keys[-1]
+        
+        # Update metadata for the specified file
+        metadata[jsonl_file] = {
+            "name": os.path.splitext(jsonl_file)[0],
+            "min_index": min_index,
+            "max_index": max_index,
+            "lint_time": datetime.now().isoformat(),
+            "linted": linted
+        }
+        
+        # Update metadata file using jsonlfile
+        update_jsonl(meta_file, {jsonl_file: metadata[jsonl_file]})
+
+    def lint_db(self) -> None:
+        """Lint all JSONL files in the database and update metadata.
+        
+        This function:
+        1. Lints each JSONL file using jsonlfile.lint_jsonl
+        2. Updates the db.meta file for each file after linting
+        """
+        # Get all JSONL files
+        jsonl_files = [f for f in os.listdir(self.folder_path) if f.endswith('.jsonl')]
+        
+        # Process each JSONL file
+        for jsonl_file in jsonl_files:
+            file_path = os.path.join(self.folder_path, jsonl_file)
+            
+            # Lint the file
+            try:
+                lint_jsonl(file_path)
+                # Update metadata with linted=True
+                self.update_dbmeta(jsonl_file, linted=True)
+            except Exception as e:
+                print(f"Error linting {jsonl_file}: {str(e)}")
+                # Update metadata with linted=False
+                self.update_dbmeta(jsonl_file, linted=False) 
