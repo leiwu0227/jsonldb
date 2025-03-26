@@ -4,6 +4,16 @@ from datetime import datetime
 from typing import Dict, Optional
 import warnings
 
+
+def is_versioned(folder_path: str) -> bool:
+    """Check if a folder is versioned.
+    
+    Args:
+        folder_path (str): Path to the folder to check
+    """
+    return os.path.exists(os.path.join(folder_path, ".git"))
+
+
 def init_folder(folder_path: str) -> None:
     """Initialize a folder as a git repository.
     

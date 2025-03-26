@@ -6,6 +6,7 @@ from jsonlfile import save_jsonl, update_jsonl, select_jsonl, delete_jsonl, buil
 import json
 import pickle
 from datetime import datetime
+from vercontrol import init_folder, commit as vercontrol_commit, revert as vercontrol_revert, list_version, is_versioned
 
 class FolderDB:
     def __init__(self, folder_path: str):
@@ -331,3 +332,48 @@ class FolderDB:
                 # No need to update metadata again since we already set linted=False 
 
         lint_jsonl(self.dbmeta_path)
+
+    def commit(self, msg: str = "") -> None:
+        """Commit changes in the database folder.
+        
+        If the folder is not already a git repository, it will be initialized first.
+        
+        Args:
+            msg: Optional commit message. If empty, an auto-generated message will be used.
+            
+        Raises:
+            git.exc.GitCommandError: If git commands fail
+        """
+        # Check if folder is a git repo, if not initialize it
+        if not is_versioned(self.folder_path):
+            init_folder(self.folder_path)
+            
+        # Commit changes
+        print(f"Committing changes in the folder: {self.folder_path}")
+        vercontrol_commit(self.folder_path, msg)
+        print("Commit successful.")
+
+    def revert(self, version_hash: str) -> None:
+        """Revert the database to a previous version.
+        
+        Args:
+            version_hash: Hash of the commit to revert to
+            
+        Raises:
+            git.exc.GitCommandError: If git commands fail
+            ValueError: If the specified commit is not found
+        """
+        print(f"Attempting to revert the folder: {self.folder_path} to version: {version_hash}")
+        vercontrol_revert(self.folder_path, version_hash)
+        print(f"Successfully reverted the folder: {self.folder_path} to version: {version_hash}")
+
+    def version(self) -> Dict[str, str]:
+        """List all versions of the database.
+        
+        Returns:
+            Dictionary with commit hashes as keys and commit messages as values
+            
+        Raises:
+            git.exc.GitCommandError: If git commands fail
+        """
+        return list_version(self.folder_path)
