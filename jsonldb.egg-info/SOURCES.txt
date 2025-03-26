@@ -3,5 +3,6 @@ setup.py
 jsonldb.egg-info/PKG-INFO
 jsonldb.egg-info/SOURCES.txt
 jsonldb.egg-info/dependency_links.txt
+jsonldb.egg-info/entry_points.txt
 jsonldb.egg-info/requires.txt
 jsonldb.egg-info/top_level.txt

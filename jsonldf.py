@@ -1,5 +1,6 @@
 import pandas as pd
-from typing import Optional, Tuple, List, Union
+from typing import Optional, Tuple, List, Union, Any
+
 from jsonldb.jsonlfile import (
     save_jsonl, load_jsonl, update_jsonl, 
     select_jsonl, delete_jsonl, lint_jsonl
@@ -60,28 +61,38 @@ def update_jsonldf(jsonl_file_path: str, df: pd.DataFrame) -> None:
 
 def select_jsonldf(
     jsonl_file_path: str,
-    key_range: Optional[Tuple[str, str]] = None
+    lower_key: Optional[Any] = None,
+    upper_key: Optional[Any] = None,
+    auto_deserialize: bool = True
 ) -> pd.DataFrame:
-    """Select records from JSONL file within the specified key range.
+    """
+    Select records from JSONL file within a specified key range.
     
     Args:
-        jsonl_file_path (str): Path to the JSONL file
-        key_range (tuple, optional): Tuple of (lower_key, upper_key). Defaults to None
+        jsonl_file_path: Path to the JSONL file
+        lower_key: Lower bound of the key range (inclusive). If None, uses smallest key.
+        upper_key: Upper bound of the key range (inclusive). If None, uses largest key.
+        auto_deserialize: Whether to automatically deserialize datetime keys
         
     Returns:
-        pd.DataFrame: DataFrame containing the selected records with line keys as index
+        DataFrame containing the selected records
+        
+    Raises:
+        ValueError: If lower_key is greater than upper_key
     """
-    # Select records from JSONL
-    records_dict = select_jsonl(jsonl_file_path, key_range)
+    # Get records within the specified range
+    records = select_jsonl(
+        jsonl_file_path,
+        lower_key=lower_key,
+        upper_key=upper_key,
+        auto_deserialize=auto_deserialize
+    )
     
-    if not records_dict:
-        # Return empty DataFrame
+    # Convert to DataFrame
+    if not records:
         return pd.DataFrame()
-    
-    # Convert dict to DataFrame, keeping keys as index
-    df = pd.DataFrame.from_dict(records_dict, orient='index')
-    
-    return df
+        
+    return pd.DataFrame.from_dict(records, orient='index')
 
 def delete_jsonldf(jsonl_file_path: str, keys: List[Union[str, int]]) -> None:
     """Delete records from JSONL file by their keys.

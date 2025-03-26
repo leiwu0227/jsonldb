@@ -415,13 +415,14 @@ def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True) -> DataDict:
     except OSError as e:
         raise OSError(f"Failed to load JSONL file {jsonl_file_path}: {str(e)}")
 
-def select_jsonl(jsonl_file_path: str, linekey_range: Tuple[LineKey, LineKey], auto_deserialize: bool = True) -> DataDict:
+def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, upper_key: Optional[LineKey] = None, auto_deserialize: bool = True) -> DataDict:
     """
     Select records from a JSONL file within a key range.
     
     Args:
         jsonl_file_path: Path to the JSONL file
-        linekey_range: Tuple of (start, end) keys
+        lower_key: Lower bound key (inclusive). If None, uses smallest key.
+        upper_key: Upper bound key (inclusive). If None, uses largest key.
         auto_deserialize: Whether to auto-deserialize datetime keys
         
     Returns:
@@ -431,19 +432,39 @@ def select_jsonl(jsonl_file_path: str, linekey_range: Tuple[LineKey, LineKey], a
         FileNotFoundError: If file or index doesn't exist
         OSError: If file operations fail
     """
-    linekey_lower, linekey_upper = map(serialize_linekey, linekey_range)
-    result_dict: DataDict = {}
-    
+    # If both keys are None, return all records
+    if lower_key is None and upper_key is None:
+        return load_jsonl(jsonl_file_path, auto_deserialize)
+        
     ensure_index_exists(jsonl_file_path)
     
     try:
         # Load index
         with open(f"{jsonl_file_path}.idx", 'r') as f:
             index_dict = json.load(f)
+            
+        # If no keys in index, return empty dict
+        if not index_dict:
+            return {}
+            
+        # Get all keys from index
+        all_keys = list(index_dict.keys())
+        
+        # Set default values if None
+        if lower_key is None:
+            lower_key = min(all_keys)
+        if upper_key is None:
+            upper_key = max(all_keys)
+            
+        # Serialize the keys
+        lower_key = serialize_linekey(lower_key)
+        upper_key = serialize_linekey(upper_key)
+        
+        result_dict: DataDict = {}
         
         # Get keys in range using Numba-optimized function
-        keys = np.array(list(index_dict.keys()))
-        mask = _select_keys_in_range(keys, linekey_lower, linekey_upper)
+        keys = np.array(all_keys)
+        mask = _select_keys_in_range(keys, lower_key, upper_key)
         selected_linekeys = keys[mask]
         
         # Load selected records

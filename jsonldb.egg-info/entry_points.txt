@@ -1,0 +1,2 @@
+[console_scripts]
+jsonldb = jsonldb.cli:main

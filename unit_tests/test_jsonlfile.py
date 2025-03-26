@@ -9,7 +9,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from jsonlfile import (
     save_jsonl, load_jsonl, update_jsonl, delete_jsonl, 
-    lint_jsonl, build_jsonl_index
+    lint_jsonl, build_jsonl_index, select_jsonl
 )
 
 # Test fixtures
@@ -255,4 +255,95 @@ def test_lint_mixed_key_types(test_file):
     datetime_keys = [k for k in keys if isinstance(k, datetime)]
     
     assert sorted(string_keys) == string_keys
-    assert sorted(datetime_keys) == datetime_keys 
+    assert sorted(datetime_keys) == datetime_keys
+
+# Select Tests
+def test_select_all_records(test_file, sample_data):
+    """Test selecting all records when no range is specified"""
+    save_jsonl(test_file, sample_data)
+    
+    # Select all records
+    selected = select_jsonl(test_file)
+    
+    # Verify all records are returned
+    assert selected == sample_data
+    assert len(selected) == 3
+
+def test_select_with_lower_bound(test_file, sample_data):
+    """Test selecting records with only lower bound specified"""
+    save_jsonl(test_file, sample_data)
+    
+    # Select records from key2 onwards
+    selected = select_jsonl(test_file, lower_key="key2")
+    
+    # Verify selection
+    assert len(selected) == 2
+    assert "key1" not in selected
+    assert "key2" in selected
+    assert "key3" in selected
+
+def test_select_with_upper_bound(test_file, sample_data):
+    """Test selecting records with only upper bound specified"""
+    save_jsonl(test_file, sample_data)
+    
+    # Select records up to key2
+    selected = select_jsonl(test_file, upper_key="key2")
+    
+    # Verify selection
+    assert len(selected) == 2
+    assert "key1" in selected
+    assert "key2" in selected
+    assert "key3" not in selected
+
+def test_select_with_both_bounds(test_file, sample_data):
+    """Test selecting records with both bounds specified"""
+    save_jsonl(test_file, sample_data)
+    
+    # Select records between key1 and key2
+    selected = select_jsonl(test_file, lower_key="key1", upper_key="key2")
+    
+    # Verify selection
+    assert len(selected) == 2
+    assert "key1" in selected
+    assert "key2" in selected
+    assert "key3" not in selected
+
+def test_select_with_datetime_keys(test_file, datetime_data):
+    """Test selecting records with datetime keys"""
+    save_jsonl(test_file, datetime_data)
+    
+    # Select records between two times
+    base_time = datetime(2024, 1, 1, 12, 0)
+    selected = select_jsonl(
+        test_file,
+        lower_key=base_time,
+        upper_key=base_time + timedelta(hours=1)
+    )
+    
+    # Verify selection
+    assert len(selected) == 2
+    assert base_time in selected
+    assert base_time + timedelta(hours=1) in selected
+    assert base_time + timedelta(hours=2) not in selected
+
+def test_select_empty_range(test_file, sample_data):
+    """Test selecting records with a range that has no matches"""
+    save_jsonl(test_file, sample_data)
+    
+    # Select records between non-existent keys
+    selected = select_jsonl(test_file, lower_key="key4", upper_key="key5")
+    
+    # Verify empty result
+    assert len(selected) == 0
+
+def test_select_single_record(test_file, sample_data):
+    """Test selecting a single record using same lower and upper bound"""
+    save_jsonl(test_file, sample_data)
+    
+    # Select just key2
+    selected = select_jsonl(test_file, lower_key="key2", upper_key="key2")
+    
+    # Verify selection
+    assert len(selected) == 1
+    assert "key2" in selected
+    assert selected["key2"] == sample_data["key2"] 
