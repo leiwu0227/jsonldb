@@ -199,7 +199,6 @@ def lint_jsonl(jsonl_file_path: str) -> None:
     """
     Clean and optimize a JSONL file.
     
-    - Validates each line is valid JSON
     - Loads all valid records
     - Sorts by linekey using Numba
     - Removes whitespace
@@ -208,27 +207,11 @@ def lint_jsonl(jsonl_file_path: str) -> None:
     
     Args:
         jsonl_file_path: Path to the JSONL file to optimize
-        
-    Raises:
-        json.JSONDecodeError: If any line contains invalid JSON
     """
-    # First validate all lines
-    with open(jsonl_file_path, 'r', encoding='utf-8') as f:
-        for line_num, line in enumerate(f, 1):
-            line = line.strip()
-            if not line:  # Skip empty lines
-                continue
-            try:
-                json.loads(line)
-            except json.JSONDecodeError as e:
-                raise json.JSONDecodeError(
-                    f"Invalid JSON at line {line_num}: {str(e)}",
-                    line,
-                    e.pos
-                )
-    
-    # If validation passes, load and sort records
+    # Load all records
     records = load_jsonl(jsonl_file_path)
+    
+    # Sort records using Numba-optimized sorting
     sorted_records = _fast_sort_records(records)
     
     # Save sorted records
@@ -537,7 +520,7 @@ def select_line_jsonl(jsonl_file_path: str, linekey: LineKey, auto_serialize: bo
     
     # Check if key exists in index
     if linekey not in index_dict:
-        return None
+        return {}
     
     result_dict: DataDict = {}
         
@@ -558,7 +541,7 @@ def select_line_jsonl(jsonl_file_path: str, linekey: LineKey, auto_serialize: bo
             else:
                 result_dict[linekey] = data[linekey]
         except (json.JSONDecodeError, KeyError):
-            return None
+            return {}
         
     return result_dict
 
