@@ -4,6 +4,7 @@ import pandas as pd
 from jsonldf import save_jsonldf, update_jsonldf, select_jsonldf, delete_jsonldf
 from jsonlfile import save_jsonl, update_jsonl, select_jsonl, delete_jsonl, build_jsonl_index
 import json
+import pickle
 
 class FolderDB:
     def __init__(self, folder_path: str):
@@ -168,36 +169,38 @@ class FolderDB:
             self.delete_file_range(name, lower_key, upper_key)
 
     def __str__(self) -> str:
-        """Return a string representation of the FolderDB"""
-        result = []
-        result.append(f"FolderDB at {self.folder_path}")
-        result.append("-" * 50)
+        """Return a string representation of the database."""
+        lines = [f"FolderDB at {self.folder_path}"]
+        lines.append("-" * 50)
         
         # Get all JSONL files
         jsonl_files = [f for f in os.listdir(self.folder_path) if f.endswith('.jsonl')]
+        lines.append(f"Found {len(jsonl_files)} JSONL files:")
         
-        if not jsonl_files:
-            result.append("No JSONL files found")
-        else:
-            result.append(f"Found {len(jsonl_files)} JSONL files:")
-            for name in sorted(jsonl_files):
-                file_path = self._get_file_path(name)
-                size = os.path.getsize(file_path)
-                
-                # Get key range and count from index
-                index_path = file_path + '.idx'
-                if os.path.exists(index_path):
-                    with open(index_path, 'r') as f:
-                        keys = [line.strip() for line in f]
-                    key_range = f"{keys[0]} to {keys[-1]}" if keys else "empty"
-                    count = len(keys)
-                else:
-                    key_range = "no index"
-                    count = "unknown"
-                
-                result.append(f"\n{name}:")
-                result.append(f"  Size: {size:,} bytes")
-                result.append(f"  Key range: {key_range}")
-                result.append(f"  Count: {count}")
+        for jsonl_file in jsonl_files:
+            file_path = os.path.join(self.folder_path, jsonl_file)
+            size = os.path.getsize(file_path)
+            
+            # Get key range from index file
+            index_file = os.path.join(self.folder_path, f"{jsonl_file}.idx")
+            key_range = "{} to {}"
+            if os.path.exists(index_file):
+                with open(index_file, 'r') as f:
+                    index = json.load(f)
+                    if index:
+                        keys = list(index.keys())
+                        if keys:
+                            key_range = f"{keys[0]} to {keys[-1]}"
+            
+            # Get record count
+            count = 0
+            if os.path.exists(file_path):
+                with open(file_path, 'r') as f:
+                    count = sum(1 for _ in f)
+            
+            lines.append(f"\n{jsonl_file}:")
+            lines.append(f"  Size: {size} bytes")
+            lines.append(f"  Key range: {key_range}")
+            lines.append(f"  Count: {count}")
         
-        return "\n".join(result) 
+        return "\n".join(lines) 
