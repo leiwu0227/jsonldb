@@ -435,8 +435,12 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
     # If both keys are None, return all records
     if lower_key is None and upper_key is None:
         return load_jsonl(jsonl_file_path, auto_deserialize)
-        
+
+    if lower_key == upper_key:
+        return select_line_jsonl(jsonl_file_path, lower_key, auto_deserialize)
+
     ensure_index_exists(jsonl_file_path)
+
     
     try:
         # Load index
@@ -468,7 +472,7 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
         selected_linekeys = keys[mask]
         
         # Load selected records
-        with open(jsonl_file_path, 'r', encoding='utf-8') as f:
+        with open(jsonl_file_path, 'r', encoding='utf-8', buffering=BUFFER_SIZE) as f:
             for linekey in selected_linekeys:
                 try:
                     f.seek(index_dict[linekey])
@@ -490,6 +494,59 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
         
     except OSError as e:
         raise OSError(f"Failed to select from JSONL file {jsonl_file_path}: {str(e)}")
+
+def select_line_jsonl(jsonl_file_path: str, linekey: LineKey, auto_serialize: bool = True) -> Optional[str]:
+    """
+    Get a specific line from a JSONL file based on the linekey.
+    
+    Args:
+        jsonl_file_path: Path to the JSONL file
+        linekey: The key to look for
+        auto_serialize: Whether to automatically serialize the key
+        
+    Returns:
+        The line as a string if found, None otherwise
+    """
+    # Serialize the key if needed
+    if auto_serialize:
+        linekey = serialize_linekey(linekey)
+    
+    ensure_index_exists(jsonl_file_path)
+    
+    index_path = jsonl_file_path + '.idx'
+    # Read the index file
+    with open(index_path, 'r') as f:
+        index_dict = json.load(f)
+    
+    # Check if key exists in index
+    if linekey not in index_dict:
+        return None
+    
+    result_dict: DataDict = {}
+        
+
+    # Load selected records
+    with open(jsonl_file_path, 'r', encoding='utf-8') as f:
+        try:
+            f.seek(index_dict[linekey])
+            line = f.readline().strip()
+            data = json.loads(line)
+            
+            if auto_serialize and 'T' in linekey and len(linekey) == 19:
+                try:
+                    actual_key = deserialize_linekey(linekey, "datetime")
+                    result_dict[actual_key] = data[linekey]
+                except ValueError:
+                    result_dict[linekey] = data[linekey]
+            else:
+                result_dict[linekey] = data[linekey]
+        except (json.JSONDecodeError, KeyError):
+            return None
+        
+    return result_dict
+
+
+
 
 def update_jsonl(jsonl_file_path: str, update_dict: DataDict) -> None:
     """
@@ -602,4 +659,5 @@ def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey]) -> None:
             
     except OSError as e:
         raise OSError(f"Failed to delete from JSONL file {jsonl_file_path}: {str(e)}")
+
 
