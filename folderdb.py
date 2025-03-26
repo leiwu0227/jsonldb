@@ -349,7 +349,6 @@ class FolderDB:
             init_folder(self.folder_path)
             
         # Commit changes
-        print(f"Committing changes in the folder: {self.folder_path}")
         vercontrol_commit(self.folder_path, msg)
         print("Commit successful.")
 
@@ -363,7 +362,6 @@ class FolderDB:
             git.exc.GitCommandError: If git commands fail
             ValueError: If the specified commit is not found
         """
-        print(f"Attempting to revert the folder: {self.folder_path} to version: {version_hash}")
         vercontrol_revert(self.folder_path, version_hash)
         print(f"Successfully reverted the folder: {self.folder_path} to version: {version_hash}")
 
