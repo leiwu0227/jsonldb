@@ -1,9 +1,8 @@
 import pandas as pd
 from typing import Optional, Tuple, List, Union, Any
-
-from jsonldb.jsonlfile import (
+from jsonlfile import (
     save_jsonl, load_jsonl, update_jsonl, 
-    select_jsonl, delete_jsonl, lint_jsonl
+    delete_jsonl, select_jsonl, lint_jsonl
 )
 
 def save_jsonldf(jsonl_file_path: str, df: pd.DataFrame) -> None:
