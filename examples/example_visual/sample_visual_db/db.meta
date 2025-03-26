@@ -1,4 +1,0 @@
-
-{"numeric_data.jsonl":{"name":"numeric_data","min_index":"1","max_index":"9","size":413,"count":10,"lint_time":"2025-03-26T17:41:14.257195","linted":false}}
-{"datetime_data.jsonl":{"name":"datetime_data","min_index":"2025-03-26T17:41:14","max_index":"2025-03-30T17:41:14","size":300,"count":5,"lint_time":"2025-03-26T17:41:14.265378","linted":false}}
-{"string_data.jsonl":{"name":"string_data","min_index":"key_1","max_index":"key_5","size":235,"count":5,"lint_time":"2025-03-26T17:41:14.272388","linted":false}}
