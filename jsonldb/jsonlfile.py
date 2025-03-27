@@ -17,7 +17,7 @@ import mmap
 # --------------------------------------------------------
 
 # Buffer size for file operations (10MB)
-BUFFER_SIZE: int = 1024 * 1024 * 10
+BUFFER_SIZE: int = 1024 * 1024 * 50
 
 # JSON serialization options
 JSON_OPTS: Dict[str, bool] = {
@@ -544,9 +544,6 @@ def select_line_jsonl(jsonl_file_path: str, linekey: LineKey, auto_serialize: bo
         
     return result_dict
 
-
-
-
 def update_jsonl(jsonl_file_path: str, update_dict: DataDict) -> None:
     """
     Update or insert records in a JSONL file.
@@ -632,29 +629,31 @@ def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey]) -> None:
     ensure_index_exists(jsonl_file_path)
     
     try:
-        # Load index
-        with open(f"{jsonl_file_path}.idx", 'r', encoding='utf-8') as f:
-            index = json.load(f)
+        # Load index using orjson for faster JSON parsing
+        with open(f"{jsonl_file_path}.idx", 'rb') as f:
+            index = orjson.loads(f.read())
 
         # Process deletions
         linekeys = [serialize_linekey(key) for key in linekeys]
+        
+        # Use regular file operations like update_jsonl
         with open(jsonl_file_path, 'rb+', buffering=BUFFER_SIZE) as f:
             for linekey in linekeys:
                 if linekey in index:
-                    pos = index[linekey]
-                    f.seek(pos)
+                    f.seek(index[linekey])
                     line = f.readline()
                     if not line.endswith(b'\n'):
                         line += b'\n'
                     
-                    # Mark as deleted
-                    f.seek(pos)
+                    # Mark as deleted using _fast_dumps for consistency
+                    deleted_line = _fast_dumps({linekey: {}}).encode('utf-8')
+                    f.seek(index[linekey])
                     f.write(b' ' * (len(line) - 1) + b'\n')
                     del index[linekey]
 
-        # Update index
-        with open(f"{jsonl_file_path}.idx", 'w', encoding='utf-8') as f:
-            json.dump(dict(sorted(index.items())), f, indent=2)
+        # Update index using orjson for faster JSON serialization
+        with open(f"{jsonl_file_path}.idx", 'wb') as f:
+            f.write(orjson.dumps(dict(sorted(index.items())), option=orjson.OPT_INDENT_2))
             
     except OSError as e:
         raise OSError(f"Failed to delete from JSONL file {jsonl_file_path}: {str(e)}")
