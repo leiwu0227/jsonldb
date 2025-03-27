@@ -4,9 +4,6 @@ from datetime import datetime, timedelta
 import os
 import sys
 
-# Add parent directory to Python path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from jsonldb.jsonldf import (
     save_jsonldf, load_jsonldf, update_jsonldf, 
     delete_jsonldf, select_jsonldf, lint_jsonldf

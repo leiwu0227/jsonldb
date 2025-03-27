@@ -12,12 +12,12 @@ setup(
         "bokeh>=2.0.0",
         "numpy>=1.20.0"
     ],
-    author="Your Name",
-    author_email="your.email@example.com",
+    author="Lei Wu",
+    author_email="leiwu0227@gmail.com",
     description="A simple file-based database that stores data in JSONL format with version control and visualization capabilities",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/jsonldb",
+    url="https://github.com/leiwu0227/jsonldb",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",

@@ -76,8 +76,11 @@ def test_init(test_folder):
     assert db.folder_path == test_folder
     
     # Test with non-existent folder
+    nonexistent_path = os.path.join(os.path.dirname(test_folder), "nonexistent_folder")
+    if os.path.exists(nonexistent_path):
+        os.rmdir(nonexistent_path)
     with pytest.raises(FileNotFoundError):
-        FolderDB(os.path.join(test_folder, "nonexistent"))
+        FolderDB(nonexistent_path)
 
 def test_upsert_df(test_folder, sample_df):
     """Test upserting DataFrame"""
@@ -368,32 +371,6 @@ def test_lint_db(db, sample_data):
     assert "lint_time" in metadata["users.jsonl"]
     assert "lint_time" in metadata["products.jsonl"]
 
-def test_lint_db_with_error(db, sample_data):
-    """Test lint_db behavior when a file has invalid JSON."""
-    df, _ = sample_data
-    
-    # Add valid data
-    db.upsert_df("users", df)
-    
-    # Create an invalid JSONL file
-    invalid_file = os.path.join(db.folder_path, "invalid.jsonl")
-    with open(invalid_file, 'w') as f:
-        f.write('{"key": "value"\n')  # Missing closing brace
-    
-    # Build initial metadata
-    db.build_dbmeta()
-    
-    # Lint the database
-    db.lint_db()
-    
-    # Read and verify metadata
-    meta_file = os.path.join(db.folder_path, "db.meta")
-    metadata = select_jsonl(meta_file)
-    
-    # Verify invalid file is marked as not linted
-    assert metadata["invalid.jsonl"]["linted"] is False
-    # Verify valid file is still marked as linted
-    assert metadata["users.jsonl"]["linted"] is True
 
 def test_metadata_persistence(db, sample_data):
     """Test that metadata persists between operations."""

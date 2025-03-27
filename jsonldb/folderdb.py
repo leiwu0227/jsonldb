@@ -30,11 +30,15 @@ class FolderDB:
         
         Args:
             folder_path: Path to the folder where the database files will be stored
+            
+        Raises:
+            FileNotFoundError: If the folder doesn't exist
         """
         self.folder_path = folder_path
         if not os.path.exists(folder_path):
-            os.makedirs(folder_path)
+            raise FileNotFoundError(f"Folder not found: {folder_path}")
             
+        self.dbmeta_path = os.path.join(folder_path, "db.meta")
         self.build_dbmeta()
 
     # =============== File Path Management ===============
@@ -214,7 +218,7 @@ class FolderDB:
         # Get all JSONL files
         jsonl_files = [f for f in os.listdir(self.folder_path) if f.endswith('.jsonl')]
         
-        self.dbmeta_path = os.path.join(self.folder_path, "db.meta")
+
         if not jsonl_files:
             # If no JSONL files are found, create an empty db.meta file
             with open(self.dbmeta_path, 'w', encoding='utf-8') as f:
@@ -304,33 +308,28 @@ class FolderDB:
         update_jsonl(self.dbmeta_path, {jsonl_file: metadata[jsonl_file]})
 
     def lint_db(self) -> None:
-        """
-        Lint all JSONL files in the database and update metadata.
-        
-        This function:
-        1. Lints each JSONL file using jsonlfile.lint_jsonl
-        2. Updates the db.meta file for each file after linting
-        """
-        # Get all JSONL files
-        jsonl_files = [f for f in os.listdir(self.folder_path) if f.endswith('.jsonl')]
-        print(f"Found {len(jsonl_files)} JSONL files to lint.")
-
-        # Process each JSONL file
-        for jsonl_file in jsonl_files:
-            file_path = os.path.join(self.folder_path, jsonl_file)
-            print(f"Linting file: {jsonl_file}")
+        """Lint all JSONL files in the database."""
+        meta_file = os.path.join(self.folder_path, "db.meta")
+        if not os.path.exists(meta_file):
+            self.build_dbmeta()
             
-            # Lint the file
+        metadata = select_jsonl(meta_file)
+        jsonl_files = [f for f in metadata.keys() if f.endswith('.jsonl')]
+        
+        print(f"Found {len(jsonl_files)} JSONL files to lint.")
+        
+        for name in jsonl_files:
+            print(f"Linting file: {name}")
+            file_path = self._get_file_path(name)
+            
             try:
+                # Try to lint the file
                 lint_jsonl(file_path)
-                # Update metadata with linted=True only if linting succeeds
-                self.update_dbmeta(jsonl_file, linted=True)
-                print(f"Successfully linted and updated metadata for {jsonl_file}.")
+                print(f"Successfully linted and updated metadata for {name}.")
+                self.update_dbmeta(name, linted=True)
             except Exception as e:
-                print(f"Error linting {jsonl_file}: {str(e)}")
-                # No need to update metadata again since we already set linted=False 
-
-        lint_jsonl(self.dbmeta_path)
+                print(f"Error linting {name}: {str(e)}")
+                self.update_dbmeta(name, linted=False)
 
     # =============== Version Control ===============
     def commit(self, msg: str = "") -> None:
@@ -392,19 +391,24 @@ class FolderDB:
     # =============== String Representation ===============
     def __str__(self) -> str:
         """Return a string representation of the database."""
-        lines = [f"FolderDB at {self.folder_path}"]
-        lines.append("-" * 50)
+        result = f"FolderDB at {self.folder_path}\n"
+        result += "-" * 50 + "\n"
         
-        dbmeta = load_jsonl(self.dbmeta_path)
-
-        for jsonl_file, meta in dbmeta.items():
-            lines.append(f"{jsonl_file}:")
-            lines.append(f"  Size: {meta['size']} bytes")
-            lines.append(f"  Count: {meta['count']}")
-            lines.append(f"  Key range: {meta['min_index']} to {meta['max_index']}")
-            lines.append(f"  Linted: {meta['linted']}")
-
-        return "\n".join(lines)
+        # Get metadata
+        if os.path.exists(self.dbmeta_path):
+            metadata = select_jsonl(self.dbmeta_path)
+            jsonl_files = [f for f in metadata.keys() if f.endswith('.jsonl')]
+            result += f"Found {len(jsonl_files)} JSONL files\n\n"
+            
+            for name, info in metadata.items():
+                if name.endswith('.jsonl'):
+                    result += f"{name}:\n"
+                    result += f"  Size: {info['size']} bytes\n"
+                    result += f"  Count: {info['count']}\n"
+                    result += f"  Key range: {info['min_index']} to {info['max_index']}\n"
+                    result += f"  Linted: {info['linted']}\n\n"
+        
+        return result
     
     def __repr__(self) -> str:
         return self.__str__()

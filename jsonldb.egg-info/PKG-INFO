@@ -42,18 +42,9 @@ A simple file-based database that stores data in JSONL format with version contr
 To install the package in development mode:
 
 ```bash
-git clone https://github.com/yourusername/jsonldb.git
-cd jsonldb
-pip install -e .
+pip install git+https://github.com/leiwu0227/jsonldb.git
 ```
 
-### Regular Installation
-
-To install the package from PyPI (when available):
-
-```bash
-pip install jsonldb
-```
 
 ## Quick Start
 
