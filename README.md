@@ -18,7 +18,7 @@ A simple file-based database that stores data in JSONL format with version contr
 To install the package in development mode:
 
 ```bash
-git clone https://github.com/yourusername/jsonldb.git
+git clone https://github.com/leiwu0227/jsonldb.git
 cd jsonldb
 pip install -e .
 ```
