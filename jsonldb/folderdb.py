@@ -218,17 +218,20 @@ class FolderDB:
         # Get all JSONL files
         jsonl_files = [f for f in os.listdir(self.folder_path) if f.endswith('.jsonl')]
         
-
         if not jsonl_files:
             # If no JSONL files are found, create an empty db.meta file
             with open(self.dbmeta_path, 'w', encoding='utf-8') as f:
                 f.write('\n')
             return
+            
         # Initialize metadata dictionary
         metadata = {}
         
         # Process each JSONL file
         for jsonl_file in jsonl_files:
+            # Get name without extension
+            name = os.path.splitext(jsonl_file)[0]
+            
             # Get index range from index file
             index_file = os.path.join(self.folder_path, f"{jsonl_file}.idx")
             min_index = None
@@ -244,12 +247,9 @@ class FolderDB:
                             min_index = keys[0]
                             max_index = keys[-1]
                             count = len(keys)
-
-            # Get name without extension
-            name = os.path.splitext(jsonl_file)[0]
             
-            # Create metadata entry
-            metadata[jsonl_file] = {
+            # Create metadata entry using name without extension as key
+            metadata[name] = {
                 "name": name,
                 "min_index": min_index,
                 "max_index": max_index,
@@ -262,6 +262,17 @@ class FolderDB:
         # Save metadata using jsonlfile
         save_jsonl(self.dbmeta_path, metadata)
 
+    def get_dbmeta(self) -> Dict[str, Any]:
+        """
+        Get the database metadata as a dictionary.
+        
+        Returns:
+            Dictionary containing metadata for all JSONL files in the database
+        """
+        if not os.path.exists(self.dbmeta_path):
+            self.build_dbmeta()
+        return load_jsonl(self.dbmeta_path)
+    
     def update_dbmeta(self, name: str, linted: bool = False) -> None:
         """
         Update the metadata for a specific JSONL file in db.meta.
@@ -270,12 +281,14 @@ class FolderDB:
             name: Name of the JSONL file (with or without .jsonl extension)
             linted: Value to set for the linted field
         """
+        # Get name without extension for metadata key
+        meta_key = os.path.splitext(name)[0]
         jsonl_file = name if name.endswith('.jsonl') else f"{name}.jsonl"
         
         # Load existing metadata
         metadata = {}
         if os.path.exists(self.dbmeta_path):
-            metadata = select_line_jsonl(self.dbmeta_path, jsonl_file)
+            metadata = select_line_jsonl(self.dbmeta_path, meta_key)
         
         # Get index range from index file
         index_file = os.path.join(self.folder_path, f"{jsonl_file}.idx")
@@ -293,9 +306,9 @@ class FolderDB:
                         max_index = keys[-1]
                         count = len(keys)
 
-        # Update metadata for the specified file
-        metadata[jsonl_file] = {
-            "name": os.path.splitext(jsonl_file)[0],
+        # Update metadata for the specified file using name without extension as key
+        metadata[meta_key] = {
+            "name": meta_key,
             "min_index": min_index,
             "max_index": max_index,
             "size": os.path.getsize(os.path.join(self.folder_path, jsonl_file)),
@@ -305,7 +318,7 @@ class FolderDB:
         }
         
         # Update metadata file using jsonlfile
-        update_jsonl(self.dbmeta_path, {jsonl_file: metadata[jsonl_file]})
+        update_jsonl(self.dbmeta_path, {meta_key: metadata[meta_key]})
 
     def lint_db(self) -> None:
         """Lint all JSONL files in the database."""
@@ -314,11 +327,9 @@ class FolderDB:
             self.build_dbmeta()
             
         metadata = select_jsonl(meta_file)
-        jsonl_files = [f for f in metadata.keys() if f.endswith('.jsonl')]
+        print(f"Found {len(metadata)} JSONL files to lint.")
         
-        print(f"Found {len(jsonl_files)} JSONL files to lint.")
-        
-        for name in jsonl_files:
+        for name in metadata:
             print(f"Linting file: {name}")
             file_path = self._get_file_path(name)
             
@@ -397,16 +408,14 @@ class FolderDB:
         # Get metadata
         if os.path.exists(self.dbmeta_path):
             metadata = select_jsonl(self.dbmeta_path)
-            jsonl_files = [f for f in metadata.keys() if f.endswith('.jsonl')]
-            result += f"Found {len(jsonl_files)} JSONL files\n\n"
+            result += f"Found {len(metadata)} JSONL files\n\n"
             
             for name, info in metadata.items():
-                if name.endswith('.jsonl'):
-                    result += f"{name}:\n"
-                    result += f"  Size: {info['size']} bytes\n"
-                    result += f"  Count: {info['count']}\n"
-                    result += f"  Key range: {info['min_index']} to {info['max_index']}\n"
-                    result += f"  Linted: {info['linted']}\n\n"
+                result += f"{name}:\n"
+                result += f"  Size: {info['size']} bytes\n"
+                result += f"  Count: {info['count']}\n"
+                result += f"  Key range: {info['min_index']} to {info['max_index']}\n"
+                result += f"  Linted: {info['linted']}\n\n"
         
         return result
     

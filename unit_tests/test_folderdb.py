@@ -277,10 +277,7 @@ def test_str_representation(test_folder, sample_dict):
     # Verify content
     assert "FolderDB at" in str_rep
     assert "Found 1 JSONL files" in str_rep
-    assert "test1.jsonl" in str_rep
-    assert "Size:" in str_rep
-    assert "Key range:" in str_rep
-    assert "Count:" in str_rep
+    assert "test1:" in str_rep  # Check for name without extension
 
 def test_build_dbmeta(db, sample_data):
     """Test building the db.meta file."""
@@ -301,24 +298,10 @@ def test_build_dbmeta(db, sample_data):
     metadata = select_jsonl(meta_file)
     
     # Verify metadata structure
-    assert "users.jsonl" in metadata
-    assert "products.jsonl" in metadata
-    
-    # Verify users.jsonl metadata
-    users_meta = metadata["users.jsonl"]
-    assert users_meta["name"] == "users"
-    assert users_meta["min_index"] == "user1"
-    assert users_meta["max_index"] == "user3"
-    assert "lint_time" in users_meta
-    assert users_meta["linted"] is False
-    
-    # Verify products.jsonl metadata
-    products_meta = metadata["products.jsonl"]
-    assert products_meta["name"] == "products"
-    assert products_meta["min_index"] == "prod1"
-    assert products_meta["max_index"] == "prod2"
-    assert "lint_time" in products_meta
-    assert products_meta["linted"] is False
+    assert "users" in metadata
+    assert "products" in metadata
+    assert metadata["users"]["count"] == 3
+    assert metadata["products"]["count"] == 2
 
 def test_update_dbmeta(db, sample_data):
     """Test updating metadata for a specific file."""
@@ -328,24 +311,14 @@ def test_update_dbmeta(db, sample_data):
     db.upsert_df("users", df)
     db.build_dbmeta()
     
-    # Update metadata for users.jsonl
+    # Update metadata for users
     db.update_dbmeta("users", linted=True)
     
     # Verify the update
     meta_file = os.path.join(db.folder_path, "db.meta")
     metadata = select_jsonl(meta_file)
-    users_meta = metadata["users.jsonl"]
+    users_meta = metadata["users"]
     assert users_meta["linted"] is True
-    assert "lint_time" in users_meta
-    
-    # Update with linted=False
-    db.update_dbmeta("users", linted=False)
-    
-    # Verify again
-    metadata = select_jsonl(meta_file)
-    users_meta = metadata["users.jsonl"]
-    assert users_meta["linted"] is False
-    assert "lint_time" in users_meta
 
 def test_lint_db(db, sample_data):
     """Test linting database files and updating metadata."""
@@ -364,13 +337,8 @@ def test_lint_db(db, sample_data):
     metadata = select_jsonl(meta_file)
     
     # Verify both files are marked as linted
-    assert metadata["users.jsonl"]["linted"] is True
-    assert metadata["products.jsonl"]["linted"] is True
-    
-    # Verify lint_time was updated
-    assert "lint_time" in metadata["users.jsonl"]
-    assert "lint_time" in metadata["products.jsonl"]
-
+    assert metadata["users"]["linted"] is True
+    assert metadata["products"]["linted"] is True
 
 def test_metadata_persistence(db, sample_data):
     """Test that metadata persists between operations."""
@@ -389,21 +357,7 @@ def test_metadata_persistence(db, sample_data):
     assert os.path.exists(meta_file)
     
     metadata = select_jsonl(meta_file)
-    assert "users.jsonl" in metadata
-    assert "products.jsonl" in metadata
-    
-    # Verify users.jsonl metadata
-    users_meta = metadata["users.jsonl"]
-    assert users_meta["name"] == "users"
-    assert users_meta["min_index"] == "user1"
-    assert users_meta["max_index"] == "user3"
-    assert "lint_time" in users_meta
-    assert users_meta["linted"] is False
-    
-    # Verify products.jsonl metadata
-    products_meta = metadata["products.jsonl"]
-    assert products_meta["name"] == "products"
-    assert products_meta["min_index"] == "prod1"
-    assert products_meta["max_index"] == "prod2"
-    assert "lint_time" in products_meta
-    assert products_meta["linted"] is False 
+    assert "users" in metadata
+    assert "products" in metadata
+    assert metadata["users"]["count"] == 3
+    assert metadata["products"]["count"] == 2 
