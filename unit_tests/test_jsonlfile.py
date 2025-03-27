@@ -7,7 +7,7 @@ import json
 # Add parent directory to Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from jsonlfile import (
+from jsonldb.jsonlfile import (
     save_jsonl, load_jsonl, update_jsonl, delete_jsonl, 
     lint_jsonl, build_jsonl_index, select_jsonl
 )

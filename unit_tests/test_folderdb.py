@@ -2,9 +2,9 @@ import pytest
 import pandas as pd
 import os
 from datetime import datetime, timedelta
-from folderdb import FolderDB
+from jsonldb import FolderDB
 import json
-from jsonlfile import select_jsonl
+from jsonldb.jsonlfile import select_jsonl
 
 @pytest.fixture
 def test_folder(tmp_path):

@@ -1,16 +1,31 @@
-# JSONL File Management System
+# JSONLDB
 
-A Python package for efficient management of JSONL (JSON Lines) files with features for version control.
+A simple file-based database that stores data in JSONL format with version control and visualization capabilities.
 
 ## Features
 
-- Efficient JSONL file operations with index-based access
-- Support for time-series data and range queries
-- Version control integration using Git
-- Pandas DataFrame integration
-- Performance optimized for large datasets
+- Store data in JSONL format with efficient key-based querying
+- Support for both DataFrame and dictionary data types
+- Built-in version control using Git
+- Interactive data visualization
+- Efficient metadata management
+- File linting and validation
 
 ## Installation
+
+### Development Installation
+
+To install the package in development mode:
+
+```bash
+git clone https://github.com/yourusername/jsonldb.git
+cd jsonldb
+pip install -e .
+```
+
+### Regular Installation
+
+To install the package from PyPI (when available):
 
 ```bash
 pip install jsonldb
@@ -18,90 +33,133 @@ pip install jsonldb
 
 ## Quick Start
 
-### Basic JSONL Operations
-
 ```python
-from jsonlfile import save_jsonl, load_jsonl, select_jsonl, update_jsonl, delete_jsonl, lint_jsonl
+from jsonldb import FolderDB
+import pandas as pd
+from datetime import datetime
 
-# Save data
-data = {"key1": {"value": 1}, "key2": {"value": 2}}
-save_jsonl("data.jsonl", data)
+# Initialize the database
+db = FolderDB("my_database")
 
-# Load data
-loaded_data = load_jsonl("data.jsonl")
+# Store DataFrame data
+df = pd.DataFrame({
+    "id": [1, 2, 3],
+    "value": ["a", "b", "c"]
+})
+db.store("my_table", df)
 
-# Select range
-selected = select_jsonl("data.jsonl", key_range=("key1", "key2"))
+# Store dictionary data
+data = {
+    "key1": {"value": 1},
+    "key2": {"value": 2}
+}
+db.store("my_dict", data)
 
-# Update records
-update_jsonl("data.jsonl", {"key1": {"value": 3}})
+# Query data
+result = db.query("my_table", key=1)
+print(result)
 
-# Delete records
-delete_jsonl("data.jsonl", ["key1"])
+# Use version control
+db.commit("Initial commit")
+versions = db.version()
+db.revert(versions[0])  # Revert to first version
 
-# Lint and optimize
-lint_jsonl("data.jsonl")
+# Visualize data distribution
+db.visualize()
 ```
 
-### Version Control Integration
+## Version Control
+
+The package includes built-in version control using Git:
 
 ```python
-from vercontrol import init_folder, commit, list_version, revert
-
-# Initialize version control
-init_folder("data_folder")
-
 # Commit changes
-commit("data_folder", "Updated data")
+db.commit("Added new data")
 
 # List versions
-versions = list_version("data_folder")
+versions = db.version()
+for commit_hash, message in versions.items():
+    print(f"{commit_hash}: {message}")
 
-# Revert to previous version
-revert("data_folder", "commit_hash")
+# Revert to a previous version
+db.revert(commit_hash)
 ```
 
-### Pandas Integration
+## Visualization
+
+Create interactive visualizations of your data:
 
 ```python
-from jsonldf import save_jsonldf, load_jsonldf, update_jsonldf, select_jsonldf, delete_jsonldf, lint_jsonldf
+# Visualize a single JSONL file
+from jsonldb import visual
+visual.visualize_jsonl("path/to/file.jsonl")
 
-# Save DataFrame to JSONL
-df = pd.DataFrame({"key": [1, 2], "value": ["a", "b"]})
-save_jsonldf("data.jsonl", df)
-
-# Load JSONL to DataFrame
-df = load_jsonldf("data.jsonl")
+# Visualize entire database
+db.visualize()
 ```
 
-## Examples
+## DataFrame Operations
 
-The package includes several example notebooks and scripts:
+```python
+# Store DataFrame
+db.store("table", df)
 
-### Basic Operations
-- `example_jsonlfile/basic_operations.ipynb`: Demonstrates core JSONL operations
-- `example_jsonlfile/performance_test.ipynb`: Tests performance with large datasets
-- `example_jsonlfile/timeseries_example.ipynb`: Shows time-series data handling
+# Query DataFrame
+result = db.query("table", key=1)
 
-### Version Control
-- `example_vercontrol/version_control_example.ipynb`: Demonstrates Git-based version control
+# Update DataFrame
+db.update("table", key=1, value={"new": "data"})
 
-## Performance
+# Delete from DataFrame
+db.delete("table", key=1)
+```
 
-- Index-based access for O(1) record retrieval
-- Efficient range queries
-- Optimized for large datasets
-- Memory-efficient processing
+## Dictionary Operations
+
+```python
+# Store dictionary
+db.store("dict", data)
+
+# Query dictionary
+result = db.query("dict", key="key1")
+
+# Update dictionary
+db.update("dict", key="key1", value={"new": "value"})
+
+# Delete from dictionary
+db.delete("dict", key="key1")
+```
+
+## Delete Operations
+
+```python
+# Delete entire table
+db.delete_table("table_name")
+
+# Delete specific key
+db.delete("table_name", key=1)
+```
+
+## Metadata Management
+
+```python
+# Get metadata
+metadata = db.get_metadata("table_name")
+
+# Update metadata
+db.update_metadata("table_name", {"new": "metadata"})
+```
 
 ## Requirements
 
-- Python 3.6+
-- Git (for version control features)
-- Dependencies:
-  - pandas
-  - numpy
-  - gitpython
+- Python >= 3.8
+- pandas >= 1.3.0
+- gitpython >= 3.1.0
+- bokeh >= 3.0.0
+- numpy >= 1.20.0
+- orjson >= 3.6.0
+- numba >= 0.54.0
 
 ## License
 
-MIT License 
+This project is licensed under the MIT License - see the LICENSE file for details. 

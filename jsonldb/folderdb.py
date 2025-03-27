@@ -1,31 +1,43 @@
+"""
+A simple file-based database that stores data in JSONL format.
+Each table is stored in a separate JSONL file.
+"""
+
 import os
-from typing import Dict, List, Optional, Union, Any
-import pandas as pd
-from jsonldf import save_jsonldf, update_jsonldf, select_jsonldf, delete_jsonldf
-from jsonlfile import save_jsonl, update_jsonl, select_jsonl, delete_jsonl, build_jsonl_index, select_line_jsonl, lint_jsonl, load_jsonl
 import json
-import pickle
+import pandas as pd
+from typing import Dict, List, Union, Optional, Any
 from datetime import datetime
-from vercontrol import init_folder, commit as vercontrol_commit, revert as vercontrol_revert, list_version, is_versioned
-import git
-from visual import visualize_folderdb
+from jsonldb import visual
+from jsonldb.jsonlfile import (
+    save_jsonl, load_jsonl, select_jsonl, update_jsonl, delete_jsonl,
+    lint_jsonl, build_jsonl_index, select_line_jsonl
+)
+from jsonldb.jsonldf import (
+    save_jsonldf, load_jsonldf, update_jsonldf, select_jsonldf, delete_jsonldf
+)
+from .vercontrol import init_folder, commit as vercontrol_commit, revert as vercontrol_revert, list_version, is_versioned
 
 class FolderDB:
+    """
+    A simple file-based database that stores data in JSONL format.
+    Each table is stored in a separate JSONL file.
+    """
+    
     def __init__(self, folder_path: str):
         """
-        Initialize FolderDB with a folder path.
+        Initialize the database.
         
         Args:
-            folder_path: Path to the folder containing JSONL files
-            
-        Raises:
-            FileNotFoundError: If the folder doesn't exist
+            folder_path: Path to the folder where the database files will be stored
         """
-        if not os.path.exists(folder_path):
-            raise FileNotFoundError(f"Folder {folder_path} does not exist")
         self.folder_path = folder_path
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+            
         self.build_dbmeta()
 
+    # =============== File Path Management ===============
     def _get_file_path(self, name: str) -> str:
         """Get the full path for a JSONL file"""
         if name.endswith('.jsonl'):
@@ -38,6 +50,7 @@ class FolderDB:
             return name
         return f"{name}.jsonl"
 
+    # =============== Data Operations ===============
     def upsert_df(self, name: str, df: pd.DataFrame) -> None:
         """
         Update or insert a DataFrame into a JSONL file.
@@ -128,6 +141,7 @@ class FolderDB:
                 result[name] = select_jsonl(file_path, lower_key, upper_key)
         return result
 
+    # =============== Delete Operations ===============
     def delete_file(self, name: str, keys: List[str]) -> None:
         """
         Delete specific keys from a JSONL file.
@@ -184,28 +198,10 @@ class FolderDB:
         for name in names:
             self.delete_file_range(name, lower_key, upper_key)
 
-    def __str__(self) -> str:
-        """Return a string representation of the database."""
-        lines = [f"FolderDB at {self.folder_path}"]
-        lines.append("-" * 50)
-        
-        dbmeta = load_jsonl(self.dbmeta_path)
-
-        for jsonl_file, meta in dbmeta.items():
-            lines.append(f"{jsonl_file}:")
-            lines.append(f"  Size: {meta['size']} bytes")
-            lines.append(f"  Count: {meta['count']}")
-            lines.append(f"  Key range: {meta['min_index']} to {meta['max_index']}")
-            lines.append(f"  Linted: {meta['linted']}")
-
-        return "\n".join(lines)
-    
-
-    def __repr__(self) -> str:
-        return self.__str__()
-
+    # =============== Metadata Management ===============
     def build_dbmeta(self) -> None:
-        """Build or update the db.meta file with information about all JSONL files.
+        """
+        Build or update the db.meta file with information about all JSONL files.
         
         The db.meta file contains metadata for each JSONL file including:
         - name: filename without .jsonl extension
@@ -245,7 +241,6 @@ class FolderDB:
                             max_index = keys[-1]
                             count = len(keys)
 
-
             # Get name without extension
             name = os.path.splitext(jsonl_file)[0]
             
@@ -264,7 +259,8 @@ class FolderDB:
         save_jsonl(self.dbmeta_path, metadata)
 
     def update_dbmeta(self, name: str, linted: bool = False) -> None:
-        """Update the metadata for a specific JSONL file in db.meta.
+        """
+        Update the metadata for a specific JSONL file in db.meta.
         
         Args:
             name: Name of the JSONL file (with or without .jsonl extension)
@@ -308,7 +304,8 @@ class FolderDB:
         update_jsonl(self.dbmeta_path, {jsonl_file: metadata[jsonl_file]})
 
     def lint_db(self) -> None:
-        """Lint all JSONL files in the database and update metadata.
+        """
+        Lint all JSONL files in the database and update metadata.
         
         This function:
         1. Lints each JSONL file using jsonlfile.lint_jsonl
@@ -335,8 +332,10 @@ class FolderDB:
 
         lint_jsonl(self.dbmeta_path)
 
+    # =============== Version Control ===============
     def commit(self, msg: str = "") -> None:
-        """Commit changes in the database folder.
+        """
+        Commit changes in the database folder.
         
         If the folder is not already a git repository, it will be initialized first.
         
@@ -353,9 +352,10 @@ class FolderDB:
         # Commit changes
         vercontrol_commit(self.folder_path, msg)
         print("Commit successful.")
-
+    
     def revert(self, version_hash: str) -> None:
-        """Revert the database to a previous version.
+        """
+        Revert the database to a previous version.
         
         Args:
             version_hash: Hash of the commit to revert to
@@ -366,9 +366,10 @@ class FolderDB:
         """
         vercontrol_revert(self.folder_path, version_hash)
         print(f"Successfully reverted the folder: {self.folder_path} to version: {version_hash}")
-
+    
     def version(self) -> Dict[str, str]:
-        """List all versions of the database.
+        """
+        List all versions of the database.
         
         Returns:
             Dictionary with commit hashes as keys and commit messages as values
@@ -378,6 +379,7 @@ class FolderDB:
         """
         return list_version(self.folder_path)
 
+    # =============== Visualization ===============
     def visualize(self) -> visual.figure:
         """
         Create a visualization of the database's data distribution.
@@ -386,3 +388,23 @@ class FolderDB:
             Bokeh figure object showing the scatter plot of data distribution
         """
         return visual.visualize_folderdb(self.folder_path)
+
+    # =============== String Representation ===============
+    def __str__(self) -> str:
+        """Return a string representation of the database."""
+        lines = [f"FolderDB at {self.folder_path}"]
+        lines.append("-" * 50)
+        
+        dbmeta = load_jsonl(self.dbmeta_path)
+
+        for jsonl_file, meta in dbmeta.items():
+            lines.append(f"{jsonl_file}:")
+            lines.append(f"  Size: {meta['size']} bytes")
+            lines.append(f"  Count: {meta['count']}")
+            lines.append(f"  Key range: {meta['min_index']} to {meta['max_index']}")
+            lines.append(f"  Linted: {meta['linted']}")
+
+        return "\n".join(lines)
+    
+    def __repr__(self) -> str:
+        return self.__str__()

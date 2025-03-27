@@ -1,7 +1,0 @@
-README.md
-setup.py
-jsonlfile.egg-info/PKG-INFO
-jsonlfile.egg-info/SOURCES.txt
-jsonlfile.egg-info/dependency_links.txt
-jsonlfile.egg-info/requires.txt
-jsonlfile.egg-info/top_level.txt

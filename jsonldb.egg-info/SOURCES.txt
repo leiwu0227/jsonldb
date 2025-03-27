@@ -1,5 +1,11 @@
 README.md
 setup.py
+jsonldb/__init__.py
+jsonldb/folderdb.py
+jsonldb/jsonldf.py
+jsonldb/jsonlfile.py
+jsonldb/vercontrol.py
+jsonldb/visual.py
 jsonldb.egg-info/PKG-INFO
 jsonldb.egg-info/SOURCES.txt
 jsonldb.egg-info/dependency_links.txt

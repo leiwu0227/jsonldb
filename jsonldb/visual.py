@@ -11,6 +11,7 @@ from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource, HoverTool
 from bokeh.palettes import Category10
 import numpy as np
+from jsonldb.jsonlfile import load_jsonl, select_jsonl
 
 def _parse_linekey(linekey: str) -> Union[float, datetime]:
     """

@@ -1,17 +1,16 @@
 """
-JSONL Database - A simple, efficient JSONL-based database with indexing.
-Supports CRUD operations with automatic indexing and efficient range queries.
+Core JSONL file operations for JSONLDB.
 """
 
-from __future__ import annotations
-import json
 import os
-import mmap
-from typing import Dict, Tuple, List, Union, Optional, Any
-import datetime
+import json
+import pandas as pd
+from typing import Dict, List, Optional, Union, Any
+import datetime as dt
 import orjson
 import numpy as np
 from numba import jit
+import mmap
 
 # --------------------------------------------------------
 # Configuration
@@ -27,7 +26,7 @@ JSON_OPTS: Dict[str, bool] = {
 }
 
 # Type aliases for better readability
-LineKey = Union[str, datetime.datetime]
+LineKey = Union[str, dt.datetime]
 DataDict = Dict[str, dict]
 IndexDict = Dict[str, int]
 
@@ -47,7 +46,7 @@ def _sort_numeric_keys(keys: np.ndarray) -> np.ndarray:
     """
     return np.argsort(keys)
 
-def _convert_key_to_sortable(key: Union[str, datetime.datetime, float]) -> float:
+def _convert_key_to_sortable(key: Union[str, dt.datetime, float]) -> float:
     """Convert a key to a sortable numeric value.
     
     Args:
@@ -56,7 +55,7 @@ def _convert_key_to_sortable(key: Union[str, datetime.datetime, float]) -> float
     Returns:
         float: Numeric value for sorting
     """
-    if isinstance(key, datetime.datetime):
+    if isinstance(key, dt.datetime):
         return key.timestamp()
     elif isinstance(key, str):
         # Convert string to numeric value for sorting
@@ -233,7 +232,7 @@ def serialize_linekey(linekey: LineKey) -> str:
     """
     if isinstance(linekey, str):
         return linekey
-    elif isinstance(linekey, datetime.datetime):
+    elif isinstance(linekey, dt.datetime):
         return linekey.isoformat(timespec='seconds')
     return str(linekey)
 
@@ -249,7 +248,7 @@ def deserialize_linekey(linekey_str: str, default_format: Optional[str] = None) 
         Original type of the linekey (datetime or string)
     """
     if default_format == "datetime":
-        return datetime.datetime.fromisoformat(linekey_str)
+        return dt.datetime.fromisoformat(linekey_str)
     return linekey_str
 
 def _fast_dumps(obj: dict) -> str:

@@ -1,7 +1,12 @@
+"""
+Version control functions for JSONLDB using Git.
+"""
+
 import os
+from typing import Dict
 import git
+from jsonldb.jsonlfile import lint_jsonl
 from datetime import datetime
-from typing import Dict, Optional
 import warnings
 
 

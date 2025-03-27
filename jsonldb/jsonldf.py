@@ -1,9 +1,12 @@
+"""
+DataFrame-specific operations for JSONLDB.
+"""
+
+
 import pandas as pd
-from typing import Optional, Tuple, List, Union, Any
-from jsonlfile import (
-    save_jsonl, load_jsonl, update_jsonl, 
-    delete_jsonl, select_jsonl, lint_jsonl
-)
+from typing import Dict, List, Optional, Union, Any
+from numba import jit
+from jsonldb.jsonlfile import save_jsonl, load_jsonl, select_jsonl, update_jsonl, delete_jsonl, build_jsonl_index
 
 def save_jsonldf(jsonl_file_path: str, df: pd.DataFrame) -> None:
     """Convert DataFrame to JSONL format and save it using index as keys.
