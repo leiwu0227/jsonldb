@@ -23,13 +23,6 @@ cd jsonldb
 pip install -e .
 ```
 
-### Regular Installation
-
-To install the package from PyPI (when available):
-
-```bash
-pip install jsonldb
-```
 
 ## Quick Start
 
