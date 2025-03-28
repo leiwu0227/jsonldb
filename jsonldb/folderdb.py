@@ -230,7 +230,7 @@ class FolderDB:
         # Process each JSONL file
         for jsonl_file in jsonl_files:
             # Get name without extension
-            name = os.path.splitext(jsonl_file)[0]
+            name = jsonl_file.replace('.jsonl', '')
             
             # Get index range from index file
             index_file = os.path.join(self.folder_path, f"{jsonl_file}.idx")
@@ -255,7 +255,7 @@ class FolderDB:
                 "max_index": max_index,
                 "size": os.path.getsize(os.path.join(self.folder_path, jsonl_file)),
                 "count": count,
-                "lint_time": datetime.now().isoformat(),
+                "lint_time": "",
                 "linted": False  # Default to False
             }
         
@@ -282,9 +282,11 @@ class FolderDB:
             linted: Value to set for the linted field
         """
         # Get name without extension for metadata key
-        meta_key = os.path.splitext(name)[0]
-        jsonl_file = name if name.endswith('.jsonl') else f"{name}.jsonl"
         
+        
+        jsonl_file = name if name.endswith('.jsonl') else f"{name}.jsonl"
+        meta_key = name.replace('.jsonl', '')
+
         # Load existing metadata
         metadata = {}
         if os.path.exists(self.dbmeta_path):
@@ -306,6 +308,8 @@ class FolderDB:
                         max_index = keys[-1]
                         count = len(keys)
 
+        lint_time = datetime.now().isoformat() if linted else ""
+
         # Update metadata for the specified file using name without extension as key
         metadata[meta_key] = {
             "name": meta_key,
@@ -313,7 +317,7 @@ class FolderDB:
             "max_index": max_index,
             "size": os.path.getsize(os.path.join(self.folder_path, jsonl_file)),
             "count": count,
-            "lint_time": datetime.now().isoformat(),
+            "lint_time": lint_time,
             "linted": linted
         }
         
@@ -341,6 +345,8 @@ class FolderDB:
             except Exception as e:
                 print(f"Error linting {name}: {str(e)}")
                 self.update_dbmeta(name, linted=False)
+
+        lint_jsonl(self.dbmeta_path)
 
     # =============== Version Control ===============
     def commit(self, msg: str = "") -> None:

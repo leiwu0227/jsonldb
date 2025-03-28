@@ -95,7 +95,7 @@ def visualize_jsonl(jsonl_path: str) -> figure:
         'y': line_numbers
     })
     
-    p.scatter('x', 'y', source=source, size=5, alpha=0.6)
+    p.scatter('x', 'y', source=source, size=1, alpha=0.6)
     
     # Customize the plot
     p.grid.grid_line_color = "gray"
@@ -170,7 +170,7 @@ def visualize_folderdb(folder_path: str) -> figure:
             print(f"Warning: Empty index file for {file_name}")
             continue
             
-        print(f"Processing {file_name} with {len(index_data)} entries")
+        # print(f"Processing {file_name} with {len(index_data)} entries")
             
         # Convert linekeys to numbers or datetimes
         linekeys = [_parse_linekey(k) for k in index_data.keys()]
@@ -180,19 +180,20 @@ def visualize_folderdb(folder_path: str) -> figure:
             'x': linekeys,
             'y': [file_name.replace('.jsonl', '')] * len(linekeys),
             'filename': [file_name.replace('.jsonl', '')] * len(linekeys)
+
         })
   
         # Add scatter plot
         p.scatter(
             'x', 'y',
             source=source,
-            size=5,
+            size=1,
             alpha=0.6,
             color="orange",
             legend_label=file_name.replace('.jsonl', '')
         )
         has_data = True
-        print(f"Added {len(linekeys)} points for {file_name}")
+        # print(f"Added {len(linekeys)} points for {file_name}")
     
     if not has_data:
         print("Warning: No valid data found to plot")

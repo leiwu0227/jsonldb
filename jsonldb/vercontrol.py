@@ -93,7 +93,7 @@ def list_version(folder_path: str) -> Dict[str, str]:
         # Get all commits
         commits = {}
         for commit in repo.iter_commits():
-            commits[commit.hexsha] = commit.message.strip()
+            commits[commit.hexsha[:7]] = commit.message.strip()
             
         return commits
         
@@ -112,16 +112,18 @@ def revert(folder_path: str, version_hash: str) -> None:
     """
     try:
         repo = git.Repo(folder_path)
+
+        full_hash = repo.git.rev_parse(version_hash)
         
         # Check if commit exists
         try:
-            commit = repo.commit(version_hash)
+            commit = repo.commit(full_hash)
         except git.exc.BadName:
-            raise ValueError(f"Commit {version_hash} not found")
+            raise ValueError(f"Commit {full_hash} not found")
             
         # Reset to the specified commit
-        repo.git.reset(version_hash, hard=True)
-        print(f"Reverted to commit {version_hash}")
+        repo.git.reset(full_hash, hard=True)
+        print(f"Reverted to commit {full_hash}")
         
     except git.exc.GitCommandError as e:
         raise git.exc.GitCommandError(f"Failed to revert to version {version_hash}: {str(e)}") 
