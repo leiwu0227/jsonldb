@@ -92,6 +92,7 @@ def select_jsonldf(
     
     # Convert to DataFrame
     if not records:
+        print(f"No records found in {jsonl_file_path}")
         return pd.DataFrame()
         
     return pd.DataFrame.from_dict(records, orient='index')

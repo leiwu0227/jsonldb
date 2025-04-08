@@ -124,6 +124,8 @@ class FolderDB:
             file_path = self._get_file_path(name)
             if os.path.exists(file_path):
                 result[name] = select_jsonldf(file_path, lower_key, upper_key)
+            else:
+                print(f"File {name} not found")
         return result
 
     def get_dict(self, names: List[str], lower_key: Optional[Any] = None, upper_key: Optional[Any] = None) -> Dict[str, Dict[str, Dict[str, Any]]]:
@@ -427,3 +429,39 @@ class FolderDB:
     
     def __repr__(self) -> str:
         return self.__str__()
+        
+    def get_file_list(self) -> List[str]:
+        """
+        Get a list of all JSONL file names in the database without the .jsonl extension.
+        
+        Returns:
+            List of ticker names (file names without .jsonl extension)
+        """
+        # Get all JSONL files in the folder
+        jsonl_files = [f for f in os.listdir(self.folder_path) if f.endswith('.jsonl')]
+        
+        # Remove the .jsonl extension from each file name
+        file_list = [os.path.splitext(f)[0] for f in jsonl_files]
+        
+        return file_list
+        
+    def search_file_list(self, regex: str) -> List[str]:
+        """
+        Search for file names that match a regular expression pattern.
+        
+        Args:
+            regex: Regular expression pattern to match against file names
+            
+        Returns:
+            List of file names that match the regex pattern
+        """
+        import re
+        
+        # Get all file names
+        all_files = self.get_file_list()
+        
+        # Filter files that match the regex pattern
+        pattern = re.compile(regex)
+        matching_files = [f for f in all_files if pattern.search(f)]
+        
+        return matching_files

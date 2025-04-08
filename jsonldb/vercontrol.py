@@ -119,7 +119,7 @@ def revert(folder_path: str, version_hash: str) -> None:
         try:
             commit = repo.commit(full_hash)
         except git.exc.BadName:
-            raise ValueError(f"Commit {full_hash} not found")
+            print(f"Commit {full_hash} not found")            
             
         # Reset to the specified commit
         repo.git.reset(full_hash, hard=True)

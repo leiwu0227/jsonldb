@@ -216,6 +216,8 @@ def lint_jsonl(jsonl_file_path: str) -> None:
     # Save sorted records
     save_jsonl(jsonl_file_path, sorted_records)
 
+    ensure_index_exists(jsonl_file_path)
+
 # --------------------------------------------------------
 # Utility Functions
 # --------------------------------------------------------
@@ -469,25 +471,31 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
         keys = np.array(all_keys)
         mask = _select_keys_in_range(keys, lower_key, upper_key)
         selected_linekeys = keys[mask]
-        
+        # print(f"Selected {len(selected_linekeys)} keys from {len(keys)} keys")
+        # print(f"First key: {selected_linekeys[0]}")
+        # print(f"Last key: {selected_linekeys[-1]}")
+
         # Load selected records
         with open(jsonl_file_path, 'r', encoding='utf-8', buffering=BUFFER_SIZE) as f:
             for linekey in selected_linekeys:
-                try:
-                    f.seek(index_dict[linekey])
-                    line = f.readline().strip()
-                    data = json.loads(line)
-                    
-                    if auto_deserialize and 'T' in linekey and len(linekey) == 19:
-                        try:
-                            actual_key = deserialize_linekey(linekey, "datetime")
-                            result_dict[actual_key] = data[linekey]
-                        except ValueError:
-                            result_dict[linekey] = data[linekey]
-                    else:
+           
+                f.seek(index_dict[linekey])
+                line = f.readline().strip()
+                # print(f"Line: {line}")
+                data = json.loads(line)
+                
+                if auto_deserialize and 'T' in linekey and len(linekey) == 19:
+                    try:
+                        actual_key = deserialize_linekey(linekey, "datetime")
+                        result_dict[actual_key] = data[linekey]
+                    except ValueError:
                         result_dict[linekey] = data[linekey]
-                except (json.JSONDecodeError, KeyError):
-                    continue
+                else:
+                    result_dict[linekey] = data[linekey]
+    
+                # print(f"Error loading linekey: {linekey}")
+                    
+               
                     
         return result_dict
         
