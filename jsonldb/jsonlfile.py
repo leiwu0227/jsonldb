@@ -264,7 +264,7 @@ def _fast_dumps(obj: dict) -> str:
         JSON string with newline
     """
     try:
-        return orjson.dumps(obj).decode('utf-8') + '\n'
+        return orjson.dumps(obj,option=orjson.OPT_SERIALIZE_NUMPY).decode('utf-8') + '\n'
     except ImportError:
         return json.dumps(obj, **JSON_OPTS) + '\n'
 
@@ -399,16 +399,17 @@ def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True) -> DataDict:
                     data = json.loads(line)
                     if isinstance(data, dict) and len(data) == 1:
                         linekey = next(iter(data))
-                        if isinstance(data[linekey], dict):
-                            if auto_deserialize and 'T' in linekey and len(linekey) == 19:
-                                try:
-                                    actual_key = deserialize_linekey(linekey, "datetime")
-                                    result_dict[actual_key] = data[linekey]
-                                except ValueError:
-                                    result_dict[linekey] = data[linekey]
-                            else:
+                        # if isinstance(data[linekey], dict): #TODO: is this really needed?
+                        if auto_deserialize and 'T' in linekey and len(linekey) == 19:
+                            try:
+                                actual_key = deserialize_linekey(linekey, "datetime")
+                                result_dict[actual_key] = data[linekey]
+                            except ValueError:
                                 result_dict[linekey] = data[linekey]
+                        else:
+                            result_dict[linekey] = data[linekey]
                 except json.JSONDecodeError:
+                    print("WARNING: invalid JSON line "+line)
                     continue  # Skip invalid JSON lines
                     
         return result_dict
@@ -661,7 +662,7 @@ def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey]) -> None:
 
         # Update index using orjson for faster JSON serialization
         with open(f"{jsonl_file_path}.idx", 'wb') as f:
-            f.write(orjson.dumps(dict(sorted(index.items())), option=orjson.OPT_INDENT_2))
+            f.write(orjson.dumps(dict(sorted(index.items())), option=orjson.OPT_SERIALIZE_NUMPY|orjson.OPT_INDENT_2))
             
     except OSError as e:
         raise OSError(f"Failed to delete from JSONL file {jsonl_file_path}: {str(e)}")

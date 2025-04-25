@@ -89,6 +89,8 @@ class FolderDB:
             name: Name of the JSONL file
             data_dict: Dictionary to save/update
         """
+      
+
         file_path = self._get_file_path(name)
         if os.path.exists(file_path):
             update_jsonl(file_path, data_dict)
@@ -107,7 +109,7 @@ class FolderDB:
         for name, data_dict in dict_dicts.items():
             self.upsert_dict(name, data_dict)
 
-    def get_df(self, names: List[str], lower_key: Optional[Any] = None, upper_key: Optional[Any] = None) -> Dict[str, pd.DataFrame]:
+    def get_df(self, names: List[str]=None, lower_key: Optional[Any] = None, upper_key: Optional[Any] = None) -> Dict[str, pd.DataFrame]:
         """
         Get DataFrames from multiple JSONL files within a key range.
         
@@ -119,6 +121,9 @@ class FolderDB:
         Returns:
             Dictionary mapping file names to selected DataFrames
         """
+        if names is None:
+            names = self.get_file_list()
+
         result = {}
         for name in names:
             file_path = self._get_file_path(name)
@@ -128,7 +133,7 @@ class FolderDB:
                 print(f"File {name} not found")
         return result
 
-    def get_dict(self, names: List[str], lower_key: Optional[Any] = None, upper_key: Optional[Any] = None) -> Dict[str, Dict[str, Dict[str, Any]]]:
+    def get_dict(self, names: List[str]=None, lower_key: Optional[Any] = None, upper_key: Optional[Any] = None) -> Dict[str, Dict[str, Dict[str, Any]]]:
         """
         Get dictionaries from multiple JSONL files within a key range.
         
@@ -140,6 +145,12 @@ class FolderDB:
         Returns:
             Dictionary mapping file names to selected data dictionaries
         """
+        if names is None:
+            names = self.get_file_list()
+
+        if not isinstance(names, list):
+            names = [names]
+
         result = {}
         for name in names:
             file_path = self._get_file_path(name)
