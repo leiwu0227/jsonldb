@@ -2,9 +2,9 @@ Metadata-Version: 2.1
 Name: jsonldb
 Version: 0.1.0
 Summary: A simple file-based database that stores data in JSONL format with version control and visualization capabilities
-Home-page: https://github.com/yourusername/jsonldb
-Author: Your Name
-Author-email: your.email@example.com
+Home-page: https://github.com/leiwu0227/jsonldb
+Author: Lei Wu
+Author-email: leiwu0227@gmail.com
 Classifier: Development Status :: 3 - Alpha
 Classifier: Intended Audience :: Developers
 Classifier: License :: OSI Approved :: MIT License
