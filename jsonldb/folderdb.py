@@ -55,6 +55,26 @@ class FolderDB:
         return f"{name}.jsonl"
 
     # =============== Data Operations ===============
+
+    def overwrite_df(self, name: str, df: pd.DataFrame) -> None:
+        file_path = self._get_file_path(name)
+        if os.path.exists(file_path):
+           os.remove(file_path)
+      
+        save_jsonldf(file_path, df)
+        self.update_dbmeta(self._get_file_name(name))
+
+    def overwrite_dfs(self, dict_dfs: Dict[Any, pd.DataFrame]) -> None:
+        """
+        Update or insert multiple DataFrames into JSONL files.
+        
+        Args:
+            dict_dfs: Dictionary mapping file names to DataFrames
+        """
+        for name, df in dict_dfs.items():
+            self.overwrite_df(name, df)
+
+
     def upsert_df(self, name: str, df: pd.DataFrame) -> None:
         """
         Update or insert a DataFrame into a JSONL file.
@@ -80,6 +100,26 @@ class FolderDB:
         """
         for name, df in dict_dfs.items():
             self.upsert_df(name, df)
+
+
+    def overwrite_dict(self, name: str, data_dict: Dict[Any, Dict[str, Any]]) -> None:
+        file_path = self._get_file_path(name)
+        if os.path.exists(file_path):
+           os.remove(file_path)
+      
+        save_jsonl(file_path, data_dict)
+        self.update_dbmeta(self._get_file_name(name))
+
+    def overwrite_dicts(self, dict_dicts: Dict[Any, Dict[str, Dict[str, Any]]]) -> None:
+        """
+        Update or insert multiple DataFrames into JSONL files.
+        
+        Args:
+            dict_dfs: Dictionary mapping file names to DataFrames
+        """
+        for name, data_dict in dict_dicts.items():
+            self.overwrite_dict(name, data_dict)
+
 
     def upsert_dict(self, name: str, data_dict: Dict[Any, Dict[str, Any]]) -> None:
         """
@@ -159,7 +199,34 @@ class FolderDB:
         return result
 
     # =============== Delete Operations ===============
-    def delete_file(self, name: str, keys: List[str]) -> None:
+
+    def clear_folder(self,force=False) -> None:
+        """
+        Clear all JSONL files in the database folder.
+        """
+       
+        if not force:
+            print("WARNING: This will delete all data in the database folder. Call clear_folder with force=True to proceed.")
+            return
+        for file in os.listdir(self.folder_path):
+            os.remove(os.path.join(self.folder_path, file))
+        # print("Database folder cleared.")
+        self.build_dbmeta()
+
+    def delete_file(self, name: str) -> None:
+        """
+        Delete a JSONL file.
+        
+        Args:
+            name: Name of the JSONL file
+        """
+        file_path = self._get_file_path(name)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            self.update_dbmeta(self._get_file_name(name))
+
+
+    def delete_file_keys(self, name: str, keys: List[str]) -> None:
         """
         Delete specific keys from a JSONL file.
         

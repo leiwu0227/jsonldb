@@ -219,7 +219,7 @@ def test_delete_file(test_folder, sample_dict):
     db.upsert_dict("test1", sample_dict)
     
     # Delete specific keys
-    db.delete_file("test1", ["key1", "key2"])
+    db.delete_file_keys("test1", ["key1", "key2"])
     
     # Verify deletion
     result = db.get_dict(["test1"])
@@ -228,7 +228,7 @@ def test_delete_file(test_folder, sample_dict):
     assert "key1" not in result["test1"]
     assert "key2" not in result["test1"]
 
-def test_delete_file_range(test_folder, sample_dict):
+def test__range(test_folder, sample_dict):
     """Test deleting keys in range"""
     db = FolderDB(test_folder)
     
