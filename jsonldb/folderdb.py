@@ -210,7 +210,6 @@ class FolderDB:
             return
         for file in os.listdir(self.folder_path):
             os.remove(os.path.join(self.folder_path, file))
-        # print("Database folder cleared.")
         self.build_dbmeta()
 
     def delete_file(self, name: str) -> None:
@@ -223,7 +222,8 @@ class FolderDB:
         file_path = self._get_file_path(name)
         if os.path.exists(file_path):
             os.remove(file_path)
-            self.update_dbmeta(self._get_file_name(name))
+            os.remove(os.path.join(file_path + '.idx'))
+
 
 
     def delete_file_keys(self, name: str, keys: List[str]) -> None:
