@@ -209,7 +209,8 @@ class FolderDB:
             print("WARNING: This will delete all data in the database folder. Call clear_folder with force=True to proceed.")
             return
         for file in os.listdir(self.folder_path):
-            os.remove(os.path.join(self.folder_path, file))
+            if file.endswith(('.idx', '.jsonl', '.meta')):
+                os.remove(os.path.join(self.folder_path, file))
         self.build_dbmeta()
 
     def delete_file(self, name: str) -> None:

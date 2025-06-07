@@ -534,7 +534,7 @@ def select_line_jsonl(jsonl_file_path: str, linekey: LineKey, auto_serialize: bo
         
 
     # Load selected records
-    with open(jsonl_file_path, 'r', encoding='utf-8') as f:
+    with open(jsonl_file_path, 'r', encoding='utf-8', buffering=BUFFER_SIZE) as f:
         try:
             f.seek(index_dict[linekey])
             line = f.readline().strip()
@@ -575,14 +575,14 @@ def update_jsonl(jsonl_file_path: str, update_dict: DataDict) -> None:
     
     try:
         # Load index
-        with open(f"{jsonl_file_path}.idx", 'r', encoding='utf-8') as f:
+        with open(f"{jsonl_file_path}.idx", 'r', encoding='utf-8', buffering=BUFFER_SIZE) as f:
             index = json.load(f)
 
         updates = []
         appends = []
         
         # Process records
-        with open(jsonl_file_path, 'rb+') as f:
+        with open(jsonl_file_path, 'rb+', buffering=BUFFER_SIZE) as f:
             f.seek(0, os.SEEK_END)
             append_pos = f.tell()
             
@@ -617,7 +617,7 @@ def update_jsonl(jsonl_file_path: str, update_dict: DataDict) -> None:
                     f.write(line)
 
         # Update index
-        with open(f"{jsonl_file_path}.idx", 'w', encoding='utf-8') as f:
+        with open(f"{jsonl_file_path}.idx", 'w', encoding='utf-8', buffering=BUFFER_SIZE) as f:
             json.dump(dict(sorted(index.items())), f, indent=2)
             
     except OSError as e:
