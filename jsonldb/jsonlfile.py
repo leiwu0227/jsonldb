@@ -617,7 +617,7 @@ def update_jsonl(jsonl_file_path: str, update_dict: DataDict) -> None:
                     f.write(line)
 
         # Update index
-        with open(f"{jsonl_file_path}.idx", 'w', encoding='utf-8', buffering=BUFFER_SIZE) as f:
+        with open(f"{jsonl_file_path}.idx", 'w', encoding='utf-8') as f:
             json.dump(dict(sorted(index.items())), f, indent=2)
             
     except OSError as e:
