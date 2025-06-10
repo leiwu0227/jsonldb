@@ -55,15 +55,14 @@ class FolderDB:
 
     def enable_hierarchy_mode(self,  delimiter: str = '.', hierarchy_depth: int = 3,force_build: bool = False) -> None:
         
-        if force_build:
-            self.use_hierarchy = True
-            self.delimiter = delimiter
-            self.hierarchy_depth = hierarchy_depth
-            self.build_hmeta()
-        else:
-            if self.use_hierarchy:
-                print("Hierarchy mode is already enabled.")
-                return
+        if self.use_hierarchy and not force_build:
+            print("Hierarchy mode is already enabled.")
+            return
+  
+        self.use_hierarchy = True
+        self.delimiter = delimiter
+        self.hierarchy_depth = hierarchy_depth
+        self.build_hmeta()
 
     def build_hmeta(self) -> None:
         """
