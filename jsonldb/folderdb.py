@@ -24,6 +24,7 @@ class FolderDB:
     Each table is stored in a separate JSONL file.
     """
     
+    # =============== Core/Initialization ===============
     def __init__(self, folder_path: str):
         """
         Initialize the database.
@@ -41,6 +42,28 @@ class FolderDB:
         self.dbmeta_path = os.path.join(folder_path, "db.meta")
         self.build_dbmeta()
 
+    def __str__(self) -> str:
+        """Return a string representation of the database."""
+        result = f"FolderDB at {self.folder_path}\n"
+        result += "-" * 50 + "\n"
+        
+        # Get metadata
+        if os.path.exists(self.dbmeta_path):
+            metadata = select_jsonl(self.dbmeta_path)
+            result += f"Found {len(metadata)} JSONL files\n\n"
+            
+            for name, info in metadata.items():
+                result += f"{name}:\n"
+                result += f"  Size: {info['size']} bytes\n"
+                result += f"  Count: {info['count']}\n"
+                result += f"  Key range: {info['min_index']} to {info['max_index']}\n"
+                result += f"  Linted: {info['linted']}\n\n"
+        
+        return result
+    
+    def __repr__(self) -> str:
+        return self.__str__()
+
     # =============== File Path Management ===============
     def _get_file_path(self, name: str) -> str:
         """Get the full path for a JSONL file"""
@@ -54,8 +77,43 @@ class FolderDB:
             return name
         return f"{name}.jsonl"
 
-    # =============== Data Operations ===============
+    def get_file_list(self) -> List[str]:
+        """
+        Get a list of all JSONL file names in the database without the .jsonl extension.
+        
+        Returns:
+            List of ticker names (file names without .jsonl extension)
+        """
+        # Get all JSONL files in the folder
+        jsonl_files = [f for f in os.listdir(self.folder_path) if f.endswith('.jsonl')]
+        
+        # Remove the .jsonl extension from each file name
+        file_list = [os.path.splitext(f)[0] for f in jsonl_files]
+        
+        return file_list
+        
+    def search_file_list(self, regex: str) -> List[str]:
+        """
+        Search for file names that match a regular expression pattern.
+        
+        Args:
+            regex: Regular expression pattern to match against file names
+            
+        Returns:
+            List of file names that match the regex pattern
+        """
+        import re
+        
+        # Get all file names
+        all_files = self.get_file_list()
+        
+        # Filter files that match the regex pattern
+        pattern = re.compile(regex)
+        matching_files = [f for f in all_files if pattern.search(f)]
+        
+        return matching_files
 
+    # =============== DataFrame Operations ===============
     def overwrite_df(self, name: str, df: pd.DataFrame) -> None:
         file_path = self._get_file_path(name)
         if os.path.exists(file_path):
@@ -73,7 +131,6 @@ class FolderDB:
         """
         for name, df in dict_dfs.items():
             self.overwrite_df(name, df)
-
 
     def upsert_df(self, name: str, df: pd.DataFrame) -> None:
         """
@@ -101,54 +158,6 @@ class FolderDB:
         for name, df in dict_dfs.items():
             self.upsert_df(name, df)
 
-
-    def overwrite_dict(self, name: str, data_dict: Dict[Any, Dict[str, Any]]) -> None:
-        file_path = self._get_file_path(name)
-        if os.path.exists(file_path):
-           os.remove(file_path)
-      
-        save_jsonl(file_path, data_dict)
-        self.update_dbmeta(self._get_file_name(name))
-
-    def overwrite_dicts(self, dict_dicts: Dict[Any, Dict[str, Dict[str, Any]]]) -> None:
-        """
-        Update or insert multiple DataFrames into JSONL files.
-        
-        Args:
-            dict_dfs: Dictionary mapping file names to DataFrames
-        """
-        for name, data_dict in dict_dicts.items():
-            self.overwrite_dict(name, data_dict)
-
-
-    def upsert_dict(self, name: str, data_dict: Dict[Any, Dict[str, Any]]) -> None:
-        """
-        Update or insert a dictionary into a JSONL file.
-        
-        Args:
-            name: Name of the JSONL file
-            data_dict: Dictionary to save/update
-        """
-      
-
-        file_path = self._get_file_path(name)
-        if os.path.exists(file_path):
-            update_jsonl(file_path, data_dict)
-        else:
-            save_jsonl(file_path, data_dict)
-
-        self.update_dbmeta(self._get_file_name(name))
-
-    def upsert_dicts(self, dict_dicts: Dict[Any, Dict[str, Dict[str, Any]]]) -> None:
-        """
-        Update or insert multiple dictionaries into JSONL files.
-        
-        Args:
-            dict_dicts: Dictionary mapping file names to data dictionaries
-        """
-        for name, data_dict in dict_dicts.items():
-            self.upsert_dict(name, data_dict)
-
     def get_df(self, names: List[str]=None, lower_key: Optional[Any] = None, upper_key: Optional[Any] = None) -> Dict[str, pd.DataFrame]:
         """
         Get DataFrames from multiple JSONL files within a key range.
@@ -172,6 +181,51 @@ class FolderDB:
             else:
                 print(f"File {name} not found")
         return result
+
+    # =============== Dictionary Operations ===============
+    def overwrite_dict(self, name: str, data_dict: Dict[Any, Dict[str, Any]]) -> None:
+        file_path = self._get_file_path(name)
+        if os.path.exists(file_path):
+           os.remove(file_path)
+      
+        save_jsonl(file_path, data_dict)
+        self.update_dbmeta(self._get_file_name(name))
+
+    def overwrite_dicts(self, dict_dicts: Dict[Any, Dict[str, Dict[str, Any]]]) -> None:
+        """
+        Update or insert multiple DataFrames into JSONL files.
+        
+        Args:
+            dict_dfs: Dictionary mapping file names to DataFrames
+        """
+        for name, data_dict in dict_dicts.items():
+            self.overwrite_dict(name, data_dict)
+
+    def upsert_dict(self, name: str, data_dict: Dict[Any, Dict[str, Any]]) -> None:
+        """
+        Update or insert a dictionary into a JSONL file.
+        
+        Args:
+            name: Name of the JSONL file
+            data_dict: Dictionary to save/update
+        """
+        file_path = self._get_file_path(name)
+        if os.path.exists(file_path):
+            update_jsonl(file_path, data_dict)
+        else:
+            save_jsonl(file_path, data_dict)
+
+        self.update_dbmeta(self._get_file_name(name))
+
+    def upsert_dicts(self, dict_dicts: Dict[Any, Dict[str, Dict[str, Any]]]) -> None:
+        """
+        Update or insert multiple dictionaries into JSONL files.
+        
+        Args:
+            dict_dicts: Dictionary mapping file names to data dictionaries
+        """
+        for name, data_dict in dict_dicts.items():
+            self.upsert_dict(name, data_dict)
 
     def get_dict(self, names: List[str]=None, lower_key: Optional[Any] = None, upper_key: Optional[Any] = None) -> Dict[str, Dict[str, Dict[str, Any]]]:
         """
@@ -199,12 +253,10 @@ class FolderDB:
         return result
 
     # =============== Delete Operations ===============
-
     def clear_folder(self,force=False) -> None:
         """
         Clear all JSONL files in the database folder.
         """
-       
         if not force:
             print("WARNING: This will delete all data in the database folder. Call clear_folder with force=True to proceed.")
             return
@@ -224,8 +276,6 @@ class FolderDB:
         if os.path.exists(file_path):
             os.remove(file_path)
             os.remove(os.path.join(file_path + '.idx'))
-
-
 
     def delete_file_keys(self, name: str, keys: List[str]) -> None:
         """
@@ -363,8 +413,6 @@ class FolderDB:
             linted: Value to set for the linted field
         """
         # Get name without extension for metadata key
-        
-        
         jsonl_file = name if name.endswith('.jsonl') else f"{name}.jsonl"
         meta_key = name.replace('.jsonl', '')
 
@@ -485,62 +533,3 @@ class FolderDB:
             Bokeh figure object showing the scatter plot of data distribution
         """
         return visual.visualize_folderdb(self.folder_path)
-
-    # =============== String Representation ===============
-    def __str__(self) -> str:
-        """Return a string representation of the database."""
-        result = f"FolderDB at {self.folder_path}\n"
-        result += "-" * 50 + "\n"
-        
-        # Get metadata
-        if os.path.exists(self.dbmeta_path):
-            metadata = select_jsonl(self.dbmeta_path)
-            result += f"Found {len(metadata)} JSONL files\n\n"
-            
-            for name, info in metadata.items():
-                result += f"{name}:\n"
-                result += f"  Size: {info['size']} bytes\n"
-                result += f"  Count: {info['count']}\n"
-                result += f"  Key range: {info['min_index']} to {info['max_index']}\n"
-                result += f"  Linted: {info['linted']}\n\n"
-        
-        return result
-    
-    def __repr__(self) -> str:
-        return self.__str__()
-        
-    def get_file_list(self) -> List[str]:
-        """
-        Get a list of all JSONL file names in the database without the .jsonl extension.
-        
-        Returns:
-            List of ticker names (file names without .jsonl extension)
-        """
-        # Get all JSONL files in the folder
-        jsonl_files = [f for f in os.listdir(self.folder_path) if f.endswith('.jsonl')]
-        
-        # Remove the .jsonl extension from each file name
-        file_list = [os.path.splitext(f)[0] for f in jsonl_files]
-        
-        return file_list
-        
-    def search_file_list(self, regex: str) -> List[str]:
-        """
-        Search for file names that match a regular expression pattern.
-        
-        Args:
-            regex: Regular expression pattern to match against file names
-            
-        Returns:
-            List of file names that match the regex pattern
-        """
-        import re
-        
-        # Get all file names
-        all_files = self.get_file_list()
-        
-        # Filter files that match the regex pattern
-        pattern = re.compile(regex)
-        matching_files = [f for f in all_files if pattern.search(f)]
-        
-        return matching_files
