@@ -38,9 +38,45 @@ class FolderDB:
         self.folder_path = folder_path
         if not os.path.exists(folder_path):
             raise FileNotFoundError(f"Folder not found: {folder_path}")
-            
+
+        self.hmeta_path = os.path.join(folder_path, "h.meta")
+        if os.path.exists(self.hmeta_path):
+            hmeta = select_jsonl(self.hmeta_path)
+            self.use_hierarchy = hmeta["use_hierarchy"]
+            self.delimiter = hmeta["delimiter"]
+            self.hierarchy_depth = hmeta["hierarchy_depth"]
+        else:
+            self.use_hierarchy = False
+
         self.dbmeta_path = os.path.join(folder_path, "db.meta")
         self.build_dbmeta()
+
+
+
+    def enable_hierarchy_mode(self,  delimiter: str = '.', hierarchy_depth: int = 3) -> None:
+        
+        self.use_hierarchy = True
+        self.delimiter = delimiter
+        self.hierarchy_depth = hierarchy_depth
+
+        self.build_hmeta()
+
+    def build_hmeta(self) -> None:
+        """
+        Save the folder information to a file.
+        """
+        if self.use_hierarchy:
+            hierachy_info= {
+                "use_hierarchy": self.use_hierarchy,
+                "delimiter": self.delimiter,
+                "hierarchy_depth": self.hierarchy_depth
+            }
+            save_jsonl(self.hmeta_path, hierachy_info)
+
+
+
+      
+
 
     def __str__(self) -> str:
         """Return a string representation of the database."""
@@ -65,32 +101,61 @@ class FolderDB:
         return self.__str__()
 
     # =============== File Path Management ===============
+
+    def _get_hierarchy_path(self, name: str) -> str:
+        if self.use_hierarchy:
+            parts = name.split(self.delimiter)[:self.hierarchy_depth]
+            return os.path.join(self.folder_path, *parts)
+        return self.folder_path
+
+
+    def create_folder(self, folder_path: str) -> None:
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path, exist_ok=True)
+
     def _get_file_path(self, name: str) -> str:
         """Get the full path for a JSONL file"""
+        folder_path = self._get_hierarchy_path(name)
+        self.create_folder(folder_path) #create the folder if it doesn't exist
+
         if name.endswith('.jsonl'):
-            return os.path.join(self.folder_path, name)
-        return os.path.join(self.folder_path, f"{name}.jsonl")
+            return os.path.join(folder_path, name)
+        return os.path.join(folder_path, f"{name}.jsonl")
     
     def _get_file_name(self, name: str) -> str:
         """Get the name of a JSONL file"""
         if name.endswith('.jsonl'):
             return name
         return f"{name}.jsonl"
+    
 
+    
     def get_file_list(self) -> List[str]:
         """
         Get a list of all JSONL file names in the database without the .jsonl extension.
+        If use_hierarchy is True, it will search through subfolders and return
+        paths relative to the root folder with the specified delimiter.
         
         Returns:
-            List of ticker names (file names without .jsonl extension)
+            List of file names (without .jsonl extension). If use_hierarchy is True,
+            names will include the full hierarchical path using the specified delimiter.
         """
-        # Get all JSONL files in the folder
-        jsonl_files = [f for f in os.listdir(self.folder_path) if f.endswith('.jsonl')]
-        
-        # Remove the .jsonl extension from each file name
-        file_list = [os.path.splitext(f)[0] for f in jsonl_files]
-        
-        return file_list
+        if self.use_hierarchy:
+            result = []
+            
+            for root, _, files in os.walk(self.folder_path):
+
+                # Add all JSONL files in this directory
+                for file in files:
+                    if file.endswith('.jsonl'):
+                        name = os.path.splitext(file)[0]
+                        result.append(name)
+            
+            return result
+        else:
+            # Original behavior for non-hierarchical mode
+            jsonl_files = [f for f in os.listdir(self.folder_path) if f.endswith('.jsonl')]
+            return [os.path.splitext(f)[0] for f in jsonl_files]
         
     def search_file_list(self, regex: str) -> List[str]:
         """
@@ -347,7 +412,7 @@ class FolderDB:
         - linted: boolean indicating if file has been linted
         """
         # Get all JSONL files
-        jsonl_files = [f for f in os.listdir(self.folder_path) if f.endswith('.jsonl')]
+        jsonl_files = self.get_file_list()
         
         if not jsonl_files:
             # If no JSONL files are found, create an empty db.meta file
@@ -379,12 +444,14 @@ class FolderDB:
                             max_index = keys[-1]
                             count = len(keys)
             
+            file_path = self._get_file_path(name)
             # Create metadata entry using name without extension as key
             metadata[name] = {
                 "name": name,
+                "path": file_path,
                 "min_index": min_index,
                 "max_index": max_index,
-                "size": os.path.getsize(os.path.join(self.folder_path, jsonl_file)),
+                "size": os.path.getsize(file_path),
                 "count": count,
                 "lint_time": "",
                 "linted": False  # Default to False
@@ -403,6 +470,14 @@ class FolderDB:
         if not os.path.exists(self.dbmeta_path):
             self.build_dbmeta()
         return load_jsonl(self.dbmeta_path)
+    
+    def delete_dbmeta(self,name: str) -> None:
+        """
+        Delete the metadata for a specific JSONL file in db.meta.
+        """
+        if not os.path.exists(self.dbmeta_path):
+            self.build_dbmeta()
+        delete_jsonl(self.dbmeta_path, [name])
     
     def update_dbmeta(self, name: str, linted: bool = False) -> None:
         """
@@ -439,12 +514,18 @@ class FolderDB:
 
         lint_time = datetime.now().isoformat() if linted else ""
 
+
+
+        file_path = self._get_file_path(name)
+        print(f"Updating metadata for {name} with path {file_path}")
+
         # Update metadata for the specified file using name without extension as key
         metadata[meta_key] = {
             "name": meta_key,
+            "path": file_path,
             "min_index": min_index,
             "max_index": max_index,
-            "size": os.path.getsize(os.path.join(self.folder_path, jsonl_file)),
+            "size": os.path.getsize(file_path),
             "count": count,
             "lint_time": lint_time,
             "linted": linted
@@ -466,16 +547,40 @@ class FolderDB:
             print(f"Linting file: {name}")
             file_path = self._get_file_path(name)
             
-            try:
+            # try:
                 # Try to lint the file
-                lint_jsonl(file_path)
-                print(f"Successfully linted and updated metadata for {name}.")
+            exist_flag = lint_jsonl(file_path)
+            if not exist_flag:
+                print(f"File {name} no longer exist, deleting metadata.")
+                self.delete_dbmeta(name)
+            else:
+                # print(f"Successfully linted and updated metadata for {name}.")
                 self.update_dbmeta(name, linted=True)
-            except Exception as e:
-                print(f"Error linting {name}: {str(e)}")
-                self.update_dbmeta(name, linted=False)
+            # except Exception as e:
+            #     print(f"Error linting {name}: {str(e)}")
+            #     self.update_dbmeta(name, linted=False)
 
         lint_jsonl(self.dbmeta_path)
+
+        #if using hierarchy, then we need to lint the h.meta file
+        if self.use_hierarchy:
+            lint_jsonl(self.hmeta_path)
+
+            self.delete_empty_folders()
+
+    def delete_empty_folders(self) -> None:
+        """
+        Delete empty folders in the database.
+        Recursively removes empty folders from bottom up.
+        """
+        for root, dirs, files in os.walk(self.folder_path, topdown=False):
+            if root == self.folder_path:
+                continue
+            try:
+                if not os.listdir(root):
+                    os.rmdir(root)
+            except OSError:
+                pass
 
     # =============== Version Control ===============
     def commit(self, msg: str = "") -> None:

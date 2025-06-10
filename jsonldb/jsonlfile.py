@@ -208,6 +208,10 @@ def lint_jsonl(jsonl_file_path: str) -> None:
         jsonl_file_path: Path to the JSONL file to optimize
     """
     # Load all records
+
+    if not os.path.exists(jsonl_file_path):
+        return False
+    
     records = load_jsonl(jsonl_file_path)
     
     # Sort records using Numba-optimized sorting
@@ -217,6 +221,7 @@ def lint_jsonl(jsonl_file_path: str) -> None:
     save_jsonl(jsonl_file_path, sorted_records)
 
     ensure_index_exists(jsonl_file_path)
+    return True
 
 # --------------------------------------------------------
 # Utility Functions
