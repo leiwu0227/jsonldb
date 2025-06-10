@@ -559,7 +559,7 @@ class FolderDB:
 
 
         file_path = self._get_file_path(name)
-        print(f"Updating metadata for {name} with path {file_path}")
+        # print(f"Updating metadata for {name} with path {file_path}")
 
         # Update metadata for the specified file using name without extension as key
         metadata[meta_key] = {
