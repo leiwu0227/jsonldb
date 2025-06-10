@@ -1,4 +1,4 @@
-Metadata-Version: 2.1
+Metadata-Version: 2.4
 Name: jsonldb
 Version: 1.0.0
 Summary: A simple file-based database that stores data in JSONL format with version control and visualization capabilities
@@ -21,6 +21,15 @@ Requires-Dist: numba>=0.54.0
 Requires-Dist: gitpython>=3.1.0
 Requires-Dist: bokeh>=2.0.0
 Requires-Dist: numpy>=1.20.0
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
 
 # JSONLDB
 
