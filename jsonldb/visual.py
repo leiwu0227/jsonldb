@@ -12,6 +12,7 @@ from bokeh.models import ColumnDataSource, HoverTool
 from bokeh.palettes import Category10
 import numpy as np
 from jsonldb.jsonlfile import load_jsonl, select_jsonl
+from jsonldb.folderdb import FolderDB
 
 def _parse_linekey(linekey: str) -> Union[float, datetime]:
     """
@@ -103,7 +104,7 @@ def visualize_jsonl(jsonl_path: str) -> figure:
     
     return p
 
-def visualize_folderdb(folder_path: str) -> figure:
+def visualize_folderdb(folderdb: FolderDB,prefix: str = None) -> figure:
     """
     Create a scatter plot visualization of all JSONL files in a FolderDB using Bokeh.
     
@@ -113,13 +114,18 @@ def visualize_folderdb(folder_path: str) -> figure:
     Returns:
         Bokeh figure object showing the scatter plot
     """
+    # db = FolderDB(folder_path)
     # Get all JSONL files in the folder
-    jsonl_files = [f for f in os.listdir(folder_path) if f.endswith('.jsonl')]
+    jsonl_files = folderdb.get_file_list()
     
     if not jsonl_files:
-        raise FileNotFoundError(f"No JSONL files found in: {folder_path}")
+        raise FileNotFoundError(f"No JSONL files found in: {folderdb.folder_path}")
     
-    print(f"Found {len(jsonl_files)} JSONL files in {folder_path}")
+    print(f"Found {len(jsonl_files)} JSONL files in {folderdb.folder_path}")
+
+    if prefix is not None:
+        jsonl_files = [file for file in jsonl_files if file.startswith(prefix)]
+        print(f"Found {len(jsonl_files)} JSONL files with prefix: {prefix}")
     
     # Prepare data for plotting
     colors = ["orange"]  # Use orange color for all files
@@ -127,7 +133,7 @@ def visualize_folderdb(folder_path: str) -> figure:
     # Check if all first keys are datetime
     all_datetime = True
     for file_name in jsonl_files:
-        idx_path = os.path.join(folder_path, file_name + '.idx')
+        idx_path = folderdb._get_file_path(file_name) + '.idx'
         if not os.path.exists(idx_path):
             print(f"Warning: Index file not found for {idx_path}")
             continue
@@ -157,7 +163,7 @@ def visualize_folderdb(folder_path: str) -> figure:
     # Plot each file's data
     has_data = False
     for i, file_name in enumerate(jsonl_files):
-        idx_path = os.path.join(folder_path, file_name + '.idx')
+        idx_path = folderdb._get_file_path(file_name) + '.idx'
         if not os.path.exists(idx_path):
             print(f"Warning: Index file not found for {idx_path}")
             continue
