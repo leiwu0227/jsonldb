@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: jsonldb
-Version: 0.1.0
+Version: 1.0.0
 Summary: A simple file-based database that stores data in JSONL format with version control and visualization capabilities
 Home-page: https://github.com/leiwu0227/jsonldb
 Author: Lei Wu
