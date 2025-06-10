@@ -8,7 +8,6 @@ import json
 import pandas as pd
 from typing import Dict, List, Union, Optional, Any
 from datetime import datetime
-from jsonldb import visual
 from jsonldb.jsonlfile import (
     save_jsonl, load_jsonl, select_jsonl, update_jsonl, delete_jsonl,
     lint_jsonl, build_jsonl_index, select_line_jsonl
@@ -78,7 +77,29 @@ class FolderDB:
 
 
 
-      
+    def validate_name(self, name: str) -> bool:
+        """
+        Validate a file name according to the current mode.
+        
+        Args:
+            name: Name of the file to validate
+            
+        Returns:
+            bool: True if the name is valid, False otherwise
+        """
+        if not self.use_hierarchy:
+            return True
+            
+        # Remove .jsonl extension if present
+        if name.endswith('.jsonl'):
+            name = name[:-6]
+            
+        # Count delimiters
+        delimiter_count = name.count(self.delimiter)
+        
+        # In hierarchy mode, name must contain exactly hierarchy_depth-1 delimiters
+        # e.g., for depth=3: "users.level1.level2" has 2 delimiters
+        return delimiter_count >= self.hierarchy_depth - 1
 
 
     def __str__(self) -> str:
@@ -106,7 +127,17 @@ class FolderDB:
     # =============== File Path Management ===============
 
     def _get_hierarchy_path(self, name: str) -> str:
+        """
+        Get the hierarchical path for a file.
+        
+        Args:
+            name: Name of the file (with or without .jsonl extension)
+            
+        Returns:
+            str: Full path to the directory where the file should be stored
+        """
         if self.use_hierarchy:
+            # Take first hierarchy_depth parts for the path
             parts = name.split(self.delimiter)[:self.hierarchy_depth]
             return os.path.join(self.folder_path, *parts)
         return self.folder_path
@@ -118,6 +149,9 @@ class FolderDB:
 
     def _get_file_path(self, name: str) -> str:
         """Get the full path for a JSONL file"""
+        if self.use_hierarchy and not self.validate_name(name):
+            raise ValueError(f"Invalid hierarchical name '{name}'. Name must contain exactly {self.hierarchy_depth-1} '{self.delimiter}' delimiters")
+            
         folder_path = self._get_hierarchy_path(name)
         self.create_folder(folder_path) #create the folder if it doesn't exist
 
@@ -344,6 +378,8 @@ class FolderDB:
         if os.path.exists(file_path):
             os.remove(file_path)
             os.remove(os.path.join(file_path + '.idx'))
+            if self.use_hierarchy:
+                self.delete_empty_folders()
 
     def delete_file_keys(self, name: str, keys: List[str]) -> None:
         """
@@ -427,12 +463,15 @@ class FolderDB:
         metadata = {}
         
         # Process each JSONL file
-        for jsonl_file in jsonl_files:
-            # Get name without extension
-            name = jsonl_file.replace('.jsonl', '')
+        for name in jsonl_files:
+            file_path = self._get_file_path(name)
+            index_file = file_path + '.idx'
+            
+            # Build index if it doesn't exist
+            if not os.path.exists(index_file):
+                build_jsonl_index(file_path)
             
             # Get index range from index file
-            index_file = os.path.join(self.folder_path, f"{jsonl_file}.idx")
             min_index = None
             max_index = None
             count = 0
@@ -631,13 +670,3 @@ class FolderDB:
             git.exc.GitCommandError: If git commands fail
         """
         return list_version(self.folder_path)
-
-    # =============== Visualization ===============
-    def visualize(self) -> visual.figure:
-        """
-        Create a visualization of the database's data distribution.
-        
-        Returns:
-            Bokeh figure object showing the scatter plot of data distribution
-        """
-        return visual.visualize_folderdb(self.folder_path)
