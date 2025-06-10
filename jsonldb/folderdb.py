@@ -55,7 +55,7 @@ class FolderDB:
     def enable_hierarchy_mode(self,  delimiter: str = '.', hierarchy_depth: int = 3,force_build: bool = False) -> None:
         
         if self.use_hierarchy and not force_build:
-            print("Hierarchy mode is already enabled.")
+            # print("Hierarchy mode is already enabled.")
             return
   
         self.use_hierarchy = True
