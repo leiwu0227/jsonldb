@@ -15,6 +15,8 @@ from jsonldb.jsonlfile import (
 from jsonldb.jsonldf import (
     save_jsonldf, load_jsonldf, update_jsonldf, select_jsonldf, delete_jsonldf
 )
+import jsonldb.jsonlfile as jsonlfile
+
 from .vercontrol import init_folder, commit as vercontrol_commit, revert as vercontrol_revert, list_version, is_versioned
 
 class FolderDB:
@@ -48,6 +50,13 @@ class FolderDB:
             self.use_hierarchy = False
 
         self.dbmeta_path = os.path.join(folder_path, "db.meta")
+
+        if os.path.exists(self.dbmeta_path):
+            dbmeta = select_jsonl(self.dbmeta_path) 
+            if dbmeta:
+               if "timespec" in dbmeta:
+                   jsonlfile.TIME_SPEC = dbmeta["timespec"]
+
         self.build_dbmeta()
 
 
@@ -464,6 +473,7 @@ class FolderDB:
         
         # Process each JSONL file
         for name in jsonl_files:
+            # print(name)
             file_path = self._get_file_path(name)
             index_file = file_path + '.idx'
             
@@ -496,7 +506,8 @@ class FolderDB:
                 "size": os.path.getsize(file_path),
                 "count": count,
                 "lint_time": "",
-                "linted": False  # Default to False
+                "linted": False,  # Default to False
+                "timespec": jsonlfile.TIME_SPEC
             }
         
         # Save metadata using jsonlfile

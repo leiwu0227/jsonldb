@@ -18,6 +18,7 @@ import mmap
 
 # Buffer size for file operations (10MB)
 BUFFER_SIZE: int = 1024 * 1024 * 50
+TIME_SPEC = 'seconds'  #or seconds/microseconds
 
 # JSON serialization options
 JSON_OPTS: Dict[str, bool] = {
@@ -143,6 +144,7 @@ def build_jsonl_index(jsonl_file_path: str) -> None:
             with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
                 current_pos = 0
                 while True:
+
                     line = mm.readline()
                     if not line:
                         break
@@ -157,7 +159,8 @@ def build_jsonl_index(jsonl_file_path: str) -> None:
                         linekey = next(iter(data))
                         index_dict[linekey] = current_pos
                     except (json.JSONDecodeError, StopIteration):
-                        pass  # Skip invalid lines
+                        print("WARNING: invalid JSON line "+line_str)
+                        continue
 
                     current_pos = mm.tell()
 
@@ -227,6 +230,20 @@ def lint_jsonl(jsonl_file_path: str) -> None:
 # Utility Functions
 # --------------------------------------------------------
 
+def _is_datetime_string(linekey: str) -> bool:
+    """Check if a string represents a datetime in ISO format.
+    
+    Args:
+        linekey: String to check
+        
+    Returns:
+        bool: True if the string appears to be a datetime in ISO format
+    """
+    if TIME_SPEC == 'seconds':
+        return len(linekey) == 19 and 'T' in linekey and '-' in linekey and ':' in linekey
+    else:  # microseconds
+        return len(linekey) == 26 and 'T' in linekey and '-' in linekey and ':' in linekey
+
 def serialize_linekey(linekey: LineKey) -> str:
     """
     Convert a linekey to its string representation.
@@ -240,7 +257,7 @@ def serialize_linekey(linekey: LineKey) -> str:
     if isinstance(linekey, str):
         return linekey
     elif isinstance(linekey, dt.datetime):
-        return linekey.isoformat(timespec='seconds')
+        return linekey.isoformat(timespec=TIME_SPEC)
     return str(linekey)
 
 def deserialize_linekey(linekey_str: str, default_format: Optional[str] = None) -> LineKey:
@@ -405,7 +422,7 @@ def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True) -> DataDict:
                     if isinstance(data, dict) and len(data) == 1:
                         linekey = next(iter(data))
                         # if isinstance(data[linekey], dict): #TODO: is this really needed?
-                        if auto_deserialize and 'T' in linekey and len(linekey) == 19:
+                        if auto_deserialize and _is_datetime_string(linekey):
                             try:
                                 actual_key = deserialize_linekey(linekey, "datetime")
                                 result_dict[actual_key] = data[linekey]
@@ -490,7 +507,7 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
                 # print(f"Line: {line}")
                 data = json.loads(line)
                 
-                if auto_deserialize and 'T' in linekey and len(linekey) == 19:
+                if auto_deserialize and _is_datetime_string(linekey):
                     try:
                         actual_key = deserialize_linekey(linekey, "datetime")
                         result_dict[actual_key] = data[linekey]
@@ -545,7 +562,7 @@ def select_line_jsonl(jsonl_file_path: str, linekey: LineKey, auto_serialize: bo
             line = f.readline().strip()
             data = json.loads(line)
             
-            if auto_serialize and 'T' in linekey and len(linekey) == 19:
+            if auto_serialize and _is_datetime_string(linekey):
                 try:
                     actual_key = deserialize_linekey(linekey, "datetime")
                     result_dict[actual_key] = data[linekey]
