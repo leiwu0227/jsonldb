@@ -50,14 +50,17 @@ class FolderDB:
             self.use_hierarchy = False
 
         self.dbmeta_path = os.path.join(folder_path, "db.meta")
+        self.configmeta_path = os.path.join(folder_path, "config.meta")
 
-        if os.path.exists(self.dbmeta_path):
-            dbmeta = select_jsonl(self.dbmeta_path) 
-            if dbmeta:
-               if "timespec" in dbmeta:
-                   jsonlfile.TIME_SPEC = dbmeta["timespec"]
+        if os.path.exists(self.configmeta_path):
+            config_meta = select_jsonl(self.configmeta_path) 
+            if config_meta:
+               if "timespec" in config_meta:
+                   print(f"Using timespec: {config_meta['timespec']}")
+                   jsonlfile.TIME_SPEC = config_meta["timespec"]
 
         self.build_dbmeta()
+        self.build_configmeta()
 
 
 
@@ -84,6 +87,15 @@ class FolderDB:
             }
             save_jsonl(self.hmeta_path, hierachy_info)
 
+
+    def build_configmeta(self) -> None:
+        """
+        Save the folder information to a file.
+        """
+        config_info = {
+            "timespec": jsonlfile.TIME_SPEC
+        }
+        save_jsonl(self.configmeta_path, config_info)
 
 
     def validate_name(self, name: str) -> bool:
@@ -507,8 +519,9 @@ class FolderDB:
                 "count": count,
                 "lint_time": "",
                 "linted": False,  # Default to False
-                "timespec": jsonlfile.TIME_SPEC
             }
+
+        metadata["timespec"] = jsonlfile.TIME_SPEC
         
         # Save metadata using jsonlfile
         save_jsonl(self.dbmeta_path, metadata)
