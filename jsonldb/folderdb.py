@@ -56,7 +56,7 @@ class FolderDB:
             config_meta = select_jsonl(self.configmeta_path) 
             if config_meta:
                if "timespec" in config_meta:
-                   print(f"Using timespec: {config_meta['timespec']}")
+                #    print(f"Using timespec: {config_meta['timespec']}")
                    jsonlfile.TIME_SPEC = config_meta["timespec"]
 
         self.build_dbmeta()
@@ -520,8 +520,6 @@ class FolderDB:
                 "lint_time": "",
                 "linted": False,  # Default to False
             }
-
-        metadata["timespec"] = jsonlfile.TIME_SPEC
         
         # Save metadata using jsonlfile
         save_jsonl(self.dbmeta_path, metadata)
