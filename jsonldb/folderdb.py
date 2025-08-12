@@ -51,6 +51,7 @@ class FolderDB:
 
         self.dbmeta_path = os.path.join(folder_path, "db.meta")
         self.configmeta_path = os.path.join(folder_path, "config.meta")
+        self.invalid_tickers_path = os.path.join(folder_path, ".invalid_tickers")
 
         if os.path.exists(self.configmeta_path):
             config_meta = select_jsonl(self.configmeta_path) 
@@ -202,6 +203,9 @@ class FolderDB:
             result = []
             
             for root, _, files in os.walk(self.folder_path):
+                # Skip .invalid_tickers folder
+                if '.invalid_tickers' in root:
+                    continue
 
                 # Add all JSONL files in this directory
                 for file in files:
@@ -211,8 +215,11 @@ class FolderDB:
             
             return result
         else:
-            # Original behavior for non-hierarchical mode
-            jsonl_files = [f for f in os.listdir(self.folder_path) if f.endswith('.jsonl')]
+            # Original behavior for non-hierarchical mode - exclude .invalid_tickers
+            jsonl_files = []
+            for f in os.listdir(self.folder_path):
+                if f.endswith('.jsonl') and f != '.invalid_tickers':
+                    jsonl_files.append(f)
             return [os.path.splitext(f)[0] for f in jsonl_files]
         
     def search_file_list(self, regex: str) -> List[str]:
@@ -631,6 +638,180 @@ class FolderDB:
             lint_jsonl(self.hmeta_path)
 
             self.delete_empty_folders()
+
+    def lint_hierarchy(self, hierarchy_level: Optional[int] = None) -> None:
+        """
+        Reorganize JSONL files according to hierarchy levels and move invalid files to .invalid_tickers.
+        
+        Args:
+            hierarchy_level: Target hierarchy level. If None, uses value from h.meta or defaults to 1
+        """
+        import shutil
+        
+        # Determine hierarchy level
+        if hierarchy_level is None:
+            if os.path.exists(self.hmeta_path):
+                hmeta = select_jsonl(self.hmeta_path)
+                hierarchy_level = hmeta.get("hierarchy_depth", 1)
+            else:
+                hierarchy_level = 1
+        
+        if hierarchy_level < 1:
+            raise ValueError("Hierarchy level must be positive")
+            
+        print(f"Organizing files for hierarchy level {hierarchy_level}")
+        
+        # Enable hierarchy mode with the specified level
+        self.enable_hierarchy_mode(hierarchy_depth=hierarchy_level, force_build=True)
+        
+        # Create .invalid_tickers folder if it doesn't exist
+        if not os.path.exists(self.invalid_tickers_path):
+            os.makedirs(self.invalid_tickers_path, exist_ok=True)
+        
+        # Get all JSONL files in the root folder and immediate subdirectories
+        all_files = []
+        for root, _, files in os.walk(self.folder_path):
+            # Skip .invalid_tickers folder
+            if '.invalid_tickers' in root:
+                continue
+                
+            for file in files:
+                if file.endswith('.jsonl'):
+                    file_path = os.path.join(root, file)
+                    name = os.path.splitext(file)[0]
+                    all_files.append((name, file_path))
+        
+        valid_files = []
+        invalid_files = []
+        
+        # Categorize files as valid or invalid
+        for name, file_path in all_files:
+            if self.validate_name(name):
+                valid_files.append((name, file_path))
+            else:
+                invalid_files.append((name, file_path))
+        
+        print(f"Found {len(valid_files)} valid files and {len(invalid_files)} invalid files")
+        
+        # Move invalid files to .invalid_tickers folder
+        for name, file_path in invalid_files:
+            try:
+                dest_path = os.path.join(self.invalid_tickers_path, os.path.basename(file_path))
+                if file_path != dest_path:  # Avoid moving file to itself
+                    shutil.move(file_path, dest_path)
+                    print(f"Moved invalid file {name} to .invalid_tickers")
+                    
+                    # Also move .idx file if it exists
+                    idx_path = file_path + '.idx'
+                    if os.path.exists(idx_path):
+                        idx_dest = dest_path + '.idx'
+                        shutil.move(idx_path, idx_dest)
+            except Exception as e:
+                print(f"Warning: Could not move invalid file {name}: {str(e)}")
+        
+        # Reorganize valid files according to hierarchy
+        for name, file_path in valid_files:
+            try:
+                target_dir = self._get_hierarchy_path(name)
+                target_file = os.path.join(target_dir, os.path.basename(file_path))
+                
+                # Skip if file is already in correct location
+                if file_path == target_file:
+                    continue
+                    
+                # Create target directory if needed
+                self.create_folder(target_dir)
+                
+                # Move JSONL file
+                shutil.move(file_path, target_file)
+                print(f"Moved {name} to {target_dir}")
+                
+                # Move .idx file if it exists
+                idx_path = file_path + '.idx'
+                if os.path.exists(idx_path):
+                    idx_target = target_file + '.idx'
+                    shutil.move(idx_path, idx_target)
+                    
+            except Exception as e:
+                print(f"Warning: Could not move valid file {name}: {str(e)}")
+        
+        # Clean up empty directories
+        self.delete_empty_folders()
+        
+        # Rebuild metadata to reflect new structure
+        self.build_dbmeta()
+        
+        print("Hierarchy organization completed")
+
+    def reprocess_invalid_tickers(self) -> None:
+        """
+        Reprocess files in .invalid_tickers folder and move any that now match naming convention.
+        """
+        import shutil
+        
+        if not os.path.exists(self.invalid_tickers_path):
+            print("No .invalid_tickers folder found")
+            return
+            
+        # Get all JSONL files in .invalid_tickers folder
+        invalid_files = []
+        for file in os.listdir(self.invalid_tickers_path):
+            if file.endswith('.jsonl'):
+                file_path = os.path.join(self.invalid_tickers_path, file)
+                name = os.path.splitext(file)[0]
+                invalid_files.append((name, file_path))
+        
+        if not invalid_files:
+            print("No files found in .invalid_tickers folder")
+            return
+            
+        print(f"Found {len(invalid_files)} files to reprocess")
+        
+        now_valid_files = []
+        still_invalid_files = []
+        
+        # Check each file against current naming rules
+        for name, file_path in invalid_files:
+            if self.validate_name(name):
+                now_valid_files.append((name, file_path))
+            else:
+                still_invalid_files.append((name, file_path))
+        
+        print(f"{len(now_valid_files)} files are now valid, {len(still_invalid_files)} remain invalid")
+        
+        # Move now-valid files to appropriate hierarchy folders
+        for name, file_path in now_valid_files:
+            try:
+                target_dir = self._get_hierarchy_path(name)
+                target_file = os.path.join(target_dir, os.path.basename(file_path))
+                
+                # Create target directory if needed
+                self.create_folder(target_dir)
+                
+                # Move JSONL file
+                shutil.move(file_path, target_file)
+                print(f"Moved {name} from .invalid_tickers to {target_dir}")
+                
+                # Move .idx file if it exists (but don't build new one yet)
+                idx_path = file_path + '.idx'
+                if os.path.exists(idx_path):
+                    idx_target = target_file + '.idx'
+                    shutil.move(idx_path, idx_target)
+                else:
+                    # Build index for newly valid file
+                    build_jsonl_index(target_file)
+                
+                # Update metadata for this file
+                self.update_dbmeta(name)
+                    
+            except Exception as e:
+                print(f"Warning: Could not move file {name}: {str(e)}")
+        
+        # Rebuild metadata to include newly valid files
+        if now_valid_files:
+            self.build_dbmeta()
+            
+        print("Reprocessing completed")
 
     def delete_empty_folders(self) -> None:
         """
