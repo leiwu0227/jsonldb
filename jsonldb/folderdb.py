@@ -26,7 +26,7 @@ class FolderDB:
     """
     
     # =============== Core/Initialization ===============
-    def __init__(self, folder_path: str):
+    def __init__(self, folder_path: str,hierarchy_depth: int = None):
         """
         Initialize the database.
         
@@ -40,18 +40,30 @@ class FolderDB:
         if not os.path.exists(folder_path):
             raise FileNotFoundError(f"Folder not found: {folder_path}")
 
+        self.use_hierarchy = False
+        self.delimiter = '.'
+
+        # Initialize all paths first
         self.hmeta_path = os.path.join(folder_path, "h.meta")
+        self.dbmeta_path = os.path.join(folder_path, "db.meta")
+        self.configmeta_path = os.path.join(folder_path, "config.meta")
+        self.invalid_tickers_path = os.path.join(folder_path, ".invalid_tickers")
+
         if os.path.exists(self.hmeta_path):
             hmeta = select_jsonl(self.hmeta_path)
             self.use_hierarchy = hmeta["use_hierarchy"]
             self.delimiter = hmeta["delimiter"]
             self.hierarchy_depth = hmeta["hierarchy_depth"]
-        else:
-            self.use_hierarchy = False
 
-        self.dbmeta_path = os.path.join(folder_path, "db.meta")
-        self.configmeta_path = os.path.join(folder_path, "config.meta")
-        self.invalid_tickers_path = os.path.join(folder_path, ".invalid_tickers")
+            if hierarchy_depth is not None and self.hierarchy_depth != hierarchy_depth: 
+                #current hierarchy depth is not the same as the one provided, so we need to lint the hierarchy
+                self.lint_hierarchy(hierarchy_depth)
+        else:
+            #no h.meta file found, so we need to build it
+            if hierarchy_depth is not None:
+                self.use_hierarchy = True 
+                self.hierarchy_depth = hierarchy_depth
+                self.lint_hierarchy(hierarchy_depth)
 
         if os.path.exists(self.configmeta_path):
             config_meta = select_jsonl(self.configmeta_path) 
@@ -60,21 +72,12 @@ class FolderDB:
                 #    print(f"Using timespec: {config_meta['timespec']}")
                    jsonlfile.TIME_SPEC = config_meta["timespec"]
 
+        
         self.build_dbmeta()
         self.build_configmeta()
 
 
-
-    def enable_hierarchy_mode(self,  delimiter: str = '.', hierarchy_depth: int = 3,force_build: bool = False) -> None:
-        
-        if self.use_hierarchy and not force_build:
-            # print("Hierarchy mode is already enabled.")
-            return
-  
-        self.use_hierarchy = True
-        self.delimiter = delimiter
-        self.hierarchy_depth = hierarchy_depth
-        self.build_hmeta()
+   
 
     def build_hmeta(self) -> None:
         """
@@ -639,31 +642,25 @@ class FolderDB:
 
             self.delete_empty_folders()
 
-    def lint_hierarchy(self, hierarchy_level: Optional[int] = None) -> None:
+    def lint_hierarchy(self, hierarchy_depth:int) -> None:
         """
         Reorganize JSONL files according to hierarchy levels and move invalid files to .invalid_tickers.
         
         Args:
             hierarchy_level: Target hierarchy level. If None, uses value from h.meta or defaults to 1
         """
-        import shutil
-        
-        # Determine hierarchy level
-        if hierarchy_level is None:
-            if os.path.exists(self.hmeta_path):
-                hmeta = select_jsonl(self.hmeta_path)
-                hierarchy_level = hmeta.get("hierarchy_depth", 1)
-            else:
-                hierarchy_level = 1
-        
-        if hierarchy_level < 1:
+
+        if hierarchy_depth < 1:
             raise ValueError("Hierarchy level must be positive")
+
+        import shutil
             
-        print(f"Organizing files for hierarchy level {hierarchy_level}")
-        
-        # Enable hierarchy mode with the specified level
-        self.enable_hierarchy_mode(hierarchy_depth=hierarchy_level, force_build=True)
-        
+        print(f"Organizing files for hierarchy level {hierarchy_depth}")
+            
+        self.use_hierarchy = True
+        self.hierarchy_depth = hierarchy_depth
+
+
         # Create .invalid_tickers folder if it doesn't exist
         if not os.path.exists(self.invalid_tickers_path):
             os.makedirs(self.invalid_tickers_path, exist_ok=True)
@@ -740,6 +737,7 @@ class FolderDB:
         
         # Rebuild metadata to reflect new structure
         self.build_dbmeta()
+        self.build_hmeta()
         
         print("Hierarchy organization completed")
 

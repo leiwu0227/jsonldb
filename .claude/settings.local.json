@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pytest unit_tests/test_folderdb.py -v)",
+      "Bash(python test:*)",
+      "Bash(python -m pytest unit_tests/test_folderdb.py::test_init -v)",
+      "Bash(python -m pytest unit_tests/test_folderdb.py::test_init unit_tests/test_folderdb.py::test_upsert_df unit_tests/test_folderdb.py::test_get_df unit_tests/test_folderdb.py::test_upsert_dict unit_tests/test_folderdb.py::test_get_dict -v)",
+      "Bash(del test_hierarchy_depth.py)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
