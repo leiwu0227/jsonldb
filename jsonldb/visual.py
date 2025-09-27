@@ -104,7 +104,7 @@ def visualize_jsonl(jsonl_path: str) -> figure:
     
     return p
 
-def visualize_folderdb(folderdb: FolderDB,prefix: str = None) -> figure:
+def visualize_folderdb(folderdb: FolderDB,prefix: str = None,height=1200) -> figure:
     """
     Create a scatter plot visualization of all JSONL files in a FolderDB using Bokeh.
     
@@ -157,7 +157,7 @@ def visualize_folderdb(folderdb: FolderDB,prefix: str = None) -> figure:
         x_axis_type="datetime" if all_datetime else "linear",
         y_range=[file_name.replace('.jsonl', '') for file_name in jsonl_files],  # Set y-axis as categorical with filenames
         width=800,
-        height=600
+        height=height
     )
     
     # Plot each file's data

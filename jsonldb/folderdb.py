@@ -205,17 +205,18 @@ class FolderDB:
         if self.use_hierarchy:
             result = []
             
-            for root, _, files in os.walk(self.folder_path):
+            for root, dirs, files in os.walk(self.folder_path, topdown=True):
+                # Skip hidden/system directories (starting with '.')
+                dirs[:] = [d for d in dirs if not d.startswith('.')]
                 # Skip .invalid_tickers folder
-                if '.invalid_tickers' in root:
+                if '.invalid_tickers' in root:  # this is important to skip the .invalid_tickers folder
                     continue
-
                 # Add all JSONL files in this directory
                 for file in files:
                     if file.endswith('.jsonl'):
                         name = os.path.splitext(file)[0]
                         result.append(name)
-            
+                
             return result
         else:
             # Original behavior for non-hierarchical mode - exclude .invalid_tickers
@@ -570,8 +571,9 @@ class FolderDB:
         if os.path.exists(self.dbmeta_path):
             metadata = select_line_jsonl(self.dbmeta_path, meta_key)
         
-        # Get index range from index file
-        index_file = os.path.join(self.folder_path, f"{jsonl_file}.idx")
+        # Get index range from index file (use hierarchical path)
+        file_path = self._get_file_path(name)
+        index_file = file_path + ".idx"
         min_index = None
         max_index = None
         count = 0
@@ -587,10 +589,6 @@ class FolderDB:
                         count = len(keys)
 
         lint_time = datetime.now().isoformat() if linted else ""
-
-
-
-        file_path = self._get_file_path(name)
         # print(f"Updating metadata for {name} with path {file_path}")
 
         # Update metadata for the specified file using name without extension as key
@@ -667,11 +665,12 @@ class FolderDB:
         
         # Get all JSONL files in the root folder and immediate subdirectories
         all_files = []
-        for root, _, files in os.walk(self.folder_path):
+        for root, dirs, files in os.walk(self.folder_path, topdown=True):
+            # Skip hidden/system directories (starting with '.')
+            dirs[:] = [d for d in dirs if not d.startswith('.')]
             # Skip .invalid_tickers folder
             if '.invalid_tickers' in root:
                 continue
-                
             for file in files:
                 if file.endswith('.jsonl'):
                     file_path = os.path.join(root, file)
