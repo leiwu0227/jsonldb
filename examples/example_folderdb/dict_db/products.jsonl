@@ -1,0 +1,2 @@
+{"prod1":{"name":"Laptop","price":1000,"specs":{"cpu":"Intel i7","ram":"16GB","storage":"512GB SSD"}}}
+{"prod2":{"name":"Smartphone","price":500,"specs":{"cpu":"Snapdragon 8","ram":"8GB","storage":"256GB"}}}

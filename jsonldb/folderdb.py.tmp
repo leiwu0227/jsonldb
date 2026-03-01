@@ -17,7 +17,9 @@ from jsonldb.jsonldf import (
 )
 import jsonldb.jsonlfile as jsonlfile
 
-from .vercontrol import init_folder, commit as vercontrol_commit, revert as vercontrol_revert, list_version, is_versioned
+# Lazy import for version control (only loaded when vercontrol methods are called)
+# This avoids loading git dependency unless version control features are used
+
 
 class FolderDB:
     """

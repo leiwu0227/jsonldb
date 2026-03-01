@@ -1,0 +1,3 @@
+
+{"products":{"name":"products","path":"dict_db\\products.jsonl","min_index":"prod1","max_index":"prod2","size":208,"count":2,"lint_time":"","linted":false}}
+{"inventory":{"name":"inventory","path":"dict_db\\inventory.jsonl","min_index":"loc1","max_index":"loc2","size":175,"count":2,"lint_time":"","linted":false}}

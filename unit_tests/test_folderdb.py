@@ -362,23 +362,24 @@ def test_metadata_persistence(db, sample_data):
     assert metadata["users"]["count"] == 3
     assert metadata["products"]["count"] == 2
 
-def test_enable_hierarchy_mode(db):
+def test_enable_hierarchy_mode(db_folder):
     """Test enabling hierarchy mode and its settings."""
-    # Test default settings
-    db.enable_hierarchy_mode()
+    # Test with hierarchy_depth=3
+    db = FolderDB(db_folder, hierarchy_depth=3)
     assert db.use_hierarchy is True
     assert db.delimiter == '.'
     assert db.hierarchy_depth == 3
 
-    # Test custom settings with force_build
-    db.enable_hierarchy_mode(delimiter='/', hierarchy_depth=2, force_build=True)
-    assert db.delimiter == '/'
-    assert db.hierarchy_depth == 2
+    # Test with different hierarchy_depth
+    db2 = FolderDB(db_folder, hierarchy_depth=2)
+    assert db2.use_hierarchy is True
+    assert db2.delimiter == '.'
+    assert db2.hierarchy_depth == 2
 
-def test_hierarchical_file_operations(db, sample_data):
+def test_hierarchical_file_operations(db_folder, sample_data):
     """Test file operations in hierarchical mode."""
     df, data_dict = sample_data
-    db.enable_hierarchy_mode(hierarchy_depth=3)
+    db = FolderDB(db_folder, hierarchy_depth=3)
 
     # Test creating files in hierarchy
     db.upsert_df("region.north.users", df)  # 2 delimiters for depth=3
@@ -388,10 +389,10 @@ def test_hierarchical_file_operations(db, sample_data):
     assert os.path.exists(os.path.join(db.folder_path, "region", "north", "users", "region.north.users.jsonl"))
     assert os.path.exists(os.path.join(db.folder_path, "region", "south", "products", "region.south.products.jsonl"))
 
-def test_hierarchical_file_deletion(db, sample_data):
+def test_hierarchical_file_deletion(db_folder, sample_data):
     """Test file deletion in hierarchical mode."""
     df, _ = sample_data
-    db.enable_hierarchy_mode(hierarchy_depth=3)
+    db = FolderDB(db_folder, hierarchy_depth=3)
 
     # Create hierarchical data
     db.upsert_df("org.hr.employees", df)
@@ -408,9 +409,9 @@ def test_hierarchical_file_deletion(db, sample_data):
     # Verify empty folders are cleaned up
     assert not os.path.exists(os.path.join(db.folder_path, "org", "hr", "employees"))
 
-def test_hierarchical_validation(db):
+def test_hierarchical_validation(db_folder):
     """Test validation of hierarchical paths."""
-    db.enable_hierarchy_mode(hierarchy_depth=3)
+    db = FolderDB(db_folder, hierarchy_depth=3)
 
     # Test invalid path (not enough delimiters)
     with pytest.raises(ValueError, match=r"Name must contain exactly \d+ '.' delimiters"):
@@ -423,10 +424,10 @@ def test_hierarchical_validation(db):
     # Test valid path
     db.upsert_df("this.is.valid", pd.DataFrame())
 
-def test_hierarchical_search(db, sample_data):
+def test_hierarchical_search(db_folder, sample_data):
     """Test searching files in hierarchical mode."""
     df, data_dict = sample_data
-    db.enable_hierarchy_mode()
+    db = FolderDB(db_folder, hierarchy_depth=3)
     
     # Create test data in different hierarchies
     db.upsert_df("us.west.users", df)
