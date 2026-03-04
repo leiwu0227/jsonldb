@@ -72,8 +72,18 @@ class FolderDB:
                 #    print(f"Using timespec: {config_meta['timespec']}")
                    jsonlfile.TIME_SPEC = config_meta["timespec"]
 
-        
-        self.build_dbmeta()
+
+        # Only rebuild db.meta if it doesn't exist or the folder has been
+        # modified externally.  Writes already call update_dbmeta()
+        # incrementally, so db.meta stays in sync during normal operation.
+        if os.path.exists(self.dbmeta_path):
+            dbmeta_mtime = os.path.getmtime(self.dbmeta_path)
+            folder_mtime = os.path.getmtime(self.folder_path)
+            if folder_mtime > dbmeta_mtime:
+                self.build_dbmeta()
+        else:
+            self.build_dbmeta()
+
         self.build_configmeta()
 
 
