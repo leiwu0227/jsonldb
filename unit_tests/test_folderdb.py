@@ -443,4 +443,25 @@ def test_hierarchical_search(db_folder, sample_data):
     west_files = db.search_file_list(r"\.west\.")
     assert len(west_files) == 2
     assert "us.west.users" in west_files
-    assert "eu.west.products" in west_files 
+    assert "eu.west.products" in west_files
+
+def test_get_dict_does_not_create_folders(db_folder, sample_data):
+    """Test that reading via get_dict does not create new directories in hierarchy mode"""
+    df, data_dict = sample_data
+    db = FolderDB(db_folder, hierarchy_depth=2)
+    db.upsert_dict("region.users", data_dict)
+
+    # Count all directories recursively before read
+    def count_dirs(path):
+        count = 0
+        for root, dirs, files in os.walk(path):
+            count += len(dirs)
+        return count
+
+    dir_count_before = count_dirs(db_folder)
+
+    # Try to read a non-existent hierarchical file — should NOT create its directory
+    result = db.get_dict(["other.nonexistent"])
+
+    dir_count_after = count_dirs(db_folder)
+    assert dir_count_before == dir_count_after

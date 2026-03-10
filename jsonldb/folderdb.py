@@ -183,10 +183,19 @@ class FolderDB:
             os.makedirs(folder_path, exist_ok=True)
 
     def _get_file_path(self, name: str) -> str:
-        """Get the full path for a JSONL file"""
+        """Get the full path for a JSONL file (read-only, no folder creation)"""
         if self.use_hierarchy and not self.validate_name(name):
             raise ValueError(f"Invalid hierarchical name '{name}'. Name must contain exactly {self.hierarchy_depth-1} '{self.delimiter}' delimiters")
-            
+        folder_path = self._get_hierarchy_path(name)
+        if name.endswith('.jsonl'):
+            return os.path.join(folder_path, name)
+        return os.path.join(folder_path, f"{name}.jsonl")
+
+    def _get_or_create_file_path(self, name: str) -> str:
+        """Get the full path for a JSONL file, creating folders as needed (for writes)"""
+        if self.use_hierarchy and not self.validate_name(name):
+            raise ValueError(f"Invalid hierarchical name '{name}'. Name must contain exactly {self.hierarchy_depth-1} '{self.delimiter}' delimiters")
+
         folder_path = self._get_hierarchy_path(name)
         self.create_folder(folder_path) #create the folder if it doesn't exist
 
@@ -259,7 +268,7 @@ class FolderDB:
 
     # =============== DataFrame Operations ===============
     def overwrite_df(self, name: str, df: pd.DataFrame) -> None:
-        file_path = self._get_file_path(name)
+        file_path = self._get_or_create_file_path(name)
         if os.path.exists(file_path):
            os.remove(file_path)
       
@@ -279,12 +288,12 @@ class FolderDB:
     def upsert_df(self, name: str, df: pd.DataFrame) -> None:
         """
         Update or insert a DataFrame into a JSONL file.
-        
+
         Args:
             name: Name of the JSONL file
             df: DataFrame to save/update
         """
-        file_path = self._get_file_path(name)
+        file_path = self._get_or_create_file_path(name)
         if os.path.exists(file_path):
             update_jsonldf(file_path, df)
         else:
@@ -329,7 +338,7 @@ class FolderDB:
 
     # =============== Dictionary Operations ===============
     def overwrite_dict(self, name: str, data_dict: Dict[Any, Dict[str, Any]]) -> None:
-        file_path = self._get_file_path(name)
+        file_path = self._get_or_create_file_path(name)
         if os.path.exists(file_path):
            os.remove(file_path)
       
@@ -354,7 +363,7 @@ class FolderDB:
             name: Name of the JSONL file
             data_dict: Dictionary to save/update
         """
-        file_path = self._get_file_path(name)
+        file_path = self._get_or_create_file_path(name)
         if os.path.exists(file_path):
             update_jsonl(file_path, data_dict)
         else:
@@ -414,11 +423,11 @@ class FolderDB:
     def delete_file(self, name: str) -> None:
         """
         Delete a JSONL file.
-        
+
         Args:
             name: Name of the JSONL file
         """
-        file_path = self._get_file_path(name)
+        file_path = self._get_or_create_file_path(name)
         if os.path.exists(file_path):
             os.remove(file_path)
             os.remove(os.path.join(file_path + '.idx'))
@@ -428,12 +437,12 @@ class FolderDB:
     def delete_file_keys(self, name: str, keys: List[str]) -> None:
         """
         Delete specific keys from a JSONL file.
-        
+
         Args:
             name: Name of the JSONL file
             keys: List of keys to delete
         """
-        file_path = self._get_file_path(name)
+        file_path = self._get_or_create_file_path(name)
         if os.path.exists(file_path):
             delete_jsonl(file_path, keys)
             self.update_dbmeta(self._get_file_name(name))
@@ -441,13 +450,13 @@ class FolderDB:
     def delete_file_range(self, name: str, lower_key: Any, upper_key: Any) -> None:
         """
         Delete all keys within a range from a JSONL file.
-        
+
         Args:
             name: Name of the JSONL file
             lower_key: Lower bound of the key range
             upper_key: Upper bound of the key range
         """
-        file_path = self._get_file_path(name)
+        file_path = self._get_or_create_file_path(name)
         if not os.path.exists(file_path):
             return
             
