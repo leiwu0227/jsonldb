@@ -637,36 +637,54 @@ class FolderDB:
 
     def lint_db(self) -> None:
         """Lint all JSONL files in the database."""
+        import orjson
         meta_file = os.path.join(self.folder_path, "db.meta")
         if not os.path.exists(meta_file):
             self.build_dbmeta()
-            
+
         metadata = select_jsonl(meta_file)
         print(f"Found {len(metadata)} JSONL files to lint.")
-        
+
+        all_meta = {}
+
         for name in metadata:
             print(f"Linting file: {name}")
             file_path = self._get_file_path(name)
-            
-            # try:
-                # Try to lint the file
             exist_flag = lint_jsonl(file_path)
+
             if not exist_flag:
                 print(f"File {name} no longer exist, deleting metadata.")
-                self.delete_dbmeta(name)
+                # Simply skip — don't add to all_meta
             else:
-                # print(f"Successfully linted and updated metadata for {name}.")
-                self.update_dbmeta(name, linted=True)
-            # except Exception as e:
-            #     print(f"Error linting {name}: {str(e)}")
-            #     self.update_dbmeta(name, linted=False)
+                # Build metadata entry inline
+                index_file = file_path + ".idx"
+                min_index = max_index = None
+                count = 0
+                if os.path.exists(index_file):
+                    with open(index_file, 'rb') as f:
+                        index = orjson.loads(f.read())
+                        if index:
+                            keys = list(index.keys())
+                            min_index, max_index = keys[0], keys[-1]
+                            count = len(keys)
 
+                all_meta[name] = {
+                    "name": name,
+                    "path": file_path,
+                    "min_index": min_index,
+                    "max_index": max_index,
+                    "size": os.path.getsize(file_path),
+                    "count": count,
+                    "lint_time": datetime.now().isoformat(),
+                    "linted": True
+                }
+
+        # Single write for all metadata
+        save_jsonl(self.dbmeta_path, all_meta)
         lint_jsonl(self.dbmeta_path)
 
-        #if using hierarchy, then we need to lint the h.meta file
         if self.use_hierarchy:
             lint_jsonl(self.hmeta_path)
-
             self.delete_empty_folders()
 
     def lint_hierarchy(self, hierarchy_depth:int) -> None:

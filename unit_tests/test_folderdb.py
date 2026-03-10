@@ -483,3 +483,29 @@ def test_init_does_not_rewrite_configmeta_if_unchanged(db_folder):
         content_after = f.read()
 
     assert content_before == content_after
+
+def test_lint_db_batches_meta_writes(db_folder, sample_data):
+    """Test that lint_db writes db.meta only once at the end, not per file"""
+    df, data_dict = sample_data
+    db = FolderDB(db_folder)
+    db.upsert_df("users", df)
+    db.upsert_dict("products", data_dict)
+
+    # Track calls to update_dbmeta
+    call_count = 0
+    original_update = db.update_dbmeta
+    def counting_update(*args, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        return original_update(*args, **kwargs)
+    db.update_dbmeta = counting_update
+
+    db.lint_db()
+
+    # Should NOT call update_dbmeta per file anymore
+    assert call_count == 0
+
+    # But metadata should still be correct
+    metadata = select_jsonl(os.path.join(db_folder, "db.meta"))
+    assert metadata["users"]["linted"] is True
+    assert metadata["products"]["linted"] is True
