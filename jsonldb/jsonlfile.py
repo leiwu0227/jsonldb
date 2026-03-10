@@ -3,7 +3,6 @@ Core JSONL file operations for JSONLDB.
 """
 
 import os
-import json
 import pandas as pd
 from typing import Dict, List, Optional, Union, Any
 import datetime as dt
@@ -19,12 +18,6 @@ import mmap
 # Buffer size for file operations (10MB)
 BUFFER_SIZE: int = 1024 * 1024 * 50
 TIME_SPEC = 'seconds'  #or seconds/microseconds
-
-# JSON serialization options
-JSON_OPTS: Dict[str, bool] = {
-    'separators': (',', ':'),  # Remove whitespace
-    'ensure_ascii': False,     # Faster for non-ASCII
-}
 
 # Type aliases for better readability
 LineKey = Union[str, dt.datetime]
@@ -149,17 +142,17 @@ def build_jsonl_index(jsonl_file_path: str) -> None:
                     if not line:
                         break
 
-                    line_str = line.decode('utf-8').strip()
-                    if not line_str:  # Skip empty lines
+                    line = line.strip()
+                    if not line:  # Skip empty lines
                         current_pos = mm.tell()
                         continue
 
                     try:
-                        data = json.loads(line_str)
+                        data = orjson.loads(line)
                         linekey = next(iter(data))
                         index_dict[linekey] = current_pos
-                    except (json.JSONDecodeError, StopIteration):
-                        print("WARNING: invalid JSON line "+line_str)
+                    except (orjson.JSONDecodeError, ValueError, StopIteration):
+                        print("WARNING: invalid JSON line " + line.decode('utf-8', errors='replace'))
                         continue
 
                     current_pos = mm.tell()
@@ -285,10 +278,7 @@ def _fast_dumps(obj: dict) -> str:
     Returns:
         JSON string with newline
     """
-    try:
-        return orjson.dumps(obj,option=orjson.OPT_SERIALIZE_NUMPY).decode('utf-8') + '\n'
-    except ImportError:
-        return json.dumps(obj, **JSON_OPTS) + '\n'
+    return orjson.dumps(obj, option=orjson.OPT_SERIALIZE_NUMPY).decode('utf-8') + '\n'
 
 def check_dict_format(data_dict: Dict[Any, Any]) -> bool:
     """Check if a dictionary follows the required JSONL format.
@@ -411,17 +401,16 @@ def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True) -> DataDict:
     result_dict: DataDict = {}
     
     try:
-        with open(jsonl_file_path, 'r', encoding='utf-8', buffering=BUFFER_SIZE) as f:
+        with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
             for line in f:
                 line = line.strip()
                 if not line:
                     continue
-                    
+
                 try:
-                    data = json.loads(line)
+                    data = orjson.loads(line)
                     if isinstance(data, dict) and len(data) == 1:
                         linekey = next(iter(data))
-                        # if isinstance(data[linekey], dict): #TODO: is this really needed?
                         if auto_deserialize and _is_datetime_string(linekey):
                             try:
                                 actual_key = deserialize_linekey(linekey, "datetime")
@@ -430,12 +419,12 @@ def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True) -> DataDict:
                                 result_dict[linekey] = data[linekey]
                         else:
                             result_dict[linekey] = data[linekey]
-                except json.JSONDecodeError:
-                    print("WARNING: invalid JSON line "+line)
+                except (orjson.JSONDecodeError, ValueError):
+                    print("WARNING: invalid JSON line " + line.decode('utf-8', errors='replace'))
                     continue  # Skip invalid JSON lines
-                    
+
         return result_dict
-        
+
     except OSError as e:
         raise OSError(f"Failed to load JSONL file {jsonl_file_path}: {str(e)}")
 
@@ -499,14 +488,13 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
         # print(f"Last key: {selected_linekeys[-1]}")
 
         # Load selected records
-        with open(jsonl_file_path, 'r', encoding='utf-8', buffering=BUFFER_SIZE) as f:
+        with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
             for linekey in selected_linekeys:
-           
+
                 f.seek(index_dict[linekey])
                 line = f.readline().strip()
-                # print(f"Line: {line}")
-                data = json.loads(line)
-                
+                data = orjson.loads(line)
+
                 if auto_deserialize and _is_datetime_string(linekey):
                     try:
                         actual_key = deserialize_linekey(linekey, "datetime")
@@ -515,11 +503,7 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
                         result_dict[linekey] = data[linekey]
                 else:
                     result_dict[linekey] = data[linekey]
-    
-                # print(f"Error loading linekey: {linekey}")
-                    
-               
-                    
+
         return result_dict
         
     except OSError as e:
@@ -556,12 +540,12 @@ def select_line_jsonl(jsonl_file_path: str, linekey: LineKey, auto_serialize: bo
         
 
     # Load selected records
-    with open(jsonl_file_path, 'r', encoding='utf-8', buffering=BUFFER_SIZE) as f:
+    with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
         try:
             f.seek(index_dict[linekey])
             line = f.readline().strip()
-            data = json.loads(line)
-            
+            data = orjson.loads(line)
+
             if auto_serialize and _is_datetime_string(linekey):
                 try:
                     actual_key = deserialize_linekey(linekey, "datetime")
@@ -570,9 +554,9 @@ def select_line_jsonl(jsonl_file_path: str, linekey: LineKey, auto_serialize: bo
                     result_dict[linekey] = data[linekey]
             else:
                 result_dict[linekey] = data[linekey]
-        except (json.JSONDecodeError, KeyError):
+        except (orjson.JSONDecodeError, ValueError, KeyError):
             return {}
-        
+
     return result_dict
 
 

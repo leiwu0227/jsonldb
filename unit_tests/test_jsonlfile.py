@@ -348,6 +348,21 @@ def test_select_single_record(test_file, sample_data):
     assert "key2" in selected
     assert selected["key2"] == sample_data["key2"]
 
+def test_load_jsonl_uses_orjson(test_file, sample_data, monkeypatch):
+    """Test that load_jsonl works with orjson parsing (bytes input)"""
+    save_jsonl(test_file, sample_data)
+    # Monkeypatch json.loads to raise — proving orjson is used instead
+    import json as json_mod
+    original_loads = json_mod.loads
+    def patched_loads(*args, **kwargs):
+        raise AssertionError("json.loads should not be called during load_jsonl")
+    monkeypatch.setattr(json_mod, "loads", patched_loads)
+    try:
+        loaded = load_jsonl(test_file)
+        assert loaded == sample_data
+    finally:
+        monkeypatch.setattr(json_mod, "loads", original_loads)
+
 def test_index_file_is_compact(test_file, sample_data):
     """Test that .idx files are written in compact format (no indentation)"""
     save_jsonl(test_file, sample_data)
