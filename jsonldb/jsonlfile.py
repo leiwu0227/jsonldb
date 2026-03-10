@@ -135,8 +135,8 @@ def build_jsonl_index(jsonl_file_path: str) -> None:
 
     # Handle empty file case
     if os.path.getsize(jsonl_file_path) == 0:
-        with open(index_file_path, 'w', encoding='utf-8') as f:
-            json.dump(index_dict, f, indent=2)
+        with open(index_file_path, 'wb') as f:
+            f.write(orjson.dumps(index_dict, option=orjson.OPT_SORT_KEYS))
         return
 
     try:
@@ -166,8 +166,8 @@ def build_jsonl_index(jsonl_file_path: str) -> None:
 
         # Sort and save index
         index_dict = dict(sorted(index_dict.items()))
-        with open(index_file_path, 'w', encoding='utf-8') as f:
-            json.dump(index_dict, f, indent=2)
+        with open(index_file_path, 'wb') as f:
+            f.write(orjson.dumps(index_dict, option=orjson.OPT_SORT_KEYS))
             
     except OSError as e:
         raise OSError(f"Failed to build index for {jsonl_file_path}: {str(e)}")
@@ -359,8 +359,8 @@ def save_jsonl(jsonl_file_path: str, db_dict: DataDict) -> None:
         if not db_dict:
             with open(jsonl_file_path, 'wb') as f:
                 pass  # create empty file
-            with open(f"{jsonl_file_path}.idx", 'w', encoding='utf-8') as f:
-                json.dump({}, f, indent=2)
+            with open(f"{jsonl_file_path}.idx", 'wb') as f:
+                f.write(orjson.dumps({}, option=orjson.OPT_SORT_KEYS))
             return
 
         byte_offset = 0
@@ -381,8 +381,8 @@ def save_jsonl(jsonl_file_path: str, db_dict: DataDict) -> None:
                 f.write(line)
 
         # Write index atomically
-        with open(f"{jsonl_file_path}.idx", 'w', encoding='utf-8') as f:
-            json.dump(dict(sorted(index.items())), f, indent=2)
+        with open(f"{jsonl_file_path}.idx", 'wb') as f:
+            f.write(orjson.dumps(dict(sorted(index.items())), option=orjson.OPT_SORT_KEYS))
             
     except OSError as e:
         raise OSError(f"Failed to save JSONL file {jsonl_file_path}: {str(e)}")
@@ -468,9 +468,9 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
     
     try:
         # Load index
-        with open(f"{jsonl_file_path}.idx", 'r') as f:
-            index_dict = json.load(f)
-            
+        with open(f"{jsonl_file_path}.idx", 'rb') as f:
+            index_dict = orjson.loads(f.read())
+
         # If no keys in index, return empty dict
         if not index_dict:
             return {}
@@ -545,8 +545,8 @@ def select_line_jsonl(jsonl_file_path: str, linekey: LineKey, auto_serialize: bo
     
     index_path = jsonl_file_path + '.idx'
     # Read the index file
-    with open(index_path, 'r') as f:
-        index_dict = json.load(f)
+    with open(index_path, 'rb') as f:
+        index_dict = orjson.loads(f.read())
     
     # Check if key exists in index
     if linekey not in index_dict:
@@ -597,8 +597,8 @@ def update_jsonl(jsonl_file_path: str, update_dict: DataDict) -> None:
     
     try:
         # Load index
-        with open(f"{jsonl_file_path}.idx", 'r', encoding='utf-8', buffering=BUFFER_SIZE) as f:
-            index = json.load(f)
+        with open(f"{jsonl_file_path}.idx", 'rb') as f:
+            index = orjson.loads(f.read())
 
         updates = []
         appends = []
@@ -639,8 +639,8 @@ def update_jsonl(jsonl_file_path: str, update_dict: DataDict) -> None:
                     f.write(line)
 
         # Update index
-        with open(f"{jsonl_file_path}.idx", 'w', encoding='utf-8') as f:
-            json.dump(dict(sorted(index.items())), f, indent=2)
+        with open(f"{jsonl_file_path}.idx", 'wb') as f:
+            f.write(orjson.dumps(dict(sorted(index.items())), option=orjson.OPT_SORT_KEYS))
             
     except OSError as e:
         raise OSError(f"Failed to update JSONL file {jsonl_file_path}: {str(e)}")
@@ -686,7 +686,7 @@ def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey]) -> None:
 
         # Update index using orjson for faster JSON serialization
         with open(f"{jsonl_file_path}.idx", 'wb') as f:
-            f.write(orjson.dumps(dict(sorted(index.items())), option=orjson.OPT_SERIALIZE_NUMPY|orjson.OPT_INDENT_2))
+            f.write(orjson.dumps(dict(sorted(index.items())), option=orjson.OPT_SORT_KEYS))
             
     except OSError as e:
         raise OSError(f"Failed to delete from JSONL file {jsonl_file_path}: {str(e)}")

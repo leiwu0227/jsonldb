@@ -339,11 +339,20 @@ def test_select_empty_range(test_file, sample_data):
 def test_select_single_record(test_file, sample_data):
     """Test selecting a single record using same lower and upper bound"""
     save_jsonl(test_file, sample_data)
-    
+
     # Select just key2
     selected = select_jsonl(test_file, lower_key="key2", upper_key="key2")
-    
+
     # Verify selection
     assert len(selected) == 1
     assert "key2" in selected
-    assert selected["key2"] == sample_data["key2"] 
+    assert selected["key2"] == sample_data["key2"]
+
+def test_index_file_is_compact(test_file, sample_data):
+    """Test that .idx files are written in compact format (no indentation)"""
+    save_jsonl(test_file, sample_data)
+    with open(test_file + ".idx", "rb") as f:
+        raw = f.read()
+    # Compact format has no newlines within the JSON object
+    decoded = raw.decode("utf-8")
+    assert "\n" not in decoded.strip()
