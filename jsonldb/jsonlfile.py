@@ -7,8 +7,7 @@ import pandas as pd
 from typing import Dict, List, Optional, Union, Any
 import datetime as dt
 import orjson
-import numpy as np
-from numba import jit
+from bisect import bisect_left, bisect_right
 import mmap
 
 # --------------------------------------------------------
@@ -23,84 +22,6 @@ TIME_SPEC = 'seconds'  #or seconds/microseconds
 LineKey = Union[str, dt.datetime]
 DataDict = Dict[str, dict]
 IndexDict = Dict[str, int]
-
-# --------------------------------------------------------
-# Numba optimized functions
-# --------------------------------------------------------
-
-@jit(nopython=True)
-def _sort_numeric_keys(keys: np.ndarray) -> np.ndarray:
-    """Sort array of numeric values using Numba.
-    
-    Args:
-        keys (np.ndarray): Array of numeric values to sort
-    
-    Returns:
-        np.ndarray: Array of indices that would sort the array
-    """
-    return np.argsort(keys)
-
-def _convert_key_to_sortable(key: Union[str, dt.datetime, float]) -> float:
-    """Convert a key to a sortable numeric value.
-    
-    Args:
-        key: String, datetime, or numeric key
-        
-    Returns:
-        float: Numeric value for sorting
-    """
-    if isinstance(key, dt.datetime):
-        return key.timestamp()
-    elif isinstance(key, str):
-        # Convert string to numeric value for sorting
-        # Use UTF-8 bytes for consistent ordering
-        return float(sum(b * 256**i for i, b in enumerate(key.encode('utf-8'))))
-    return float(key)  # fallback for numeric keys
-
-def _fast_sort_records(records: Dict[str, Any]) -> Dict[str, Any]:
-    """Sort records by converting keys to sortable numeric values.
-    
-    Args:
-        records (dict): Dictionary with string or datetime keys
-        
-    Returns:
-        dict: Sorted dictionary
-    """
-    if not records:
-        return records
-        
-    # Convert keys to sortable numeric values
-    keys = list(records.keys())
-    numeric_keys = np.array([_convert_key_to_sortable(k) for k in keys], dtype=np.float64)
-    
-    # Get sorted indices using Numba
-    sorted_indices = _sort_numeric_keys(numeric_keys)
-    
-    # Create new sorted dictionary
-    sorted_dict = {}
-    for idx in sorted_indices:
-        key = keys[idx]
-        sorted_dict[key] = records[key]
-    
-    return sorted_dict
-
-@jit(nopython=True)
-def _select_keys_in_range(keys: np.ndarray, lower: str, upper: str) -> np.ndarray:
-    """
-    Numba-optimized function to select keys within a range.
-    
-    Args:
-        keys: NumPy array of string keys
-        lower: Lower bound key (inclusive)
-        upper: Upper bound key (inclusive)
-        
-    Returns:
-        Boolean mask array indicating which keys are in range
-    """
-    mask = np.zeros(len(keys), dtype=np.bool_)
-    for i in range(len(keys)):
-        mask[i] = lower <= keys[i] <= upper
-    return mask
 
 # --------------------------------------------------------
 # Indexing Functions
@@ -195,7 +116,7 @@ def lint_jsonl(jsonl_file_path: str) -> None:
     Clean and optimize a JSONL file.
     
     - Loads all valid records
-    - Sorts by linekey using Numba
+    - Sorts by linekey
     - Removes whitespace
     - Rewrites file in optimized format
     - Rebuilds index
@@ -210,8 +131,8 @@ def lint_jsonl(jsonl_file_path: str) -> None:
     
     records = load_jsonl(jsonl_file_path)
     
-    # Sort records using Numba-optimized sorting
-    sorted_records = _fast_sort_records(records)
+    # Sort records by string key
+    sorted_records = dict(sorted(records.items(), key=lambda x: str(x[0])))
     
     # Save sorted records
     save_jsonl(jsonl_file_path, sorted_records)
@@ -477,33 +398,34 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
         lower_key = serialize_linekey(lower_key)
         upper_key = serialize_linekey(upper_key)
         
-        result_dict: DataDict = {}
-        
-        # Get keys in range using Numba-optimized function
-        keys = np.array(all_keys)
-        mask = _select_keys_in_range(keys, lower_key, upper_key)
-        selected_linekeys = keys[mask]
-        # print(f"Selected {len(selected_linekeys)} keys from {len(keys)} keys")
-        # print(f"First key: {selected_linekeys[0]}")
-        # print(f"Last key: {selected_linekeys[-1]}")
+        # Use bisect for O(log n) range selection
+        lo = bisect_left(all_keys, lower_key)
+        hi = bisect_right(all_keys, upper_key)
+        selected_linekeys = all_keys[lo:hi]
 
-        # Load selected records
+        # Read in offset order for sequential I/O
+        offset_key_pairs = sorted(
+            [(index_dict[k], k) for k in selected_linekeys]
+        )
+        raw_results = {}
         with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
-            for linekey in selected_linekeys:
-
-                f.seek(index_dict[linekey])
-                line = f.readline().strip()
+            for offset, linekey in offset_key_pairs:
+                f.seek(offset)
+                line = f.readline()
                 data = orjson.loads(line)
+                raw_results[linekey] = data[linekey]
 
-                if auto_deserialize and _is_datetime_string(linekey):
-                    try:
-                        actual_key = deserialize_linekey(linekey, "datetime")
-                        result_dict[actual_key] = data[linekey]
-                    except ValueError:
-                        result_dict[linekey] = data[linekey]
-                else:
-                    result_dict[linekey] = data[linekey]
-
+        # Rebuild in sorted key order with deserialization
+        result_dict = {}
+        for linekey in selected_linekeys:
+            if auto_deserialize and _is_datetime_string(linekey):
+                try:
+                    actual_key = deserialize_linekey(linekey, "datetime")
+                    result_dict[actual_key] = raw_results[linekey]
+                except ValueError:
+                    result_dict[linekey] = raw_results[linekey]
+            else:
+                result_dict[linekey] = raw_results[linekey]
         return result_dict
         
     except OSError as e:

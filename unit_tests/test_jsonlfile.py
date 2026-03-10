@@ -363,6 +363,20 @@ def test_load_jsonl_uses_orjson(test_file, sample_data, monkeypatch):
     finally:
         monkeypatch.setattr(json_mod, "loads", original_loads)
 
+def test_select_does_not_use_numpy(test_file, sample_data, monkeypatch):
+    """Test that select_jsonl uses bisect, not numpy for range selection"""
+    save_jsonl(test_file, sample_data)
+    import numpy as np_mod
+    original_array = np_mod.array
+    def patched_array(*args, **kwargs):
+        raise AssertionError("np.array should not be called during select_jsonl")
+    monkeypatch.setattr(np_mod, "array", patched_array)
+    try:
+        selected = select_jsonl(test_file, lower_key="key1", upper_key="key2")
+        assert len(selected) == 2
+    finally:
+        monkeypatch.setattr(np_mod, "array", original_array)
+
 def test_index_file_is_compact(test_file, sample_data):
     """Test that .idx files are written in compact format (no indentation)"""
     save_jsonl(test_file, sample_data)
