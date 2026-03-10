@@ -84,7 +84,15 @@ class FolderDB:
         else:
             self.build_dbmeta()
 
-        self.build_configmeta()
+        # Only rewrite config.meta if it doesn't exist or timespec changed
+        # Note: config.meta stores {"timespec": value} as a flat JSONL record
+        # select_jsonl returns {"timespec": value} where "timespec" is the linekey
+        if os.path.exists(self.configmeta_path):
+            config_meta = select_jsonl(self.configmeta_path)
+            if not config_meta or config_meta.get("timespec") != jsonlfile.TIME_SPEC:
+                self.build_configmeta()
+        else:
+            self.build_configmeta()
 
 
    

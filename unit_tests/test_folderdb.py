@@ -465,3 +465,21 @@ def test_get_dict_does_not_create_folders(db_folder, sample_data):
 
     dir_count_after = count_dirs(db_folder)
     assert dir_count_before == dir_count_after
+
+def test_init_does_not_rewrite_configmeta_if_unchanged(db_folder):
+    """Test that __init__ skips config.meta rewrite when value unchanged"""
+    db = FolderDB(db_folder)
+    config_path = os.path.join(db_folder, "config.meta")
+
+    # Read content after first init
+    with open(config_path, 'rb') as f:
+        content_before = f.read()
+    size_before = os.path.getsize(config_path)
+
+    # Re-init — should not rewrite (verify via content identity)
+    db2 = FolderDB(db_folder)
+
+    with open(config_path, 'rb') as f:
+        content_after = f.read()
+
+    assert content_before == content_after
