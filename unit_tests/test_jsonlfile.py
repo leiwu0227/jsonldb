@@ -377,6 +377,47 @@ def test_select_does_not_use_numpy(test_file, sample_data, monkeypatch):
     finally:
         monkeypatch.setattr(np_mod, "array", original_array)
 
+def test_lint_skips_already_clean_file(test_file, sample_data):
+    """Test that lint_jsonl skips rewrite for already sorted, compact files"""
+    save_jsonl(test_file, sample_data)
+    # File is already sorted and compact after save
+    lint_jsonl(test_file)  # First lint to ensure clean state
+
+    # Read file content after first lint
+    with open(test_file, 'rb') as f:
+        content_before = f.read()
+
+    # Second lint should skip (file unchanged) — verify via content hash
+    result = lint_jsonl(test_file)
+
+    with open(test_file, 'rb') as f:
+        content_after = f.read()
+
+    assert result is True
+    assert content_before == content_after  # File bytes unchanged — skip path taken
+
+def test_lint_stream_compacts_dead_lines(test_file, sample_data):
+    """Test that stream lint removes dead lines from delete operations"""
+    save_jsonl(test_file, sample_data)
+    delete_jsonl(test_file, ["key1"])
+
+    size_before = os.path.getsize(test_file)
+    lint_jsonl(test_file)
+    size_after = os.path.getsize(test_file)
+
+    # File should be smaller after compaction
+    assert size_after < size_before
+
+    # Data should still be correct
+    loaded = load_jsonl(test_file)
+    assert len(loaded) == 2
+    assert "key1" not in loaded
+
+def test_lint_returns_false_for_missing_file():
+    """Test lint_jsonl returns False for non-existent file"""
+    result = lint_jsonl("/nonexistent/path/test.jsonl")
+    assert result is False
+
 def test_index_file_is_compact(test_file, sample_data):
     """Test that .idx files are written in compact format (no indentation)"""
     save_jsonl(test_file, sample_data)
