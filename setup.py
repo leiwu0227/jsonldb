@@ -7,7 +7,6 @@ setup(
     install_requires=[
         "pandas>=1.3.0",
         "orjson>=3.6.0",
-        "numba>=0.54.0",
         "gitpython>=3.1.0",
         "bokeh>=2.0.0",
         "numpy>=1.20.0"
