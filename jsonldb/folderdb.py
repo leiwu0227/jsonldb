@@ -4,7 +4,7 @@ Each table is stored in a separate JSONL file.
 """
 
 import os
-import json
+import orjson
 import pandas as pd
 from typing import Dict, List, Union, Optional, Any
 from datetime import datetime
@@ -474,8 +474,8 @@ class FolderDB:
             build_jsonl_index(file_path)
             
         # Read the index file
-        with open(index_path, 'r') as f:
-            index = json.load(f)
+        with open(index_path, 'rb') as f:
+            index = orjson.loads(f.read())
             
         # Filter keys within range
         keys_to_delete = [
@@ -539,15 +539,15 @@ class FolderDB:
             count = 0
             
             if os.path.exists(index_file):
-                with open(index_file, 'r') as f:
-                    index = json.load(f)
+                with open(index_file, 'rb') as f:
+                    index = orjson.loads(f.read())
                     if index:
                         keys = list(index.keys())
                         if keys:
                             min_index = keys[0]
                             max_index = keys[-1]
                             count = len(keys)
-            
+
             file_path = self._get_file_path(name)
             # Create metadata entry using name without extension as key
             metadata[name] = {
@@ -608,8 +608,8 @@ class FolderDB:
         count = 0
 
         if os.path.exists(index_file):
-            with open(index_file, 'r') as f:
-                index = json.load(f)
+            with open(index_file, 'rb') as f:
+                index = orjson.loads(f.read())
                 if index:
                     keys = list(index.keys())
                     if keys:

@@ -1,5 +1,12 @@
 #!/usr/bin/env python
-"""Benchmark script for JSONLDB performance."""
+"""Benchmark script for JSONLDB performance.
+
+Usage:
+    python benchmark.py                  # Run benchmarks, print results
+    python benchmark.py --save baseline.json   # Run and save results to file
+    python benchmark.py --compare baseline.json  # Run and compare against saved baseline
+    python benchmark.py --large          # Include 1M record benchmarks
+"""
 
 import os
 import sys
@@ -7,12 +14,16 @@ import time
 import shutil
 import tempfile
 import argparse
+import json
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from jsonldb.jsonlfile import save_jsonl, load_jsonl, select_jsonl, lint_jsonl, delete_jsonl, update_jsonl
 from jsonldb.folderdb import FolderDB
+
+# Collect results for save/compare
+_results = {}
 
 
 def generate_data(n):
@@ -31,6 +42,7 @@ def bench(label, fn, *args, **kwargs):
     result = fn(*args, **kwargs)
     elapsed = time.perf_counter() - start
     print(f"  {label:<50s} {elapsed:8.3f}s")
+    _results[label] = elapsed
     return elapsed, result
 
 
@@ -105,9 +117,32 @@ def benchmark_folderdb(num_files=50, records_per_file=1000):
         shutil.rmtree(tmp)
 
 
+def print_comparison(baseline, current):
+    """Print a before/after comparison table."""
+    print("\n" + "=" * 78)
+    print("BEFORE / AFTER COMPARISON")
+    print("=" * 78)
+    print(f"  {'Operation':<42s} {'Before':>8s} {'After':>8s} {'Speedup':>8s}")
+    print(f"  {'-'*42} {'-'*8} {'-'*8} {'-'*8}")
+
+    for label in current:
+        before = baseline.get(label)
+        after = current[label]
+        if before is not None:
+            speedup = before / after if after > 0 else float('inf')
+            marker = " <--" if speedup < 0.8 else ""
+            print(f"  {label:<42s} {before:7.3f}s {after:7.3f}s {speedup:7.1f}x{marker}")
+        else:
+            print(f"  {label:<42s} {'N/A':>8s} {after:7.3f}s {'N/A':>8s}")
+
+    print()
+
+
 def main():
     parser = argparse.ArgumentParser(description="JSONLDB Performance Benchmarks")
     parser.add_argument("--large", action="store_true", help="Include 1M record benchmarks")
+    parser.add_argument("--save", metavar="FILE", help="Save results to JSON file for later comparison")
+    parser.add_argument("--compare", metavar="FILE", help="Compare current run against a saved baseline")
     args = parser.parse_args()
 
     sizes = [1_000, 10_000, 100_000]
@@ -119,6 +154,21 @@ def main():
 
     benchmark_jsonlfile(sizes)
     benchmark_folderdb()
+
+    # Save results if requested
+    if args.save:
+        with open(args.save, 'w') as f:
+            json.dump(_results, f, indent=2)
+        print(f"\nResults saved to {args.save}")
+
+    # Compare against baseline if requested
+    if args.compare:
+        if not os.path.exists(args.compare):
+            print(f"\nBaseline file not found: {args.compare}")
+        else:
+            with open(args.compare) as f:
+                baseline = json.load(f)
+            print_comparison(baseline, _results)
 
     print("\nDone.")
 
