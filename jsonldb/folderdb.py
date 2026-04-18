@@ -635,8 +635,13 @@ class FolderDB:
         # Update metadata file using jsonlfile
         update_jsonl(self.dbmeta_path, {meta_key: metadata[meta_key]})
 
-    def lint_db(self) -> None:
-        """Lint all JSONL files in the database."""
+    def lint_db(self, force: bool = False) -> None:
+        """Lint all JSONL files in the database.
+
+        Args:
+            force: If True, run full mmap line-count verification on every file.
+                   If False (default), skip the scan when the index is fresh.
+        """
         import orjson
         meta_file = os.path.join(self.folder_path, "db.meta")
         if not os.path.exists(meta_file):
@@ -650,7 +655,7 @@ class FolderDB:
         for name in metadata:
             print(f"Linting file: {name}")
             file_path = self._get_file_path(name)
-            exist_flag = lint_jsonl(file_path)
+            exist_flag = lint_jsonl(file_path, force=force)
 
             if not exist_flag:
                 print(f"File {name} no longer exist, deleting metadata.")
@@ -681,10 +686,10 @@ class FolderDB:
 
         # Single write for all metadata
         save_jsonl(self.dbmeta_path, all_meta)
-        lint_jsonl(self.dbmeta_path)
+        lint_jsonl(self.dbmeta_path, force=force)
 
         if self.use_hierarchy:
-            lint_jsonl(self.hmeta_path)
+            lint_jsonl(self.hmeta_path, force=force)
             self.delete_empty_folders()
 
     def lint_hierarchy(self, hierarchy_depth:int) -> None:

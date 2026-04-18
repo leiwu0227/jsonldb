@@ -509,3 +509,21 @@ def test_lint_db_batches_meta_writes(db_folder, sample_data):
     metadata = select_jsonl(os.path.join(db_folder, "db.meta"))
     assert metadata["users"]["linted"] is True
     assert metadata["products"]["linted"] is True
+
+def test_lint_db_force_parameter(db, sample_data):
+    """Test that lint_db accepts and passes through force parameter"""
+    _, data_dict = sample_data
+    db.upsert_dict("test_table", data_dict)
+
+    # Default (force=False) should work
+    db.lint_db()
+
+    # Explicit force=True should work
+    db.lint_db(force=True)
+
+    # Explicit force=False should work
+    db.lint_db(force=False)
+
+    # Data should still be intact after all lint modes
+    result = db.get_dict(["test_table"])
+    assert len(result["test_table"]) == len(data_dict)
