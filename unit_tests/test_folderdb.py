@@ -511,19 +511,20 @@ def test_lint_db_batches_meta_writes(db_folder, sample_data):
     assert metadata["products"]["linted"] is True
 
 def test_lint_db_force_parameter(db, sample_data):
-    """Test that lint_db accepts and passes through force parameter"""
+    """Test that lint_db passes force through to lint_jsonl"""
     _, data_dict = sample_data
     db.upsert_dict("test_table", data_dict)
 
-    # Default (force=False) should work
-    db.lint_db()
+    # Append an orphaned line to the underlying file (not in index)
+    import orjson
+    file_path = db._get_file_path("test_table")
+    with open(file_path, 'ab') as f:
+        f.write(orjson.dumps({"orphan": {"v": 99}}) + b'\n')
 
-    # Explicit force=True should work
+    # Touch index to appear fresh despite missing the orphan
+    os.utime(file_path + ".idx")
+
+    # force=True: mmap scan detects cardinality mismatch, rebuilds index
     db.lint_db(force=True)
-
-    # Explicit force=False should work
-    db.lint_db(force=False)
-
-    # Data should still be intact after all lint modes
     result = db.get_dict(["test_table"])
-    assert len(result["test_table"]) == len(data_dict)
+    assert "orphan" in result["test_table"]

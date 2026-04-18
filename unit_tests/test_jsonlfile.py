@@ -457,13 +457,42 @@ def test_lint_mtime_skip_path(test_file, sample_data):
     assert mtime_before == mtime_after
 
 
-def test_lint_force_runs_full_scan(test_file, sample_data):
-    """Test that force=True bypasses mtime check and runs full mmap scan"""
+def test_lint_force_detects_orphan_lines(test_file, sample_data):
+    """Test that force=True detects orphaned lines via mmap cardinality scan"""
     save_jsonl(test_file, sample_data)
 
-    # force=True should work and return True
-    result = lint_jsonl(test_file, force=True)
-    assert result is True
+    # Append an orphaned line (not in index)
+    import orjson as _orjson
+    with open(test_file, 'ab') as f:
+        f.write(_orjson.dumps({"orphan": {"v": 99}}) + b'\n')
+
+    # Touch index to appear fresh despite missing the orphan entry.
+    # This prevents ensure_index_exists() from rebuilding.
+    os.utime(test_file + ".idx")
+
+    # force=True: mmap scan counts 4 lines, index has 3 → rebuilds index
+    lint_jsonl(test_file, force=True)
+    loaded = load_jsonl(test_file)
+    assert "orphan" in loaded
+
+
+def test_lint_default_compacts_orphan_lines(test_file, sample_data):
+    """Test that force=False compacts away orphaned lines via sort/compaction"""
+    save_jsonl(test_file, sample_data)
+
+    # Append an orphaned line (not in index)
+    import orjson as _orjson
+    with open(test_file, 'ab') as f:
+        f.write(_orjson.dumps({"orphan": {"v": 99}}) + b'\n')
+
+    # Touch index to appear fresh despite missing the orphan entry
+    os.utime(test_file + ".idx")
+
+    # force=False: fast path loads old index, compaction removes orphan
+    lint_jsonl(test_file, force=False)
+    loaded = load_jsonl(test_file)
+    assert "orphan" not in loaded
+    assert len(loaded) == len(sample_data)
 
 
 def test_lint_stale_index_recovers(test_file, sample_data):
