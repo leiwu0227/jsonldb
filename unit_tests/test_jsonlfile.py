@@ -466,16 +466,21 @@ def test_lint_force_runs_full_scan(test_file, sample_data):
     assert result is True
 
 
-def test_lint_stale_index_triggers_full_scan(test_file, sample_data):
-    """Test that stale index (older than data file) triggers full scan"""
+def test_lint_stale_index_recovers(test_file, sample_data):
+    """Test that lint_jsonl handles a stale index gracefully"""
     save_jsonl(test_file, sample_data)
 
-    # Make the index appear old by setting its mtime to epoch 0
+    # Make the index appear old — ensure_index_exists() will rebuild it,
+    # then the mtime gate will see a fresh index and use the fast path.
+    # Either way, data integrity is maintained.
     os.utime(test_file + ".idx", (0, 0))
 
-    # lint should still work (falls through to full scan)
     result = lint_jsonl(test_file)
     assert result is True
+
+    # Verify data is intact after recovery
+    loaded = load_jsonl(test_file)
+    assert len(loaded) == len(sample_data)
 
 
 def test_lint_corrupt_index_fast_path_recovery(test_file, sample_data):
