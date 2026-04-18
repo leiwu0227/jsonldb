@@ -495,6 +495,24 @@ def test_lint_default_compacts_orphan_lines(test_file, sample_data):
     assert len(loaded) == len(sample_data)
 
 
+def test_lint_bad_index_offsets_recovery(test_file, sample_data):
+    """Test that lint recovers when index has valid JSON but wrong offsets"""
+    import orjson as _orjson
+    save_jsonl(test_file, sample_data)
+
+    # Write a valid JSON index with bad byte offsets
+    bad_index = {"a": 1, "b": 999999}
+    with open(test_file + ".idx", 'wb') as f:
+        f.write(_orjson.dumps(bad_index))
+    os.utime(test_file + ".idx")
+
+    result = lint_jsonl(test_file)
+    assert result is True
+
+    loaded = load_jsonl(test_file)
+    assert len(loaded) == len(sample_data)
+
+
 def test_lint_stale_index_recovers(test_file, sample_data):
     """Test that lint_jsonl handles a stale index gracefully"""
     save_jsonl(test_file, sample_data)
