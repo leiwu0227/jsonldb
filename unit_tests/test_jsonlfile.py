@@ -440,6 +440,64 @@ def test_verify_and_compact_sorts_unsorted(test_file):
     keys = [next(iter(orjson.loads(line))) for line in lines]
     assert keys == ["a", "b", "c"]
 
+def test_lint_mtime_skip_path(test_file, sample_data):
+    """Test that lint_jsonl skips mmap scan when index is fresh"""
+    save_jsonl(test_file, sample_data)
+    lint_jsonl(test_file, force=True)  # Ensure clean state
+
+    # Get file state before
+    mtime_before = os.path.getmtime(test_file)
+
+    # Call lint without force — should use fast path (index is fresh)
+    result = lint_jsonl(test_file)
+    assert result is True
+
+    # File should not have been rewritten (mtime unchanged)
+    mtime_after = os.path.getmtime(test_file)
+    assert mtime_before == mtime_after
+
+
+def test_lint_force_runs_full_scan(test_file, sample_data):
+    """Test that force=True bypasses mtime check and runs full mmap scan"""
+    save_jsonl(test_file, sample_data)
+
+    # force=True should work and return True
+    result = lint_jsonl(test_file, force=True)
+    assert result is True
+
+
+def test_lint_stale_index_triggers_full_scan(test_file, sample_data):
+    """Test that stale index (older than data file) triggers full scan"""
+    save_jsonl(test_file, sample_data)
+
+    # Make the index appear old by setting its mtime to epoch 0
+    os.utime(test_file + ".idx", (0, 0))
+
+    # lint should still work (falls through to full scan)
+    result = lint_jsonl(test_file)
+    assert result is True
+
+
+def test_lint_corrupt_index_fast_path_recovery(test_file, sample_data):
+    """Test that corrupt index on fast path triggers rebuild"""
+    save_jsonl(test_file, sample_data)
+
+    # Corrupt the index file
+    with open(test_file + ".idx", 'wb') as f:
+        f.write(b'not valid json')
+
+    # Touch index to make it appear fresh
+    os.utime(test_file + ".idx")
+
+    # lint should recover via rebuild
+    result = lint_jsonl(test_file)
+    assert result is True
+
+    # Data should still be readable
+    loaded = load_jsonl(test_file)
+    assert len(loaded) == len(sample_data)
+
+
 def test_index_file_is_compact(test_file, sample_data):
     """Test that .idx files are written in compact format (no indentation)"""
     save_jsonl(test_file, sample_data)

@@ -165,15 +165,18 @@ def _verify_and_compact(jsonl_file_path: str, index_dict: dict) -> bool:
     build_jsonl_index(jsonl_file_path)
     return True
 
-def lint_jsonl(jsonl_file_path: str) -> bool:
-    """
-    Clean and optimize a JSONL file.
+def lint_jsonl(jsonl_file_path: str, force: bool = False) -> bool:
+    """Clean and optimize a JSONL file.
 
     Uses stream-based approach to avoid loading entire file into memory.
     Skips rewrite if file is already sorted and compact.
 
+    When force=False (default), skips the expensive mmap line-count scan
+    if the index file is at least as recent as the data file.
+
     Args:
         jsonl_file_path: Path to the JSONL file to optimize
+        force: If True, always run full mmap line-count verification
 
     Returns:
         bool: True if file exists (whether skipped or linted), False if not found
@@ -187,7 +190,23 @@ def lint_jsonl(jsonl_file_path: str) -> bool:
 
     ensure_index_exists(jsonl_file_path)
 
-    # Full mmap line-count scan
+    index_path = jsonl_file_path + ".idx"
+
+    # Fast path: skip mmap scan when index is fresh
+    if not force:
+        idx_mtime = os.path.getmtime(index_path)
+        data_mtime = os.path.getmtime(jsonl_file_path)
+        if idx_mtime >= data_mtime:
+            try:
+                with open(index_path, 'rb') as f:
+                    index_dict = orjson.loads(f.read())
+            except (orjson.JSONDecodeError, OSError):
+                build_jsonl_index(jsonl_file_path)
+                with open(index_path, 'rb') as f:
+                    index_dict = orjson.loads(f.read())
+            return _verify_and_compact(jsonl_file_path, index_dict)
+
+    # Full path: mmap line-count scan
     with open(jsonl_file_path, 'rb') as f:
         with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
             non_blank_count = sum(
@@ -195,12 +214,12 @@ def lint_jsonl(jsonl_file_path: str) -> bool:
                 if line.strip()
             )
 
-    with open(f"{jsonl_file_path}.idx", 'rb') as f:
+    with open(index_path, 'rb') as f:
         index_dict = orjson.loads(f.read())
 
     if non_blank_count != len(index_dict):
         build_jsonl_index(jsonl_file_path)
-        with open(f"{jsonl_file_path}.idx", 'rb') as f:
+        with open(index_path, 'rb') as f:
             index_dict = orjson.loads(f.read())
 
     return _verify_and_compact(jsonl_file_path, index_dict)
