@@ -418,6 +418,28 @@ def test_lint_returns_false_for_missing_file():
     result = lint_jsonl("/nonexistent/path/test.jsonl")
     assert result is False
 
+def test_verify_and_compact_sorts_unsorted(test_file):
+    """Test that _verify_and_compact sorts unsorted keys"""
+    from jsonldb.jsonlfile import _verify_and_compact, build_jsonl_index
+    import orjson
+    # Write keys out of order
+    data = {"c": {"v": 3}, "a": {"v": 1}, "b": {"v": 2}}
+    with open(test_file, 'wb') as f:
+        for k, v in data.items():
+            f.write(orjson.dumps({k: v}) + b'\n')
+    build_jsonl_index(test_file)
+
+    with open(test_file + ".idx", 'rb') as f:
+        index_dict = orjson.loads(f.read())
+
+    _verify_and_compact(test_file, index_dict)
+
+    # Verify file is now sorted
+    with open(test_file, 'rb') as f:
+        lines = f.readlines()
+    keys = [next(iter(orjson.loads(line))) for line in lines]
+    assert keys == ["a", "b", "c"]
+
 def test_index_file_is_compact(test_file, sample_data):
     """Test that .idx files are written in compact format (no indentation)"""
     save_jsonl(test_file, sample_data)

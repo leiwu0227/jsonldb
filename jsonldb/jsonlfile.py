@@ -111,6 +111,60 @@ def ensure_index_exists(jsonl_file_path: str) -> None:
     if should_rebuild:
         build_jsonl_index(jsonl_file_path)
 
+def _verify_and_compact(jsonl_file_path: str, index_dict: dict) -> bool:
+    """Spot-check, sort-verify, and compact a JSONL file using a pre-loaded index.
+
+    Args:
+        jsonl_file_path: Path to the JSONL file
+        index_dict: Pre-loaded index dictionary (key -> byte offset)
+
+    Returns:
+        True if file exists and was processed, False if index is empty
+    """
+    if index_dict:
+        keys = list(index_dict.keys())
+        with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
+            for check_key in [keys[0], keys[-1]]:
+                f.seek(index_dict[check_key])
+                line = f.readline()
+                data = orjson.loads(line)
+                parsed_key = next(iter(data))
+                if parsed_key != check_key:
+                    build_jsonl_index(jsonl_file_path)
+                    with open(f"{jsonl_file_path}.idx", 'rb') as f2:
+                        index_dict = orjson.loads(f2.read())
+                    break
+
+    if not index_dict:
+        return True
+
+    keys = list(index_dict.keys())
+    is_sorted = all(keys[i] <= keys[i+1] for i in range(len(keys)-1))
+
+    if is_sorted:
+        if index_dict[keys[0]] == 0:
+            with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
+                f.seek(index_dict[keys[-1]])
+                last_line = f.readline()
+                expected_end = index_dict[keys[-1]] + len(last_line)
+                actual_size = os.path.getsize(jsonl_file_path)
+                if expected_end == actual_size:
+                    return True
+
+    sorted_keys = sorted(keys, key=str)
+    tmp_path = jsonl_file_path + '.tmp'
+
+    with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as src:
+        with open(tmp_path, 'wb', buffering=BUFFER_SIZE) as dst:
+            for key in sorted_keys:
+                src.seek(index_dict[key])
+                line = src.readline()
+                dst.write(line)
+
+    os.replace(tmp_path, jsonl_file_path)
+    build_jsonl_index(jsonl_file_path)
+    return True
+
 def lint_jsonl(jsonl_file_path: str) -> bool:
     """
     Clean and optimize a JSONL file.
@@ -131,10 +185,9 @@ def lint_jsonl(jsonl_file_path: str) -> bool:
         ensure_index_exists(jsonl_file_path)
         return True
 
-    # Step 1: Ensure index exists
     ensure_index_exists(jsonl_file_path)
 
-    # Step 2: Line-count check + spot verification
+    # Full mmap line-count scan
     with open(jsonl_file_path, 'rb') as f:
         with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
             non_blank_count = sum(
@@ -146,58 +199,11 @@ def lint_jsonl(jsonl_file_path: str) -> bool:
         index_dict = orjson.loads(f.read())
 
     if non_blank_count != len(index_dict):
-        # Orphaned/corrupted lines — rebuild index
         build_jsonl_index(jsonl_file_path)
         with open(f"{jsonl_file_path}.idx", 'rb') as f:
             index_dict = orjson.loads(f.read())
-    else:
-        # Spot-check first and last entries
-        if index_dict:
-            keys = list(index_dict.keys())
-            with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
-                for check_key in [keys[0], keys[-1]]:
-                    f.seek(index_dict[check_key])
-                    line = f.readline()
-                    data = orjson.loads(line)
-                    parsed_key = next(iter(data))
-                    if parsed_key != check_key:
-                        build_jsonl_index(jsonl_file_path)
-                        with open(f"{jsonl_file_path}.idx", 'rb') as f2:
-                            index_dict = orjson.loads(f2.read())
-                        break
 
-    if not index_dict:
-        return True
-
-    # Step 3: Sorted + compaction check
-    keys = list(index_dict.keys())
-    is_sorted = all(keys[i] <= keys[i+1] for i in range(len(keys)-1))
-
-    if is_sorted:
-        # Check for dead space: first entry must start at 0, last must end at EOF
-        if index_dict[keys[0]] == 0:
-            with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
-                f.seek(index_dict[keys[-1]])
-                last_line = f.readline()
-                expected_end = index_dict[keys[-1]] + len(last_line)
-                actual_size = os.path.getsize(jsonl_file_path)
-                if expected_end == actual_size:
-                    return True  # Already clean — skip
-
-    # Step 4: Stream-lint
-    sorted_keys = sorted(keys, key=str)
-    tmp_path = jsonl_file_path + '.tmp'
-
-    with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as src:
-        with open(tmp_path, 'wb', buffering=BUFFER_SIZE) as dst:
-            for key in sorted_keys:
-                src.seek(index_dict[key])
-                line = src.readline()
-                dst.write(line)
-
-    os.replace(tmp_path, jsonl_file_path)
-    build_jsonl_index(jsonl_file_path)
-    return True
+    return _verify_and_compact(jsonl_file_path, index_dict)
 
 # --------------------------------------------------------
 # Utility Functions
