@@ -132,7 +132,7 @@ def _verify_and_compact(jsonl_file_path: str, index_dict: dict) -> bool:
                     parsed_key = next(iter(data))
                     if parsed_key != check_key:
                         raise ValueError("key mismatch")
-        except (orjson.JSONDecodeError, ValueError, OSError):
+        except (orjson.JSONDecodeError, ValueError, TypeError, OSError):
             build_jsonl_index(jsonl_file_path)
             with open(f"{jsonl_file_path}.idx", 'rb') as f2:
                 index_dict = orjson.loads(f2.read())
