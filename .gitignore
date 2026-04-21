@@ -32,5 +32,6 @@ unit_tests/
 
 # Agent / assistant config
 .claude/
+.cursor/
 CLAUDE.md
 AGENTS.md
