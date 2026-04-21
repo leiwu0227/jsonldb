@@ -1,6 +1,0 @@
-# jsonldb production allowlist
-jsonldb/**
-setup.py
-pyproject.toml
-README.md
-.gitignore

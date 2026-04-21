@@ -22,4 +22,15 @@ env/
 *.swo
 
 # Jupyter Notebook
-.ipynb_checkpoints 
+.ipynb_checkpoints
+
+# Local dev / tooling
+.prodinclude
+.journal/
+profile_test/
+unit_tests/
+
+# Agent / assistant config
+.claude/
+CLAUDE.md
+AGENTS.md
