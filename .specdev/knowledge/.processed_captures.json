@@ -1,8 +1,10 @@
 {
   "project": [
-    "00001_refactor_perf-optimization"
+    "00001_refactor_perf-optimization",
+    "00002_refactor_lint-db-perf"
   ],
   "workflow": [
-    "00001_refactor_perf-optimization"
+    "00001_refactor_perf-optimization",
+    "00002_refactor_lint-db-perf"
   ]
 }

@@ -1,0 +1,1 @@
+{"tasks":[{"number":1,"name":"Extract _verify_and_compact() helper from lint_jsonl()","mode":"standard","status":"completed"},{"number":2,"name":"Add force parameter and mtime fast path to lint_jsonl()","mode":"full","status":"completed"},{"number":3,"name":"Add force parameter to FolderDB.lint_db() and pass through","mode":"full","status":"completed"}]}

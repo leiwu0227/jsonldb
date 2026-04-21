@@ -24,6 +24,7 @@ Internal team use.
 - Linekeys can be strings or ISO datetimes; datetime precision is configurable (`seconds` or `microseconds`)
 - Serialization uses orjson exclusively (no stdlib json fallback)
 - Files are written with large buffer sizes (50 MB) for throughput
-- `lint_jsonl` uses stream-based approach: line-count check + spot verification to skip already-clean files; otherwise seeks per line in sorted order, writes to temp file, atomic rename
+- `lint_jsonl(path, force=False)` uses mtime-based fast path: when `.idx` is fresh, skips O(file_size) mmap scan and does spot check + sort/compaction only; `force=True` runs full mmap line-count verification for crash recovery or maintenance
+- `FolderDB.lint_db(force=False)` orchestrates linting across all tables, passing `force` through to each `lint_jsonl` call
 - `.idx` files use compact (no-indent) orjson format for minimal disk I/O
 - `profile_test/benchmark.py` provides performance benchmarks with `--save`/`--compare` for before/after comparison

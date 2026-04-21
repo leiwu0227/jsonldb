@@ -25,6 +25,7 @@ Below is a list of proposed assignments and their completion progress.
 |---|-----------------|--------|----------------|-------|
 | 00000 | placholder | placholder | yyyy-mm-dd | placholder |
 | 00001 | Performance Optimization | Done | 2026-03-10 | orjson unification, bisect, stream-lint, batched meta |
+| 00002 | lint_db Performance | Done | 2026-04-19 | mtime fast path, force parameter, fault-tolerant spot check |
 
 ---
 
