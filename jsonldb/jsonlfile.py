@@ -598,8 +598,13 @@ def update_jsonl(jsonl_file_path: str, update_dict: DataDict) -> None:
         # Process records
         with open(jsonl_file_path, 'rb+', buffering=BUFFER_SIZE) as f:
             f.seek(0, os.SEEK_END)
+            # Heal a missing trailing newline so appends start on a fresh line
+            if f.tell() > 0:
+                f.seek(-1, os.SEEK_END)
+                if f.read(1) != b'\n':
+                    f.write(b'\n')
             append_pos = f.tell()
-            
+
             for linekey, data in update_dict.items():
                 linekey = serialize_linekey(linekey)
                 new_line = _fast_dumps({linekey: data}).encode('utf-8')
