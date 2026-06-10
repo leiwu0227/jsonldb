@@ -10,7 +10,7 @@ from typing import Dict, List, Union, Optional, Any
 from datetime import datetime
 from jsonldb.jsonlfile import (
     save_jsonl, load_jsonl, select_jsonl, update_jsonl, delete_jsonl,
-    lint_jsonl, build_jsonl_index, select_line_jsonl
+    lint_jsonl, build_jsonl_index, select_line_jsonl, serialize_linekey
 )
 from jsonldb.jsonldf import (
     save_jsonldf, load_jsonldf, update_jsonldf, select_jsonldf, delete_jsonldf
@@ -477,10 +477,13 @@ class FolderDB:
         with open(index_path, 'rb') as f:
             index = orjson.loads(f.read())
             
-        # Filter keys within range
+        # Filter keys within range (bounds must use the same serialization as
+        # stored keys — str(datetime) uses a space, isoformat uses 'T')
+        lower_str = serialize_linekey(lower_key)
+        upper_str = serialize_linekey(upper_key)
         keys_to_delete = [
             key for key in index.keys()
-            if str(lower_key) <= key <= str(upper_key)
+            if lower_str <= key <= upper_str
         ]
         
         if keys_to_delete:
