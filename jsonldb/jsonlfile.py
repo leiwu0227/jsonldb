@@ -278,6 +278,29 @@ def deserialize_linekey(linekey_str: str, default_format: Optional[str] = None) 
         return dt.datetime.fromisoformat(linekey_str)
     return linekey_str
 
+def detect_timespec(linekey: str) -> Optional[str]:
+    """Detect the datetime precision of a linekey string.
+
+    Example: detect_timespec("2024-01-01T12:00:00.123456") -> 'microseconds'
+             detect_timespec("2024-01-01T12:00:00") -> 'seconds'
+             detect_timespec("key1") -> None
+
+    Args:
+        linekey: String to classify
+
+    Returns:
+        'seconds' or 'microseconds' if the string is a parseable ISO datetime
+        of that precision, None otherwise
+    """
+    for spec in ('seconds', 'microseconds'):
+        if _is_datetime_string(linekey, spec):
+            try:
+                dt.datetime.fromisoformat(linekey)
+                return spec
+            except ValueError:
+                return None
+    return None
+
 def _store_with_key(result_dict: DataDict, linekey: str, value: dict,
                     auto_deserialize: bool, timespec: Optional[str] = None) -> None:
     """Store value under linekey, converting datetime-looking keys when requested.
