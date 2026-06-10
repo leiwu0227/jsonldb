@@ -132,7 +132,7 @@ class FolderDB:
         # Count delimiters
         delimiter_count = name.count(self.delimiter)
         
-        # In hierarchy mode, name must contain exactly hierarchy_depth-1 delimiters
+        # In hierarchy mode, name must contain at least hierarchy_depth-1 delimiters
         # e.g., for depth=3: "users.level1.level2" has 2 delimiters
         return delimiter_count >= self.hierarchy_depth - 1
 
@@ -185,7 +185,7 @@ class FolderDB:
     def _get_file_path(self, name: str) -> str:
         """Get the full path for a JSONL file (read-only, no folder creation)"""
         if self.use_hierarchy and not self.validate_name(name):
-            raise ValueError(f"Invalid hierarchical name '{name}'. Name must contain exactly {self.hierarchy_depth-1} '{self.delimiter}' delimiters")
+            raise ValueError(f"Invalid hierarchical name '{name}'. Name must contain at least {self.hierarchy_depth-1} '{self.delimiter}' delimiters")
         folder_path = self._get_hierarchy_path(name)
         if name.endswith('.jsonl'):
             return os.path.join(folder_path, name)
@@ -194,7 +194,7 @@ class FolderDB:
     def _get_or_create_file_path(self, name: str) -> str:
         """Get the full path for a JSONL file, creating folders as needed (for writes)"""
         if self.use_hierarchy and not self.validate_name(name):
-            raise ValueError(f"Invalid hierarchical name '{name}'. Name must contain exactly {self.hierarchy_depth-1} '{self.delimiter}' delimiters")
+            raise ValueError(f"Invalid hierarchical name '{name}'. Name must contain at least {self.hierarchy_depth-1} '{self.delimiter}' delimiters")
 
         folder_path = self._get_hierarchy_path(name)
         self.create_folder(folder_path) #create the folder if it doesn't exist
@@ -499,6 +499,34 @@ class FolderDB:
             self.delete_file_range(name, lower_key, upper_key)
 
     # =============== Metadata Management ===============
+    def _make_meta_entry(self, name: str, file_path: str, linted: bool = False,
+                         lint_time: str = "") -> Dict[str, Any]:
+        """Build one db.meta entry for a JSONL file from its index file.
+
+        Example: {"name": "users", "path": ".../users.jsonl", "min_index": "a",
+                  "max_index": "z", "size": 123, "count": 3, "lint_time": "", "linted": False}
+        """
+        index_file = file_path + '.idx'
+        min_index = max_index = None
+        count = 0
+        if os.path.exists(index_file):
+            with open(index_file, 'rb') as f:
+                index = orjson.loads(f.read())
+            if index:
+                keys = list(index.keys())
+                min_index, max_index = keys[0], keys[-1]
+                count = len(keys)
+        return {
+            "name": name,
+            "path": file_path,
+            "min_index": min_index,
+            "max_index": max_index,
+            "size": os.path.getsize(file_path),
+            "count": count,
+            "lint_time": lint_time,
+            "linted": linted,
+        }
+
     def build_dbmeta(self) -> None:
         """
         Build or update the db.meta file with information about all JSONL files.
@@ -525,41 +553,13 @@ class FolderDB:
         
         # Process each JSONL file
         for name in jsonl_files:
-            # print(name)
             file_path = self._get_file_path(name)
-            index_file = file_path + '.idx'
-            
-            # Build index if it doesn't exist
-            if not os.path.exists(index_file):
-                build_jsonl_index(file_path)
-            
-            # Get index range from index file
-            min_index = None
-            max_index = None
-            count = 0
-            
-            if os.path.exists(index_file):
-                with open(index_file, 'rb') as f:
-                    index = orjson.loads(f.read())
-                    if index:
-                        keys = list(index.keys())
-                        if keys:
-                            min_index = keys[0]
-                            max_index = keys[-1]
-                            count = len(keys)
 
-            file_path = self._get_file_path(name)
-            # Create metadata entry using name without extension as key
-            metadata[name] = {
-                "name": name,
-                "path": file_path,
-                "min_index": min_index,
-                "max_index": max_index,
-                "size": os.path.getsize(file_path),
-                "count": count,
-                "lint_time": "",
-                "linted": False,  # Default to False
-            }
+            # Build index if it doesn't exist
+            if not os.path.exists(file_path + '.idx'):
+                build_jsonl_index(file_path)
+
+            metadata[name] = self._make_meta_entry(name, file_path)
         
         # Save metadata using jsonlfile
         save_jsonl(self.dbmeta_path, metadata)
@@ -591,49 +591,16 @@ class FolderDB:
             name: Name of the JSONL file (with or without .jsonl extension)
             linted: Value to set for the linted field
         """
-        # Get name without extension for metadata key
-        jsonl_file = name if name.endswith('.jsonl') else f"{name}.jsonl"
-        meta_key = name.replace('.jsonl', '')
+        # Metadata key is the name without the .jsonl extension
+        meta_key = name[:-6] if name.endswith('.jsonl') else name
 
-        # Load existing metadata
-        metadata = {}
-        if os.path.exists(self.dbmeta_path):
-            metadata = select_line_jsonl(self.dbmeta_path, meta_key)
-        
-        # Get index range from index file (use hierarchical path)
+        # Use hierarchical path for the data file
         file_path = self._get_file_path(name)
-        index_file = file_path + ".idx"
-        min_index = None
-        max_index = None
-        count = 0
-
-        if os.path.exists(index_file):
-            with open(index_file, 'rb') as f:
-                index = orjson.loads(f.read())
-                if index:
-                    keys = list(index.keys())
-                    if keys:
-                        min_index = keys[0]
-                        max_index = keys[-1]
-                        count = len(keys)
-
         lint_time = datetime.now().isoformat() if linted else ""
-        # print(f"Updating metadata for {name} with path {file_path}")
+        entry = self._make_meta_entry(meta_key, file_path, linted, lint_time)
 
-        # Update metadata for the specified file using name without extension as key
-        metadata[meta_key] = {
-            "name": meta_key,
-            "path": file_path,
-            "min_index": min_index,
-            "max_index": max_index,
-            "size": os.path.getsize(file_path),
-            "count": count,
-            "lint_time": lint_time,
-            "linted": linted
-        }
-        
         # Update metadata file using jsonlfile
-        update_jsonl(self.dbmeta_path, {meta_key: metadata[meta_key]})
+        update_jsonl(self.dbmeta_path, {meta_key: entry})
 
     def lint_db(self, force: bool = False) -> None:
         """Lint all JSONL files in the database.
@@ -642,7 +609,6 @@ class FolderDB:
             force: If True, run full mmap line-count verification on every file.
                    If False (default), skip the scan when the index is fresh.
         """
-        import orjson
         meta_file = os.path.join(self.folder_path, "db.meta")
         if not os.path.exists(meta_file):
             self.build_dbmeta()
@@ -661,28 +627,9 @@ class FolderDB:
                 print(f"File {name} no longer exist, deleting metadata.")
                 # Simply skip — don't add to all_meta
             else:
-                # Build metadata entry inline
-                index_file = file_path + ".idx"
-                min_index = max_index = None
-                count = 0
-                if os.path.exists(index_file):
-                    with open(index_file, 'rb') as f:
-                        index = orjson.loads(f.read())
-                        if index:
-                            keys = list(index.keys())
-                            min_index, max_index = keys[0], keys[-1]
-                            count = len(keys)
-
-                all_meta[name] = {
-                    "name": name,
-                    "path": file_path,
-                    "min_index": min_index,
-                    "max_index": max_index,
-                    "size": os.path.getsize(file_path),
-                    "count": count,
-                    "lint_time": datetime.now().isoformat(),
-                    "linted": True
-                }
+                all_meta[name] = self._make_meta_entry(
+                    name, file_path, linted=True,
+                    lint_time=datetime.now().isoformat())
 
         # Single write for all metadata
         save_jsonl(self.dbmeta_path, all_meta)
