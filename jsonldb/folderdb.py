@@ -439,10 +439,11 @@ class FolderDB:
         Args:
             name: Name of the JSONL file
         """
-        file_path = self._get_or_create_file_path(name)
+        file_path = self._get_file_path(name)
         if os.path.exists(file_path):
             os.remove(file_path)
-            os.remove(os.path.join(file_path + '.idx'))
+            if os.path.exists(file_path + '.idx'):
+                os.remove(file_path + '.idx')
             if self.use_hierarchy:
                 self.delete_empty_folders()
 
@@ -454,7 +455,7 @@ class FolderDB:
             name: Name of the JSONL file
             keys: List of keys to delete
         """
-        file_path = self._get_or_create_file_path(name)
+        file_path = self._get_file_path(name)
         if os.path.exists(file_path):
             delete_jsonl(file_path, keys)
             self.update_dbmeta(self._get_file_name(name))
@@ -468,7 +469,7 @@ class FolderDB:
             lower_key: Lower bound of the key range
             upper_key: Upper bound of the key range
         """
-        file_path = self._get_or_create_file_path(name)
+        file_path = self._get_file_path(name)
         if not os.path.exists(file_path):
             return
             
