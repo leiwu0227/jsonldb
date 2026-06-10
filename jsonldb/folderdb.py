@@ -423,9 +423,13 @@ class FolderDB:
         if not force:
             print("WARNING: This will delete all data in the database folder. Call clear_folder with force=True to proceed.")
             return
-        for file in os.listdir(self.folder_path):
-            if file.endswith(('.idx', '.jsonl', '.meta')):
-                os.remove(os.path.join(self.folder_path, file))
+        for root, dirs, files in os.walk(self.folder_path, topdown=True):
+            # Skip hidden/system directories (e.g. .git, .invalid_tickers)
+            dirs[:] = [d for d in dirs if not d.startswith('.')]
+            for file in files:
+                if file.endswith(('.idx', '.jsonl', '.meta')):
+                    os.remove(os.path.join(root, file))
+        self.delete_empty_folders()
         self.build_dbmeta()
 
     def delete_file(self, name: str) -> None:
