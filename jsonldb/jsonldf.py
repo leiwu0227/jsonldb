@@ -8,7 +8,7 @@ from typing import Dict, List, Optional, Union, Any
 from numba import jit
 from jsonldb.jsonlfile import save_jsonl, load_jsonl, select_jsonl, update_jsonl, delete_jsonl, build_jsonl_index, lint_jsonl
 
-def save_jsonldf(jsonl_file_path: str, df: pd.DataFrame) -> None:
+def save_jsonldf(jsonl_file_path: str, df: pd.DataFrame, timespec: Optional[str] = None) -> None:
     """Convert DataFrame to JSONL format and save it using index as keys.
     
     Args:
@@ -25,9 +25,9 @@ def save_jsonldf(jsonl_file_path: str, df: pd.DataFrame) -> None:
     records_dict = df.to_dict('index')
     
     # Save to JSONL
-    save_jsonl(jsonl_file_path, records_dict)
+    save_jsonl(jsonl_file_path, records_dict, timespec)
 
-def load_jsonldf(jsonl_file_path: str) -> pd.DataFrame:
+def load_jsonldf(jsonl_file_path: str, timespec: Optional[str] = None) -> pd.DataFrame:
     """Load JSONL file into a DataFrame using line keys as index.
     
     Args:
@@ -37,7 +37,7 @@ def load_jsonldf(jsonl_file_path: str) -> pd.DataFrame:
         pd.DataFrame: DataFrame containing the JSONL data with line keys as index
     """
     # Load JSONL data
-    records_dict = load_jsonl(jsonl_file_path)
+    records_dict = load_jsonl(jsonl_file_path, timespec=timespec)
     
     if not records_dict:
         # Return empty DataFrame
@@ -48,7 +48,7 @@ def load_jsonldf(jsonl_file_path: str) -> pd.DataFrame:
     
     return df
 
-def update_jsonldf(jsonl_file_path: str, df: pd.DataFrame) -> None:
+def update_jsonldf(jsonl_file_path: str, df: pd.DataFrame, timespec: Optional[str] = None) -> None:
     """Update JSONL file with data from DataFrame using index as keys.
     
     Args:
@@ -59,13 +59,14 @@ def update_jsonldf(jsonl_file_path: str, df: pd.DataFrame) -> None:
     updates_dict = df.to_dict('index')
     
     # Update JSONL file
-    update_jsonl(jsonl_file_path, updates_dict)
+    update_jsonl(jsonl_file_path, updates_dict, timespec)
 
 def select_jsonldf(
     jsonl_file_path: str,
     lower_key: Optional[Any] = None,
     upper_key: Optional[Any] = None,
-    auto_deserialize: bool = True
+    auto_deserialize: bool = True,
+    timespec: Optional[str] = None
 ) -> pd.DataFrame:
     """
     Select records from JSONL file within a specified key range.
@@ -87,7 +88,8 @@ def select_jsonldf(
         jsonl_file_path,
         lower_key=lower_key,
         upper_key=upper_key,
-        auto_deserialize=auto_deserialize
+        auto_deserialize=auto_deserialize,
+        timespec=timespec
     )
     
     # Convert to DataFrame
@@ -97,14 +99,14 @@ def select_jsonldf(
         
     return pd.DataFrame.from_dict(records, orient='index')
 
-def delete_jsonldf(jsonl_file_path: str, keys: List[Union[str, int]]) -> None:
+def delete_jsonldf(jsonl_file_path: str, keys: List[Union[str, int]], timespec: Optional[str] = None) -> None:
     """Delete records from JSONL file by their keys.
     
     Args:
         jsonl_file_path (str): Path to the JSONL file
         keys (list): List of keys to delete
     """
-    delete_jsonl(jsonl_file_path, keys)
+    delete_jsonl(jsonl_file_path, keys, timespec)
 
 def lint_jsonldf(jsonl_file_path: str) -> None:
     """Sort and clean the JSONL file.
