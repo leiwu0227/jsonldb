@@ -230,34 +230,38 @@ def lint_jsonl(jsonl_file_path: str, force: bool = False) -> bool:
 # Utility Functions
 # --------------------------------------------------------
 
-def _is_datetime_string(linekey: str) -> bool:
+def _is_datetime_string(linekey: str, timespec: Optional[str] = None) -> bool:
     """Check if a string represents a datetime in ISO format.
-    
+
     Args:
         linekey: String to check
-        
+        timespec: Datetime precision ('seconds' or 'microseconds').
+            Defaults to the module-level TIME_SPEC.
+
     Returns:
         bool: True if the string appears to be a datetime in ISO format
     """
-    if TIME_SPEC == 'seconds':
+    if (timespec or TIME_SPEC) == 'seconds':
         return len(linekey) == 19 and 'T' in linekey and '-' in linekey and ':' in linekey
     else:  # microseconds
         return len(linekey) == 26 and 'T' in linekey and '-' in linekey and ':' in linekey
 
-def serialize_linekey(linekey: LineKey) -> str:
+def serialize_linekey(linekey: LineKey, timespec: Optional[str] = None) -> str:
     """
     Convert a linekey to its string representation.
-    
+
     Args:
         linekey: String or datetime object to serialize
-        
+        timespec: Datetime precision ('seconds' or 'microseconds').
+            Defaults to the module-level TIME_SPEC.
+
     Returns:
         String representation of the linekey
     """
     if isinstance(linekey, str):
         return linekey
     elif isinstance(linekey, dt.datetime):
-        return linekey.isoformat(timespec=TIME_SPEC)
+        return linekey.isoformat(timespec=timespec or TIME_SPEC)
     return str(linekey)
 
 def deserialize_linekey(linekey_str: str, default_format: Optional[str] = None) -> LineKey:
@@ -274,6 +278,21 @@ def deserialize_linekey(linekey_str: str, default_format: Optional[str] = None) 
     if default_format == "datetime":
         return dt.datetime.fromisoformat(linekey_str)
     return linekey_str
+
+def _store_with_key(result_dict: DataDict, linekey: str, value: dict,
+                    auto_deserialize: bool, timespec: Optional[str] = None) -> None:
+    """Store value under linekey, converting datetime-looking keys when requested.
+
+    Example: _store_with_key(d, "2024-01-01T00:00:00", {"v": 1}, True)
+    stores under datetime(2024, 1, 1); non-datetime keys stay strings.
+    """
+    if auto_deserialize and _is_datetime_string(linekey, timespec):
+        try:
+            result_dict[deserialize_linekey(linekey, "datetime")] = value
+            return
+        except ValueError:
+            pass
+    result_dict[linekey] = value
 
 def _fast_dumps(obj: dict) -> str:
     """
@@ -335,7 +354,7 @@ def check_dict_format(data_dict: Dict[Any, Any]) -> bool:
 # Core CRUD Functions
 # --------------------------------------------------------
 
-def save_jsonl(jsonl_file_path: str, db_dict: DataDict) -> None:
+def save_jsonl(jsonl_file_path: str, db_dict: DataDict, timespec: Optional[str] = None) -> None:
     """
     Save a dictionary to a JSONL file with automatic indexing.
     
@@ -365,7 +384,7 @@ def save_jsonl(jsonl_file_path: str, db_dict: DataDict) -> None:
         
         # Pre-process all lines
         for linekey, data in db_dict.items():
-            serialized_key = serialize_linekey(linekey)
+            serialized_key = serialize_linekey(linekey, timespec)
             line_dict = {serialized_key: data}
             line = _fast_dumps(line_dict).encode('utf-8')
             lines.append(line)
@@ -384,7 +403,7 @@ def save_jsonl(jsonl_file_path: str, db_dict: DataDict) -> None:
     except OSError as e:
         raise OSError(f"Failed to save JSONL file {jsonl_file_path}: {str(e)}")
 
-def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True) -> DataDict:
+def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True, timespec: Optional[str] = None) -> DataDict:
     """
     Load a JSONL file into a dictionary.
     
@@ -418,14 +437,7 @@ def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True) -> DataDict:
                     data = orjson.loads(line)
                     if isinstance(data, dict) and len(data) == 1:
                         linekey = next(iter(data))
-                        if auto_deserialize and _is_datetime_string(linekey):
-                            try:
-                                actual_key = deserialize_linekey(linekey, "datetime")
-                                result_dict[actual_key] = data[linekey]
-                            except ValueError:
-                                result_dict[linekey] = data[linekey]
-                        else:
-                            result_dict[linekey] = data[linekey]
+                        _store_with_key(result_dict, linekey, data[linekey], auto_deserialize, timespec)
                 except (orjson.JSONDecodeError, ValueError):
                     print("WARNING: invalid JSON line " + line.decode('utf-8', errors='replace'))
                     continue  # Skip invalid JSON lines
@@ -435,7 +447,7 @@ def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True) -> DataDict:
     except OSError as e:
         raise OSError(f"Failed to load JSONL file {jsonl_file_path}: {str(e)}")
 
-def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, upper_key: Optional[LineKey] = None, auto_deserialize: bool = True) -> DataDict:
+def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, upper_key: Optional[LineKey] = None, auto_deserialize: bool = True, timespec: Optional[str] = None) -> DataDict:
     """
     Select records from a JSONL file within a key range.
     
@@ -454,10 +466,10 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
     """
     # If both keys are None, return all records
     if lower_key is None and upper_key is None:
-        return load_jsonl(jsonl_file_path, auto_deserialize)
+        return load_jsonl(jsonl_file_path, auto_deserialize, timespec)
 
     if lower_key == upper_key:
-        return select_line_jsonl(jsonl_file_path, lower_key, auto_deserialize)
+        return select_line_jsonl(jsonl_file_path, lower_key, auto_deserialize, timespec)
 
     ensure_index_exists(jsonl_file_path)
 
@@ -481,8 +493,8 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
             upper_key = max(all_keys)
             
         # Serialize the keys
-        lower_key = serialize_linekey(lower_key)
-        upper_key = serialize_linekey(upper_key)
+        lower_key = serialize_linekey(lower_key, timespec)
+        upper_key = serialize_linekey(upper_key, timespec)
         
         # Use bisect for O(log n) range selection
         lo = bisect_left(all_keys, lower_key)
@@ -504,34 +516,31 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
         # Rebuild in sorted key order with deserialization
         result_dict = {}
         for linekey in selected_linekeys:
-            if auto_deserialize and _is_datetime_string(linekey):
-                try:
-                    actual_key = deserialize_linekey(linekey, "datetime")
-                    result_dict[actual_key] = raw_results[linekey]
-                except ValueError:
-                    result_dict[linekey] = raw_results[linekey]
-            else:
-                result_dict[linekey] = raw_results[linekey]
+            _store_with_key(result_dict, linekey, raw_results[linekey], auto_deserialize, timespec)
         return result_dict
         
     except OSError as e:
         raise OSError(f"Failed to select from JSONL file {jsonl_file_path}: {str(e)}")
 
-def select_line_jsonl(jsonl_file_path: str, linekey: LineKey, auto_serialize: bool = True) -> Optional[str]:
+def select_line_jsonl(jsonl_file_path: str, linekey: LineKey, auto_serialize: bool = True, timespec: Optional[str] = None) -> DataDict:
     """
-    Get a specific line from a JSONL file based on the linekey.
-    
+    Get a single record from a JSONL file based on the linekey.
+
     Args:
         jsonl_file_path: Path to the JSONL file
         linekey: The key to look for
-        auto_serialize: Whether to automatically serialize the key
-        
+        auto_serialize: Whether to serialize the lookup key and deserialize
+            datetime-looking keys in the result
+        timespec: Datetime precision ('seconds' or 'microseconds').
+            Defaults to the module-level TIME_SPEC.
+
     Returns:
-        The line as a string if found, None otherwise
+        Single-record dict {linekey: value} if found, {} otherwise.
+        Example: {"key1": {"v": 1}}
     """
     # Serialize the key if needed
     if auto_serialize:
-        linekey = serialize_linekey(linekey)
+        linekey = serialize_linekey(linekey, timespec)
     
     ensure_index_exists(jsonl_file_path)
     
@@ -553,15 +562,7 @@ def select_line_jsonl(jsonl_file_path: str, linekey: LineKey, auto_serialize: bo
             f.seek(index_dict[linekey])
             line = f.readline().strip()
             data = orjson.loads(line)
-
-            if auto_serialize and _is_datetime_string(linekey):
-                try:
-                    actual_key = deserialize_linekey(linekey, "datetime")
-                    result_dict[actual_key] = data[linekey]
-                except ValueError:
-                    result_dict[linekey] = data[linekey]
-            else:
-                result_dict[linekey] = data[linekey]
+            _store_with_key(result_dict, linekey, data[linekey], auto_serialize, timespec)
         except (orjson.JSONDecodeError, ValueError, KeyError):
             return {}
 
@@ -569,7 +570,7 @@ def select_line_jsonl(jsonl_file_path: str, linekey: LineKey, auto_serialize: bo
 
 
 
-def update_jsonl(jsonl_file_path: str, update_dict: DataDict) -> None:
+def update_jsonl(jsonl_file_path: str, update_dict: DataDict, timespec: Optional[str] = None) -> None:
     """
     Update or insert records in a JSONL file.
     
@@ -606,7 +607,7 @@ def update_jsonl(jsonl_file_path: str, update_dict: DataDict) -> None:
             append_pos = f.tell()
 
             for linekey, data in update_dict.items():
-                linekey = serialize_linekey(linekey)
+                linekey = serialize_linekey(linekey, timespec)
                 new_line = _fast_dumps({linekey: data}).encode('utf-8')
 
                 if linekey in index:
@@ -644,7 +645,7 @@ def update_jsonl(jsonl_file_path: str, update_dict: DataDict) -> None:
     except OSError as e:
         raise OSError(f"Failed to update JSONL file {jsonl_file_path}: {str(e)}")
 
-def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey]) -> None:
+def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey], timespec: Optional[str] = None) -> None:
     """
     Delete records from a JSONL file.
     
@@ -666,7 +667,7 @@ def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey]) -> None:
             index = orjson.loads(f.read())
 
         # Process deletions
-        linekeys = [serialize_linekey(key) for key in linekeys]
+        linekeys = [serialize_linekey(key, timespec) for key in linekeys]
         
         # Use regular file operations like update_jsonl
         with open(jsonl_file_path, 'rb+', buffering=BUFFER_SIZE) as f:
