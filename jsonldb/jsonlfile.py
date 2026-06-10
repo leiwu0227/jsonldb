@@ -14,7 +14,7 @@ import mmap
 # Configuration
 # --------------------------------------------------------
 
-# Buffer size for file operations (10MB)
+# Buffer size for file operations (50MB)
 BUFFER_SIZE: int = 1024 * 1024 * 50
 TIME_SPEC = 'seconds'  #or seconds/microseconds
 
@@ -78,8 +78,7 @@ def build_jsonl_index(jsonl_file_path: str) -> None:
 
                     current_pos = mm.tell()
 
-        # Sort and save index
-        index_dict = dict(sorted(index_dict.items()))
+        # Save index (OPT_SORT_KEYS sorts on dump)
         with open(index_file_path, 'wb') as f:
             f.write(orjson.dumps(index_dict, option=orjson.OPT_SORT_KEYS))
             
@@ -306,50 +305,6 @@ def _fast_dumps(obj: dict) -> str:
     """
     return orjson.dumps(obj, option=orjson.OPT_SERIALIZE_NUMPY).decode('utf-8') + '\n'
 
-def check_dict_format(data_dict: Dict[Any, Any]) -> bool:
-    """Check if a dictionary follows the required JSONL format.
-    
-    Required format:
-    {
-        "linekey1": {"value1": 10, "value2": 11},
-        "linekey2": {"value1": 11, "value2": 12}
-    }
-    
-    Args:
-        data_dict (Dict[str, Any]): Dictionary to check
-        
-    Returns:
-        bool: True if format is valid, False otherwise
-        
-    Raises:
-        ValueError: If format is invalid, with specific error message
-    """
-    if not isinstance(data_dict, dict):
-        raise ValueError("Input must be a dictionary")
-        
-    # if not data_dict:
-    #     raise ValueError("Dictionary cannot be empty")
-        
-    # Check each key-value pair
-    for linekey, value in data_dict.items():
-        # Check if linekey is a string
-        # No need to check if linekey is a string
-            
-        # Check if value is a dictionary
-        if not isinstance(value, dict):
-            raise ValueError(f"Value for linekey '{linekey}' must be a dictionary")
-            
-        # Check if value dictionary is not empty
-        if not value:
-            raise ValueError(f"Value dictionary for linekey '{linekey}' cannot be empty")
-            
-    # Check for duplicate linekeys
-    linekeys = list(data_dict.keys())
-    if len(linekeys) != len(set(linekeys)):
-        raise ValueError("Duplicate linekeys found")
-        
-    return True
-
 # --------------------------------------------------------
 # Core CRUD Functions
 # --------------------------------------------------------
@@ -379,26 +334,19 @@ def save_jsonl(jsonl_file_path: str, db_dict: DataDict, timespec: Optional[str] 
                 f.write(orjson.dumps({}, option=orjson.OPT_SORT_KEYS))
             return
 
+        # Stream lines to the file while tracking byte offsets
         byte_offset = 0
-        lines = []
-        
-        # Pre-process all lines
-        for linekey, data in db_dict.items():
-            serialized_key = serialize_linekey(linekey, timespec)
-            line_dict = {serialized_key: data}
-            line = _fast_dumps(line_dict).encode('utf-8')
-            lines.append(line)
-            index[serialized_key] = byte_offset
-            byte_offset += len(line)
-
-        # Write all lines at once
         with open(jsonl_file_path, 'wb', buffering=BUFFER_SIZE) as f:
-            for line in lines:
+            for linekey, data in db_dict.items():
+                serialized_key = serialize_linekey(linekey, timespec)
+                line = _fast_dumps({serialized_key: data}).encode('utf-8')
                 f.write(line)
+                index[serialized_key] = byte_offset
+                byte_offset += len(line)
 
-        # Write index atomically
+        # Write index (OPT_SORT_KEYS sorts on dump)
         with open(f"{jsonl_file_path}.idx", 'wb') as f:
-            f.write(orjson.dumps(dict(sorted(index.items())), option=orjson.OPT_SORT_KEYS))
+            f.write(orjson.dumps(index, option=orjson.OPT_SORT_KEYS))
             
     except OSError as e:
         raise OSError(f"Failed to save JSONL file {jsonl_file_path}: {str(e)}")
@@ -488,9 +436,9 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
         
         # Set default values if None
         if lower_key is None:
-            lower_key = min(all_keys)
+            lower_key = all_keys[0]   # index keys are stored sorted
         if upper_key is None:
-            upper_key = max(all_keys)
+            upper_key = all_keys[-1]
             
         # Serialize the keys
         lower_key = serialize_linekey(lower_key, timespec)
@@ -640,7 +588,7 @@ def update_jsonl(jsonl_file_path: str, update_dict: DataDict, timespec: Optional
 
         # Update index
         with open(f"{jsonl_file_path}.idx", 'wb') as f:
-            f.write(orjson.dumps(dict(sorted(index.items())), option=orjson.OPT_SORT_KEYS))
+            f.write(orjson.dumps(index, option=orjson.OPT_SORT_KEYS))
             
     except OSError as e:
         raise OSError(f"Failed to update JSONL file {jsonl_file_path}: {str(e)}")
@@ -678,15 +626,13 @@ def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey], timespec: Option
                     if not line.endswith(b'\n'):
                         line += b'\n'
                     
-                    # Mark as deleted using _fast_dumps for consistency
-                    deleted_line = _fast_dumps({linekey: {}}).encode('utf-8')
                     f.seek(index[linekey])
                     f.write(b' ' * (len(line) - 1) + b'\n')
                     del index[linekey]
 
         # Update index using orjson for faster JSON serialization
         with open(f"{jsonl_file_path}.idx", 'wb') as f:
-            f.write(orjson.dumps(dict(sorted(index.items())), option=orjson.OPT_SORT_KEYS))
+            f.write(orjson.dumps(index, option=orjson.OPT_SORT_KEYS))
             
     except OSError as e:
         raise OSError(f"Failed to delete from JSONL file {jsonl_file_path}: {str(e)}")
