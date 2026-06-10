@@ -17,7 +17,8 @@ from jsonldb.jsonldf import (
 )
 import jsonldb.jsonlfile as jsonlfile
 
-from .vercontrol import init_folder, commit as vercontrol_commit, revert as vercontrol_revert, list_version, is_versioned
+# Version control (gitpython) is imported lazily inside commit/revert/version
+# so that importing FolderDB does not load git.
 
 class FolderDB:
     """
@@ -888,10 +889,12 @@ class FolderDB:
         Raises:
             git.exc.GitCommandError: If git commands fail
         """
+        from .vercontrol import init_folder, commit as vercontrol_commit, is_versioned
+
         # Check if folder is a git repo, if not initialize it
         if not is_versioned(self.folder_path):
             init_folder(self.folder_path)
-            
+
         # Commit changes
         vercontrol_commit(self.folder_path, msg)
         print("Commit successful.")
@@ -907,6 +910,8 @@ class FolderDB:
             git.exc.GitCommandError: If git commands fail
             ValueError: If the specified commit is not found
         """
+        from .vercontrol import revert as vercontrol_revert
+
         vercontrol_revert(self.folder_path, version_hash)
         print(f"Successfully reverted the folder: {self.folder_path} to version: {version_hash}")
     
@@ -920,4 +925,6 @@ class FolderDB:
         Raises:
             git.exc.GitCommandError: If git commands fail
         """
+        from .vercontrol import list_version
+
         return list_version(self.folder_path)

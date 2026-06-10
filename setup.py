@@ -9,6 +9,7 @@ setup(
         "orjson>=3.6.0",
         "gitpython>=3.1.0",
         "bokeh>=2.0.0",
+        "matplotlib>=3.0.0",
         "numpy>=1.20.0"
     ],
     author="Lei Wu",
@@ -32,9 +33,4 @@ setup(
     package_data={
         "jsonldb": ["*.py"],
     },
-    entry_points={
-        "console_scripts": [
-            "jsonldb=jsonldb.cli:main",
-        ],
-    },
-) 
+)

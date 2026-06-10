@@ -7,10 +7,10 @@ unnecessary dependencies (e.g., git for vercontrol, bokeh/matplotlib for visual)
 Example usage:
     from jsonldb import FolderDB  # Core functionality only
     from jsonldb.vercontrol import commit  # Only if you need version control
-    from jsonldb.visual import plot  # Only if you need visualization
+    from jsonldb.visual import visualize_folderdb  # Only if you need visualization
 """
 
 from .folderdb import FolderDB
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 __all__ = ["FolderDB", "visual", "vercontrol", "jsonlfile", "jsonldf"]

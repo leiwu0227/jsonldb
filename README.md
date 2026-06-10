@@ -149,7 +149,7 @@ db.update_metadata("table_name", {"new": "metadata"})
 - bokeh >= 3.0.0
 - numpy >= 1.20.0
 - orjson >= 3.6.0
-- numba >= 0.54.0
+- matplotlib >= 3.0.0
 
 ## License
 
