@@ -65,13 +65,17 @@ class FolderDB:
                 self.hierarchy_depth = hierarchy_depth
                 self.lint_hierarchy(hierarchy_depth)
 
+        # Timespec is per-instance state; never mutate the module global.
+        # config.meta stores {"timespec": value} as a flat JSONL record.
+        self.timespec = jsonlfile.TIME_SPEC
         if os.path.exists(self.configmeta_path):
-            config_meta = select_jsonl(self.configmeta_path) 
-            if config_meta:
-               if "timespec" in config_meta:
-                #    print(f"Using timespec: {config_meta['timespec']}")
-                   jsonlfile.TIME_SPEC = config_meta["timespec"]
-
+            config_meta = select_jsonl(self.configmeta_path)
+            if config_meta.get("timespec"):
+                self.timespec = config_meta["timespec"]
+            else:
+                self.build_configmeta()
+        else:
+            self.build_configmeta()
 
         # Only rebuild db.meta if it doesn't exist or the folder has been
         # modified externally.  Writes already call update_dbmeta()
@@ -83,19 +87,6 @@ class FolderDB:
                 self.build_dbmeta()
         else:
             self.build_dbmeta()
-
-        # Only rewrite config.meta if it doesn't exist or timespec changed
-        # Note: config.meta stores {"timespec": value} as a flat JSONL record
-        # select_jsonl returns {"timespec": value} where "timespec" is the linekey
-        if os.path.exists(self.configmeta_path):
-            config_meta = select_jsonl(self.configmeta_path)
-            if not config_meta or config_meta.get("timespec") != jsonlfile.TIME_SPEC:
-                self.build_configmeta()
-        else:
-            self.build_configmeta()
-
-
-   
 
     def build_hmeta(self) -> None:
         """
@@ -115,7 +106,7 @@ class FolderDB:
         Save the folder information to a file.
         """
         config_info = {
-            "timespec": jsonlfile.TIME_SPEC
+            "timespec": self.timespec
         }
         save_jsonl(self.configmeta_path, config_info)
 
@@ -280,7 +271,7 @@ class FolderDB:
         if os.path.exists(file_path):
            os.remove(file_path)
       
-        save_jsonldf(file_path, df)
+        save_jsonldf(file_path, df, self.timespec)
         self.update_dbmeta(self._get_file_name(name))
 
     def overwrite_dfs(self, dict_dfs: Dict[Any, pd.DataFrame]) -> None:
@@ -303,9 +294,9 @@ class FolderDB:
         """
         file_path = self._get_or_create_file_path(name)
         if os.path.exists(file_path):
-            update_jsonldf(file_path, df)
+            update_jsonldf(file_path, df, self.timespec)
         else:
-            save_jsonldf(file_path, df)
+            save_jsonldf(file_path, df, self.timespec)
         
         self.update_dbmeta(self._get_file_name(name))
 
@@ -339,7 +330,7 @@ class FolderDB:
         for name in names:
             file_path = self._get_file_path(name)
             if os.path.exists(file_path):
-                result[name] = select_jsonldf(file_path, lower_key, upper_key, auto_deserialize)
+                result[name] = select_jsonldf(file_path, lower_key, upper_key, auto_deserialize, timespec=self.timespec)
             else:
                 print(f"File {name} not found")
         return result
@@ -350,7 +341,7 @@ class FolderDB:
         if os.path.exists(file_path):
            os.remove(file_path)
       
-        save_jsonl(file_path, data_dict)
+        save_jsonl(file_path, data_dict, self.timespec)
         self.update_dbmeta(self._get_file_name(name))
 
     def overwrite_dicts(self, dict_dicts: Dict[Any, Dict[str, Dict[str, Any]]]) -> None:
@@ -373,9 +364,9 @@ class FolderDB:
         """
         file_path = self._get_or_create_file_path(name)
         if os.path.exists(file_path):
-            update_jsonl(file_path, data_dict)
+            update_jsonl(file_path, data_dict, self.timespec)
         else:
-            save_jsonl(file_path, data_dict)
+            save_jsonl(file_path, data_dict, self.timespec)
 
         self.update_dbmeta(self._get_file_name(name))
 
@@ -412,7 +403,7 @@ class FolderDB:
         for name in names:
             file_path = self._get_file_path(name)
             if os.path.exists(file_path):
-                result[name] = select_jsonl(file_path, lower_key, upper_key, auto_deserialize)
+                result[name] = select_jsonl(file_path, lower_key, upper_key, auto_deserialize, timespec=self.timespec)
         return result
 
     # =============== Delete Operations ===============
@@ -457,7 +448,7 @@ class FolderDB:
         """
         file_path = self._get_file_path(name)
         if os.path.exists(file_path):
-            delete_jsonl(file_path, keys)
+            delete_jsonl(file_path, keys, self.timespec)
             self.update_dbmeta(self._get_file_name(name))
 
     def delete_file_range(self, name: str, lower_key: Any, upper_key: Any) -> None:
@@ -484,8 +475,8 @@ class FolderDB:
             
         # Filter keys within range (bounds must use the same serialization as
         # stored keys — str(datetime) uses a space, isoformat uses 'T')
-        lower_str = serialize_linekey(lower_key)
-        upper_str = serialize_linekey(upper_key)
+        lower_str = serialize_linekey(lower_key, self.timespec)
+        upper_str = serialize_linekey(upper_key, self.timespec)
         keys_to_delete = [
             key for key in index.keys()
             if lower_str <= key <= upper_str
