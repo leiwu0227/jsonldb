@@ -623,10 +623,12 @@ def update_jsonl(jsonl_file_path: str, update_dict: DataDict) -> None:
 
             # Apply updates
             for pos, line, old_len in updates:
+                if len(line) < old_len:
+                    # Pad before the newline so the record keeps its exact old
+                    # length and the line stays newline-terminated
+                    line = line[:-1] + b' ' * (old_len - len(line)) + b'\n'
                 f.seek(pos)
                 f.write(line)
-                if len(line) < old_len:
-                    f.write(b' ' * (old_len - len(line)))
 
             # Apply appends
             if appends:
