@@ -10,7 +10,8 @@ from typing import Dict, List, Union, Optional, Any
 from datetime import datetime
 from jsonldb.jsonlfile import (
     save_jsonl, load_jsonl, select_jsonl, update_jsonl, delete_jsonl,
-    lint_jsonl, build_jsonl_index, select_line_jsonl, serialize_linekey
+    lint_jsonl, build_jsonl_index, select_line_jsonl, serialize_linekey,
+    detect_timespec
 )
 from jsonldb.jsonldf import (
     save_jsonldf, load_jsonldf, update_jsonldf, select_jsonldf, delete_jsonldf
@@ -89,6 +90,23 @@ class FolderDB:
         else:
             self.build_dbmeta()
 
+        # Guard against config.meta disagreeing with the data's actual datetime
+        # precision (possible from the pre-instance-scoping contamination bug).
+        # Stage 1 checks db.meta boundary keys (no extra I/O); stage 2 confirms
+        # with a full index scan before healing. Mixed precision keeps the
+        # configured value. See _detect_data_timespec/_scan_index_timespecs.
+        candidate = self._detect_data_timespec()
+        if candidate is not None:
+            found = self._scan_index_timespecs()
+            if found == {candidate}:
+                print(f"WARNING: config.meta timespec '{self.timespec}' does not match "
+                      f"data ('{candidate}'); auto-correcting config.meta")
+                self.timespec = candidate
+                self.build_configmeta()
+            elif len(found) > 1:
+                print(f"WARNING: mixed datetime key precisions {sorted(found)} found in "
+                      f"{self.folder_path}; keeping timespec '{self.timespec}'")
+
     def build_hmeta(self) -> None:
         """
         Save the folder information to a file.
@@ -110,6 +128,45 @@ class FolderDB:
             "timespec": self.timespec
         }
         save_jsonl(self.configmeta_path, config_info)
+
+    def _detect_data_timespec(self) -> Optional[str]:
+        """Stage 1 trigger: candidate precision from db.meta boundary keys.
+
+        Returns a precision only when a datetime-like min/max key disagrees
+        with self.timespec; None when boundaries look healthy or db.meta is
+        missing. Costs no I/O beyond one db.meta read.
+        """
+        if not os.path.exists(self.dbmeta_path):
+            return None
+        metadata = select_jsonl(self.dbmeta_path)
+        for info in metadata.values():
+            if not isinstance(info, dict):
+                continue
+            for key in (info.get("min_index"), info.get("max_index")):
+                if isinstance(key, str):
+                    spec = detect_timespec(key)
+                    if spec and spec != self.timespec:
+                        return spec
+        return None
+
+    def _scan_index_timespecs(self) -> set:
+        """Stage 2 confirmation: datetime-key precisions across every .idx file.
+
+        Example: {'microseconds'} for a uniformly contaminated database,
+        {'seconds', 'microseconds'} for mixed data, set() for string keys only.
+        """
+        found = set()
+        for name in self.get_file_list():
+            index_path = self._get_file_path(name) + '.idx'
+            if not os.path.exists(index_path):
+                continue
+            with open(index_path, 'rb') as f:
+                index = orjson.loads(f.read())
+            for key in index:
+                spec = detect_timespec(key)
+                if spec:
+                    found.add(spec)
+        return found
 
 
     def validate_name(self, name: str) -> bool:
