@@ -96,19 +96,51 @@ def ensure_index_exists(jsonl_file_path: str) -> None:
         jsonl_file_path: Path to the JSONL file
     """
     index_file_path = f"{jsonl_file_path}.idx"
-    
+
     should_rebuild = False
+    corrupt = False
     if not os.path.exists(index_file_path):
         should_rebuild = True
-    else:
-        # Rebuild if JSONL file is newer than index
-        jsonl_mtime = os.path.getmtime(jsonl_file_path)
-        index_mtime = os.path.getmtime(index_file_path)
-        if jsonl_mtime > index_mtime:
-            should_rebuild = True
-            
+    elif os.path.getsize(index_file_path) == 0:
+        # An empty .idx (e.g. left by an interrupted write) is corrupt: a valid
+        # empty index is b'{}' (2 bytes), never zero-length. Treat it as missing.
+        should_rebuild = True
+        corrupt = True
+    elif os.path.getmtime(jsonl_file_path) > os.path.getmtime(index_file_path):
+        # Rebuild if JSONL file is newer than index (stale, but not corrupt)
+        should_rebuild = True
+
     if should_rebuild:
+        if corrupt:
+            print(f"WARNING: rebuilt empty index {index_file_path}")
         build_jsonl_index(jsonl_file_path)
+
+
+def load_index(jsonl_file_path: str) -> dict:
+    """Load a JSONL file's index, self-healing if it is missing/empty/corrupt.
+
+    The .idx is fully derived from the .jsonl (the source of truth), so an empty
+    or unparseable index is treated exactly like a missing one: rebuilt via
+    build_jsonl_index and re-read. This is the single index-read path for the
+    library — every other read site routes through here.
+
+    Args:
+        jsonl_file_path: Path to the JSONL file
+
+    Returns:
+        dict: key -> byte offset index
+    """
+    index_file_path = f"{jsonl_file_path}.idx"
+    ensure_index_exists(jsonl_file_path)  # heals missing / empty / stale
+    try:
+        with open(index_file_path, 'rb') as f:
+            return orjson.loads(f.read())
+    except (orjson.JSONDecodeError, OSError):
+        # Non-empty but unparseable/unreadable index -> rebuild from the .jsonl
+        print(f"WARNING: rebuilt corrupt index {index_file_path}")
+        build_jsonl_index(jsonl_file_path)
+        with open(index_file_path, 'rb') as f:
+            return orjson.loads(f.read())
 
 def _verify_and_compact(jsonl_file_path: str, index_dict: dict) -> bool:
     """Spot-check, sort-verify, and compact a JSONL file using a pre-loaded index.
@@ -132,6 +164,8 @@ def _verify_and_compact(jsonl_file_path: str, index_dict: dict) -> bool:
                     if parsed_key != check_key:
                         raise ValueError("key mismatch")
         except (orjson.JSONDecodeError, ValueError, TypeError, OSError):
+            # Spot-check failed on a parseable-but-wrong index (bad offsets/keys):
+            # load_index only heals empty/unparseable indexes, so force a rebuild.
             build_jsonl_index(jsonl_file_path)
             with open(f"{jsonl_file_path}.idx", 'rb') as f2:
                 index_dict = orjson.loads(f2.read())
@@ -198,13 +232,7 @@ def lint_jsonl(jsonl_file_path: str, force: bool = False) -> bool:
         idx_mtime = os.path.getmtime(index_path)
         data_mtime = os.path.getmtime(jsonl_file_path)
         if idx_mtime >= data_mtime:
-            try:
-                with open(index_path, 'rb') as f:
-                    index_dict = orjson.loads(f.read())
-            except (orjson.JSONDecodeError, OSError):
-                build_jsonl_index(jsonl_file_path)
-                with open(index_path, 'rb') as f:
-                    index_dict = orjson.loads(f.read())
+            index_dict = load_index(jsonl_file_path)
             return _verify_and_compact(jsonl_file_path, index_dict)
 
     # Full path: mmap line-count scan
@@ -215,8 +243,7 @@ def lint_jsonl(jsonl_file_path: str, force: bool = False) -> bool:
                 if line.strip()
             )
 
-    with open(index_path, 'rb') as f:
-        index_dict = orjson.loads(f.read())
+    index_dict = load_index(jsonl_file_path)
 
     if non_blank_count != len(index_dict):
         build_jsonl_index(jsonl_file_path)
@@ -442,13 +469,9 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
     if lower_key == upper_key:
         return select_line_jsonl(jsonl_file_path, lower_key, auto_deserialize, timespec)
 
-    ensure_index_exists(jsonl_file_path)
-
-    
     try:
-        # Load index
-        with open(f"{jsonl_file_path}.idx", 'rb') as f:
-            index_dict = orjson.loads(f.read())
+        # Load index (self-heals an empty/corrupt .idx)
+        index_dict = load_index(jsonl_file_path)
 
         # If no keys in index, return empty dict
         if not index_dict:
@@ -513,13 +536,9 @@ def select_line_jsonl(jsonl_file_path: str, linekey: LineKey, auto_serialize: bo
     if auto_serialize:
         linekey = serialize_linekey(linekey, timespec)
     
-    ensure_index_exists(jsonl_file_path)
-    
-    index_path = jsonl_file_path + '.idx'
-    # Read the index file
-    with open(index_path, 'rb') as f:
-        index_dict = orjson.loads(f.read())
-    
+    # Read the index file (self-heals an empty/corrupt .idx)
+    index_dict = load_index(jsonl_file_path)
+
     # Check if key exists in index
     if linekey not in index_dict:
         return {}
@@ -557,12 +576,9 @@ def update_jsonl(jsonl_file_path: str, update_dict: DataDict, timespec: Optional
     Raises:
         OSError: If file operations fail
     """
-    ensure_index_exists(jsonl_file_path)
-    
     try:
-        # Load index
-        with open(f"{jsonl_file_path}.idx", 'rb') as f:
-            index = orjson.loads(f.read())
+        # Load index (self-heals an empty/corrupt .idx)
+        index = load_index(jsonl_file_path)
 
         updates = []
         appends = []
@@ -630,12 +646,9 @@ def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey], timespec: Option
     Raises:
         OSError: If file operations fail
     """
-    ensure_index_exists(jsonl_file_path)
-    
     try:
-        # Load index using orjson for faster JSON parsing
-        with open(f"{jsonl_file_path}.idx", 'rb') as f:
-            index = orjson.loads(f.read())
+        # Load index (self-heals an empty/corrupt .idx)
+        index = load_index(jsonl_file_path)
 
         # Process deletions
         linekeys = [serialize_linekey(key, timespec) for key in linekeys]
