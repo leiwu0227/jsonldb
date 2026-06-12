@@ -2,7 +2,6 @@
 Visualization functions for JSONL files and FolderDB using Bokeh and Matplotlib.
 """
 
-import os
 from datetime import datetime
 from typing import Dict, List, Union, Optional
 import pandas as pd
@@ -203,12 +202,7 @@ def visualize_folderdb_bokeh(folderdb: FolderDB,prefix: str = None,height=1200) 
     # Check if all first keys are datetime
     all_datetime = True
     for file_name in jsonl_files:
-        idx_path = folderdb._get_file_path(file_name) + '.idx'
-        if not os.path.exists(idx_path):
-            print(f"Warning: Index file not found for {idx_path}")
-            continue
-            
-        # Read the index file (self-heals an existing empty/corrupt .idx)
+        # Read the index file (self-heals missing/empty/corrupt from the .jsonl)
         index_data = load_index(folderdb._get_file_path(file_name))
         
         if index_data:
@@ -232,12 +226,7 @@ def visualize_folderdb_bokeh(folderdb: FolderDB,prefix: str = None,height=1200) 
     # Plot each file's data
     has_data = False
     for i, file_name in enumerate(jsonl_files):
-        idx_path = folderdb._get_file_path(file_name) + '.idx'
-        if not os.path.exists(idx_path):
-            print(f"Warning: Index file not found for {idx_path}")
-            continue
-            
-        # Read the index file (self-heals an existing empty/corrupt .idx)
+        # Read the index file (self-heals missing/empty/corrupt from the .jsonl)
         index_data = load_index(folderdb._get_file_path(file_name))
         
         if not index_data:  # Skip empty files
@@ -315,12 +304,7 @@ def visualize_folderdb_matplot(folderdb: FolderDB, prefix: str = None, height: i
     # Check if all first keys are datetime
     all_datetime = True
     for file_name in jsonl_files:
-        idx_path = folderdb._get_file_path(file_name) + '.idx'
-        if not os.path.exists(idx_path):
-            print(f"Warning: Index file not found for {idx_path}")
-            continue
-
-        # Read the index file (self-heals an existing empty/corrupt .idx)
+        # Read the index file (self-heals missing/empty/corrupt from the .jsonl)
         index_data = load_index(folderdb._get_file_path(file_name))
 
         if index_data:
@@ -343,12 +327,7 @@ def visualize_folderdb_matplot(folderdb: FolderDB, prefix: str = None, height: i
     colors = plt.cm.tab10(np.linspace(0, 1, len(jsonl_files)))
 
     for i, file_name in enumerate(jsonl_files):
-        idx_path = folderdb._get_file_path(file_name) + '.idx'
-        if not os.path.exists(idx_path):
-            print(f"Warning: Index file not found for {idx_path}")
-            continue
-
-        # Read the index file (self-heals an existing empty/corrupt .idx)
+        # Read the index file (self-heals missing/empty/corrupt from the .jsonl)
         index_data = load_index(folderdb._get_file_path(file_name))
 
         if not index_data:  # Skip empty files

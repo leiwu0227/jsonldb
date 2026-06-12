@@ -165,10 +165,10 @@ def _verify_and_compact(jsonl_file_path: str, index_dict: dict) -> bool:
                         raise ValueError("key mismatch")
         except (orjson.JSONDecodeError, ValueError, TypeError, OSError):
             # Spot-check failed on a parseable-but-wrong index (bad offsets/keys):
-            # load_index only heals empty/unparseable indexes, so force a rebuild.
+            # load_index only heals empty/unparseable indexes, so force a rebuild
+            # first, then re-read through the single loader.
             build_jsonl_index(jsonl_file_path)
-            with open(f"{jsonl_file_path}.idx", 'rb') as f2:
-                index_dict = orjson.loads(f2.read())
+            index_dict = load_index(jsonl_file_path)
 
     if not index_dict:
         return True
