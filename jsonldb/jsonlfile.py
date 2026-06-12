@@ -246,9 +246,10 @@ def lint_jsonl(jsonl_file_path: str, force: bool = False) -> bool:
     index_dict = load_index(jsonl_file_path)
 
     if non_blank_count != len(index_dict):
+        # Index cardinality disagrees with the data (orphan/missing lines):
+        # rebuild, then re-read through the single loader.
         build_jsonl_index(jsonl_file_path)
-        with open(index_path, 'rb') as f:
-            index_dict = orjson.loads(f.read())
+        index_dict = load_index(jsonl_file_path)
 
     return _verify_and_compact(jsonl_file_path, index_dict)
 

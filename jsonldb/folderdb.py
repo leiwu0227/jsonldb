@@ -4,7 +4,6 @@ Each table is stored in a separate JSONL file.
 """
 
 import os
-import orjson
 import pandas as pd
 from typing import Dict, List, Union, Optional, Any
 from datetime import datetime
@@ -157,11 +156,10 @@ class FolderDB:
         """
         found = set()
         for name in self.get_file_list():
-            index_path = self._get_file_path(name) + '.idx'
-            if not os.path.exists(index_path):
+            file_path = self._get_file_path(name)
+            if not os.path.exists(file_path + '.idx'):
                 continue
-            with open(index_path, 'rb') as f:
-                index = orjson.loads(f.read())
+            index = jsonlfile.load_index(file_path)  # heals empty/corrupt
             for key in index:
                 spec = detect_timespec(key)
                 if spec:
@@ -522,14 +520,8 @@ class FolderDB:
         if not os.path.exists(file_path):
             return
             
-        # Get all keys from the index
-        index_path = file_path + '.idx'
-        if not os.path.exists(index_path):
-            build_jsonl_index(file_path)
-            
-        # Read the index file
-        with open(index_path, 'rb') as f:
-            index = orjson.loads(f.read())
+        # Read the index file (self-heals missing/empty/corrupt)
+        index = jsonlfile.load_index(file_path)
             
         # Filter keys within range (bounds must use the same serialization as
         # stored keys — str(datetime) uses a space, isoformat uses 'T')
@@ -567,8 +559,7 @@ class FolderDB:
         min_index = max_index = None
         count = 0
         if os.path.exists(index_file):
-            with open(index_file, 'rb') as f:
-                index = orjson.loads(f.read())
+            index = jsonlfile.load_index(file_path)  # heals empty/corrupt
             if index:
                 keys = list(index.keys())
                 min_index, max_index = keys[0], keys[-1]

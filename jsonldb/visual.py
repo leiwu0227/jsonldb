@@ -3,7 +3,6 @@ Visualization functions for JSONL files and FolderDB using Bokeh and Matplotlib.
 """
 
 import os
-import json
 from datetime import datetime
 from typing import Dict, List, Union, Optional
 import pandas as pd
@@ -13,7 +12,7 @@ from bokeh.palettes import Category10
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from jsonldb.jsonlfile import load_jsonl, select_jsonl
+from jsonldb.jsonlfile import load_jsonl, select_jsonl, load_index
 from jsonldb.folderdb import FolderDB
 
 def _parse_linekey(linekey: str) -> Union[float, datetime]:
@@ -53,16 +52,9 @@ def visualize_jsonl_bokeh(jsonl_path: str) -> figure:
     Returns:
         Bokeh figure object showing the scatter plot
     """
-    # Get the index file path
-    idx_path = jsonl_path + '.idx'
-    
-    if not os.path.exists(idx_path):
-        raise FileNotFoundError(f"Index file not found: {idx_path}")
-    
-    # Read the index file
-    with open(idx_path, 'r') as f:
-        index_data = json.load(f)
-    
+    # Read the index file (self-heals missing/empty/corrupt from the .jsonl)
+    index_data = load_index(jsonl_path)
+
     # Convert linekeys to numbers or datetimes
     linekeys = [_parse_linekey(k) for k in index_data.keys()]
     line_numbers = list(index_data.values())
@@ -118,15 +110,8 @@ def visualize_jsonl_matplot(jsonl_path: str, start_index = None, end_index = Non
     Returns:
         Matplotlib figure and axes objects
     """
-    # Get the index file path
-    idx_path = jsonl_path + '.idx'
-
-    if not os.path.exists(idx_path):
-        raise FileNotFoundError(f"Index file not found: {idx_path}")
-
-    # Read the index file
-    with open(idx_path, 'r') as f:
-        index_data = json.load(f)
+    # Read the index file (self-heals missing/empty/corrupt from the .jsonl)
+    index_data = load_index(jsonl_path)
 
     # Convert linekeys to numbers or datetimes
     all_linekeys = [_parse_linekey(k) for k in index_data.keys()]
@@ -223,9 +208,8 @@ def visualize_folderdb_bokeh(folderdb: FolderDB,prefix: str = None,height=1200) 
             print(f"Warning: Index file not found for {idx_path}")
             continue
             
-        # Read the index file
-        with open(idx_path, 'r') as f:
-            index_data = json.load(f)
+        # Read the index file (self-heals an existing empty/corrupt .idx)
+        index_data = load_index(folderdb._get_file_path(file_name))
         
         if index_data:
             first_key = next(iter(index_data.keys()))
@@ -253,9 +237,8 @@ def visualize_folderdb_bokeh(folderdb: FolderDB,prefix: str = None,height=1200) 
             print(f"Warning: Index file not found for {idx_path}")
             continue
             
-        # Read the index file
-        with open(idx_path, 'r') as f:
-            index_data = json.load(f)
+        # Read the index file (self-heals an existing empty/corrupt .idx)
+        index_data = load_index(folderdb._get_file_path(file_name))
         
         if not index_data:  # Skip empty files
             print(f"Warning: Empty index file for {file_name}")
@@ -337,9 +320,8 @@ def visualize_folderdb_matplot(folderdb: FolderDB, prefix: str = None, height: i
             print(f"Warning: Index file not found for {idx_path}")
             continue
 
-        # Read the index file
-        with open(idx_path, 'r') as f:
-            index_data = json.load(f)
+        # Read the index file (self-heals an existing empty/corrupt .idx)
+        index_data = load_index(folderdb._get_file_path(file_name))
 
         if index_data:
             first_key = next(iter(index_data.keys()))
@@ -366,9 +348,8 @@ def visualize_folderdb_matplot(folderdb: FolderDB, prefix: str = None, height: i
             print(f"Warning: Index file not found for {idx_path}")
             continue
 
-        # Read the index file
-        with open(idx_path, 'r') as f:
-            index_data = json.load(f)
+        # Read the index file (self-heals an existing empty/corrupt .idx)
+        index_data = load_index(folderdb._get_file_path(file_name))
 
         if not index_data:  # Skip empty files
             print(f"Warning: Empty index file for {file_name}")
