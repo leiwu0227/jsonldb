@@ -1,0 +1,7 @@
+{
+  "assignment": "00007_bugfix_corrupt-idx-self-heal",
+  "reviewer": "codex",
+  "autocontinue": true,
+  "set_at": "2026-06-12T08:48:42.828Z",
+  "set_by_step": "implementation.review"
+}

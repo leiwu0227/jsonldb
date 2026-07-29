@@ -1,53 +1,44 @@
-# Legacy Assignment Migration Guide (V3 -> V4)
+# SpecDev layout migration guide
 
-Use this guide when a project was started with an older SpecDev layout and has
-assignment files at the assignment root (for example `plan.md`,
-`implementation.md`).
+Migration is an explicit, user-approved filesystem operation. Inspect first;
+never infer permission to move or delete project records.
 
-## When to run migration
+## Current anchors
 
-Run migration after `specdev update` if existing assignments still use root-level
-phase files.
-
-## Command
-
-```bash
-specdev migrate
+```text
+.specdev/
+  assignments/<id>_<slug>/
+    brainstorm/contract.md
+    design/plan.md
+    implementation/progress.json
+    review/
+    outcome.md
+    status.json
+  missions/M<id>_<slug>/
+  discussions/D<id>_<slug>/
+  project_notes/
+  knowledge/
+  guides/project/
+  processes/
 ```
 
-Optional:
+Managed runtime files (`_main.md`, `_index.md`, `_guides/`, `_templates/`,
+`skills/core/`, `guides/library/`, `workflows/`, and `workflow.json`) should
+normally be refreshed by `specdev update`, not moved manually.
 
-```bash
-specdev migrate --dry-run
-specdev migrate --assignment=<assignment-id>
-```
+## Procedure
 
-## File moves performed
+1. Inventory the existing tree without modifying it.
+2. Search source, tests, templates, and graph packages for every proposed path.
+   Referenced paths are load-bearing and stay in place until product code is
+   changed.
+3. Write `.specdev/migration/layout-plan.md` listing proposed moves, paths to
+   leave untouched, conflicts, and open questions.
+4. Ask the user to approve the exact plan.
+5. Apply only approved non-overwriting moves and keep recoverable backups when a
+   collision exists.
+6. Run `specdev status --json` and report the resulting tree.
 
-- `proposal.md` -> `brainstorm/proposal.md`
-- `design.md` -> `brainstorm/design.md`
-- `plan.md` -> `breakdown/plan.md`
-- `implementation.md` -> `implementation/implementation.md`
-- `validation_checklist.md` -> `review/validation_checklist.md`
-
-The migration also ensures:
-
-- `context/` exists
-- `implementation/progress.json` exists when `implementation/` exists
-
-## Safety behavior
-
-- Existing destination files are never overwritten.
-- If destination exists, that move is skipped and reported.
-- Use `--dry-run` first to preview changes.
-
-## After migration
-
-Continue the normal workflow:
-
-- `specdev start` (fill in project context)
-- `specdev assignment "<description>"` (reserve ID for new work)
-- `specdev continue` (resume where you left off)
-- `specdev checkpoint <phase>` (validate artifacts before approval)
-- `specdev approve <phase>` (gate approval to proceed)
-- `specdev review <phase>` (optional manual review in separate session)
+Historical completed layouts are readable documents and do not need conversion.
+For the old deterministic root-file move only, discuss `specdev migrate
+legacy-assignments --dry-run` first.

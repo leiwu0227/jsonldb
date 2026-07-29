@@ -1,0 +1,27 @@
+{
+  "plan_file": ".specdev/assignments/00004_bugfix_timespec-scoping-api-contracts/breakdown/plan.md",
+  "total_tasks": 3,
+  "tasks": [
+    {
+      "number": 1,
+      "status": "completed",
+      "started_at": "2026-06-10T11:21:51Z",
+      "completed_at": "2026-06-10T11:24:06Z",
+      "summary": "timespec kwarg (default module TIME_SPEC) on serialize_linekey/_is_datetime_string and all six CRUD functions; new _store_with_key helper replaces 3 duplicated deserialize blocks; select_line_jsonl annotated DataDict with corrected docstring; test test_explicit_timespec_round_trip; suite 76 passed"
+    },
+    {
+      "number": 2,
+      "status": "completed",
+      "started_at": "2026-06-10T11:24:13Z",
+      "completed_at": "2026-06-10T11:24:42Z",
+      "summary": "All five jsonldf wrappers accept and pass through timespec; no behavior change when omitted; suite 76 passed"
+    },
+    {
+      "number": 3,
+      "status": "completed",
+      "started_at": "2026-06-10T11:25:01Z",
+      "completed_at": "2026-06-10T11:26:25Z",
+      "summary": "self.timespec from config.meta (default module TIME_SPEC); global mutation removed; config.meta read collapsed to one block; timespec passed through all FolderDB data ops; tests test_timespec_no_global_contamination + test_two_dbs_different_timespecs_round_trip; suite 78 passed"
+    }
+  ]
+}

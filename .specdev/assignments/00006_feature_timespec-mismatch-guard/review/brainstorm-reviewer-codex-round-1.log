@@ -1,0 +1,3141 @@
+Reviewloop reviewer log
+Reviewer:   codex
+Phase:      brainstorm
+Round:      1
+Started:    2026-06-10T12:29:23.294Z
+Timeout:    900s
+Command:    codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral "Run specdev review $SPECDEV_PHASE --round $SPECDEV_ROUND. Follow its instructions."
+Env:
+  SPECDEV_PHASE=brainstorm
+  SPECDEV_ASSIGNMENT=00006_feature_timespec-mismatch-guard
+  SPECDEV_ROUND=1
+  SPECDEV_FEEDBACK_FILE=/mnt/h/oceanwave/lib/jsonldb/.specdev/assignments/00006_feature_timespec-mismatch-guard/review/brainstorm-feedback.md
+  SPECDEV_CHANGELOG_FILE=/mnt/h/oceanwave/lib/jsonldb/.specdev/assignments/00006_feature_timespec-mismatch-guard/review/brainstorm-changelog.md
+  SPECDEV_FOCUS=Architecture & structure — review modularity, separation of concerns, API design, and dependency direction. Identify structural issues.
+
+----- reviewer output -----
+Reading additional input from stdin...
+OpenAI Codex v0.138.0
+--------
+workdir: /mnt/h/oceanwave/lib/jsonldb
+model: gpt-5.5
+provider: openai
+approval: never
+sandbox: danger-full-access
+reasoning effort: medium
+reasoning summaries: none
+session id: 019eb182-406a-78d1-b9cf-f60da1c7ef62
+--------
+user
+Run specdev review brainstorm --round 1. Follow its instructions.
+codex
+Specdev: reading the review workflow and repository instructions before starting round 1.
+exec
+/usr/bin/zsh -lc "sed -n '1,220p' .specdev/_main.md" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+# SpecDev Workflow
+
+You are working in a project that uses SpecDev — a spec-driven development framework. You MUST follow this workflow for all work.
+
+## How SpecDev Works
+
+All work is organized into **assignments**. An assignment is a self-contained unit of work — a feature, bugfix, refactor, or investigation — tracked in its own folder under `assignments/`. Each assignment progresses through three required phases, with optional non-blocking phase-end knowledge capture when reusable knowledge was learned. The CLI enforces gates between phases so work cannot advance until artifacts are validated and the user approves.
+
+## CLI
+
+`specdev` is a Node.js CLI installed globally via npm. Run it directly as `specdev <command>`. It is NOT a Python package — never use pip/python/pipx.
+
+## First Steps
+
+1. Read `project_notes/big_picture.md` — understand the project
+2. Check `.specdev/.current` for the active assignment pointer.
+   - `.current` exists → keep it unless the user asks to switch; use `specdev focus <id>` only when needed.
+   - No active assignment → run `specdev assignment "<description>" --type=<type> --slug=<slug>` to create and focus one.
+   - For parallel exploration before committing to an assignment → run `specdev discussion "<description>"`
+3. Run `specdev next --json` for the canonical next workflow action. Follow the returned guide, command, blockers, choices, and hook outcomes.
+
+**Reference:** `_index.md` is the detailed lookup for all guides, skills, commands, and project context. Consult it when you need to find a specific resource.
+
+## Workflow FAQ
+
+If workflow instructions conflict, a SpecDev command fails unexpectedly, or you are unsure how to proceed, run `specdev knowledge search "<issue>"` and inspect `knowledge/workflow/` before guessing. Capture recurring workflow gotchas through optional phase-end knowledge capture.
+
+## The Workflow
+
+Every assignment follows the same 3 required phases in order:
+
+1. **Brainstorm** — understand the problem, explore approaches, produce a design or research output
+2. **Breakdown** — create a concise implementation plan with coherent tasks and verification guidance
+3. **Implement** — execute tasks using the plan's execution mode and task-level verification
+
+Optional phase-end knowledge capture may suggest durable notes when reusable knowledge was learned.
+
+Use `workflow.yaml` and `specdev next --json` as the source of truth for action selection. Read `_guides/workflow.md` when you need a human-readable reference for phases, artifacts, gates, and recovery paths.
+
+## Rules
+
+- Follow the phases in order. Do not skip phases.
+- No completion claims without evidence.
+- Announce subtasks with "Specdev: <action>".
+- Read `_guides/codestyle_guide.md` before writing any code.
+- When a specdev assignment is active, specdev skills take precedence over superpowers equivalents. See `_guides/superpowers_exclusions.md`.
+
+exec
+/usr/bin/zsh -lc "sed -n '1,220p' /mnt/h/oceanwave/lib/jsonldb/.codex/skills/specdev-review/SKILL.md" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+---
+name: specdev-review
+description: Phase-aware manual review of the current assignment
+---
+
+Run `specdev review <phase>` where phase is brainstorm or implementation.
+
+Examples: `specdev review brainstorm`, `specdev review implementation`.
+
+Follow the printed instructions to review the appropriate artifacts.
+Discuss findings with the user before concluding.
+
+codex
+Specdev: checking project context and active assignment, then running the requested brainstorm review command.
+exec
+/usr/bin/zsh -lc "sed -n '1,220p' project_notes/big_picture.md" in /mnt/h/oceanwave/lib/jsonldb
+ exited 2 in 0ms:
+sed: can't read project_notes/big_picture.md: No such file or directory
+
+exec
+/usr/bin/zsh -lc 'test -f .specdev/.current && cat .specdev/.current || true' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+00006_feature_timespec-mismatch-guard
+exec
+/usr/bin/zsh -lc 'specdev next --json' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 152ms:
+{
+  "command": "next",
+  "version": 1,
+  "status": "ok",
+  "assignment": "00006_feature_timespec-mismatch-guard",
+  "assignment_path": "/mnt/h/oceanwave/lib/jsonldb/.specdev/assignments/00006_feature_timespec-mismatch-guard",
+  "state": "brainstorm_checkpoint_ready",
+  "workflow": {
+    "source": "manifest",
+    "path": "/mnt/h/oceanwave/lib/jsonldb/.specdev/workflow.yaml",
+    "contract_version": 2
+  },
+  "next_action": {
+    "id": "brainstorm.checkpoint",
+    "phase": "brainstorm",
+    "step": "checkpoint",
+    "kind": "command",
+    "evidence": {
+      "exit_code": 0
+    },
+    "command_line": "specdev checkpoint brainstorm"
+  },
+  "interaction": {
+    "type": "choice",
+    "prompt": "How do you want to proceed from brainstorm?",
+    "choices": [
+      {
+        "id": "reviewloop_autocontinue",
+        "label": "Automated review, then continue",
+        "description": "Runs reviewloop and continues to the next phase if approved.",
+        "command": "specdev reviewloop brainstorm --reviewer=<name> --autocontinue",
+        "requires_reviewer": true,
+        "autocontinue": true,
+        "reviewers": []
+      },
+      {
+        "id": "reviewloop_only",
+        "label": "Automated review only",
+        "description": "Runs reviewloop and stops after phase approval.",
+        "command": "specdev reviewloop brainstorm --reviewer=<name>",
+        "requires_reviewer": true,
+        "autocontinue": false,
+        "reviewers": []
+      },
+      {
+        "id": "manual_review",
+        "label": "Manual review",
+        "description": "Starts a separate manual review session.",
+        "command": "specdev review brainstorm"
+      },
+      {
+        "id": "approve_skip_review",
+        "label": "Approve without review",
+        "description": "Approves the brainstorm gate without running review.",
+        "command": "specdev approve brainstorm"
+      }
+    ]
+  },
+  "hook_outcomes": [
+    {
+      "id": "brainstorm_knowledge_prompt",
+      "phase": "brainstorm",
+      "slot": "phase:end",
+      "order": 50,
+      "kind": "guide",
+      "guide": ".specdev/skills/core/knowledge-capture/SKILL.md",
+      "blocking": false,
+      "outcome": "skipped",
+      "reason": "advisory phase-end knowledge capture hook is available; workflow progress is not blocked"
+    }
+  ],
+  "trace": [
+    "brainstorm artifacts are present",
+    "brainstorm approval gate is pending",
+    "next action is to run the brainstorm checkpoint"
+  ],
+  "blockers": [],
+  "progress": {
+    "source": "none",
+    "totalTasks": 0,
+    "completedTasks": 0,
+    "inProgressTasks": 0,
+    "pendingTasks": 0,
+    "summary": "No implementation/progress.json found"
+  }
+}
+
+codex
+Specdev: the project notes path in the main guide is not present at repo root, so I’m locating the SpecDev project context before reviewing artifacts.
+exec
+/usr/bin/zsh -lc "rg --files .specdev | rg 'big_picture|brainstorm|review|requirements|design|notes'" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+.specdev/_templates/review_request_schema.json
+.specdev/_templates/review_report_template.md
+.specdev/_templates/brainstorm-design.md
+.specdev/project_notes/lint_db_performance.md
+.specdev/project_notes/feature_descriptions.md
+.specdev/project_notes/big_picture.md
+.specdev/project_notes/assignment_progress.md
+.specdev/knowledge/_workflow_feedback/codex-review-test-naming.md
+.specdev/assignments/00006_feature_timespec-mismatch-guard/review/brainstorm-reviewer-codex-round-1.log
+.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/implementation-reviewer-codex-round-2.log
+.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/implementation-reviewer-codex-round-1.log
+.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/implementation-feedback.md
+.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/implementation-changelog.md
+.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-reviewer-codex-round-1.log
+.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-feedback.md
+.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-reviewer-codex-round-1.log
+.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-feedback.md
+.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/brainstorm-reviewer-codex-round-1.log
+.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/brainstorm-feedback.md
+.specdev/skills/core/receiving-code-review.md
+.specdev/assignments/00002_refactor_lint-db-perf/review/implementation-feedback.md
+.specdev/assignments/00002_refactor_lint-db-perf/review/implementation-changelog.md
+.specdev/assignments/00002_refactor_lint-db-perf/review/brainstorm-feedback.md
+.specdev/assignments/00002_refactor_lint-db-perf/review/brainstorm-changelog.md
+.specdev/assignments/00006_feature_timespec-mismatch-guard/brainstorm/proposal.md
+.specdev/assignments/00006_feature_timespec-mismatch-guard/brainstorm/design.md
+.specdev/assignments/00001_refactor_perf-optimization/review/implementation-feedback.md
+.specdev/assignments/00001_refactor_perf-optimization/review/implementation-changelog.md
+.specdev/assignments/00001_refactor_perf-optimization/review/brainstorm-feedback.md
+.specdev/assignments/00001_refactor_perf-optimization/review/brainstorm-changelog.md
+.specdev/skills/core/brainstorming/SKILL.md
+.specdev/assignments/00001_refactor_perf-optimization/capture/project-notes-diff.md
+.specdev/skills/core/brainstorming/scripts/get-project-context.sh
+.specdev/skills/core/implementing/prompts/code-reviewer.md
+.specdev/skills/core/review-agent/SKILL.md
+.specdev/skills/core/reviewloop/SKILL.md
+.specdev/assignments/00001_refactor_perf-optimization/brainstorm/proposal.md
+.specdev/assignments/00001_refactor_perf-optimization/brainstorm/design.md
+.specdev/assignments/00002_refactor_lint-db-perf/brainstorm/proposal.md
+.specdev/assignments/00002_refactor_lint-db-perf/brainstorm/design.md
+.specdev/skills/core/reviewloop/review-focus.json
+.specdev/assignments/00002_refactor_lint-db-perf/capture/project-notes-diff.md
+.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/brainstorm/proposal.md
+.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/brainstorm/design.md
+.specdev/_templates/assignment_examples/feature/00000_feature_email-validator/brainstorm/proposal.md
+.specdev/skills/core/reviewloop/reviewers/cursor-gemini.json
+.specdev/skills/core/reviewloop/reviewers/codex.json
+.specdev/skills/core/reviewloop/reviewers/claude.json
+.specdev/skills/core/reviewloop/reviewers/cursor.json
+.specdev/skills/core/reviewloop/reviewers/README.md
+.specdev/skills/core/review-agent/scripts/poll-for-feedback.sh
+.specdev/assignments/00005_refactor_packaging-perf-cleanup/brainstorm/design.md
+.specdev/assignments/00005_refactor_packaging-perf-cleanup/brainstorm/proposal.md
+.specdev/skills/core/review-agent/prompts/breakdown-reviewer.md
+.specdev/skills/core/review-agent/prompts/implementation-reviewer.md
+.specdev/_templates/assignment_examples/feature/00000_feature_email-validator/review/validation_checklist.md
+.specdev/assignments/00004_bugfix_timespec-scoping-api-contracts/brainstorm/design.md
+.specdev/assignments/00004_bugfix_timespec-scoping-api-contracts/brainstorm/proposal.md
+.specdev/assignments/00004_bugfix_timespec-scoping-api-contracts/review/brainstorm-reviewer-codex-round-1.log
+.specdev/assignments/00004_bugfix_timespec-scoping-api-contracts/review/brainstorm-feedback.md
+.specdev/assignments/00004_bugfix_timespec-scoping-api-contracts/review/implementation-feedback.md
+.specdev/assignments/00004_bugfix_timespec-scoping-api-contracts/review/implementation-reviewer-codex-round-1.log
+
+exec
+/usr/bin/zsh -lc 'specdev review brainstorm --round 1' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 106ms:
+Check:
+  1. Is the design complete? Any missing sections?
+  2. Is it feasible with the current tech stack?
+  3. Is the scope appropriate (not too large)?
+  4. ALWAYS scan the codebase to verify claims — never assume.
+     Read the actual files, grep for symbols, check dependencies.
+     Take eager effort to find answers; do not take shortcuts.
+
+Cost-benefit principle:
+  Only flag issues worth the cost of fixing. Skip unlikely edge cases,
+  speculative future-proofing, and stylistic preferences.
+  Accept [REJECTED] findings unless they would cause a real bug.
+
+Review Focus:
+   Architecture & structure — review modularity, separation of concerns, API design, and dependency direction. Identify structural issues.
+
+Write findings to:
+   00006_feature_timespec-mismatch-guard/review/brainstorm-feedback.md
+   Automated review requirement: append ## Round 1 with **Verdict:** approved or **Verdict:** needs-changes before exiting.
+   Do not only print a summary to stdout.
+
+Feedback format (append to file):
+  ```markdown
+  ## Round 1
+  
+  **Verdict:** approved | needs-changes
+  
+  ### Findings
+  1. [F1.1] Description of finding
+  
+  ### Addressed from changelog
+  - (none -- first round)
+  ```
+
+Reviewing assignment: 00006_feature_timespec-mismatch-guard
+
+
+codex
+Specdev: reviewing the assignment proposal/design and matching their claims against the actual code paths.
+exec
+/usr/bin/zsh -lc "sed -n '1,320p' .specdev/assignments/00006_feature_timespec-mismatch-guard/brainstorm/design.md" in /mnt/h/oceanwave/lib/jsonldb
+exec
+/usr/bin/zsh -lc "sed -n '1,260p' .specdev/assignments/00006_feature_timespec-mismatch-guard/brainstorm/proposal.md" in /mnt/h/oceanwave/lib/jsonldb
+exec
+/usr/bin/zsh -lc "sed -n '1,260p' .specdev/project_notes/big_picture.md" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+# Project Big Picture
+
+## Overview
+JSONLDB is a file-based database library that stores data in JSONL (JSON Lines) format. It provides efficient key-based querying, hierarchical folder organization, built-in Git version control, and data visualization.
+
+## Users / Consumers
+Internal team use.
+
+## Tech Stack
+- **Language:** Python (>= 3.8)
+- **Key dependencies:** pandas, orjson, numpy, gitpython, bokeh, matplotlib, mmap, bisect (stdlib)
+
+## Architecture
+- **Layered design:** `jsonlfile` (low-level single-file CRUD with byte-offset indexing via `.idx` files) → `jsonldf` (DataFrame adapter over jsonlfile) → `folderdb` (folder-level DB managing multiple JSONL tables with metadata)
+- **Index-driven reads:** Each `.jsonl` file has a companion `.idx` file mapping linekeys to byte offsets for O(1) lookups and range queries
+- **Sorted keys:** Records are kept sorted by linekey; bisect is used for O(log n) range selection on sorted index keys
+- **In-place updates:** Updates that fit in the existing line space are written in-place; oversized updates append and blank the old line
+- **Hierarchical storage:** Optional `hierarchy_depth` splits files into subdirectories based on dot-delimited key prefixes (e.g. `A.B.ticker.jsonl` → `A/B/ticker.jsonl`)
+- **Metadata files:** `db.meta` (per-table stats), `h.meta` (hierarchy config), `config.meta` (runtime config like time precision)
+- **Modular imports:** `vercontrol` (Git wrapper) and `visual` (Bokeh/Matplotlib) are lazy-loaded to avoid pulling heavy deps unnecessarily
+
+## Conventions & Constraints
+- Each JSONL line is `{"linekey": {value_dict}}` — one top-level key per line, value must be a non-empty dict
+- Linekeys can be strings or ISO datetimes; datetime precision is configurable (`seconds` or `microseconds`)
+- Serialization uses orjson exclusively (no stdlib json fallback)
+- Files are written with large buffer sizes (50 MB) for throughput
+- `lint_jsonl(path, force=False)` uses mtime-based fast path: when `.idx` is fresh, skips O(file_size) mmap scan and does spot check + sort/compaction only; `force=True` runs full mmap line-count verification for crash recovery or maintenance
+- `FolderDB.lint_db(force=False)` orchestrates linting across all tables, passing `force` through to each `lint_jsonl` call
+- `.idx` files use compact (no-indent) orjson format for minimal disk I/O
+- `profile_test/benchmark.py` provides performance benchmarks with `--save`/`--compare` for before/after comparison
+
+ succeeded in 0ms:
+# Proposal: Auto-detect and heal timespec/data mismatches at FolderDB open
+
+Before assignment 00004, the old global-timespec contamination bug could produce databases
+whose `config.meta` says `seconds` while the files actually contain microsecond-precision
+datetime keys (or vice versa). Such a database still loads — nothing is lost — but its
+datetime keys deserialize as plain strings because `_is_datetime_string` matches on exact
+length per configured precision.
+
+This assignment adds a guard at `FolderDB.__init__`: infer the data's actual precision from
+the `min_index`/`max_index` keys already recorded in `db.meta`, and when it consistently
+disagrees with the configured timespec, adopt the detected value, rewrite `config.meta`, and
+print a warning. Mixed precisions across tables keep the configured value and warn (no safe
+automatic choice exists). The guard is read-cheap (one `db.meta` read, no file scans) and
+keeps reads and writes symmetric — unlike a read-side-only fallback, which would re-serialize
+recovered datetime keys at the wrong precision and write them back under different keys.
+
+ succeeded in 0ms:
+# Design: Auto-detect and heal timespec/data mismatches at FolderDB open
+
+## Overview
+
+A database written under the pre-00004 contamination bug can carry a `config.meta` timespec
+that disagrees with the actual precision of its datetime keys. Keys then load as strings
+instead of `datetime` objects. The fix detects the data's real precision when the database is
+opened and self-heals the configuration.
+
+## Goals
+
+- Opening a mismatched database "just works": datetime keys deserialize correctly and
+  `config.meta` is corrected on disk, with a visible warning.
+- Zero cost for healthy databases beyond one `db.meta` read (already loaded data).
+- No behavior change for direct `jsonlfile` users.
+
+## Non-Goals
+
+- **No read-side fallback in `_store_with_key`/`_is_datetime_string`.** Recovering a
+  26-char key as a datetime in a seconds-configured DB and later re-serializing it at
+  seconds precision would write it back under a *different* key (truncated micros),
+  turning an update into a divergent insert. Detection stays strict; the heal happens once,
+  at open, where reads and writes can be switched together.
+- **No per-table timespec.** Mixed precisions across tables get a warning and keep the
+  configured value; supporting heterogeneous precision is a separate design.
+- **No full-file scans.** Detection uses only `db.meta` key ranges.
+
+## Design
+
+**`jsonlfile.detect_timespec(linekey: str) -> Optional[str]`** (new helper):
+returns `'seconds'` / `'microseconds'` when the string is shape-matched by
+`_is_datetime_string` for that precision *and* `datetime.fromisoformat` parses it;
+`None` otherwise. Single source of truth for "what precision is this key".
+
+**`FolderDB._detect_data_timespec(self) -> Optional[str]`** (new private method):
+reads `db.meta` (if present) and runs `detect_timespec` over every entry's
+`min_index`/`max_index`. Returns the precision when all datetime-like keys agree;
+returns `None` (and prints a mixed-precision warning) otherwise or when no datetime-like
+keys exist.
+
+**`FolderDB.__init__`**: after the existing `db.meta` build/refresh block (so `db.meta`
+exists and is current for fresh folders):
+
+```python
+detected = self._detect_data_timespec()
+if detected and detected != self.timespec:
+    print(f"WARNING: config.meta timespec '{self.timespec}' does not match "
+          f"data ('{detected}'); auto-correcting config.meta")
+    self.timespec = detected
+    self.build_configmeta()
+```
+
+## Key Decisions
+
+- **Detect from `db.meta`, not the files:** `min_index`/`max_index` are maintained on every
+  write and rebuilt by the same `__init__` when stale — representative of key shape at zero
+  additional I/O. A table's min and max keys cover both ends of its range.
+- **Heal persistently (rewrite `config.meta`)** rather than only in-memory: otherwise every
+  open re-detects and other processes opening the folder stay broken.
+- **Mixed precision → keep configured + warn:** any automatic choice silently breaks the
+  other tables; surfacing the conflict is the only safe move.
+- **Warning via `print`:** consistent with the library's existing diagnostics.
+
+## Success Criteria
+
+- New test: a DB whose `config.meta` says `seconds` but whose table contains
+  microsecond-precision keys opens with `db.timespec == "microseconds"`, `config.meta`
+  rewritten to `microseconds`, and `get_dict` returns microsecond `datetime` keys.
+- Healthy databases (matching config, string-keyed, or empty) open with no warning and no
+  `config.meta` rewrite (existing `test_init_does_not_rewrite_configmeta_if_unchanged`
+  stays green).
+- Full suite passes.
+
+## Testing Approach
+
+TDD: write the mismatch-heal test first (construct the contaminated state directly with
+`save_jsonl(..., timespec='microseconds')` plus a `seconds` `config.meta`), watch it fail,
+then add `detect_timespec`, `_detect_data_timespec`, and the `__init__` hook.
+
+exec
+/usr/bin/zsh -lc "rg -n \"timespec|time_spec|timepart|LogConfig|ListConfig|listdir|Scan|scan|Lazy|mtime|ctime|dump|append\" . --glob '"'!node_modules'"' --glob '"'!.git'"'" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+./jsonldb/folderdb.py.tmp:20:# Lazy import for version control (only loaded when vercontrol methods are called)
+./jsonldb/folderdb.py.tmp:73:               if "timespec" in config_meta:
+./jsonldb/folderdb.py.tmp:74:                #    print(f"Using timespec: {config_meta['timespec']}")
+./jsonldb/folderdb.py.tmp:75:                   jsonlfile.TIME_SPEC = config_meta["timespec"]
+./jsonldb/folderdb.py.tmp:102:            "timespec": jsonlfile.TIME_SPEC
+./jsonldb/folderdb.py.tmp:220:                        result.append(name)
+./jsonldb/folderdb.py.tmp:226:            for f in os.listdir(self.folder_path):
+./jsonldb/folderdb.py.tmp:228:                    jsonl_files.append(f)
+./jsonldb/folderdb.py.tmp:401:        for file in os.listdir(self.folder_path):
+./jsonldb/folderdb.py.tmp:682:                    all_files.append((name, file_path))
+./jsonldb/folderdb.py.tmp:690:                valid_files.append((name, file_path))
+./jsonldb/folderdb.py.tmp:692:                invalid_files.append((name, file_path))
+./jsonldb/folderdb.py.tmp:759:        for file in os.listdir(self.invalid_tickers_path):
+./jsonldb/folderdb.py.tmp:763:                invalid_files.append((name, file_path))
+./jsonldb/folderdb.py.tmp:777:                now_valid_files.append((name, file_path))
+./jsonldb/folderdb.py.tmp:779:                still_invalid_files.append((name, file_path))
+./jsonldb/folderdb.py.tmp:826:                if not os.listdir(root):
+./jsonldb/folderdb.py:70:        # config.meta stores {"timespec": value} as a flat JSONL record.
+./jsonldb/folderdb.py:71:        self.timespec = jsonlfile.TIME_SPEC
+./jsonldb/folderdb.py:74:            if config_meta.get("timespec"):
+./jsonldb/folderdb.py:75:                self.timespec = config_meta["timespec"]
+./jsonldb/folderdb.py:85:            dbmeta_mtime = os.path.getmtime(self.dbmeta_path)
+./jsonldb/folderdb.py:86:            folder_mtime = os.path.getmtime(self.folder_path)
+./jsonldb/folderdb.py:87:            if folder_mtime > dbmeta_mtime:
+./jsonldb/folderdb.py:110:            "timespec": self.timespec
+./jsonldb/folderdb.py:237:                        result.append(name)
+./jsonldb/folderdb.py:243:            for f in os.listdir(self.folder_path):
+./jsonldb/folderdb.py:245:                    jsonl_files.append(f)
+./jsonldb/folderdb.py:275:        save_jsonldf(file_path, df, self.timespec)
+./jsonldb/folderdb.py:298:            update_jsonldf(file_path, df, self.timespec)
+./jsonldb/folderdb.py:300:            save_jsonldf(file_path, df, self.timespec)
+./jsonldb/folderdb.py:334:                result[name] = select_jsonldf(file_path, lower_key, upper_key, auto_deserialize, timespec=self.timespec)
+./jsonldb/folderdb.py:345:        save_jsonl(file_path, data_dict, self.timespec)
+./jsonldb/folderdb.py:368:            update_jsonl(file_path, data_dict, self.timespec)
+./jsonldb/folderdb.py:370:            save_jsonl(file_path, data_dict, self.timespec)
+./jsonldb/folderdb.py:407:                result[name] = select_jsonl(file_path, lower_key, upper_key, auto_deserialize, timespec=self.timespec)
+./jsonldb/folderdb.py:452:            delete_jsonl(file_path, keys, self.timespec)
+./jsonldb/folderdb.py:479:        lower_str = serialize_linekey(lower_key, self.timespec)
+./jsonldb/folderdb.py:480:        upper_str = serialize_linekey(upper_key, self.timespec)
+./jsonldb/folderdb.py:610:                   If False (default), skip the scan when the index is fresh.
+./jsonldb/folderdb.py:677:                    all_files.append((name, file_path))
+./jsonldb/folderdb.py:685:                valid_files.append((name, file_path))
+./jsonldb/folderdb.py:687:                invalid_files.append((name, file_path))
+./jsonldb/folderdb.py:754:        for file in os.listdir(self.invalid_tickers_path):
+./jsonldb/folderdb.py:758:                invalid_files.append((name, file_path))
+./jsonldb/folderdb.py:772:                now_valid_files.append((name, file_path))
+./jsonldb/folderdb.py:774:                still_invalid_files.append((name, file_path))
+./jsonldb/folderdb.py:821:                if not os.listdir(root):
+./jsonldb/jsonldf.py:10:def save_jsonldf(jsonl_file_path: str, df: pd.DataFrame, timespec: Optional[str] = None) -> None:
+./jsonldb/jsonldf.py:27:    save_jsonl(jsonl_file_path, records_dict, timespec)
+./jsonldb/jsonldf.py:29:def load_jsonldf(jsonl_file_path: str, timespec: Optional[str] = None) -> pd.DataFrame:
+./jsonldb/jsonldf.py:39:    records_dict = load_jsonl(jsonl_file_path, timespec=timespec)
+./jsonldb/jsonldf.py:50:def update_jsonldf(jsonl_file_path: str, df: pd.DataFrame, timespec: Optional[str] = None) -> None:
+./jsonldb/jsonldf.py:61:    update_jsonl(jsonl_file_path, updates_dict, timespec)
+./jsonldb/jsonldf.py:68:    timespec: Optional[str] = None
+./jsonldb/jsonldf.py:91:        timespec=timespec
+./jsonldb/jsonldf.py:101:def delete_jsonldf(jsonl_file_path: str, keys: List[Union[str, int]], timespec: Optional[str] = None) -> None:
+./jsonldb/jsonldf.py:108:    delete_jsonl(jsonl_file_path, keys, timespec)
+./jsonldb/visual.py:153:                filtered_data.append((linekey, line_num))
+./jsonldb/visual.py:398:                    filtered_linekeys.append(linekey)
+./jsonldb/jsonlfile.py:53:            f.write(orjson.dumps(index_dict, option=orjson.OPT_SORT_KEYS))
+./jsonldb/jsonlfile.py:81:        # Save index (OPT_SORT_KEYS sorts on dump)
+./jsonldb/jsonlfile.py:83:            f.write(orjson.dumps(index_dict, option=orjson.OPT_SORT_KEYS))
+./jsonldb/jsonlfile.py:105:        jsonl_mtime = os.path.getmtime(jsonl_file_path)
+./jsonldb/jsonlfile.py:106:        index_mtime = os.path.getmtime(index_file_path)
+./jsonldb/jsonlfile.py:107:        if jsonl_mtime > index_mtime:
+./jsonldb/jsonlfile.py:175:    When force=False (default), skips the expensive mmap line-count scan
+./jsonldb/jsonlfile.py:196:    # Fast path: skip mmap scan when index is fresh
+./jsonldb/jsonlfile.py:198:        idx_mtime = os.path.getmtime(index_path)
+./jsonldb/jsonlfile.py:199:        data_mtime = os.path.getmtime(jsonl_file_path)
+./jsonldb/jsonlfile.py:200:        if idx_mtime >= data_mtime:
+./jsonldb/jsonlfile.py:210:    # Full path: mmap line-count scan
+./jsonldb/jsonlfile.py:232:def _is_datetime_string(linekey: str, timespec: Optional[str] = None) -> bool:
+./jsonldb/jsonlfile.py:237:        timespec: Datetime precision ('seconds' or 'microseconds').
+./jsonldb/jsonlfile.py:243:    if (timespec or TIME_SPEC) == 'seconds':
+./jsonldb/jsonlfile.py:248:def serialize_linekey(linekey: LineKey, timespec: Optional[str] = None) -> str:
+./jsonldb/jsonlfile.py:254:        timespec: Datetime precision ('seconds' or 'microseconds').
+./jsonldb/jsonlfile.py:263:        return linekey.isoformat(timespec=timespec or TIME_SPEC)
+./jsonldb/jsonlfile.py:282:                    auto_deserialize: bool, timespec: Optional[str] = None) -> None:
+./jsonldb/jsonlfile.py:288:    if auto_deserialize and _is_datetime_string(linekey, timespec):
+./jsonldb/jsonlfile.py:296:def _fast_dumps(obj: dict) -> str:
+./jsonldb/jsonlfile.py:306:    return orjson.dumps(obj, option=orjson.OPT_SERIALIZE_NUMPY).decode('utf-8') + '\n'
+./jsonldb/jsonlfile.py:312:def save_jsonl(jsonl_file_path: str, db_dict: DataDict, timespec: Optional[str] = None) -> None:
+./jsonldb/jsonlfile.py:334:                f.write(orjson.dumps({}, option=orjson.OPT_SORT_KEYS))
+./jsonldb/jsonlfile.py:341:                serialized_key = serialize_linekey(linekey, timespec)
+./jsonldb/jsonlfile.py:342:                line = _fast_dumps({serialized_key: data}).encode('utf-8')
+./jsonldb/jsonlfile.py:347:        # Write index (OPT_SORT_KEYS sorts on dump)
+./jsonldb/jsonlfile.py:349:            f.write(orjson.dumps(index, option=orjson.OPT_SORT_KEYS))
+./jsonldb/jsonlfile.py:354:def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True, timespec: Optional[str] = None) -> DataDict:
+./jsonldb/jsonlfile.py:388:                        _store_with_key(result_dict, linekey, data[linekey], auto_deserialize, timespec)
+./jsonldb/jsonlfile.py:398:def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, upper_key: Optional[LineKey] = None, auto_deserialize: bool = True, timespec: Optional[str] = None) -> DataDict:
+./jsonldb/jsonlfile.py:417:        return load_jsonl(jsonl_file_path, auto_deserialize, timespec)
+./jsonldb/jsonlfile.py:420:        return select_line_jsonl(jsonl_file_path, lower_key, auto_deserialize, timespec)
+./jsonldb/jsonlfile.py:444:        lower_key = serialize_linekey(lower_key, timespec)
+./jsonldb/jsonlfile.py:445:        upper_key = serialize_linekey(upper_key, timespec)
+./jsonldb/jsonlfile.py:467:            _store_with_key(result_dict, linekey, raw_results[linekey], auto_deserialize, timespec)
+./jsonldb/jsonlfile.py:473:def select_line_jsonl(jsonl_file_path: str, linekey: LineKey, auto_serialize: bool = True, timespec: Optional[str] = None) -> DataDict:
+./jsonldb/jsonlfile.py:482:        timespec: Datetime precision ('seconds' or 'microseconds').
+./jsonldb/jsonlfile.py:491:        linekey = serialize_linekey(linekey, timespec)
+./jsonldb/jsonlfile.py:513:            _store_with_key(result_dict, linekey, data[linekey], auto_serialize, timespec)
+./jsonldb/jsonlfile.py:521:def update_jsonl(jsonl_file_path: str, update_dict: DataDict, timespec: Optional[str] = None) -> None:
+./jsonldb/jsonlfile.py:545:        appends = []
+./jsonldb/jsonlfile.py:550:            # Heal a missing trailing newline so appends start on a fresh line
+./jsonldb/jsonlfile.py:555:            append_pos = f.tell()
+./jsonldb/jsonlfile.py:558:                linekey = serialize_linekey(linekey, timespec)
+./jsonldb/jsonlfile.py:559:                new_line = _fast_dumps({linekey: data}).encode('utf-8')
+./jsonldb/jsonlfile.py:566:                        updates.append((index[linekey], new_line, len(old_line)))
+./jsonldb/jsonlfile.py:568:                        updates.append((index[linekey], b' ' * (len(old_line) - 1) + b'\n', len(old_line)))
+./jsonldb/jsonlfile.py:569:                        appends.append((linekey, new_line))
+./jsonldb/jsonlfile.py:571:                    appends.append((linekey, new_line))
+./jsonldb/jsonlfile.py:582:            # Apply appends
+./jsonldb/jsonlfile.py:583:            if appends:
+./jsonldb/jsonlfile.py:584:                f.seek(append_pos)
+./jsonldb/jsonlfile.py:585:                for linekey, line in appends:
+./jsonldb/jsonlfile.py:591:            f.write(orjson.dumps(index, option=orjson.OPT_SORT_KEYS))
+./jsonldb/jsonlfile.py:596:def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey], timespec: Optional[str] = None) -> None:
+./jsonldb/jsonlfile.py:618:        linekeys = [serialize_linekey(key, timespec) for key in linekeys]
+./jsonldb/jsonlfile.py:635:            f.write(orjson.dumps(index, option=orjson.OPT_SORT_KEYS))
+./examples/example_folderdb/basic_operations.ipynb:213:    "for file in os.listdir(db_folder):\n",
+./examples/example_folderdb/dict_operations.ipynb:164:    "print(json.dumps(products, indent=2))\n",
+./examples/example_folderdb/dict_operations.ipynb:166:    "print(json.dumps(inventory, indent=2))"
+./examples/example_folderdb/dict_operations.ipynb:250:    "print(json.dumps(db.get_dict([\"products\"])[\"products\"], indent=2))"
+./examples/example_folderdb/dict_operations.ipynb:286:    "# print(json.dumps(db.get_dict([\"products\"])[\"products\"], indent=2))\n",
+./examples/example_folderdb/dict_operations.ipynb:290:    "print(json.dumps(db.get_dict([\"inventory\"], lower_key=\"loc1\", upper_key=\"loc1\")[\"inventory\"], indent=2))"
+./examples/example_folderdb/dict_operations.ipynb:323:    "print(json.dumps(db.get_dict([\"inventory\"])[\"inventory\"], indent=2))"
+./examples/example_folderdb/dict_operations.ipynb:348:    "print(json.dumps(db.get_dict([\"inventory\"])[\"inventory\"], indent=2))"
+./examples/example_folderdb/dict_operations.ipynb:392:    "for file in os.listdir(db_folder):\n",
+./examples/example_jsonldf/timeseries_data.ipynb:71:    "        data.append({\n",
+./examples/example_jsonldf/timeseries_data.ipynb:121:    "    dfs.append(df)\n",
+./examples/example_visual/visualize_folder.ipynb:54:      "application/javascript": "'use strict';\n(function(root) {\n  function now() {\n    return new Date();\n  }\n\n  const force = true;\n\n  if (typeof root._bokeh_onload_callbacks === \"undefined\" || force === true) {\n    root._bokeh_onload_callbacks = [];\n    root._bokeh_is_loading = undefined;\n  }\n\nconst JS_MIME_TYPE = 'application/javascript';\n  const HTML_MIME_TYPE = 'text/html';\n  const EXEC_MIME_TYPE = 'application/vnd.bokehjs_exec.v0+json';\n  const CLASS_NAME = 'output_bokeh rendered_html';\n\n  /**\n   * Render data to the DOM node\n   */\n  function render(props, node) {\n    const script = document.createElement(\"script\");\n    node.appendChild(script);\n  }\n\n  /**\n   * Handle when an output is cleared or removed\n   */\n  function handleClearOutput(event, handle) {\n    function drop(id) {\n      const view = Bokeh.index.get_by_id(id)\n      if (view != null) {\n        view.model.document.clear()\n        Bokeh.index.delete(view)\n      }\n    }\n\n    const cell = handle.cell;\n\n    const id = cell.output_area._bokeh_element_id;\n    const server_id = cell.output_area._bokeh_server_id;\n\n    // Clean up Bokeh references\n    if (id != null) {\n      drop(id)\n    }\n\n    if (server_id !== undefined) {\n      // Clean up Bokeh references\n      const cmd_clean = \"from bokeh.io.state import curstate; print(curstate().uuid_to_server['\" + server_id + \"'].get_sessions()[0].document.roots[0]._id)\";\n      cell.notebook.kernel.execute(cmd_clean, {\n        iopub: {\n          output: function(msg) {\n            const id = msg.content.text.trim()\n            drop(id)\n          }\n        }\n      });\n      // Destroy server and session\n      const cmd_destroy = \"import bokeh.io.notebook as ion; ion.destroy_server('\" + server_id + \"')\";\n      cell.notebook.kernel.execute(cmd_destroy);\n    }\n  }\n\n  /**\n   * Handle when a new output is added\n   */\n  function handleAddOutput(event, handle) {\n    const output_area = handle.output_area;\n    const output = handle.output;\n\n    // limit handleAddOutput to display_data with EXEC_MIME_TYPE content only\n    if ((output.output_type != \"display_data\") || (!Object.prototype.hasOwnProperty.call(output.data, EXEC_MIME_TYPE))) {\n      return\n    }\n\n    const toinsert = output_area.element.find(\".\" + CLASS_NAME.split(' ')[0]);\n\n    if (output.metadata[EXEC_MIME_TYPE][\"id\"] !== undefined) {\n      toinsert[toinsert.length - 1].firstChild.textContent = output.data[JS_MIME_TYPE];\n      // store reference to embed id on output_area\n      output_area._bokeh_element_id = output.metadata[EXEC_MIME_TYPE][\"id\"];\n    }\n    if (output.metadata[EXEC_MIME_TYPE][\"server_id\"] !== undefined) {\n      const bk_div = document.createElement(\"div\");\n      bk_div.innerHTML = output.data[HTML_MIME_TYPE];\n      const script_attrs = bk_div.children[0].attributes;\n      for (let i = 0; i < script_attrs.length; i++) {\n        toinsert[toinsert.length - 1].firstChild.setAttribute(script_attrs[i].name, script_attrs[i].value);\n        toinsert[toinsert.length - 1].firstChild.textContent = bk_div.children[0].textContent\n      }\n      // store reference to server id on output_area\n      output_area._bokeh_server_id = output.metadata[EXEC_MIME_TYPE][\"server_id\"];\n    }\n  }\n\n  function register_renderer(events, OutputArea) {\n\n    function append_mime(data, metadata, element) {\n      // create a DOM node to render to\n      const toinsert = this.create_output_subarea(\n        metadata,\n        CLASS_NAME,\n        EXEC_MIME_TYPE\n      );\n      this.keyboard_manager.register_events(toinsert);\n      // Render to node\n      const props = {data: data, metadata: metadata[EXEC_MIME_TYPE]};\n      render(props, toinsert[toinsert.length - 1]);\n      element.append(toinsert);\n      return toinsert\n    }\n\n    /* Handle when an output is cleared or removed */\n    events.on('clear_output.CodeCell', handleClearOutput);\n    events.on('delete.Cell', handleClearOutput);\n\n    /* Handle when a new output is added */\n    events.on('output_added.OutputArea', handleAddOutput);\n\n    /**\n     * Register the mime type and append_mime function with output_area\n     */\n    OutputArea.prototype.register_mime_type(EXEC_MIME_TYPE, append_mime, {\n      /* Is output safe? */\n      safe: true,\n      /* Index of renderer in `output_area.display_order` */\n      index: 0\n    });\n  }\n\n  // register the mime type if in Jupyter Notebook environment and previously unregistered\n  if (root.Jupyter !== undefined) {\n    const events = require('base/js/events');\n    const OutputArea = require('notebook/js/outputarea').OutputArea;\n\n    if (OutputArea.prototype.mime_types().indexOf(EXEC_MIME_TYPE) == -1) {\n      register_renderer(events, OutputArea);\n    }\n  }\n  if (typeof (root._bokeh_timeout) === \"undefined\" || force === true) {\n    root._bokeh_timeout = Date.now() + 5000;\n    root._bokeh_failed_load = false;\n  }\n\n  const NB_LOAD_WARNING = {'data': {'text/html':\n     \"<div style='background-color: #fdd'>\\n\"+\n     \"<p>\\n\"+\n     \"BokehJS does not appear to have successfully loaded. If loading BokehJS from CDN, this \\n\"+\n     \"may be due to a slow or bad network connection. Possible fixes:\\n\"+\n     \"</p>\\n\"+\n     \"<ul>\\n\"+\n     \"<li>re-rerun `output_notebook()` to attempt to load from CDN again, or</li>\\n\"+\n     \"<li>use INLINE resources instead, as so:</li>\\n\"+\n     \"</ul>\\n\"+\n     \"<code>\\n\"+\n     \"from bokeh.resources import INLINE\\n\"+\n     \"output_notebook(resources=INLINE)\\n\"+\n     \"</code>\\n\"+\n     \"</div>\"}};\n\n  function display_loaded(error = null) {\n    const el = document.getElementById(\"f3a48b52-cafa-43a3-8d3e-77f703ef2bb8\");\n    if (el != null) {\n      const html = (() => {\n        if (typeof root.Bokeh === \"undefined\") {\n          if (error == null) {\n            return \"BokehJS is loading ...\";\n          } else {\n            return \"BokehJS failed to load.\";\n          }\n        } else {\n          const prefix = `BokehJS ${root.Bokeh.version}`;\n          if (error == null) {\n            return `${prefix} successfully loaded.`;\n          } else {\n            return `${prefix} <b>encountered errors</b> while loading and may not function as expected.`;\n          }\n        }\n      })();\n      el.innerHTML = html;\n\n      if (error != null) {\n        const wrapper = document.createElement(\"div\");\n        wrapper.style.overflow = \"auto\";\n        wrapper.style.height = \"5em\";\n        wrapper.style.resize = \"vertical\";\n        const content = document.createElement(\"div\");\n        content.style.fontFamily = \"monospace\";\n        content.style.whiteSpace = \"pre-wrap\";\n        content.style.backgroundColor = \"rgb(255, 221, 221)\";\n        content.textContent = error.stack ?? error.toString();\n        wrapper.append(content);\n        el.append(wrapper);\n      }\n    } else if (Date.now() < root._bokeh_timeout) {\n      setTimeout(() => display_loaded(error), 100);\n    }\n  }\n\n  function run_callbacks() {\n    try {\n      root._bokeh_onload_callbacks.forEach(function(callback) {\n        if (callback != null)\n          callback();\n      });\n    } finally {\n      delete root._bokeh_onload_callbacks\n    }\n    console.debug(\"Bokeh: all callbacks have finished\");\n  }\n\n  function load_libs(css_urls, js_urls, callback) {\n    if (css_urls == null) css_urls = [];\n    if (js_urls == null) js_urls = [];\n\n    root._bokeh_onload_callbacks.push(callback);\n    if (root._bokeh_is_loading > 0) {\n      console.debug(\"Bokeh: BokehJS is being loaded, scheduling callback at\", now());\n      return null;\n    }\n    if (js_urls == null || js_urls.length === 0) {\n      run_callbacks();\n      return null;\n    }\n    console.debug(\"Bokeh: BokehJS not loaded, scheduling load and callback at\", now());\n    root._bokeh_is_loading = css_urls.length + js_urls.length;\n\n    function on_load() {\n      root._bokeh_is_loading--;\n      if (root._bokeh_is_loading === 0) {\n        console.debug(\"Bokeh: all BokehJS libraries/stylesheets loaded\");\n        run_callbacks()\n      }\n    }\n\n    function on_error(url) {\n      console.error(\"failed to load \" + url);\n    }\n\n    for (let i = 0; i < css_urls.length; i++) {\n      const url = css_urls[i];\n      const element = document.createElement(\"link\");\n      element.onload = on_load;\n      element.onerror = on_error.bind(null, url);\n      element.rel = \"stylesheet\";\n      element.type = \"text/css\";\n      element.href = url;\n      console.debug(\"Bokeh: injecting link tag for BokehJS stylesheet: \", url);\n      document.body.appendChild(element);\n    }\n\n    for (let i = 0; i < js_urls.length; i++) {\n      const url = js_urls[i];\n      const element = document.createElement('script');\n      element.onload = on_load;\n      element.onerror = on_error.bind(null, url);\n      element.async = false;\n      element.src = url;\n      console.debug(\"Bokeh: injecting script tag for BokehJS library: \", url);\n      document.head.appendChild(element);\n    }\n  };\n\n  function inject_raw_css(css) {\n    const element = document.createElement(\"style\");\n    element.appendChild(document.createTextNode(css));\n    document.body.appendChild(element);\n  }\n\n  const js_urls = [\"https://cdn.bokeh.org/bokeh/release/bokeh-3.8.0.min.js\", \"https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.8.0.min.js\", \"https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.8.0.min.js\", \"https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.8.0.min.js\", \"https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-3.8.0.min.js\"];\n  const css_urls = [];\n\n  const inline_js = [    function(Bokeh) {\n      Bokeh.set_log_level(\"info\");\n    },\nfunction(Bokeh) {\n    }\n  ];\n\n  function run_inline_js() {\n    if (root.Bokeh !== undefined || force === true) {\n      try {\n            for (let i = 0; i < inline_js.length; i++) {\n      inline_js[i].call(root, root.Bokeh);\n    }\n\n      } catch (error) {display_loaded(error);throw error;\n      }if (force === true) {\n        display_loaded();\n      }} else if (Date.now() < root._bokeh_timeout) {\n      setTimeout(run_inline_js, 100);\n    } else if (!root._bokeh_failed_load) {\n      console.log(\"Bokeh: BokehJS failed to load within specified timeout.\");\n      root._bokeh_failed_load = true;\n    } else if (force !== true) {\n      const cell = $(document.getElementById(\"f3a48b52-cafa-43a3-8d3e-77f703ef2bb8\")).parents('.cell').data().cell;\n      cell.output_area.append_execute_result(NB_LOAD_WARNING)\n    }\n  }\n\n  if (root._bokeh_is_loading === 0) {\n    console.debug(\"Bokeh: BokehJS loaded, going straight to plotting\");\n    run_inline_js();\n  } else {\n    load_libs(css_urls, js_urls, function() {\n      console.debug(\"Bokeh: BokehJS plotting callback run at\", now());\n      run_inline_js();\n    });\n  }\n}(window));",
+./examples/example_vercontrol/version_control_example.ipynb:70:    "            f.write(json.dumps(record) + \"\\n\")"
+./examples/example_folderdb/timeseries_data.ipynb:38:    "sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd()))))\n",
+./examples/example_folderdb/timeseries_data.ipynb:283:    "for file in os.listdir(db_folder):\n",
+./examples/example_visual/overlapping_datetime_example.ipynb:57:      "application/javascript": "(function(root) {\n  function now() {\n    return new Date();\n  }\n\n  const force = true;\n\n  if (typeof root._bokeh_onload_callbacks === \"undefined\" || force === true) {\n    root._bokeh_onload_callbacks = [];\n    root._bokeh_is_loading = undefined;\n  }\n\nconst JS_MIME_TYPE = 'application/javascript';\n  const HTML_MIME_TYPE = 'text/html';\n  const EXEC_MIME_TYPE = 'application/vnd.bokehjs_exec.v0+json';\n  const CLASS_NAME = 'output_bokeh rendered_html';\n\n  /**\n   * Render data to the DOM node\n   */\n  function render(props, node) {\n    const script = document.createElement(\"script\");\n    node.appendChild(script);\n  }\n\n  /**\n   * Handle when an output is cleared or removed\n   */\n  function handleClearOutput(event, handle) {\n    const cell = handle.cell;\n\n    const id = cell.output_area._bokeh_element_id;\n    const server_id = cell.output_area._bokeh_server_id;\n    // Clean up Bokeh references\n    if (id != null && id in Bokeh.index) {\n      Bokeh.index[id].model.document.clear();\n      delete Bokeh.index[id];\n    }\n\n    if (server_id !== undefined) {\n      // Clean up Bokeh references\n      const cmd_clean = \"from bokeh.io.state import curstate; print(curstate().uuid_to_server['\" + server_id + \"'].get_sessions()[0].document.roots[0]._id)\";\n      cell.notebook.kernel.execute(cmd_clean, {\n        iopub: {\n          output: function(msg) {\n            const id = msg.content.text.trim();\n            if (id in Bokeh.index) {\n              Bokeh.index[id].model.document.clear();\n              delete Bokeh.index[id];\n            }\n          }\n        }\n      });\n      // Destroy server and session\n      const cmd_destroy = \"import bokeh.io.notebook as ion; ion.destroy_server('\" + server_id + \"')\";\n      cell.notebook.kernel.execute(cmd_destroy);\n    }\n  }\n\n  /**\n   * Handle when a new output is added\n   */\n  function handleAddOutput(event, handle) {\n    const output_area = handle.output_area;\n    const output = handle.output;\n\n    // limit handleAddOutput to display_data with EXEC_MIME_TYPE content only\n    if ((output.output_type != \"display_data\") || (!Object.prototype.hasOwnProperty.call(output.data, EXEC_MIME_TYPE))) {\n      return\n    }\n\n    const toinsert = output_area.element.find(\".\" + CLASS_NAME.split(' ')[0]);\n\n    if (output.metadata[EXEC_MIME_TYPE][\"id\"] !== undefined) {\n      toinsert[toinsert.length - 1].firstChild.textContent = output.data[JS_MIME_TYPE];\n      // store reference to embed id on output_area\n      output_area._bokeh_element_id = output.metadata[EXEC_MIME_TYPE][\"id\"];\n    }\n    if (output.metadata[EXEC_MIME_TYPE][\"server_id\"] !== undefined) {\n      const bk_div = document.createElement(\"div\");\n      bk_div.innerHTML = output.data[HTML_MIME_TYPE];\n      const script_attrs = bk_div.children[0].attributes;\n      for (let i = 0; i < script_attrs.length; i++) {\n        toinsert[toinsert.length - 1].firstChild.setAttribute(script_attrs[i].name, script_attrs[i].value);\n        toinsert[toinsert.length - 1].firstChild.textContent = bk_div.children[0].textContent\n      }\n      // store reference to server id on output_area\n      output_area._bokeh_server_id = output.metadata[EXEC_MIME_TYPE][\"server_id\"];\n    }\n  }\n\n  function register_renderer(events, OutputArea) {\n\n    function append_mime(data, metadata, element) {\n      // create a DOM node to render to\n      const toinsert = this.create_output_subarea(\n        metadata,\n        CLASS_NAME,\n        EXEC_MIME_TYPE\n      );\n      this.keyboard_manager.register_events(toinsert);\n      // Render to node\n      const props = {data: data, metadata: metadata[EXEC_MIME_TYPE]};\n      render(props, toinsert[toinsert.length - 1]);\n      element.append(toinsert);\n      return toinsert\n    }\n\n    /* Handle when an output is cleared or removed */\n    events.on('clear_output.CodeCell', handleClearOutput);\n    events.on('delete.Cell', handleClearOutput);\n\n    /* Handle when a new output is added */\n    events.on('output_added.OutputArea', handleAddOutput);\n\n    /**\n     * Register the mime type and append_mime function with output_area\n     */\n    OutputArea.prototype.register_mime_type(EXEC_MIME_TYPE, append_mime, {\n      /* Is output safe? */\n      safe: true,\n      /* Index of renderer in `output_area.display_order` */\n      index: 0\n    });\n  }\n\n  // register the mime type if in Jupyter Notebook environment and previously unregistered\n  if (root.Jupyter !== undefined) {\n    const events = require('base/js/events');\n    const OutputArea = require('notebook/js/outputarea').OutputArea;\n\n    if (OutputArea.prototype.mime_types().indexOf(EXEC_MIME_TYPE) == -1) {\n      register_renderer(events, OutputArea);\n    }\n  }\n  if (typeof (root._bokeh_timeout) === \"undefined\" || force === true) {\n    root._bokeh_timeout = Date.now() + 5000;\n    root._bokeh_failed_load = false;\n  }\n\n  const NB_LOAD_WARNING = {'data': {'text/html':\n     \"<div style='background-color: #fdd'>\\n\"+\n     \"<p>\\n\"+\n     \"BokehJS does not appear to have successfully loaded. If loading BokehJS from CDN, this \\n\"+\n     \"may be due to a slow or bad network connection. Possible fixes:\\n\"+\n     \"</p>\\n\"+\n     \"<ul>\\n\"+\n     \"<li>re-rerun `output_notebook()` to attempt to load from CDN again, or</li>\\n\"+\n     \"<li>use INLINE resources instead, as so:</li>\\n\"+\n     \"</ul>\\n\"+\n     \"<code>\\n\"+\n     \"from bokeh.resources import INLINE\\n\"+\n     \"output_notebook(resources=INLINE)\\n\"+\n     \"</code>\\n\"+\n     \"</div>\"}};\n\n  function display_loaded() {\n    const el = document.getElementById(\"1002\");\n    if (el != null) {\n      el.textContent = \"BokehJS is loading...\";\n    }\n    if (root.Bokeh !== undefined) {\n      if (el != null) {\n        el.textContent = \"BokehJS \" + root.Bokeh.version + \" successfully loaded.\";\n      }\n    } else if (Date.now() < root._bokeh_timeout) {\n      setTimeout(display_loaded, 100)\n    }\n  }\n\n  function run_callbacks() {\n    try {\n      root._bokeh_onload_callbacks.forEach(function(callback) {\n        if (callback != null)\n          callback();\n      });\n    } finally {\n      delete root._bokeh_onload_callbacks\n    }\n    console.debug(\"Bokeh: all callbacks have finished\");\n  }\n\n  function load_libs(css_urls, js_urls, callback) {\n    if (css_urls == null) css_urls = [];\n    if (js_urls == null) js_urls = [];\n\n    root._bokeh_onload_callbacks.push(callback);\n    if (root._bokeh_is_loading > 0) {\n      console.debug(\"Bokeh: BokehJS is being loaded, scheduling callback at\", now());\n      return null;\n    }\n    if (js_urls == null || js_urls.length === 0) {\n      run_callbacks();\n      return null;\n    }\n    console.debug(\"Bokeh: BokehJS not loaded, scheduling load and callback at\", now());\n    root._bokeh_is_loading = css_urls.length + js_urls.length;\n\n    function on_load() {\n      root._bokeh_is_loading--;\n      if (root._bokeh_is_loading === 0) {\n        console.debug(\"Bokeh: all BokehJS libraries/stylesheets loaded\");\n        run_callbacks()\n      }\n    }\n\n    function on_error(url) {\n      console.error(\"failed to load \" + url);\n    }\n\n    for (let i = 0; i < css_urls.length; i++) {\n      const url = css_urls[i];\n      const element = document.createElement(\"link\");\n      element.onload = on_load;\n      element.onerror = on_error.bind(null, url);\n      element.rel = \"stylesheet\";\n      element.type = \"text/css\";\n      element.href = url;\n      console.debug(\"Bokeh: injecting link tag for BokehJS stylesheet: \", url);\n      document.body.appendChild(element);\n    }\n\n    for (let i = 0; i < js_urls.length; i++) {\n      const url = js_urls[i];\n      const element = document.createElement('script');\n      element.onload = on_load;\n      element.onerror = on_error.bind(null, url);\n      element.async = false;\n      element.src = url;\n      console.debug(\"Bokeh: injecting script tag for BokehJS library: \", url);\n      document.head.appendChild(element);\n    }\n  };\n\n  function inject_raw_css(css) {\n    const element = document.createElement(\"style\");\n    element.appendChild(document.createTextNode(css));\n    document.body.appendChild(element);\n  }\n\n  const js_urls = [\"https://cdn.bokeh.org/bokeh/release/bokeh-2.4.3.min.js\", \"https://cdn.bokeh.org/bokeh/release/bokeh-gl-2.4.3.min.js\", \"https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.4.3.min.js\", \"https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.4.3.min.js\", \"https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-2.4.3.min.js\"];\n  const css_urls = [];\n\n  const inline_js = [    function(Bokeh) {\n      Bokeh.set_log_level(\"info\");\n    },\nfunction(Bokeh) {\n    }\n  ];\n\n  function run_inline_js() {\n    if (root.Bokeh !== undefined || force === true) {\n          for (let i = 0; i < inline_js.length; i++) {\n      inline_js[i].call(root, root.Bokeh);\n    }\nif (force === true) {\n        display_loaded();\n      }} else if (Date.now() < root._bokeh_timeout) {\n      setTimeout(run_inline_js, 100);\n    } else if (!root._bokeh_failed_load) {\n      console.log(\"Bokeh: BokehJS failed to load within specified timeout.\");\n      root._bokeh_failed_load = true;\n    } else if (force !== true) {\n      const cell = $(document.getElementById(\"1002\")).parents('.cell').data().cell;\n      cell.output_area.append_execute_result(NB_LOAD_WARNING)\n    }\n  }\n\n  if (root._bokeh_is_loading === 0) {\n    console.debug(\"Bokeh: BokehJS loaded, going straight to plotting\");\n    run_inline_js();\n  } else {\n    load_libs(css_urls, js_urls, function() {\n      console.debug(\"Bokeh: BokehJS plotting callback run at\", now());\n      run_inline_js();\n    });\n  }\n}(window));",
+./examples/example_visual/overlapping_datetime_example.ipynb:349:    "for file in os.listdir(db_folder):\n",
+./examples/example_visual/visualization_examples.ipynb:58:      "application/javascript": "(function(root) {\n  function now() {\n    return new Date();\n  }\n\n  const force = true;\n\n  if (typeof root._bokeh_onload_callbacks === \"undefined\" || force === true) {\n    root._bokeh_onload_callbacks = [];\n    root._bokeh_is_loading = undefined;\n  }\n\nconst JS_MIME_TYPE = 'application/javascript';\n  const HTML_MIME_TYPE = 'text/html';\n  const EXEC_MIME_TYPE = 'application/vnd.bokehjs_exec.v0+json';\n  const CLASS_NAME = 'output_bokeh rendered_html';\n\n  /**\n   * Render data to the DOM node\n   */\n  function render(props, node) {\n    const script = document.createElement(\"script\");\n    node.appendChild(script);\n  }\n\n  /**\n   * Handle when an output is cleared or removed\n   */\n  function handleClearOutput(event, handle) {\n    const cell = handle.cell;\n\n    const id = cell.output_area._bokeh_element_id;\n    const server_id = cell.output_area._bokeh_server_id;\n    // Clean up Bokeh references\n    if (id != null && id in Bokeh.index) {\n      Bokeh.index[id].model.document.clear();\n      delete Bokeh.index[id];\n    }\n\n    if (server_id !== undefined) {\n      // Clean up Bokeh references\n      const cmd_clean = \"from bokeh.io.state import curstate; print(curstate().uuid_to_server['\" + server_id + \"'].get_sessions()[0].document.roots[0]._id)\";\n      cell.notebook.kernel.execute(cmd_clean, {\n        iopub: {\n          output: function(msg) {\n            const id = msg.content.text.trim();\n            if (id in Bokeh.index) {\n              Bokeh.index[id].model.document.clear();\n              delete Bokeh.index[id];\n            }\n          }\n        }\n      });\n      // Destroy server and session\n      const cmd_destroy = \"import bokeh.io.notebook as ion; ion.destroy_server('\" + server_id + \"')\";\n      cell.notebook.kernel.execute(cmd_destroy);\n    }\n  }\n\n  /**\n   * Handle when a new output is added\n   */\n  function handleAddOutput(event, handle) {\n    const output_area = handle.output_area;\n    const output = handle.output;\n\n    // limit handleAddOutput to display_data with EXEC_MIME_TYPE content only\n    if ((output.output_type != \"display_data\") || (!Object.prototype.hasOwnProperty.call(output.data, EXEC_MIME_TYPE))) {\n      return\n    }\n\n    const toinsert = output_area.element.find(\".\" + CLASS_NAME.split(' ')[0]);\n\n    if (output.metadata[EXEC_MIME_TYPE][\"id\"] !== undefined) {\n      toinsert[toinsert.length - 1].firstChild.textContent = output.data[JS_MIME_TYPE];\n      // store reference to embed id on output_area\n      output_area._bokeh_element_id = output.metadata[EXEC_MIME_TYPE][\"id\"];\n    }\n    if (output.metadata[EXEC_MIME_TYPE][\"server_id\"] !== undefined) {\n      const bk_div = document.createElement(\"div\");\n      bk_div.innerHTML = output.data[HTML_MIME_TYPE];\n      const script_attrs = bk_div.children[0].attributes;\n      for (let i = 0; i < script_attrs.length; i++) {\n        toinsert[toinsert.length - 1].firstChild.setAttribute(script_attrs[i].name, script_attrs[i].value);\n        toinsert[toinsert.length - 1].firstChild.textContent = bk_div.children[0].textContent\n      }\n      // store reference to server id on output_area\n      output_area._bokeh_server_id = output.metadata[EXEC_MIME_TYPE][\"server_id\"];\n    }\n  }\n\n  function register_renderer(events, OutputArea) {\n\n    function append_mime(data, metadata, element) {\n      // create a DOM node to render to\n      const toinsert = this.create_output_subarea(\n        metadata,\n        CLASS_NAME,\n        EXEC_MIME_TYPE\n      );\n      this.keyboard_manager.register_events(toinsert);\n      // Render to node\n      const props = {data: data, metadata: metadata[EXEC_MIME_TYPE]};\n      render(props, toinsert[toinsert.length - 1]);\n      element.append(toinsert);\n      return toinsert\n    }\n\n    /* Handle when an output is cleared or removed */\n    events.on('clear_output.CodeCell', handleClearOutput);\n    events.on('delete.Cell', handleClearOutput);\n\n    /* Handle when a new output is added */\n    events.on('output_added.OutputArea', handleAddOutput);\n\n    /**\n     * Register the mime type and append_mime function with output_area\n     */\n    OutputArea.prototype.register_mime_type(EXEC_MIME_TYPE, append_mime, {\n      /* Is output safe? */\n      safe: true,\n      /* Index of renderer in `output_area.display_order` */\n      index: 0\n    });\n  }\n\n  // register the mime type if in Jupyter Notebook environment and previously unregistered\n  if (root.Jupyter !== undefined) {\n    const events = require('base/js/events');\n    const OutputArea = require('notebook/js/outputarea').OutputArea;\n\n    if (OutputArea.prototype.mime_types().indexOf(EXEC_MIME_TYPE) == -1) {\n      register_renderer(events, OutputArea);\n    }\n  }\n  if (typeof (root._bokeh_timeout) === \"undefined\" || force === true) {\n    root._bokeh_timeout = Date.now() + 5000;\n    root._bokeh_failed_load = false;\n  }\n\n  const NB_LOAD_WARNING = {'data': {'text/html':\n     \"<div style='background-color: #fdd'>\\n\"+\n     \"<p>\\n\"+\n     \"BokehJS does not appear to have successfully loaded. If loading BokehJS from CDN, this \\n\"+\n     \"may be due to a slow or bad network connection. Possible fixes:\\n\"+\n     \"</p>\\n\"+\n     \"<ul>\\n\"+\n     \"<li>re-rerun `output_notebook()` to attempt to load from CDN again, or</li>\\n\"+\n     \"<li>use INLINE resources instead, as so:</li>\\n\"+\n     \"</ul>\\n\"+\n     \"<code>\\n\"+\n     \"from bokeh.resources import INLINE\\n\"+\n     \"output_notebook(resources=INLINE)\\n\"+\n     \"</code>\\n\"+\n     \"</div>\"}};\n\n  function display_loaded() {\n    const el = document.getElementById(\"1002\");\n    if (el != null) {\n      el.textContent = \"BokehJS is loading...\";\n    }\n    if (root.Bokeh !== undefined) {\n      if (el != null) {\n        el.textContent = \"BokehJS \" + root.Bokeh.version + \" successfully loaded.\";\n      }\n    } else if (Date.now() < root._bokeh_timeout) {\n      setTimeout(display_loaded, 100)\n    }\n  }\n\n  function run_callbacks() {\n    try {\n      root._bokeh_onload_callbacks.forEach(function(callback) {\n        if (callback != null)\n          callback();\n      });\n    } finally {\n      delete root._bokeh_onload_callbacks\n    }\n    console.debug(\"Bokeh: all callbacks have finished\");\n  }\n\n  function load_libs(css_urls, js_urls, callback) {\n    if (css_urls == null) css_urls = [];\n    if (js_urls == null) js_urls = [];\n\n    root._bokeh_onload_callbacks.push(callback);\n    if (root._bokeh_is_loading > 0) {\n      console.debug(\"Bokeh: BokehJS is being loaded, scheduling callback at\", now());\n      return null;\n    }\n    if (js_urls == null || js_urls.length === 0) {\n      run_callbacks();\n      return null;\n    }\n    console.debug(\"Bokeh: BokehJS not loaded, scheduling load and callback at\", now());\n    root._bokeh_is_loading = css_urls.length + js_urls.length;\n\n    function on_load() {\n      root._bokeh_is_loading--;\n      if (root._bokeh_is_loading === 0) {\n        console.debug(\"Bokeh: all BokehJS libraries/stylesheets loaded\");\n        run_callbacks()\n      }\n    }\n\n    function on_error(url) {\n      console.error(\"failed to load \" + url);\n    }\n\n    for (let i = 0; i < css_urls.length; i++) {\n      const url = css_urls[i];\n      const element = document.createElement(\"link\");\n      element.onload = on_load;\n      element.onerror = on_error.bind(null, url);\n      element.rel = \"stylesheet\";\n      element.type = \"text/css\";\n      element.href = url;\n      console.debug(\"Bokeh: injecting link tag for BokehJS stylesheet: \", url);\n      document.body.appendChild(element);\n    }\n\n    for (let i = 0; i < js_urls.length; i++) {\n      const url = js_urls[i];\n      const element = document.createElement('script');\n      element.onload = on_load;\n      element.onerror = on_error.bind(null, url);\n      element.async = false;\n      element.src = url;\n      console.debug(\"Bokeh: injecting script tag for BokehJS library: \", url);\n      document.head.appendChild(element);\n    }\n  };\n\n  function inject_raw_css(css) {\n    const element = document.createElement(\"style\");\n    element.appendChild(document.createTextNode(css));\n    document.body.appendChild(element);\n  }\n\n  const js_urls = [\"https://cdn.bokeh.org/bokeh/release/bokeh-2.4.3.min.js\", \"https://cdn.bokeh.org/bokeh/release/bokeh-gl-2.4.3.min.js\", \"https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.4.3.min.js\", \"https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.4.3.min.js\", \"https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-2.4.3.min.js\"];\n  const css_urls = [];\n\n  const inline_js = [    function(Bokeh) {\n      Bokeh.set_log_level(\"info\");\n    },\nfunction(Bokeh) {\n    }\n  ];\n\n  function run_inline_js() {\n    if (root.Bokeh !== undefined || force === true) {\n          for (let i = 0; i < inline_js.length; i++) {\n      inline_js[i].call(root, root.Bokeh);\n    }\nif (force === true) {\n        display_loaded();\n      }} else if (Date.now() < root._bokeh_timeout) {\n      setTimeout(run_inline_js, 100);\n    } else if (!root._bokeh_failed_load) {\n      console.log(\"Bokeh: BokehJS failed to load within specified timeout.\");\n      root._bokeh_failed_load = true;\n    } else if (force !== true) {\n      const cell = $(document.getElementById(\"1002\")).parents('.cell').data().cell;\n      cell.output_area.append_execute_result(NB_LOAD_WARNING)\n    }\n  }\n\n  if (root._bokeh_is_loading === 0) {\n    console.debug(\"Bokeh: BokehJS loaded, going straight to plotting\");\n    run_inline_js();\n  } else {\n    load_libs(css_urls, js_urls, function() {\n      console.debug(\"Bokeh: BokehJS plotting callback run at\", now());\n      run_inline_js();\n    });\n  }\n}(window));",
+./examples/example_visual/visualization_examples.ipynb:286:    "for file in os.listdir(db_folder):\n",
+./examples/example_folderdb/dict_db/config.meta.idx:2:  "timespec": 0
+./examples/example_folderdb/dict_db/config.meta:1:{"timespec":"seconds"}
+
+codex
+Specdev: the design depends on `db.meta` freshness and key-shape helpers, so I’m reading those implementations and nearby tests rather than relying on the proposal text.
+exec
+/usr/bin/zsh -lc "sed -n '220,330p' jsonldb/jsonlfile.py" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+
+    if non_blank_count != len(index_dict):
+        build_jsonl_index(jsonl_file_path)
+        with open(index_path, 'rb') as f:
+            index_dict = orjson.loads(f.read())
+
+    return _verify_and_compact(jsonl_file_path, index_dict)
+
+# --------------------------------------------------------
+# Utility Functions
+# --------------------------------------------------------
+
+def _is_datetime_string(linekey: str, timespec: Optional[str] = None) -> bool:
+    """Check if a string represents a datetime in ISO format.
+
+    Args:
+        linekey: String to check
+        timespec: Datetime precision ('seconds' or 'microseconds').
+            Defaults to the module-level TIME_SPEC.
+
+    Returns:
+        bool: True if the string appears to be a datetime in ISO format
+    """
+    if (timespec or TIME_SPEC) == 'seconds':
+        return len(linekey) == 19 and 'T' in linekey and '-' in linekey and ':' in linekey
+    else:  # microseconds
+        return len(linekey) == 26 and 'T' in linekey and '-' in linekey and ':' in linekey
+
+def serialize_linekey(linekey: LineKey, timespec: Optional[str] = None) -> str:
+    """
+    Convert a linekey to its string representation.
+
+    Args:
+        linekey: String or datetime object to serialize
+        timespec: Datetime precision ('seconds' or 'microseconds').
+            Defaults to the module-level TIME_SPEC.
+
+    Returns:
+        String representation of the linekey
+    """
+    if isinstance(linekey, str):
+        return linekey
+    elif isinstance(linekey, dt.datetime):
+        return linekey.isoformat(timespec=timespec or TIME_SPEC)
+    return str(linekey)
+
+def deserialize_linekey(linekey_str: str, default_format: Optional[str] = None) -> LineKey:
+    """
+    Convert a string linekey back to its original type.
+    
+    Args:
+        linekey_str: String to deserialize
+        default_format: Format hint for deserialization ('datetime' supported)
+        
+    Returns:
+        Original type of the linekey (datetime or string)
+    """
+    if default_format == "datetime":
+        return dt.datetime.fromisoformat(linekey_str)
+    return linekey_str
+
+def _store_with_key(result_dict: DataDict, linekey: str, value: dict,
+                    auto_deserialize: bool, timespec: Optional[str] = None) -> None:
+    """Store value under linekey, converting datetime-looking keys when requested.
+
+    Example: _store_with_key(d, "2024-01-01T00:00:00", {"v": 1}, True)
+    stores under datetime(2024, 1, 1); non-datetime keys stay strings.
+    """
+    if auto_deserialize and _is_datetime_string(linekey, timespec):
+        try:
+            result_dict[deserialize_linekey(linekey, "datetime")] = value
+            return
+        except ValueError:
+            pass
+    result_dict[linekey] = value
+
+def _fast_dumps(obj: dict) -> str:
+    """
+    Fast JSON serialization using orjson if available.
+    
+    Args:
+        obj: Dictionary to serialize
+        
+    Returns:
+        JSON string with newline
+    """
+    return orjson.dumps(obj, option=orjson.OPT_SERIALIZE_NUMPY).decode('utf-8') + '\n'
+
+# --------------------------------------------------------
+# Core CRUD Functions
+# --------------------------------------------------------
+
+def save_jsonl(jsonl_file_path: str, db_dict: DataDict, timespec: Optional[str] = None) -> None:
+    """
+    Save a dictionary to a JSONL file with automatic indexing.
+    
+    Efficiently writes records and maintains an index of byte positions.
+    Handles empty dictionaries and ensures atomic writes.
+    
+    Args:
+        jsonl_file_path: Path to save the JSONL file
+        db_dict: Dictionary of records to save
+        
+    Raises:
+        OSError: If file operations fail
+    """
+    index: IndexDict = {}
+    
+    try:
+        # Handle empty dictionary case
+        if not db_dict:
+
+exec
+/usr/bin/zsh -lc "sed -n '150,520p' jsonldb/folderdb.py" in /mnt/h/oceanwave/lib/jsonldb
+exec
+/usr/bin/zsh -lc "sed -n '1,150p' jsonldb/folderdb.py" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+"""
+A simple file-based database that stores data in JSONL format.
+Each table is stored in a separate JSONL file.
+"""
+
+import os
+import orjson
+import pandas as pd
+from typing import Dict, List, Union, Optional, Any
+from datetime import datetime
+from jsonldb.jsonlfile import (
+    save_jsonl, load_jsonl, select_jsonl, update_jsonl, delete_jsonl,
+    lint_jsonl, build_jsonl_index, select_line_jsonl, serialize_linekey
+)
+from jsonldb.jsonldf import (
+    save_jsonldf, load_jsonldf, update_jsonldf, select_jsonldf, delete_jsonldf
+)
+import jsonldb.jsonlfile as jsonlfile
+
+# Version control (gitpython) is imported lazily inside commit/revert/version
+# so that importing FolderDB does not load git.
+
+class FolderDB:
+    """
+    A simple file-based database that stores data in JSONL format.
+    Each table is stored in a separate JSONL file.
+    """
+    
+    # =============== Core/Initialization ===============
+    def __init__(self, folder_path: str,hierarchy_depth: int = None):
+        """
+        Initialize the database.
+        
+        Args:
+            folder_path: Path to the folder where the database files will be stored
+            
+        Raises:
+            FileNotFoundError: If the folder doesn't exist
+        """
+        self.folder_path = folder_path
+        if not os.path.exists(folder_path):
+            raise FileNotFoundError(f"Folder not found: {folder_path}")
+
+        self.use_hierarchy = False
+        self.delimiter = '.'
+
+        # Initialize all paths first
+        self.hmeta_path = os.path.join(folder_path, "h.meta")
+        self.dbmeta_path = os.path.join(folder_path, "db.meta")
+        self.configmeta_path = os.path.join(folder_path, "config.meta")
+        self.invalid_tickers_path = os.path.join(folder_path, ".invalid_tickers")
+
+        if os.path.exists(self.hmeta_path):
+            hmeta = select_jsonl(self.hmeta_path)
+            self.use_hierarchy = hmeta["use_hierarchy"]
+            self.delimiter = hmeta["delimiter"]
+            self.hierarchy_depth = hmeta["hierarchy_depth"]
+
+            if hierarchy_depth is not None and self.hierarchy_depth != hierarchy_depth: 
+                #current hierarchy depth is not the same as the one provided, so we need to lint the hierarchy
+                self.lint_hierarchy(hierarchy_depth)
+        else:
+            #no h.meta file found, so we need to build it
+            if hierarchy_depth is not None:
+                self.use_hierarchy = True 
+                self.hierarchy_depth = hierarchy_depth
+                self.lint_hierarchy(hierarchy_depth)
+
+        # Timespec is per-instance state; never mutate the module global.
+        # config.meta stores {"timespec": value} as a flat JSONL record.
+        self.timespec = jsonlfile.TIME_SPEC
+        if os.path.exists(self.configmeta_path):
+            config_meta = select_jsonl(self.configmeta_path)
+            if config_meta.get("timespec"):
+                self.timespec = config_meta["timespec"]
+            else:
+                self.build_configmeta()
+        else:
+            self.build_configmeta()
+
+        # Only rebuild db.meta if it doesn't exist or the folder has been
+        # modified externally.  Writes already call update_dbmeta()
+        # incrementally, so db.meta stays in sync during normal operation.
+        if os.path.exists(self.dbmeta_path):
+            dbmeta_mtime = os.path.getmtime(self.dbmeta_path)
+            folder_mtime = os.path.getmtime(self.folder_path)
+            if folder_mtime > dbmeta_mtime:
+                self.build_dbmeta()
+        else:
+            self.build_dbmeta()
+
+    def build_hmeta(self) -> None:
+        """
+        Save the folder information to a file.
+        """
+        if self.use_hierarchy:
+            hierachy_info= {
+                "use_hierarchy": self.use_hierarchy,
+                "delimiter": self.delimiter,
+                "hierarchy_depth": self.hierarchy_depth
+            }
+            save_jsonl(self.hmeta_path, hierachy_info)
+
+
+    def build_configmeta(self) -> None:
+        """
+        Save the folder information to a file.
+        """
+        config_info = {
+            "timespec": self.timespec
+        }
+        save_jsonl(self.configmeta_path, config_info)
+
+
+    def validate_name(self, name: str) -> bool:
+        """
+        Validate a file name according to the current mode.
+        
+        Args:
+            name: Name of the file to validate
+            
+        Returns:
+            bool: True if the name is valid, False otherwise
+        """
+        if not self.use_hierarchy:
+            return True
+            
+        # Remove .jsonl extension if present
+        if name.endswith('.jsonl'):
+            name = name[:-6]
+            
+        # Count delimiters
+        delimiter_count = name.count(self.delimiter)
+        
+        # In hierarchy mode, name must contain at least hierarchy_depth-1 delimiters
+        # e.g., for depth=3: "users.level1.level2" has 2 delimiters
+        return delimiter_count >= self.hierarchy_depth - 1
+
+
+    def __str__(self) -> str:
+        """Return a string representation of the database."""
+        result = f"FolderDB at {self.folder_path}\n"
+        result += "-" * 50 + "\n"
+        
+        # Get metadata
+        if os.path.exists(self.dbmeta_path):
+            metadata = select_jsonl(self.dbmeta_path)
+            result += f"Found {len(metadata)} JSONL files\n\n"
+            
+            for name, info in metadata.items():
+
+ succeeded in 0ms:
+            for name, info in metadata.items():
+                result += f"{name}:\n"
+                result += f"  Size: {info['size']} bytes\n"
+                result += f"  Count: {info['count']}\n"
+                result += f"  Key range: {info['min_index']} to {info['max_index']}\n"
+                result += f"  Linted: {info['linted']}\n\n"
+        
+        return result
+    
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    # =============== File Path Management ===============
+
+    def _get_hierarchy_path(self, name: str) -> str:
+        """
+        Get the hierarchical path for a file.
+        
+        Args:
+            name: Name of the file (with or without .jsonl extension)
+            
+        Returns:
+            str: Full path to the directory where the file should be stored
+        """
+        if self.use_hierarchy:
+            # Take first hierarchy_depth parts for the path
+            parts = name.split(self.delimiter)[:self.hierarchy_depth]
+            return os.path.join(self.folder_path, *parts)
+        return self.folder_path
+
+
+    def create_folder(self, folder_path: str) -> None:
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path, exist_ok=True)
+
+    def _get_file_path(self, name: str) -> str:
+        """Get the full path for a JSONL file (read-only, no folder creation)"""
+        if self.use_hierarchy and not self.validate_name(name):
+            raise ValueError(f"Invalid hierarchical name '{name}'. Name must contain at least {self.hierarchy_depth-1} '{self.delimiter}' delimiters")
+        folder_path = self._get_hierarchy_path(name)
+        if name.endswith('.jsonl'):
+            return os.path.join(folder_path, name)
+        return os.path.join(folder_path, f"{name}.jsonl")
+
+    def _get_or_create_file_path(self, name: str) -> str:
+        """Get the full path for a JSONL file, creating folders as needed (for writes)"""
+        if self.use_hierarchy and not self.validate_name(name):
+            raise ValueError(f"Invalid hierarchical name '{name}'. Name must contain at least {self.hierarchy_depth-1} '{self.delimiter}' delimiters")
+
+        folder_path = self._get_hierarchy_path(name)
+        self.create_folder(folder_path) #create the folder if it doesn't exist
+
+        if name.endswith('.jsonl'):
+            return os.path.join(folder_path, name)
+        return os.path.join(folder_path, f"{name}.jsonl")
+    
+    def _get_file_name(self, name: str) -> str:
+        """Get the name of a JSONL file"""
+        if name.endswith('.jsonl'):
+            return name
+        return f"{name}.jsonl"
+    
+
+    
+    def get_file_list(self) -> List[str]:
+        """
+        Get a list of all JSONL file names in the database without the .jsonl extension.
+        If use_hierarchy is True, it will search through subfolders and return
+        paths relative to the root folder with the specified delimiter.
+        
+        Returns:
+            List of file names (without .jsonl extension). If use_hierarchy is True,
+            names will include the full hierarchical path using the specified delimiter.
+        """
+        if self.use_hierarchy:
+            result = []
+            
+            for root, dirs, files in os.walk(self.folder_path, topdown=True):
+                # Skip hidden/system directories (starting with '.')
+                dirs[:] = [d for d in dirs if not d.startswith('.')]
+                # Skip .invalid_tickers folder
+                if '.invalid_tickers' in root:  # this is important to skip the .invalid_tickers folder
+                    continue
+                # Add all JSONL files in this directory
+                for file in files:
+                    if file.endswith('.jsonl'):
+                        name = os.path.splitext(file)[0]
+                        result.append(name)
+                
+            return result
+        else:
+            # Original behavior for non-hierarchical mode - exclude .invalid_tickers
+            jsonl_files = []
+            for f in os.listdir(self.folder_path):
+                if f.endswith('.jsonl') and f != '.invalid_tickers':
+                    jsonl_files.append(f)
+            return [os.path.splitext(f)[0] for f in jsonl_files]
+        
+    def search_file_list(self, regex: str) -> List[str]:
+        """
+        Search for file names that match a regular expression pattern.
+        
+        Args:
+            regex: Regular expression pattern to match against file names
+            
+        Returns:
+            List of file names that match the regex pattern
+        """
+        import re
+        
+        # Get all file names
+        all_files = self.get_file_list()
+        
+        # Filter files that match the regex pattern
+        pattern = re.compile(regex)
+        matching_files = [f for f in all_files if pattern.search(f)]
+        
+        return matching_files
+
+    # =============== DataFrame Operations ===============
+    def overwrite_df(self, name: str, df: pd.DataFrame) -> None:
+        file_path = self._get_or_create_file_path(name)
+        if os.path.exists(file_path):
+           os.remove(file_path)
+      
+        save_jsonldf(file_path, df, self.timespec)
+        self.update_dbmeta(self._get_file_name(name))
+
+    def overwrite_dfs(self, dict_dfs: Dict[Any, pd.DataFrame]) -> None:
+        """
+        Update or insert multiple DataFrames into JSONL files.
+        
+        Args:
+            dict_dfs: Dictionary mapping file names to DataFrames
+        """
+        for name, df in dict_dfs.items():
+            self.overwrite_df(name, df)
+
+    def upsert_df(self, name: str, df: pd.DataFrame) -> None:
+        """
+        Update or insert a DataFrame into a JSONL file.
+
+        Args:
+            name: Name of the JSONL file
+            df: DataFrame to save/update
+        """
+        file_path = self._get_or_create_file_path(name)
+        if os.path.exists(file_path):
+            update_jsonldf(file_path, df, self.timespec)
+        else:
+            save_jsonldf(file_path, df, self.timespec)
+        
+        self.update_dbmeta(self._get_file_name(name))
+
+    def upsert_dfs(self, dict_dfs: Dict[Any, pd.DataFrame]) -> None:
+        """
+        Update or insert multiple DataFrames into JSONL files.
+        
+        Args:
+            dict_dfs: Dictionary mapping file names to DataFrames
+        """
+        for name, df in dict_dfs.items():
+            self.upsert_df(name, df)
+
+    def get_df(self, names: List[str]=None, lower_key: Optional[Any] = None, upper_key: Optional[Any] = None,auto_deserialize: bool = True) -> Dict[str, pd.DataFrame]:
+        """
+        Get DataFrames from multiple JSONL files within a key range.
+        
+        Args:
+            names: List of JSONL file names
+            lower_key: Lower bound of the key range
+            upper_key: Upper bound of the key range
+            auto_deserialize: Whether to automatically deserialize datetime keys
+
+        Returns:
+            Dictionary mapping file names to selected DataFrames
+        """
+        if names is None:
+            names = self.get_file_list()
+
+        result = {}
+        for name in names:
+            file_path = self._get_file_path(name)
+            if os.path.exists(file_path):
+                result[name] = select_jsonldf(file_path, lower_key, upper_key, auto_deserialize, timespec=self.timespec)
+            else:
+                print(f"File {name} not found")
+        return result
+
+    # =============== Dictionary Operations ===============
+    def overwrite_dict(self, name: str, data_dict: Dict[Any, Dict[str, Any]]) -> None:
+        file_path = self._get_or_create_file_path(name)
+        if os.path.exists(file_path):
+           os.remove(file_path)
+      
+        save_jsonl(file_path, data_dict, self.timespec)
+        self.update_dbmeta(self._get_file_name(name))
+
+    def overwrite_dicts(self, dict_dicts: Dict[Any, Dict[str, Dict[str, Any]]]) -> None:
+        """
+        Update or insert multiple DataFrames into JSONL files.
+        
+        Args:
+            dict_dfs: Dictionary mapping file names to DataFrames
+        """
+        for name, data_dict in dict_dicts.items():
+            self.overwrite_dict(name, data_dict)
+
+    def upsert_dict(self, name: str, data_dict: Dict[Any, Dict[str, Any]]) -> None:
+        """
+        Update or insert a dictionary into a JSONL file.
+        
+        Args:
+            name: Name of the JSONL file
+            data_dict: Dictionary to save/update
+        """
+        file_path = self._get_or_create_file_path(name)
+        if os.path.exists(file_path):
+            update_jsonl(file_path, data_dict, self.timespec)
+        else:
+            save_jsonl(file_path, data_dict, self.timespec)
+
+        self.update_dbmeta(self._get_file_name(name))
+
+    def upsert_dicts(self, dict_dicts: Dict[Any, Dict[str, Dict[str, Any]]]) -> None:
+        """
+        Update or insert multiple dictionaries into JSONL files.
+        
+        Args:
+            dict_dicts: Dictionary mapping file names to data dictionaries
+        """
+        for name, data_dict in dict_dicts.items():
+            self.upsert_dict(name, data_dict)
+
+    def get_dict(self, names: List[str]=None, lower_key: Optional[Any] = None, upper_key: Optional[Any] = None,auto_deserialize: bool = True) -> Dict[str, Dict[str, Dict[str, Any]]]:
+        """
+        Get dictionaries from multiple JSONL files within a key range.
+        
+        Args:
+            names: List of JSONL file names
+            lower_key: Lower bound of the key range
+            upper_key: Upper bound of the key range
+            auto_deserialize: Whether to automatically deserialize datetime keys
+
+        Returns:
+            Dictionary mapping file names to selected data dictionaries
+        """
+        if names is None:
+            names = self.get_file_list()
+
+        if not isinstance(names, list):
+            names = [names]
+
+        result = {}
+        for name in names:
+            file_path = self._get_file_path(name)
+            if os.path.exists(file_path):
+                result[name] = select_jsonl(file_path, lower_key, upper_key, auto_deserialize, timespec=self.timespec)
+        return result
+
+    # =============== Delete Operations ===============
+    def clear_folder(self,force=False) -> None:
+        """
+        Clear all JSONL files in the database folder.
+        """
+        if not force:
+            print("WARNING: This will delete all data in the database folder. Call clear_folder with force=True to proceed.")
+            return
+        for root, dirs, files in os.walk(self.folder_path, topdown=True):
+            # Skip hidden/system directories (e.g. .git, .invalid_tickers)
+            dirs[:] = [d for d in dirs if not d.startswith('.')]
+            for file in files:
+                if file.endswith(('.idx', '.jsonl', '.meta')):
+                    os.remove(os.path.join(root, file))
+        self.delete_empty_folders()
+        self.build_dbmeta()
+
+    def delete_file(self, name: str) -> None:
+        """
+        Delete a JSONL file.
+
+        Args:
+            name: Name of the JSONL file
+        """
+        file_path = self._get_file_path(name)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            if os.path.exists(file_path + '.idx'):
+                os.remove(file_path + '.idx')
+            if self.use_hierarchy:
+                self.delete_empty_folders()
+
+    def delete_file_keys(self, name: str, keys: List[str]) -> None:
+        """
+        Delete specific keys from a JSONL file.
+
+        Args:
+            name: Name of the JSONL file
+            keys: List of keys to delete
+        """
+        file_path = self._get_file_path(name)
+        if os.path.exists(file_path):
+            delete_jsonl(file_path, keys, self.timespec)
+            self.update_dbmeta(self._get_file_name(name))
+
+    def delete_file_range(self, name: str, lower_key: Any, upper_key: Any) -> None:
+        """
+        Delete all keys within a range from a JSONL file.
+
+        Args:
+            name: Name of the JSONL file
+            lower_key: Lower bound of the key range
+            upper_key: Upper bound of the key range
+        """
+        file_path = self._get_file_path(name)
+        if not os.path.exists(file_path):
+            return
+            
+        # Get all keys from the index
+        index_path = file_path + '.idx'
+        if not os.path.exists(index_path):
+            build_jsonl_index(file_path)
+            
+        # Read the index file
+        with open(index_path, 'rb') as f:
+            index = orjson.loads(f.read())
+            
+        # Filter keys within range (bounds must use the same serialization as
+        # stored keys — str(datetime) uses a space, isoformat uses 'T')
+        lower_str = serialize_linekey(lower_key, self.timespec)
+        upper_str = serialize_linekey(upper_key, self.timespec)
+        keys_to_delete = [
+            key for key in index.keys()
+            if lower_str <= key <= upper_str
+        ]
+        
+        if keys_to_delete:
+            delete_jsonl(file_path, keys_to_delete)
+
+    def delete_range(self, names: List[str], lower_key: Any, upper_key: Any) -> None:
+        """
+        Delete all keys within a range from multiple JSONL files.
+        
+        Args:
+            names: List of JSONL file names
+            lower_key: Lower bound of the key range
+            upper_key: Upper bound of the key range
+        """
+        for name in names:
+            self.delete_file_range(name, lower_key, upper_key)
+
+    # =============== Metadata Management ===============
+    def _make_meta_entry(self, name: str, file_path: str, linted: bool = False,
+                         lint_time: str = "") -> Dict[str, Any]:
+        """Build one db.meta entry for a JSONL file from its index file.
+
+        Example: {"name": "users", "path": ".../users.jsonl", "min_index": "a",
+                  "max_index": "z", "size": 123, "count": 3, "lint_time": "", "linted": False}
+        """
+        index_file = file_path + '.idx'
+        min_index = max_index = None
+        count = 0
+        if os.path.exists(index_file):
+            with open(index_file, 'rb') as f:
+                index = orjson.loads(f.read())
+            if index:
+                keys = list(index.keys())
+                min_index, max_index = keys[0], keys[-1]
+                count = len(keys)
+        return {
+            "name": name,
+
+exec
+/usr/bin/zsh -lc "rg -n \"configmeta|timespec|datetime|db.meta|meta|FolderDB\\(\" tests jsonldb -g '*.py'" in /mnt/h/oceanwave/lib/jsonldb
+ exited 2 in 0ms:
+rg: tests: No such file or directory (os error 2)
+jsonldb/jsonlfile.py:8:import datetime as dt
+jsonldb/jsonlfile.py:22:LineKey = Union[str, dt.datetime]
+jsonldb/jsonlfile.py:232:def _is_datetime_string(linekey: str, timespec: Optional[str] = None) -> bool:
+jsonldb/jsonlfile.py:233:    """Check if a string represents a datetime in ISO format.
+jsonldb/jsonlfile.py:237:        timespec: Datetime precision ('seconds' or 'microseconds').
+jsonldb/jsonlfile.py:241:        bool: True if the string appears to be a datetime in ISO format
+jsonldb/jsonlfile.py:243:    if (timespec or TIME_SPEC) == 'seconds':
+jsonldb/jsonlfile.py:248:def serialize_linekey(linekey: LineKey, timespec: Optional[str] = None) -> str:
+jsonldb/jsonlfile.py:253:        linekey: String or datetime object to serialize
+jsonldb/jsonlfile.py:254:        timespec: Datetime precision ('seconds' or 'microseconds').
+jsonldb/jsonlfile.py:262:    elif isinstance(linekey, dt.datetime):
+jsonldb/jsonlfile.py:263:        return linekey.isoformat(timespec=timespec or TIME_SPEC)
+jsonldb/jsonlfile.py:272:        default_format: Format hint for deserialization ('datetime' supported)
+jsonldb/jsonlfile.py:275:        Original type of the linekey (datetime or string)
+jsonldb/jsonlfile.py:277:    if default_format == "datetime":
+jsonldb/jsonlfile.py:278:        return dt.datetime.fromisoformat(linekey_str)
+jsonldb/jsonlfile.py:282:                    auto_deserialize: bool, timespec: Optional[str] = None) -> None:
+jsonldb/jsonlfile.py:283:    """Store value under linekey, converting datetime-looking keys when requested.
+jsonldb/jsonlfile.py:286:    stores under datetime(2024, 1, 1); non-datetime keys stay strings.
+jsonldb/jsonlfile.py:288:    if auto_deserialize and _is_datetime_string(linekey, timespec):
+jsonldb/jsonlfile.py:290:            result_dict[deserialize_linekey(linekey, "datetime")] = value
+jsonldb/jsonlfile.py:312:def save_jsonl(jsonl_file_path: str, db_dict: DataDict, timespec: Optional[str] = None) -> None:
+jsonldb/jsonlfile.py:341:                serialized_key = serialize_linekey(linekey, timespec)
+jsonldb/jsonlfile.py:354:def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True, timespec: Optional[str] = None) -> DataDict:
+jsonldb/jsonlfile.py:359:    Handles datetime deserialization and skips invalid lines.
+jsonldb/jsonlfile.py:363:        auto_deserialize: Whether to convert datetime strings back to datetime objects
+jsonldb/jsonlfile.py:388:                        _store_with_key(result_dict, linekey, data[linekey], auto_deserialize, timespec)
+jsonldb/jsonlfile.py:398:def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, upper_key: Optional[LineKey] = None, auto_deserialize: bool = True, timespec: Optional[str] = None) -> DataDict:
+jsonldb/jsonlfile.py:406:        auto_deserialize: Whether to auto-deserialize datetime keys
+jsonldb/jsonlfile.py:417:        return load_jsonl(jsonl_file_path, auto_deserialize, timespec)
+jsonldb/jsonlfile.py:420:        return select_line_jsonl(jsonl_file_path, lower_key, auto_deserialize, timespec)
+jsonldb/jsonlfile.py:444:        lower_key = serialize_linekey(lower_key, timespec)
+jsonldb/jsonlfile.py:445:        upper_key = serialize_linekey(upper_key, timespec)
+jsonldb/jsonlfile.py:467:            _store_with_key(result_dict, linekey, raw_results[linekey], auto_deserialize, timespec)
+jsonldb/jsonlfile.py:473:def select_line_jsonl(jsonl_file_path: str, linekey: LineKey, auto_serialize: bool = True, timespec: Optional[str] = None) -> DataDict:
+jsonldb/jsonlfile.py:481:            datetime-looking keys in the result
+jsonldb/jsonlfile.py:482:        timespec: Datetime precision ('seconds' or 'microseconds').
+jsonldb/jsonlfile.py:491:        linekey = serialize_linekey(linekey, timespec)
+jsonldb/jsonlfile.py:513:            _store_with_key(result_dict, linekey, data[linekey], auto_serialize, timespec)
+jsonldb/jsonlfile.py:521:def update_jsonl(jsonl_file_path: str, update_dict: DataDict, timespec: Optional[str] = None) -> None:
+jsonldb/jsonlfile.py:558:                linekey = serialize_linekey(linekey, timespec)
+jsonldb/jsonlfile.py:596:def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey], timespec: Optional[str] = None) -> None:
+jsonldb/jsonlfile.py:618:        linekeys = [serialize_linekey(key, timespec) for key in linekeys]
+jsonldb/folderdb.py:10:from datetime import datetime
+jsonldb/folderdb.py:48:        self.hmeta_path = os.path.join(folder_path, "h.meta")
+jsonldb/folderdb.py:49:        self.dbmeta_path = os.path.join(folder_path, "db.meta")
+jsonldb/folderdb.py:50:        self.configmeta_path = os.path.join(folder_path, "config.meta")
+jsonldb/folderdb.py:53:        if os.path.exists(self.hmeta_path):
+jsonldb/folderdb.py:54:            hmeta = select_jsonl(self.hmeta_path)
+jsonldb/folderdb.py:55:            self.use_hierarchy = hmeta["use_hierarchy"]
+jsonldb/folderdb.py:56:            self.delimiter = hmeta["delimiter"]
+jsonldb/folderdb.py:57:            self.hierarchy_depth = hmeta["hierarchy_depth"]
+jsonldb/folderdb.py:63:            #no h.meta file found, so we need to build it
+jsonldb/folderdb.py:70:        # config.meta stores {"timespec": value} as a flat JSONL record.
+jsonldb/folderdb.py:71:        self.timespec = jsonlfile.TIME_SPEC
+jsonldb/folderdb.py:72:        if os.path.exists(self.configmeta_path):
+jsonldb/folderdb.py:73:            config_meta = select_jsonl(self.configmeta_path)
+jsonldb/folderdb.py:74:            if config_meta.get("timespec"):
+jsonldb/folderdb.py:75:                self.timespec = config_meta["timespec"]
+jsonldb/folderdb.py:77:                self.build_configmeta()
+jsonldb/folderdb.py:79:            self.build_configmeta()
+jsonldb/folderdb.py:81:        # Only rebuild db.meta if it doesn't exist or the folder has been
+jsonldb/folderdb.py:82:        # modified externally.  Writes already call update_dbmeta()
+jsonldb/folderdb.py:83:        # incrementally, so db.meta stays in sync during normal operation.
+jsonldb/folderdb.py:84:        if os.path.exists(self.dbmeta_path):
+jsonldb/folderdb.py:85:            dbmeta_mtime = os.path.getmtime(self.dbmeta_path)
+jsonldb/folderdb.py:87:            if folder_mtime > dbmeta_mtime:
+jsonldb/folderdb.py:88:                self.build_dbmeta()
+jsonldb/folderdb.py:90:            self.build_dbmeta()
+jsonldb/folderdb.py:92:    def build_hmeta(self) -> None:
+jsonldb/folderdb.py:102:            save_jsonl(self.hmeta_path, hierachy_info)
+jsonldb/folderdb.py:105:    def build_configmeta(self) -> None:
+jsonldb/folderdb.py:110:            "timespec": self.timespec
+jsonldb/folderdb.py:112:        save_jsonl(self.configmeta_path, config_info)
+jsonldb/folderdb.py:145:        # Get metadata
+jsonldb/folderdb.py:146:        if os.path.exists(self.dbmeta_path):
+jsonldb/folderdb.py:147:            metadata = select_jsonl(self.dbmeta_path)
+jsonldb/folderdb.py:148:            result += f"Found {len(metadata)} JSONL files\n\n"
+jsonldb/folderdb.py:150:            for name, info in metadata.items():
+jsonldb/folderdb.py:275:        save_jsonldf(file_path, df, self.timespec)
+jsonldb/folderdb.py:276:        self.update_dbmeta(self._get_file_name(name))
+jsonldb/folderdb.py:298:            update_jsonldf(file_path, df, self.timespec)
+jsonldb/folderdb.py:300:            save_jsonldf(file_path, df, self.timespec)
+jsonldb/folderdb.py:302:        self.update_dbmeta(self._get_file_name(name))
+jsonldb/folderdb.py:322:            auto_deserialize: Whether to automatically deserialize datetime keys
+jsonldb/folderdb.py:334:                result[name] = select_jsonldf(file_path, lower_key, upper_key, auto_deserialize, timespec=self.timespec)
+jsonldb/folderdb.py:345:        save_jsonl(file_path, data_dict, self.timespec)
+jsonldb/folderdb.py:346:        self.update_dbmeta(self._get_file_name(name))
+jsonldb/folderdb.py:368:            update_jsonl(file_path, data_dict, self.timespec)
+jsonldb/folderdb.py:370:            save_jsonl(file_path, data_dict, self.timespec)
+jsonldb/folderdb.py:372:        self.update_dbmeta(self._get_file_name(name))
+jsonldb/folderdb.py:392:            auto_deserialize: Whether to automatically deserialize datetime keys
+jsonldb/folderdb.py:407:                result[name] = select_jsonl(file_path, lower_key, upper_key, auto_deserialize, timespec=self.timespec)
+jsonldb/folderdb.py:422:                if file.endswith(('.idx', '.jsonl', '.meta')):
+jsonldb/folderdb.py:425:        self.build_dbmeta()
+jsonldb/folderdb.py:452:            delete_jsonl(file_path, keys, self.timespec)
+jsonldb/folderdb.py:453:            self.update_dbmeta(self._get_file_name(name))
+jsonldb/folderdb.py:478:        # stored keys — str(datetime) uses a space, isoformat uses 'T')
+jsonldb/folderdb.py:479:        lower_str = serialize_linekey(lower_key, self.timespec)
+jsonldb/folderdb.py:480:        upper_str = serialize_linekey(upper_key, self.timespec)
+jsonldb/folderdb.py:502:    def _make_meta_entry(self, name: str, file_path: str, linted: bool = False,
+jsonldb/folderdb.py:504:        """Build one db.meta entry for a JSONL file from its index file.
+jsonldb/folderdb.py:530:    def build_dbmeta(self) -> None:
+jsonldb/folderdb.py:532:        Build or update the db.meta file with information about all JSONL files.
+jsonldb/folderdb.py:534:        The db.meta file contains metadata for each JSONL file including:
+jsonldb/folderdb.py:546:            # If no JSONL files are found, create an empty db.meta file
+jsonldb/folderdb.py:547:            with open(self.dbmeta_path, 'w', encoding='utf-8') as f:
+jsonldb/folderdb.py:551:        # Initialize metadata dictionary
+jsonldb/folderdb.py:552:        metadata = {}
+jsonldb/folderdb.py:562:            metadata[name] = self._make_meta_entry(name, file_path)
+jsonldb/folderdb.py:564:        # Save metadata using jsonlfile
+jsonldb/folderdb.py:565:        save_jsonl(self.dbmeta_path, metadata)
+jsonldb/folderdb.py:567:    def get_dbmeta(self) -> Dict[str, Any]:
+jsonldb/folderdb.py:569:        Get the database metadata as a dictionary.
+jsonldb/folderdb.py:572:            Dictionary containing metadata for all JSONL files in the database
+jsonldb/folderdb.py:574:        if not os.path.exists(self.dbmeta_path):
+jsonldb/folderdb.py:575:            self.build_dbmeta()
+jsonldb/folderdb.py:576:        return load_jsonl(self.dbmeta_path)
+jsonldb/folderdb.py:578:    def delete_dbmeta(self,name: str) -> None:
+jsonldb/folderdb.py:580:        Delete the metadata for a specific JSONL file in db.meta.
+jsonldb/folderdb.py:582:        if not os.path.exists(self.dbmeta_path):
+jsonldb/folderdb.py:583:            self.build_dbmeta()
+jsonldb/folderdb.py:584:        delete_jsonl(self.dbmeta_path, [name])
+jsonldb/folderdb.py:586:    def update_dbmeta(self, name: str, linted: bool = False) -> None:
+jsonldb/folderdb.py:588:        Update the metadata for a specific JSONL file in db.meta.
+jsonldb/folderdb.py:595:        meta_key = name[:-6] if name.endswith('.jsonl') else name
+jsonldb/folderdb.py:599:        lint_time = datetime.now().isoformat() if linted else ""
+jsonldb/folderdb.py:600:        entry = self._make_meta_entry(meta_key, file_path, linted, lint_time)
+jsonldb/folderdb.py:602:        # Update metadata file using jsonlfile
+jsonldb/folderdb.py:603:        update_jsonl(self.dbmeta_path, {meta_key: entry})
+jsonldb/folderdb.py:612:        meta_file = os.path.join(self.folder_path, "db.meta")
+jsonldb/folderdb.py:613:        if not os.path.exists(meta_file):
+jsonldb/folderdb.py:614:            self.build_dbmeta()
+jsonldb/folderdb.py:616:        metadata = select_jsonl(meta_file)
+jsonldb/folderdb.py:617:        print(f"Found {len(metadata)} JSONL files to lint.")
+jsonldb/folderdb.py:619:        all_meta = {}
+jsonldb/folderdb.py:621:        for name in metadata:
+jsonldb/folderdb.py:627:                print(f"File {name} no longer exist, deleting metadata.")
+jsonldb/folderdb.py:628:                # Simply skip — don't add to all_meta
+jsonldb/folderdb.py:630:                all_meta[name] = self._make_meta_entry(
+jsonldb/folderdb.py:632:                    lint_time=datetime.now().isoformat())
+jsonldb/folderdb.py:634:        # Single write for all metadata
+jsonldb/folderdb.py:635:        save_jsonl(self.dbmeta_path, all_meta)
+jsonldb/folderdb.py:636:        lint_jsonl(self.dbmeta_path, force=force)
+jsonldb/folderdb.py:639:            lint_jsonl(self.hmeta_path, force=force)
+jsonldb/folderdb.py:647:            hierarchy_level: Target hierarchy level. If None, uses value from h.meta or defaults to 1
+jsonldb/folderdb.py:736:        # Rebuild metadata to reflect new structure
+jsonldb/folderdb.py:737:        self.build_dbmeta()
+jsonldb/folderdb.py:738:        self.build_hmeta()
+jsonldb/folderdb.py:800:                # Update metadata for this file
+jsonldb/folderdb.py:801:                self.update_dbmeta(name)
+jsonldb/folderdb.py:806:        # Rebuild metadata to include newly valid files
+jsonldb/folderdb.py:808:            self.build_dbmeta()
+jsonldb/visual.py:7:from datetime import datetime
+jsonldb/visual.py:19:def _parse_linekey(linekey: str) -> Union[float, datetime]:
+jsonldb/visual.py:21:    Parse a linekey string into either a number or datetime.
+jsonldb/visual.py:23:    or a datetime if the string matches a datetime format.
+jsonldb/visual.py:30:            # Try to parse as datetime
+jsonldb/visual.py:31:            return datetime.fromisoformat(linekey)
+jsonldb/visual.py:36:def _is_datetime_key(key: str) -> bool:
+jsonldb/visual.py:38:    Check if a key string is in datetime format.
+jsonldb/visual.py:41:        datetime.fromisoformat(key)
+jsonldb/visual.py:66:    # Convert linekeys to numbers or datetimes
+jsonldb/visual.py:71:    # Determine if linekeys are datetime
+jsonldb/visual.py:72:    x_axis_type = "datetime" if isinstance(linekeys[0], datetime) else "linear"
+jsonldb/visual.py:86:            ("Line Key", "@x{%F %T}" if x_axis_type == "datetime" else "@x"),
+jsonldb/visual.py:90:            '@x': 'datetime' if x_axis_type == "datetime" else 'numeral'
+jsonldb/visual.py:131:    # Convert linekeys to numbers or datetimes
+jsonldb/visual.py:141:                if isinstance(linekey, datetime) and isinstance(start_index, str):
+jsonldb/visual.py:147:                if isinstance(linekey, datetime) and isinstance(end_index, str):
+jsonldb/visual.py:168:    # Determine if linekeys are datetime (check if we have any data)
+jsonldb/visual.py:169:    is_datetime = len(linekeys) > 0 and isinstance(linekeys[0], datetime)
+jsonldb/visual.py:179:    # Format x-axis for datetime if needed
+jsonldb/visual.py:180:    if is_datetime:
+jsonldb/visual.py:202:    # db = FolderDB(folder_path)
+jsonldb/visual.py:218:    # Check if all first keys are datetime
+jsonldb/visual.py:219:    all_datetime = True
+jsonldb/visual.py:232:            if not _is_datetime_key(first_key):
+jsonldb/visual.py:233:                all_datetime = False
+jsonldb/visual.py:242:        x_axis_type="datetime" if all_datetime else "linear",
+jsonldb/visual.py:266:        # Convert linekeys to numbers or datetimes
+jsonldb/visual.py:332:    # Check if all first keys are datetime
+jsonldb/visual.py:333:    all_datetime = True
+jsonldb/visual.py:346:            if not _is_datetime_key(first_key):
+jsonldb/visual.py:347:                all_datetime = False
+jsonldb/visual.py:377:        # Convert linekeys to numbers or datetimes
+jsonldb/visual.py:386:                    if isinstance(linekey, datetime) and isinstance(start_index, str):
+jsonldb/visual.py:392:                    if isinstance(linekey, datetime) and isinstance(end_index, str):
+jsonldb/visual.py:431:    # Format x-axis for datetime if needed
+jsonldb/visual.py:432:    if all_datetime and has_data:
+jsonldb/jsonldf.py:10:def save_jsonldf(jsonl_file_path: str, df: pd.DataFrame, timespec: Optional[str] = None) -> None:
+jsonldb/jsonldf.py:27:    save_jsonl(jsonl_file_path, records_dict, timespec)
+jsonldb/jsonldf.py:29:def load_jsonldf(jsonl_file_path: str, timespec: Optional[str] = None) -> pd.DataFrame:
+jsonldb/jsonldf.py:39:    records_dict = load_jsonl(jsonl_file_path, timespec=timespec)
+jsonldb/jsonldf.py:50:def update_jsonldf(jsonl_file_path: str, df: pd.DataFrame, timespec: Optional[str] = None) -> None:
+jsonldb/jsonldf.py:61:    update_jsonl(jsonl_file_path, updates_dict, timespec)
+jsonldb/jsonldf.py:68:    timespec: Optional[str] = None
+jsonldb/jsonldf.py:77:        auto_deserialize: Whether to automatically deserialize datetime keys
+jsonldb/jsonldf.py:91:        timespec=timespec
+jsonldb/jsonldf.py:101:def delete_jsonldf(jsonl_file_path: str, keys: List[Union[str, int]], timespec: Optional[str] = None) -> None:
+jsonldb/jsonldf.py:108:    delete_jsonl(jsonl_file_path, keys, timespec)
+jsonldb/vercontrol.py:9:from datetime import datetime
+jsonldb/vercontrol.py:62:        timestamp = datetime.now().strftime("%Y-%m-%d@%H-%M")
+
+codex
+Specdev: I found no `tests/` directory under that name, so I’m checking the repository test layout and metadata update behavior directly.
+exec
+/usr/bin/zsh -lc "rg --files | rg '("'^test|/test|_test'"\\.py"'$|tests|pytest)'"'" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+examples/example_folderdb/test_db/db.meta
+
+exec
+/usr/bin/zsh -lc "sed -n '520,660p' jsonldb/folderdb.py" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+            "name": name,
+            "path": file_path,
+            "min_index": min_index,
+            "max_index": max_index,
+            "size": os.path.getsize(file_path),
+            "count": count,
+            "lint_time": lint_time,
+            "linted": linted,
+        }
+
+    def build_dbmeta(self) -> None:
+        """
+        Build or update the db.meta file with information about all JSONL files.
+        
+        The db.meta file contains metadata for each JSONL file including:
+        - name: filename without .jsonl extension
+        - min_index: smallest index from the index file
+        - max_index: biggest index from the index file
+        - size: size of the file in bytes
+        - lint_time: ISO format timestamp of last lint
+        - linted: boolean indicating if file has been linted
+        """
+        # Get all JSONL files
+        jsonl_files = self.get_file_list()
+        
+        if not jsonl_files:
+            # If no JSONL files are found, create an empty db.meta file
+            with open(self.dbmeta_path, 'w', encoding='utf-8') as f:
+                f.write('\n')
+            return
+            
+        # Initialize metadata dictionary
+        metadata = {}
+        
+        # Process each JSONL file
+        for name in jsonl_files:
+            file_path = self._get_file_path(name)
+
+            # Build index if it doesn't exist
+            if not os.path.exists(file_path + '.idx'):
+                build_jsonl_index(file_path)
+
+            metadata[name] = self._make_meta_entry(name, file_path)
+        
+        # Save metadata using jsonlfile
+        save_jsonl(self.dbmeta_path, metadata)
+
+    def get_dbmeta(self) -> Dict[str, Any]:
+        """
+        Get the database metadata as a dictionary.
+        
+        Returns:
+            Dictionary containing metadata for all JSONL files in the database
+        """
+        if not os.path.exists(self.dbmeta_path):
+            self.build_dbmeta()
+        return load_jsonl(self.dbmeta_path)
+    
+    def delete_dbmeta(self,name: str) -> None:
+        """
+        Delete the metadata for a specific JSONL file in db.meta.
+        """
+        if not os.path.exists(self.dbmeta_path):
+            self.build_dbmeta()
+        delete_jsonl(self.dbmeta_path, [name])
+    
+    def update_dbmeta(self, name: str, linted: bool = False) -> None:
+        """
+        Update the metadata for a specific JSONL file in db.meta.
+        
+        Args:
+            name: Name of the JSONL file (with or without .jsonl extension)
+            linted: Value to set for the linted field
+        """
+        # Metadata key is the name without the .jsonl extension
+        meta_key = name[:-6] if name.endswith('.jsonl') else name
+
+        # Use hierarchical path for the data file
+        file_path = self._get_file_path(name)
+        lint_time = datetime.now().isoformat() if linted else ""
+        entry = self._make_meta_entry(meta_key, file_path, linted, lint_time)
+
+        # Update metadata file using jsonlfile
+        update_jsonl(self.dbmeta_path, {meta_key: entry})
+
+    def lint_db(self, force: bool = False) -> None:
+        """Lint all JSONL files in the database.
+
+        Args:
+            force: If True, run full mmap line-count verification on every file.
+                   If False (default), skip the scan when the index is fresh.
+        """
+        meta_file = os.path.join(self.folder_path, "db.meta")
+        if not os.path.exists(meta_file):
+            self.build_dbmeta()
+
+        metadata = select_jsonl(meta_file)
+        print(f"Found {len(metadata)} JSONL files to lint.")
+
+        all_meta = {}
+
+        for name in metadata:
+            print(f"Linting file: {name}")
+            file_path = self._get_file_path(name)
+            exist_flag = lint_jsonl(file_path, force=force)
+
+            if not exist_flag:
+                print(f"File {name} no longer exist, deleting metadata.")
+                # Simply skip — don't add to all_meta
+            else:
+                all_meta[name] = self._make_meta_entry(
+                    name, file_path, linted=True,
+                    lint_time=datetime.now().isoformat())
+
+        # Single write for all metadata
+        save_jsonl(self.dbmeta_path, all_meta)
+        lint_jsonl(self.dbmeta_path, force=force)
+
+        if self.use_hierarchy:
+            lint_jsonl(self.hmeta_path, force=force)
+            self.delete_empty_folders()
+
+    def lint_hierarchy(self, hierarchy_depth:int) -> None:
+        """
+        Reorganize JSONL files according to hierarchy levels and move invalid files to .invalid_tickers.
+        
+        Args:
+            hierarchy_level: Target hierarchy level. If None, uses value from h.meta or defaults to 1
+        """
+
+        if hierarchy_depth < 1:
+            raise ValueError("Hierarchy level must be positive")
+
+        import shutil
+            
+        print(f"Organizing files for hierarchy level {hierarchy_depth}")
+            
+        self.use_hierarchy = True
+        self.hierarchy_depth = hierarchy_depth
+
+
+
+exec
+/usr/bin/zsh -lc "rg -n \"test_init_does_not_rewrite_configmeta|config.meta|timespec|datetime\" . -g '*.py' -g '"'!jsonldb/*.py'"'" in /mnt/h/oceanwave/lib/jsonldb
+ exited 1 in 0ms:
+exec
+/usr/bin/zsh -lc "find . -maxdepth 3 -type f \\( -name '*test*.py' -o -name 'pyproject.toml' -o -name 'pytest.ini' -o -name 'setup.cfg' \\) -print" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 918ms:
+./unit_tests/test_folderdb.py
+./unit_tests/test_jsonldf.py
+./unit_tests/test_jsonlfile.py
+
+codex
+Specdev: checking the unit tests and edge cases around empty metadata, invalid keys, and JSONL selection so the review can be concrete.
+exec
+/usr/bin/zsh -lc "sed -n '1,260p' unit_tests/test_folderdb.py" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+import pytest
+import pandas as pd
+import os
+from datetime import datetime, timedelta
+from jsonldb import FolderDB
+import json
+from jsonldb.jsonlfile import select_jsonl
+
+@pytest.fixture
+def test_folder(tmp_path):
+    """Create a temporary test folder"""
+    return str(tmp_path)
+
+@pytest.fixture
+def sample_df():
+    """Create a sample DataFrame"""
+    return pd.DataFrame({
+        'value': [1, 2, 3]
+    }, index=['key1', 'key2', 'key3'])
+
+@pytest.fixture
+def datetime_df():
+    """Create a DataFrame with datetime keys"""
+    base_time = datetime(2024, 1, 1, 12, 0)
+    return pd.DataFrame({
+        'value': [1, 2, 3]
+    }, index=[
+        base_time,
+        base_time + timedelta(hours=1),
+        base_time + timedelta(hours=2)
+    ])
+
+@pytest.fixture
+def sample_dict():
+    """Create a sample dictionary"""
+    return {
+        'key1': {'value': 1},
+        'key2': {'value': 2},
+        'key3': {'value': 3}
+    }
+
+@pytest.fixture
+def sample_data():
+    """Create sample data for testing."""
+    # Create sample DataFrame
+    df = pd.DataFrame({
+        'name': ['Alice', 'Bob', 'Charlie'],
+        'age': [25, 30, 35],
+        'city': ['New York', 'London', 'Paris']
+    }, index=['user1', 'user2', 'user3'])
+    
+    # Create sample dictionary
+    data_dict = {
+        'prod1': {'name': 'Laptop', 'price': 1000},
+        'prod2': {'name': 'Phone', 'price': 500}
+    }
+    
+    return df, data_dict
+
+@pytest.fixture
+def db_folder(tmp_path):
+    """Create a temporary folder for testing."""
+    folder = tmp_path / "test_db"
+    folder.mkdir()
+    return str(folder)
+
+@pytest.fixture
+def db(db_folder):
+    """Create a FolderDB instance for testing."""
+    return FolderDB(db_folder)
+
+def test_init(test_folder):
+    """Test FolderDB initialization"""
+    # Test with existing folder
+    db = FolderDB(test_folder)
+    assert db.folder_path == test_folder
+    
+    # Test with non-existent folder
+    nonexistent_path = os.path.join(os.path.dirname(test_folder), "nonexistent_folder")
+    if os.path.exists(nonexistent_path):
+        os.rmdir(nonexistent_path)
+    with pytest.raises(FileNotFoundError):
+        FolderDB(nonexistent_path)
+
+def test_upsert_df(test_folder, sample_df):
+    """Test upserting DataFrame"""
+    db = FolderDB(test_folder)
+    
+    # Test creating new file
+    db.upsert_df("test1", sample_df)
+    assert os.path.exists(os.path.join(test_folder, "test1.jsonl"))
+    assert os.path.exists(os.path.join(test_folder, "test1.jsonl.idx"))
+    
+    # Test updating existing file
+    updated_df = pd.DataFrame({
+        'value': [10, 20]
+    }, index=['key1', 'key2'])
+    db.upsert_df("test1", updated_df)
+    
+    # Verify update
+    loaded_df = db.get_df(["test1"])["test1"]
+    assert loaded_df.loc['key1', 'value'] == 10
+    assert loaded_df.loc['key2', 'value'] == 20
+    assert loaded_df.loc['key3', 'value'] == 3
+
+def test_upsert_dfs(test_folder, sample_df, datetime_df):
+    """Test upserting multiple DataFrames"""
+    db = FolderDB(test_folder)
+    
+    # Test creating multiple files
+    dict_dfs = {
+        "test1": sample_df,
+        "test2": datetime_df
+    }
+    db.upsert_dfs(dict_dfs)
+    
+    # Verify files were created
+    assert os.path.exists(os.path.join(test_folder, "test1.jsonl"))
+    assert os.path.exists(os.path.join(test_folder, "test2.jsonl"))
+    
+    # Verify data
+    loaded_dfs = db.get_df(["test1", "test2"])
+    pd.testing.assert_frame_equal(loaded_dfs["test1"], sample_df)
+    pd.testing.assert_frame_equal(loaded_dfs["test2"], datetime_df)
+
+def test_upsert_dict(test_folder, sample_dict):
+    """Test upserting dictionary"""
+    db = FolderDB(test_folder)
+    
+    # Test creating new file
+    db.upsert_dict("test1", sample_dict)
+    assert os.path.exists(os.path.join(test_folder, "test1.jsonl"))
+    assert os.path.exists(os.path.join(test_folder, "test1.jsonl.idx"))
+    
+    # Test updating existing file
+    updated_dict = {
+        'key1': {'value': 10},
+        'key2': {'value': 20}
+    }
+    db.upsert_dict("test1", updated_dict)
+    
+    # Verify update
+    loaded_dict = db.get_dict(["test1"])["test1"]
+    assert loaded_dict['key1']['value'] == 10
+    assert loaded_dict['key2']['value'] == 20
+    assert loaded_dict['key3']['value'] == 3
+
+def test_upsert_dicts(test_folder, sample_dict):
+    """Test upserting multiple dictionaries"""
+    db = FolderDB(test_folder)
+    
+    # Test creating multiple files
+    dict_dicts = {
+        "test1": sample_dict,
+        "test2": {k: {'value': v['value'] * 2} for k, v in sample_dict.items()}
+    }
+    db.upsert_dicts(dict_dicts)
+    
+    # Verify files were created
+    assert os.path.exists(os.path.join(test_folder, "test1.jsonl"))
+    assert os.path.exists(os.path.join(test_folder, "test2.jsonl"))
+    
+    # Verify data
+    loaded_dicts = db.get_dict(["test1", "test2"])
+    assert loaded_dicts["test1"] == sample_dict
+    assert loaded_dicts["test2"] == {k: {'value': v['value'] * 2} for k, v in sample_dict.items()}
+
+def test_get_df(test_folder, sample_df, datetime_df):
+    """Test getting DataFrames"""
+    db = FolderDB(test_folder)
+    
+    # Setup test data
+    db.upsert_df("test1", sample_df)
+    db.upsert_df("test2", datetime_df)
+    
+    # Test getting all records
+    result = db.get_df(["test1", "test2"])
+    pd.testing.assert_frame_equal(result["test1"], sample_df)
+    pd.testing.assert_frame_equal(result["test2"], datetime_df)
+    
+    # Test getting records in range
+    base_time = datetime(2024, 1, 1, 12, 0)
+    result = db.get_df(
+        ["test2"],
+        lower_key=base_time,
+        upper_key=base_time + timedelta(hours=1)
+    )
+    assert len(result["test2"]) == 2
+    assert base_time in result["test2"].index
+    assert base_time + timedelta(hours=1) in result["test2"].index
+
+def test_get_dict(test_folder, sample_dict):
+    """Test getting dictionaries"""
+    db = FolderDB(test_folder)
+    
+    # Setup test data
+    db.upsert_dict("test1", sample_dict)
+    
+    # Test getting all records
+    result = db.get_dict(["test1"])
+    assert result["test1"] == sample_dict
+    
+    # Test getting records in range
+    result = db.get_dict(
+        ["test1"],
+        lower_key="key1",
+        upper_key="key2"
+    )
+    assert len(result["test1"]) == 2
+    assert "key1" in result["test1"]
+    assert "key2" in result["test1"]
+    assert "key3" not in result["test1"]
+
+def test_delete_file(test_folder, sample_dict):
+    """Test deleting specific keys"""
+    db = FolderDB(test_folder)
+    
+    # Setup test data
+    db.upsert_dict("test1", sample_dict)
+    
+    # Delete specific keys
+    db.delete_file_keys("test1", ["key1", "key2"])
+    
+    # Verify deletion
+    result = db.get_dict(["test1"])
+    assert len(result["test1"]) == 1
+    assert "key3" in result["test1"]
+    assert "key1" not in result["test1"]
+    assert "key2" not in result["test1"]
+
+def test_delete_file_tolerates_missing_index(test_folder, sample_dict):
+    """delete_file must remove the data file even when its .idx is missing"""
+    db = FolderDB(test_folder)
+    db.upsert_dict("test1", sample_dict)
+    os.remove(os.path.join(test_folder, "test1.jsonl.idx"))
+
+    db.delete_file("test1")
+
+    assert not os.path.exists(os.path.join(test_folder, "test1.jsonl"))
+
+def test__range(test_folder, sample_dict):
+    """Test deleting keys in range"""
+    db = FolderDB(test_folder)
+    
+    # Setup test data
+    db.upsert_dict("test1", sample_dict)
+    
+    # Delete keys in range
+    db.delete_file_range("test1", "key1", "key2")
+    
+    # Verify deletion
+    result = db.get_dict(["test1"])
+    assert len(result["test1"]) == 1
+    assert "key3" in result["test1"]
+    assert "key1" not in result["test1"]
+    assert "key2" not in result["test1"]
+
+def test_delete_file_range_datetime_bounds(test_folder):
+    """Datetime range bounds must respect time of day, not just the date"""
+    db = FolderDB(test_folder)
+
+exec
+/usr/bin/zsh -lc "rg -n \"timespec|configmeta|datetime|dbmeta|rewrite|FolderDB\\(\" unit_tests jsonldb -g '*.py'" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+jsonldb/folderdb.py:10:from datetime import datetime
+jsonldb/folderdb.py:49:        self.dbmeta_path = os.path.join(folder_path, "db.meta")
+jsonldb/folderdb.py:50:        self.configmeta_path = os.path.join(folder_path, "config.meta")
+jsonldb/folderdb.py:70:        # config.meta stores {"timespec": value} as a flat JSONL record.
+jsonldb/folderdb.py:71:        self.timespec = jsonlfile.TIME_SPEC
+jsonldb/folderdb.py:72:        if os.path.exists(self.configmeta_path):
+jsonldb/folderdb.py:73:            config_meta = select_jsonl(self.configmeta_path)
+jsonldb/folderdb.py:74:            if config_meta.get("timespec"):
+jsonldb/folderdb.py:75:                self.timespec = config_meta["timespec"]
+jsonldb/folderdb.py:77:                self.build_configmeta()
+jsonldb/folderdb.py:79:            self.build_configmeta()
+jsonldb/folderdb.py:82:        # modified externally.  Writes already call update_dbmeta()
+jsonldb/folderdb.py:84:        if os.path.exists(self.dbmeta_path):
+jsonldb/folderdb.py:85:            dbmeta_mtime = os.path.getmtime(self.dbmeta_path)
+jsonldb/folderdb.py:87:            if folder_mtime > dbmeta_mtime:
+jsonldb/folderdb.py:88:                self.build_dbmeta()
+jsonldb/folderdb.py:90:            self.build_dbmeta()
+jsonldb/folderdb.py:105:    def build_configmeta(self) -> None:
+jsonldb/folderdb.py:110:            "timespec": self.timespec
+jsonldb/folderdb.py:112:        save_jsonl(self.configmeta_path, config_info)
+jsonldb/folderdb.py:146:        if os.path.exists(self.dbmeta_path):
+jsonldb/folderdb.py:147:            metadata = select_jsonl(self.dbmeta_path)
+jsonldb/folderdb.py:275:        save_jsonldf(file_path, df, self.timespec)
+jsonldb/folderdb.py:276:        self.update_dbmeta(self._get_file_name(name))
+jsonldb/folderdb.py:298:            update_jsonldf(file_path, df, self.timespec)
+jsonldb/folderdb.py:300:            save_jsonldf(file_path, df, self.timespec)
+jsonldb/folderdb.py:302:        self.update_dbmeta(self._get_file_name(name))
+jsonldb/folderdb.py:322:            auto_deserialize: Whether to automatically deserialize datetime keys
+jsonldb/folderdb.py:334:                result[name] = select_jsonldf(file_path, lower_key, upper_key, auto_deserialize, timespec=self.timespec)
+jsonldb/folderdb.py:345:        save_jsonl(file_path, data_dict, self.timespec)
+jsonldb/folderdb.py:346:        self.update_dbmeta(self._get_file_name(name))
+jsonldb/folderdb.py:368:            update_jsonl(file_path, data_dict, self.timespec)
+jsonldb/folderdb.py:370:            save_jsonl(file_path, data_dict, self.timespec)
+jsonldb/folderdb.py:372:        self.update_dbmeta(self._get_file_name(name))
+jsonldb/folderdb.py:392:            auto_deserialize: Whether to automatically deserialize datetime keys
+jsonldb/folderdb.py:407:                result[name] = select_jsonl(file_path, lower_key, upper_key, auto_deserialize, timespec=self.timespec)
+jsonldb/folderdb.py:425:        self.build_dbmeta()
+jsonldb/folderdb.py:452:            delete_jsonl(file_path, keys, self.timespec)
+jsonldb/folderdb.py:453:            self.update_dbmeta(self._get_file_name(name))
+jsonldb/folderdb.py:478:        # stored keys — str(datetime) uses a space, isoformat uses 'T')
+jsonldb/folderdb.py:479:        lower_str = serialize_linekey(lower_key, self.timespec)
+jsonldb/folderdb.py:480:        upper_str = serialize_linekey(upper_key, self.timespec)
+jsonldb/folderdb.py:530:    def build_dbmeta(self) -> None:
+jsonldb/folderdb.py:547:            with open(self.dbmeta_path, 'w', encoding='utf-8') as f:
+jsonldb/folderdb.py:565:        save_jsonl(self.dbmeta_path, metadata)
+jsonldb/folderdb.py:567:    def get_dbmeta(self) -> Dict[str, Any]:
+jsonldb/folderdb.py:574:        if not os.path.exists(self.dbmeta_path):
+jsonldb/folderdb.py:575:            self.build_dbmeta()
+jsonldb/folderdb.py:576:        return load_jsonl(self.dbmeta_path)
+jsonldb/folderdb.py:578:    def delete_dbmeta(self,name: str) -> None:
+jsonldb/folderdb.py:582:        if not os.path.exists(self.dbmeta_path):
+jsonldb/folderdb.py:583:            self.build_dbmeta()
+jsonldb/folderdb.py:584:        delete_jsonl(self.dbmeta_path, [name])
+jsonldb/folderdb.py:586:    def update_dbmeta(self, name: str, linted: bool = False) -> None:
+jsonldb/folderdb.py:599:        lint_time = datetime.now().isoformat() if linted else ""
+jsonldb/folderdb.py:603:        update_jsonl(self.dbmeta_path, {meta_key: entry})
+jsonldb/folderdb.py:614:            self.build_dbmeta()
+jsonldb/folderdb.py:632:                    lint_time=datetime.now().isoformat())
+jsonldb/folderdb.py:635:        save_jsonl(self.dbmeta_path, all_meta)
+jsonldb/folderdb.py:636:        lint_jsonl(self.dbmeta_path, force=force)
+jsonldb/folderdb.py:737:        self.build_dbmeta()
+jsonldb/folderdb.py:801:                self.update_dbmeta(name)
+jsonldb/folderdb.py:808:            self.build_dbmeta()
+jsonldb/jsonlfile.py:8:import datetime as dt
+jsonldb/jsonlfile.py:22:LineKey = Union[str, dt.datetime]
+jsonldb/jsonlfile.py:173:    Skips rewrite if file is already sorted and compact.
+jsonldb/jsonlfile.py:232:def _is_datetime_string(linekey: str, timespec: Optional[str] = None) -> bool:
+jsonldb/jsonlfile.py:233:    """Check if a string represents a datetime in ISO format.
+jsonldb/jsonlfile.py:237:        timespec: Datetime precision ('seconds' or 'microseconds').
+jsonldb/jsonlfile.py:241:        bool: True if the string appears to be a datetime in ISO format
+jsonldb/jsonlfile.py:243:    if (timespec or TIME_SPEC) == 'seconds':
+jsonldb/jsonlfile.py:248:def serialize_linekey(linekey: LineKey, timespec: Optional[str] = None) -> str:
+jsonldb/jsonlfile.py:253:        linekey: String or datetime object to serialize
+jsonldb/jsonlfile.py:254:        timespec: Datetime precision ('seconds' or 'microseconds').
+jsonldb/jsonlfile.py:262:    elif isinstance(linekey, dt.datetime):
+jsonldb/jsonlfile.py:263:        return linekey.isoformat(timespec=timespec or TIME_SPEC)
+jsonldb/jsonlfile.py:272:        default_format: Format hint for deserialization ('datetime' supported)
+jsonldb/jsonlfile.py:275:        Original type of the linekey (datetime or string)
+jsonldb/jsonlfile.py:277:    if default_format == "datetime":
+jsonldb/jsonlfile.py:278:        return dt.datetime.fromisoformat(linekey_str)
+jsonldb/jsonlfile.py:282:                    auto_deserialize: bool, timespec: Optional[str] = None) -> None:
+jsonldb/jsonlfile.py:283:    """Store value under linekey, converting datetime-looking keys when requested.
+jsonldb/jsonlfile.py:286:    stores under datetime(2024, 1, 1); non-datetime keys stay strings.
+jsonldb/jsonlfile.py:288:    if auto_deserialize and _is_datetime_string(linekey, timespec):
+jsonldb/jsonlfile.py:290:            result_dict[deserialize_linekey(linekey, "datetime")] = value
+jsonldb/jsonlfile.py:312:def save_jsonl(jsonl_file_path: str, db_dict: DataDict, timespec: Optional[str] = None) -> None:
+jsonldb/jsonlfile.py:341:                serialized_key = serialize_linekey(linekey, timespec)
+jsonldb/jsonlfile.py:354:def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True, timespec: Optional[str] = None) -> DataDict:
+jsonldb/jsonlfile.py:359:    Handles datetime deserialization and skips invalid lines.
+jsonldb/jsonlfile.py:363:        auto_deserialize: Whether to convert datetime strings back to datetime objects
+jsonldb/jsonlfile.py:388:                        _store_with_key(result_dict, linekey, data[linekey], auto_deserialize, timespec)
+jsonldb/jsonlfile.py:398:def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, upper_key: Optional[LineKey] = None, auto_deserialize: bool = True, timespec: Optional[str] = None) -> DataDict:
+jsonldb/jsonlfile.py:406:        auto_deserialize: Whether to auto-deserialize datetime keys
+jsonldb/jsonlfile.py:417:        return load_jsonl(jsonl_file_path, auto_deserialize, timespec)
+jsonldb/jsonlfile.py:420:        return select_line_jsonl(jsonl_file_path, lower_key, auto_deserialize, timespec)
+jsonldb/jsonlfile.py:444:        lower_key = serialize_linekey(lower_key, timespec)
+jsonldb/jsonlfile.py:445:        upper_key = serialize_linekey(upper_key, timespec)
+jsonldb/jsonlfile.py:467:            _store_with_key(result_dict, linekey, raw_results[linekey], auto_deserialize, timespec)
+jsonldb/jsonlfile.py:473:def select_line_jsonl(jsonl_file_path: str, linekey: LineKey, auto_serialize: bool = True, timespec: Optional[str] = None) -> DataDict:
+jsonldb/jsonlfile.py:481:            datetime-looking keys in the result
+jsonldb/jsonlfile.py:482:        timespec: Datetime precision ('seconds' or 'microseconds').
+jsonldb/jsonlfile.py:491:        linekey = serialize_linekey(linekey, timespec)
+jsonldb/jsonlfile.py:513:            _store_with_key(result_dict, linekey, data[linekey], auto_serialize, timespec)
+jsonldb/jsonlfile.py:521:def update_jsonl(jsonl_file_path: str, update_dict: DataDict, timespec: Optional[str] = None) -> None:
+jsonldb/jsonlfile.py:558:                linekey = serialize_linekey(linekey, timespec)
+jsonldb/jsonlfile.py:596:def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey], timespec: Optional[str] = None) -> None:
+jsonldb/jsonlfile.py:618:        linekeys = [serialize_linekey(key, timespec) for key in linekeys]
+jsonldb/vercontrol.py:9:from datetime import datetime
+jsonldb/vercontrol.py:62:        timestamp = datetime.now().strftime("%Y-%m-%d@%H-%M")
+jsonldb/jsonldf.py:10:def save_jsonldf(jsonl_file_path: str, df: pd.DataFrame, timespec: Optional[str] = None) -> None:
+jsonldb/jsonldf.py:27:    save_jsonl(jsonl_file_path, records_dict, timespec)
+jsonldb/jsonldf.py:29:def load_jsonldf(jsonl_file_path: str, timespec: Optional[str] = None) -> pd.DataFrame:
+jsonldb/jsonldf.py:39:    records_dict = load_jsonl(jsonl_file_path, timespec=timespec)
+jsonldb/jsonldf.py:50:def update_jsonldf(jsonl_file_path: str, df: pd.DataFrame, timespec: Optional[str] = None) -> None:
+jsonldb/jsonldf.py:61:    update_jsonl(jsonl_file_path, updates_dict, timespec)
+jsonldb/jsonldf.py:68:    timespec: Optional[str] = None
+jsonldb/jsonldf.py:77:        auto_deserialize: Whether to automatically deserialize datetime keys
+jsonldb/jsonldf.py:91:        timespec=timespec
+jsonldb/jsonldf.py:101:def delete_jsonldf(jsonl_file_path: str, keys: List[Union[str, int]], timespec: Optional[str] = None) -> None:
+jsonldb/jsonldf.py:108:    delete_jsonl(jsonl_file_path, keys, timespec)
+unit_tests/test_jsonlfile.py:4:from datetime import datetime, timedelta
+unit_tests/test_jsonlfile.py:35:def datetime_data():
+unit_tests/test_jsonlfile.py:36:    base_time = datetime(2024, 1, 1, 12, 0)
+unit_tests/test_jsonlfile.py:132:def test_explicit_timespec_round_trip(test_file):
+unit_tests/test_jsonlfile.py:133:    """An explicit timespec kwarg must round-trip microsecond keys without touching the global"""
+unit_tests/test_jsonlfile.py:135:    key = datetime(2024, 1, 1, 12, 0, 0, 123456)
+unit_tests/test_jsonlfile.py:137:    save_jsonl(test_file, {key: {"v": 1}}, timespec="microseconds")
+unit_tests/test_jsonlfile.py:138:    loaded = load_jsonl(test_file, timespec="microseconds")
+unit_tests/test_jsonlfile.py:143:def test_update_with_datetime_keys(test_file, datetime_data):
+unit_tests/test_jsonlfile.py:144:    """Test updating records with datetime keys"""
+unit_tests/test_jsonlfile.py:145:    save_jsonl(test_file, datetime_data)
+unit_tests/test_jsonlfile.py:147:    # Update existing and add new datetime records
+unit_tests/test_jsonlfile.py:148:    base_time = datetime(2024, 1, 1, 12, 0)
+unit_tests/test_jsonlfile.py:190:def test_delete_with_datetime_keys(test_file, datetime_data):
+unit_tests/test_jsonlfile.py:191:    """Test deleting records with datetime keys"""
+unit_tests/test_jsonlfile.py:192:    save_jsonl(test_file, datetime_data)
+unit_tests/test_jsonlfile.py:194:    # Delete records with datetime keys
+unit_tests/test_jsonlfile.py:195:    base_time = datetime(2024, 1, 1, 12, 0)
+unit_tests/test_jsonlfile.py:236:def test_lint_sorts_datetime_keys(test_file):
+unit_tests/test_jsonlfile.py:237:    """Test that lint_jsonl properly sorts datetime keys"""
+unit_tests/test_jsonlfile.py:239:    base_time = datetime(2024, 1, 1, 12, 0)
+unit_tests/test_jsonlfile.py:286:    base_time = datetime(2024, 1, 1, 12, 0)
+unit_tests/test_jsonlfile.py:301:    datetime_keys = [k for k in keys if isinstance(k, datetime)]
+unit_tests/test_jsonlfile.py:304:    assert sorted(datetime_keys) == datetime_keys
+unit_tests/test_jsonlfile.py:357:def test_select_with_datetime_keys(test_file, datetime_data):
+unit_tests/test_jsonlfile.py:358:    """Test selecting records with datetime keys"""
+unit_tests/test_jsonlfile.py:359:    save_jsonl(test_file, datetime_data)
+unit_tests/test_jsonlfile.py:362:    base_time = datetime(2024, 1, 1, 12, 0)
+unit_tests/test_jsonlfile.py:427:    """Test that lint_jsonl skips rewrite for already sorted, compact files"""
+jsonldb/visual.py:7:from datetime import datetime
+jsonldb/visual.py:19:def _parse_linekey(linekey: str) -> Union[float, datetime]:
+jsonldb/visual.py:21:    Parse a linekey string into either a number or datetime.
+jsonldb/visual.py:23:    or a datetime if the string matches a datetime format.
+jsonldb/visual.py:30:            # Try to parse as datetime
+jsonldb/visual.py:31:            return datetime.fromisoformat(linekey)
+jsonldb/visual.py:36:def _is_datetime_key(key: str) -> bool:
+jsonldb/visual.py:38:    Check if a key string is in datetime format.
+jsonldb/visual.py:41:        datetime.fromisoformat(key)
+jsonldb/visual.py:66:    # Convert linekeys to numbers or datetimes
+jsonldb/visual.py:71:    # Determine if linekeys are datetime
+jsonldb/visual.py:72:    x_axis_type = "datetime" if isinstance(linekeys[0], datetime) else "linear"
+jsonldb/visual.py:86:            ("Line Key", "@x{%F %T}" if x_axis_type == "datetime" else "@x"),
+jsonldb/visual.py:90:            '@x': 'datetime' if x_axis_type == "datetime" else 'numeral'
+jsonldb/visual.py:131:    # Convert linekeys to numbers or datetimes
+jsonldb/visual.py:141:                if isinstance(linekey, datetime) and isinstance(start_index, str):
+jsonldb/visual.py:147:                if isinstance(linekey, datetime) and isinstance(end_index, str):
+jsonldb/visual.py:168:    # Determine if linekeys are datetime (check if we have any data)
+jsonldb/visual.py:169:    is_datetime = len(linekeys) > 0 and isinstance(linekeys[0], datetime)
+jsonldb/visual.py:179:    # Format x-axis for datetime if needed
+jsonldb/visual.py:180:    if is_datetime:
+jsonldb/visual.py:202:    # db = FolderDB(folder_path)
+jsonldb/visual.py:218:    # Check if all first keys are datetime
+jsonldb/visual.py:219:    all_datetime = True
+jsonldb/visual.py:232:            if not _is_datetime_key(first_key):
+jsonldb/visual.py:233:                all_datetime = False
+jsonldb/visual.py:242:        x_axis_type="datetime" if all_datetime else "linear",
+jsonldb/visual.py:266:        # Convert linekeys to numbers or datetimes
+jsonldb/visual.py:332:    # Check if all first keys are datetime
+jsonldb/visual.py:333:    all_datetime = True
+jsonldb/visual.py:346:            if not _is_datetime_key(first_key):
+jsonldb/visual.py:347:                all_datetime = False
+jsonldb/visual.py:377:        # Convert linekeys to numbers or datetimes
+jsonldb/visual.py:386:                    if isinstance(linekey, datetime) and isinstance(start_index, str):
+jsonldb/visual.py:392:                    if isinstance(linekey, datetime) and isinstance(end_index, str):
+jsonldb/visual.py:431:    # Format x-axis for datetime if needed
+jsonldb/visual.py:432:    if all_datetime and has_data:
+unit_tests/test_jsonldf.py:3:from datetime import datetime, timedelta
+unit_tests/test_jsonldf.py:25:def datetime_df():
+unit_tests/test_jsonldf.py:26:    """Create a sample DataFrame with datetime keys"""
+unit_tests/test_jsonldf.py:27:    base_time = datetime(2024, 1, 1, 12, 0)
+unit_tests/test_jsonldf.py:209:def test_select_jsonldf_with_datetime_keys(test_file, datetime_df):
+unit_tests/test_jsonldf.py:210:    """Test selecting records with datetime keys"""
+unit_tests/test_jsonldf.py:212:    save_jsonldf(test_file, datetime_df)
+unit_tests/test_jsonldf.py:215:    base_time = datetime(2024, 1, 1, 12, 0)
+unit_tests/test_folderdb.py:4:from datetime import datetime, timedelta
+unit_tests/test_folderdb.py:22:def datetime_df():
+unit_tests/test_folderdb.py:23:    """Create a DataFrame with datetime keys"""
+unit_tests/test_folderdb.py:24:    base_time = datetime(2024, 1, 1, 12, 0)
+unit_tests/test_folderdb.py:70:    return FolderDB(db_folder)
+unit_tests/test_folderdb.py:75:    db = FolderDB(test_folder)
+unit_tests/test_folderdb.py:83:        FolderDB(nonexistent_path)
+unit_tests/test_folderdb.py:87:    db = FolderDB(test_folder)
+unit_tests/test_folderdb.py:106:def test_upsert_dfs(test_folder, sample_df, datetime_df):
+unit_tests/test_folderdb.py:108:    db = FolderDB(test_folder)
+unit_tests/test_folderdb.py:113:        "test2": datetime_df
+unit_tests/test_folderdb.py:124:    pd.testing.assert_frame_equal(loaded_dfs["test2"], datetime_df)
+unit_tests/test_folderdb.py:128:    db = FolderDB(test_folder)
+unit_tests/test_folderdb.py:150:    db = FolderDB(test_folder)
+unit_tests/test_folderdb.py:168:def test_get_df(test_folder, sample_df, datetime_df):
+unit_tests/test_folderdb.py:170:    db = FolderDB(test_folder)
+unit_tests/test_folderdb.py:174:    db.upsert_df("test2", datetime_df)
+unit_tests/test_folderdb.py:179:    pd.testing.assert_frame_equal(result["test2"], datetime_df)
+unit_tests/test_folderdb.py:182:    base_time = datetime(2024, 1, 1, 12, 0)
+unit_tests/test_folderdb.py:194:    db = FolderDB(test_folder)
+unit_tests/test_folderdb.py:216:    db = FolderDB(test_folder)
+unit_tests/test_folderdb.py:233:    db = FolderDB(test_folder)
+unit_tests/test_folderdb.py:243:    db = FolderDB(test_folder)
+unit_tests/test_folderdb.py:258:def test_delete_file_range_datetime_bounds(test_folder):
+unit_tests/test_folderdb.py:260:    db = FolderDB(test_folder)
+unit_tests/test_folderdb.py:261:    early = datetime(2024, 1, 2, 1, 0)
+unit_tests/test_folderdb.py:262:    late = datetime(2024, 1, 2, 23, 0)
+unit_tests/test_folderdb.py:266:    db.delete_file_range("t", datetime(2024, 1, 2, 0, 30), datetime(2024, 1, 2, 23, 30))
+unit_tests/test_folderdb.py:271:    db.delete_file_range("t2", datetime(2024, 1, 2, 12, 0), datetime(2024, 1, 3))
+unit_tests/test_folderdb.py:276:    db = FolderDB(test_folder)
+unit_tests/test_folderdb.py:295:    db = FolderDB(test_folder)
+unit_tests/test_folderdb.py:308:def test_build_dbmeta(db, sample_data):
+unit_tests/test_folderdb.py:317:    db.build_dbmeta()
+unit_tests/test_folderdb.py:332:def test_update_dbmeta(db, sample_data):
+unit_tests/test_folderdb.py:338:    db.build_dbmeta()
+unit_tests/test_folderdb.py:341:    db.update_dbmeta("users", linted=True)
+unit_tests/test_folderdb.py:356:    db.build_dbmeta()
+unit_tests/test_folderdb.py:376:    db.build_dbmeta()
+unit_tests/test_folderdb.py:379:    new_db = FolderDB(db.folder_path)
+unit_tests/test_folderdb.py:394:    db = FolderDB(db_folder, hierarchy_depth=2)
+unit_tests/test_folderdb.py:410:    db = FolderDB(db_folder, hierarchy_depth=3)
+unit_tests/test_folderdb.py:416:    db2 = FolderDB(db_folder, hierarchy_depth=2)
+unit_tests/test_folderdb.py:424:    db = FolderDB(db_folder, hierarchy_depth=3)
+unit_tests/test_folderdb.py:437:    db = FolderDB(db_folder, hierarchy_depth=3)
+unit_tests/test_folderdb.py:456:    db = FolderDB(db_folder, hierarchy_depth=3)
+unit_tests/test_folderdb.py:472:    db = FolderDB(db_folder, hierarchy_depth=3)
+unit_tests/test_folderdb.py:493:    db = FolderDB(db_folder, hierarchy_depth=2)
+unit_tests/test_folderdb.py:524:def test_timespec_no_global_contamination(tmp_path, monkeypatch):
+unit_tests/test_folderdb.py:525:    """Opening a microseconds DB must not leak its timespec into other DBs or the global"""
+unit_tests/test_folderdb.py:532:    save_jsonl(str(dir_a / "config.meta"), {"timespec": "microseconds"})
+unit_tests/test_folderdb.py:534:    db_a = FolderDB(str(dir_a))
+unit_tests/test_folderdb.py:535:    assert db_a.timespec == "microseconds"
+unit_tests/test_folderdb.py:538:    db_b = FolderDB(str(dir_b))  # fresh DB created afterwards
+unit_tests/test_folderdb.py:539:    assert db_b.timespec == "seconds"
+unit_tests/test_folderdb.py:541:    assert config_b.get("timespec") == "seconds"  # not persisted contamination
+unit_tests/test_folderdb.py:543:def test_two_dbs_different_timespecs_round_trip(tmp_path, monkeypatch):
+unit_tests/test_folderdb.py:544:    """Two DBs with different timespecs must round-trip datetime keys independently"""
+unit_tests/test_folderdb.py:551:    save_jsonl(str(dir_us / "config.meta"), {"timespec": "microseconds"})
+unit_tests/test_folderdb.py:553:    db_us = FolderDB(str(dir_us))
+unit_tests/test_folderdb.py:554:    db_s = FolderDB(str(dir_s))
+unit_tests/test_folderdb.py:556:    key_us = datetime(2024, 1, 1, 12, 0, 0, 123456)
+unit_tests/test_folderdb.py:557:    key_s = datetime(2024, 1, 1, 12, 0, 0)
+unit_tests/test_folderdb.py:564:def test_init_does_not_rewrite_configmeta_if_unchanged(db_folder):
+unit_tests/test_folderdb.py:565:    """Test that __init__ skips config.meta rewrite when value unchanged"""
+unit_tests/test_folderdb.py:566:    db = FolderDB(db_folder)
+unit_tests/test_folderdb.py:574:    # Re-init — should not rewrite (verify via content identity)
+unit_tests/test_folderdb.py:575:    db2 = FolderDB(db_folder)
+unit_tests/test_folderdb.py:585:    db = FolderDB(db_folder)
+unit_tests/test_folderdb.py:589:    # Track calls to update_dbmeta
+unit_tests/test_folderdb.py:591:    original_update = db.update_dbmeta
+unit_tests/test_folderdb.py:596:    db.update_dbmeta = counting_update
+unit_tests/test_folderdb.py:600:    # Should NOT call update_dbmeta per file anymore
+
+exec
+/usr/bin/zsh -lc "sed -n '1,220p' unit_tests/test_jsonlfile.py" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+import os
+import sys
+import pytest
+from datetime import datetime, timedelta
+import json
+
+# Add parent directory to Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from jsonldb.jsonlfile import (
+    save_jsonl, load_jsonl, update_jsonl, delete_jsonl, 
+    lint_jsonl, build_jsonl_index, select_jsonl
+)
+
+# Test fixtures
+@pytest.fixture
+def test_file():
+    filename = "test_data.jsonl"
+    yield filename
+    # Cleanup
+    if os.path.exists(filename):
+        os.remove(filename)
+    if os.path.exists(filename + ".idx"):
+        os.remove(filename + ".idx")
+
+@pytest.fixture
+def sample_data():
+    return {
+        "key1": {"value": 1, "name": "test1"},
+        "key2": {"value": 2, "name": "test2"},
+        "key3": {"value": 3, "name": "test3"}
+    }
+
+@pytest.fixture
+def datetime_data():
+    base_time = datetime(2024, 1, 1, 12, 0)
+    return {
+        base_time: {"temp": 20.5, "humidity": 45},
+        base_time + timedelta(hours=1): {"temp": 21.5, "humidity": 46},
+        base_time + timedelta(hours=2): {"temp": 22.5, "humidity": 47}
+    }
+
+# Update Tests
+def test_update_existing_records(test_file, sample_data):
+    """Test updating existing records with same size data"""
+    save_jsonl(test_file, sample_data)
+    
+    # Update existing records
+    updates = {
+        "key1": {"value": 10, "name": "updated1"},
+        "key2": {"value": 20, "name": "updated2"}
+    }
+    update_jsonl(test_file, updates)
+    
+    # Verify updates
+    loaded_data = load_jsonl(test_file)
+    assert loaded_data["key1"]["value"] == 10
+    assert loaded_data["key2"]["name"] == "updated2"
+    assert loaded_data["key3"] == sample_data["key3"]  # Unchanged
+
+def test_update_with_larger_data(test_file, sample_data):
+    """Test updating records with larger data that won't fit in place"""
+    save_jsonl(test_file, sample_data)
+    
+    # Update with larger data
+    updates = {
+        "key1": {
+            "value": 10,
+            "name": "updated1",
+            "extra": "this makes the record larger"
+        }
+    }
+    update_jsonl(test_file, updates)
+    
+    # Verify updates
+    loaded_data = load_jsonl(test_file)
+    assert loaded_data["key1"]["extra"] == "this makes the record larger"
+    assert loaded_data["key2"] == sample_data["key2"]  # Unchanged
+
+def test_update_with_new_records(test_file, sample_data):
+    """Test adding new records via update"""
+    save_jsonl(test_file, sample_data)
+    
+    # Add new records
+    updates = {
+        "key4": {"value": 4, "name": "test4"},
+        "key5": {"value": 5, "name": "test5"}
+    }
+    update_jsonl(test_file, updates)
+    
+    # Verify updates
+    loaded_data = load_jsonl(test_file)
+    assert len(loaded_data) == 5
+    assert loaded_data["key4"]["value"] == 4
+    assert loaded_data["key5"]["name"] == "test5"
+
+def test_update_append_heals_missing_trailing_newline(test_file):
+    """Appending must not concatenate onto a last line that lacks a trailing newline"""
+    with open(test_file, 'wb') as f:
+        f.write(b'{"a":{"v":1}}')  # no trailing newline
+
+    update_jsonl(test_file, {"b": {"v": 2}})
+
+    loaded_data = load_jsonl(test_file)
+    assert loaded_data == {"a": {"v": 1}, "b": {"v": 2}}
+
+def test_update_shrink_keeps_line_terminator(test_file):
+    """Shrinking a record in place must keep every line newline-terminated"""
+    save_jsonl(test_file, {"a": {"v": "xxxxxxxxxxxxxxxxxxxx"}, "b": {"v": 2}})
+
+    update_jsonl(test_file, {"a": {"v": 1}})  # much shorter record
+
+    with open(test_file, 'rb') as f:
+        raw = f.read()
+    # Every line (including the padded one) must end with a newline, so the
+    # padding must not merge into record b's line.
+    lines = raw.split(b'\n')
+    assert lines[-1] == b''  # file ends with newline
+    record_lines = [l for l in lines[:-1] if l.strip()]
+    assert record_lines[0].rstrip(b' ') == b'{"a":{"v":1}}'  # padding stays on its own line
+    assert record_lines[1] == b'{"b":{"v":2}}'
+
+    # Rebuilt index must point at real record starts (not padding)
+    build_jsonl_index(test_file)
+    with open(test_file + '.idx', 'rb') as f:
+        index = json.loads(f.read())
+    for key, offset in index.items():
+        assert raw[offset:offset + 1] == b'{'
+
+    assert load_jsonl(test_file) == {"a": {"v": 1}, "b": {"v": 2}}
+
+def test_explicit_timespec_round_trip(test_file):
+    """An explicit timespec kwarg must round-trip microsecond keys without touching the global"""
+    import jsonldb.jsonlfile as jf
+    key = datetime(2024, 1, 1, 12, 0, 0, 123456)
+
+    save_jsonl(test_file, {key: {"v": 1}}, timespec="microseconds")
+    loaded = load_jsonl(test_file, timespec="microseconds")
+
+    assert loaded == {key: {"v": 1}}
+    assert jf.TIME_SPEC == "seconds"  # module global untouched
+
+def test_update_with_datetime_keys(test_file, datetime_data):
+    """Test updating records with datetime keys"""
+    save_jsonl(test_file, datetime_data)
+    
+    # Update existing and add new datetime records
+    base_time = datetime(2024, 1, 1, 12, 0)
+    updates = {
+        base_time: {"temp": 25.0, "humidity": 50},  # Update existing
+        base_time + timedelta(hours=3): {"temp": 23.5, "humidity": 48}  # New record
+    }
+    update_jsonl(test_file, updates)
+    
+    # Verify updates
+    loaded_data = load_jsonl(test_file)
+    assert loaded_data[base_time]["temp"] == 25.0
+    assert base_time + timedelta(hours=3) in loaded_data
+    assert len(loaded_data) == 4
+
+# Delete Tests
+def test_delete_single_record(test_file, sample_data):
+    """Test deleting a single record"""
+    save_jsonl(test_file, sample_data)
+    
+    # Delete one record
+    delete_jsonl(test_file, ["key2"])
+    
+    # Verify deletion
+    loaded_data = load_jsonl(test_file)
+    assert "key2" not in loaded_data
+    assert len(loaded_data) == 2
+    assert loaded_data["key1"] == sample_data["key1"]
+    assert loaded_data["key3"] == sample_data["key3"]
+
+def test_delete_multiple_records(test_file, sample_data):
+    """Test deleting multiple records"""
+    save_jsonl(test_file, sample_data)
+    
+    # Delete multiple records
+    delete_jsonl(test_file, ["key1", "key3"])
+    
+    # Verify deletions
+    loaded_data = load_jsonl(test_file)
+    assert len(loaded_data) == 1
+    assert "key1" not in loaded_data
+    assert "key3" not in loaded_data
+    assert loaded_data["key2"] == sample_data["key2"]
+
+def test_delete_with_datetime_keys(test_file, datetime_data):
+    """Test deleting records with datetime keys"""
+    save_jsonl(test_file, datetime_data)
+    
+    # Delete records with datetime keys
+    base_time = datetime(2024, 1, 1, 12, 0)
+    delete_jsonl(test_file, [base_time, base_time + timedelta(hours=1)])
+    
+    # Verify deletions
+    loaded_data = load_jsonl(test_file)
+    assert len(loaded_data) == 1
+    assert base_time not in loaded_data
+    assert base_time + timedelta(hours=1) not in loaded_data
+    assert base_time + timedelta(hours=2) in loaded_data
+
+def test_delete_nonexistent_records(test_file, sample_data):
+    """Test deleting records that don't exist"""
+    save_jsonl(test_file, sample_data)
+    
+    # Try to delete nonexistent records
+    delete_jsonl(test_file, ["nonexistent1", "nonexistent2"])
+    
+    # Verify no changes
+    loaded_data = load_jsonl(test_file)
+    assert loaded_data == sample_data
+
+# Lint Tests
+def test_lint_sorts_string_keys(test_file):
+    """Test that lint_jsonl properly sorts string keys"""
+    # Save data in unsorted order
+    data = {
+
+exec
+/usr/bin/zsh -lc "sed -n '330,520p' jsonldb/jsonlfile.py" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+        if not db_dict:
+            with open(jsonl_file_path, 'wb') as f:
+                pass  # create empty file
+            with open(f"{jsonl_file_path}.idx", 'wb') as f:
+                f.write(orjson.dumps({}, option=orjson.OPT_SORT_KEYS))
+            return
+
+        # Stream lines to the file while tracking byte offsets
+        byte_offset = 0
+        with open(jsonl_file_path, 'wb', buffering=BUFFER_SIZE) as f:
+            for linekey, data in db_dict.items():
+                serialized_key = serialize_linekey(linekey, timespec)
+                line = _fast_dumps({serialized_key: data}).encode('utf-8')
+                f.write(line)
+                index[serialized_key] = byte_offset
+                byte_offset += len(line)
+
+        # Write index (OPT_SORT_KEYS sorts on dump)
+        with open(f"{jsonl_file_path}.idx", 'wb') as f:
+            f.write(orjson.dumps(index, option=orjson.OPT_SORT_KEYS))
+            
+    except OSError as e:
+        raise OSError(f"Failed to save JSONL file {jsonl_file_path}: {str(e)}")
+
+def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True, timespec: Optional[str] = None) -> DataDict:
+    """
+    Load a JSONL file into a dictionary.
+    
+    Reads each line as a JSON object and builds a dictionary.
+    Handles datetime deserialization and skips invalid lines.
+    
+    Args:
+        jsonl_file_path: Path to the JSONL file to load
+        auto_deserialize: Whether to convert datetime strings back to datetime objects
+        
+    Returns:
+        Dictionary of loaded records
+        
+    Raises:
+        FileNotFoundError: If the file doesn't exist
+        OSError: If file operations fail
+    """
+    if not os.path.exists(jsonl_file_path):
+        raise FileNotFoundError(f"JSONL file not found: {jsonl_file_path}")
+
+    result_dict: DataDict = {}
+    
+    try:
+        with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+
+                try:
+                    data = orjson.loads(line)
+                    if isinstance(data, dict) and len(data) == 1:
+                        linekey = next(iter(data))
+                        _store_with_key(result_dict, linekey, data[linekey], auto_deserialize, timespec)
+                except (orjson.JSONDecodeError, ValueError):
+                    print("WARNING: invalid JSON line " + line.decode('utf-8', errors='replace'))
+                    continue  # Skip invalid JSON lines
+
+        return result_dict
+
+    except OSError as e:
+        raise OSError(f"Failed to load JSONL file {jsonl_file_path}: {str(e)}")
+
+def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, upper_key: Optional[LineKey] = None, auto_deserialize: bool = True, timespec: Optional[str] = None) -> DataDict:
+    """
+    Select records from a JSONL file within a key range.
+    
+    Args:
+        jsonl_file_path: Path to the JSONL file
+        lower_key: Lower bound key (inclusive). If None, uses smallest key.
+        upper_key: Upper bound key (inclusive). If None, uses largest key.
+        auto_deserialize: Whether to auto-deserialize datetime keys
+        
+    Returns:
+        Dictionary of records within the range
+        
+    Raises:
+        FileNotFoundError: If file or index doesn't exist
+        OSError: If file operations fail
+    """
+    # If both keys are None, return all records
+    if lower_key is None and upper_key is None:
+        return load_jsonl(jsonl_file_path, auto_deserialize, timespec)
+
+    if lower_key == upper_key:
+        return select_line_jsonl(jsonl_file_path, lower_key, auto_deserialize, timespec)
+
+    ensure_index_exists(jsonl_file_path)
+
+    
+    try:
+        # Load index
+        with open(f"{jsonl_file_path}.idx", 'rb') as f:
+            index_dict = orjson.loads(f.read())
+
+        # If no keys in index, return empty dict
+        if not index_dict:
+            return {}
+            
+        # Get all keys from index
+        all_keys = list(index_dict.keys())
+        
+        # Set default values if None
+        if lower_key is None:
+            lower_key = all_keys[0]   # index keys are stored sorted
+        if upper_key is None:
+            upper_key = all_keys[-1]
+            
+        # Serialize the keys
+        lower_key = serialize_linekey(lower_key, timespec)
+        upper_key = serialize_linekey(upper_key, timespec)
+        
+        # Use bisect for O(log n) range selection
+        lo = bisect_left(all_keys, lower_key)
+        hi = bisect_right(all_keys, upper_key)
+        selected_linekeys = all_keys[lo:hi]
+
+        # Read in offset order for sequential I/O
+        offset_key_pairs = sorted(
+            [(index_dict[k], k) for k in selected_linekeys]
+        )
+        raw_results = {}
+        with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
+            for offset, linekey in offset_key_pairs:
+                f.seek(offset)
+                line = f.readline()
+                data = orjson.loads(line)
+                raw_results[linekey] = data[linekey]
+
+        # Rebuild in sorted key order with deserialization
+        result_dict = {}
+        for linekey in selected_linekeys:
+            _store_with_key(result_dict, linekey, raw_results[linekey], auto_deserialize, timespec)
+        return result_dict
+        
+    except OSError as e:
+        raise OSError(f"Failed to select from JSONL file {jsonl_file_path}: {str(e)}")
+
+def select_line_jsonl(jsonl_file_path: str, linekey: LineKey, auto_serialize: bool = True, timespec: Optional[str] = None) -> DataDict:
+    """
+    Get a single record from a JSONL file based on the linekey.
+
+    Args:
+        jsonl_file_path: Path to the JSONL file
+        linekey: The key to look for
+        auto_serialize: Whether to serialize the lookup key and deserialize
+            datetime-looking keys in the result
+        timespec: Datetime precision ('seconds' or 'microseconds').
+            Defaults to the module-level TIME_SPEC.
+
+    Returns:
+        Single-record dict {linekey: value} if found, {} otherwise.
+        Example: {"key1": {"v": 1}}
+    """
+    # Serialize the key if needed
+    if auto_serialize:
+        linekey = serialize_linekey(linekey, timespec)
+    
+    ensure_index_exists(jsonl_file_path)
+    
+    index_path = jsonl_file_path + '.idx'
+    # Read the index file
+    with open(index_path, 'rb') as f:
+        index_dict = orjson.loads(f.read())
+    
+    # Check if key exists in index
+    if linekey not in index_dict:
+        return {}
+    
+    result_dict: DataDict = {}
+        
+
+    # Load selected records
+    with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
+        try:
+            f.seek(index_dict[linekey])
+            line = f.readline().strip()
+            data = orjson.loads(line)
+            _store_with_key(result_dict, linekey, data[linekey], auto_serialize, timespec)
+        except (orjson.JSONDecodeError, ValueError, KeyError):
+            return {}
+
+    return result_dict
+
+
+
+
+exec
+/usr/bin/zsh -lc "rg -n \"delete_file\\(|delete_dbmeta|update_dbmeta|build_dbmeta|lint_db|clear_folder\" unit_tests/test_folderdb.py jsonldb/folderdb.py" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+unit_tests/test_folderdb.py:214:def test_delete_file(test_folder, sample_dict):
+unit_tests/test_folderdb.py:237:    db.delete_file("test1")
+unit_tests/test_folderdb.py:308:def test_build_dbmeta(db, sample_data):
+unit_tests/test_folderdb.py:317:    db.build_dbmeta()
+unit_tests/test_folderdb.py:332:def test_update_dbmeta(db, sample_data):
+unit_tests/test_folderdb.py:338:    db.build_dbmeta()
+unit_tests/test_folderdb.py:341:    db.update_dbmeta("users", linted=True)
+unit_tests/test_folderdb.py:349:def test_lint_db(db, sample_data):
+unit_tests/test_folderdb.py:356:    db.build_dbmeta()
+unit_tests/test_folderdb.py:359:    db.lint_db()
+unit_tests/test_folderdb.py:376:    db.build_dbmeta()
+unit_tests/test_folderdb.py:391:def test_clear_folder_clears_hierarchy_subfolders(db_folder, sample_data):
+unit_tests/test_folderdb.py:392:    """clear_folder(force=True) must remove data files at any hierarchy depth"""
+unit_tests/test_folderdb.py:397:    db.clear_folder(force=True)
+unit_tests/test_folderdb.py:443:    db.delete_file("org.hr.employees")
+unit_tests/test_folderdb.py:582:def test_lint_db_batches_meta_writes(db_folder, sample_data):
+unit_tests/test_folderdb.py:583:    """Test that lint_db writes db.meta only once at the end, not per file"""
+unit_tests/test_folderdb.py:589:    # Track calls to update_dbmeta
+unit_tests/test_folderdb.py:591:    original_update = db.update_dbmeta
+unit_tests/test_folderdb.py:596:    db.update_dbmeta = counting_update
+unit_tests/test_folderdb.py:598:    db.lint_db()
+unit_tests/test_folderdb.py:600:    # Should NOT call update_dbmeta per file anymore
+unit_tests/test_folderdb.py:608:def test_lint_db_force_parameter(db, sample_data):
+unit_tests/test_folderdb.py:609:    """Test that lint_db passes force through to lint_jsonl"""
+unit_tests/test_folderdb.py:623:    db.lint_db(force=True)
+jsonldb/folderdb.py:82:        # modified externally.  Writes already call update_dbmeta()
+jsonldb/folderdb.py:88:                self.build_dbmeta()
+jsonldb/folderdb.py:90:            self.build_dbmeta()
+jsonldb/folderdb.py:276:        self.update_dbmeta(self._get_file_name(name))
+jsonldb/folderdb.py:302:        self.update_dbmeta(self._get_file_name(name))
+jsonldb/folderdb.py:346:        self.update_dbmeta(self._get_file_name(name))
+jsonldb/folderdb.py:372:        self.update_dbmeta(self._get_file_name(name))
+jsonldb/folderdb.py:411:    def clear_folder(self,force=False) -> None:
+jsonldb/folderdb.py:416:            print("WARNING: This will delete all data in the database folder. Call clear_folder with force=True to proceed.")
+jsonldb/folderdb.py:425:        self.build_dbmeta()
+jsonldb/folderdb.py:427:    def delete_file(self, name: str) -> None:
+jsonldb/folderdb.py:453:            self.update_dbmeta(self._get_file_name(name))
+jsonldb/folderdb.py:530:    def build_dbmeta(self) -> None:
+jsonldb/folderdb.py:575:            self.build_dbmeta()
+jsonldb/folderdb.py:578:    def delete_dbmeta(self,name: str) -> None:
+jsonldb/folderdb.py:583:            self.build_dbmeta()
+jsonldb/folderdb.py:586:    def update_dbmeta(self, name: str, linted: bool = False) -> None:
+jsonldb/folderdb.py:605:    def lint_db(self, force: bool = False) -> None:
+jsonldb/folderdb.py:614:            self.build_dbmeta()
+jsonldb/folderdb.py:737:        self.build_dbmeta()
+jsonldb/folderdb.py:801:                self.update_dbmeta(name)
+jsonldb/folderdb.py:808:            self.build_dbmeta()
+
+exec
+/usr/bin/zsh -lc "sed -n '520,620p' unit_tests/test_folderdb.py" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+    result = subprocess.run([sys.executable, "-c", code],
+                            capture_output=True, text=True, cwd=repo_root)
+    assert result.returncode == 0, result.stderr
+
+def test_timespec_no_global_contamination(tmp_path, monkeypatch):
+    """Opening a microseconds DB must not leak its timespec into other DBs or the global"""
+    import jsonldb.jsonlfile as jf
+    from jsonldb.jsonlfile import save_jsonl
+    monkeypatch.setattr(jf, "TIME_SPEC", "seconds")
+
+    dir_a = tmp_path / "a"; dir_a.mkdir()
+    dir_b = tmp_path / "b"; dir_b.mkdir()
+    save_jsonl(str(dir_a / "config.meta"), {"timespec": "microseconds"})
+
+    db_a = FolderDB(str(dir_a))
+    assert db_a.timespec == "microseconds"
+    assert jf.TIME_SPEC == "seconds"  # global untouched
+
+    db_b = FolderDB(str(dir_b))  # fresh DB created afterwards
+    assert db_b.timespec == "seconds"
+    config_b = select_jsonl(str(dir_b / "config.meta"))
+    assert config_b.get("timespec") == "seconds"  # not persisted contamination
+
+def test_two_dbs_different_timespecs_round_trip(tmp_path, monkeypatch):
+    """Two DBs with different timespecs must round-trip datetime keys independently"""
+    import jsonldb.jsonlfile as jf
+    from jsonldb.jsonlfile import save_jsonl
+    monkeypatch.setattr(jf, "TIME_SPEC", "seconds")
+
+    dir_us = tmp_path / "us"; dir_us.mkdir()
+    dir_s = tmp_path / "s"; dir_s.mkdir()
+    save_jsonl(str(dir_us / "config.meta"), {"timespec": "microseconds"})
+
+    db_us = FolderDB(str(dir_us))
+    db_s = FolderDB(str(dir_s))
+
+    key_us = datetime(2024, 1, 1, 12, 0, 0, 123456)
+    key_s = datetime(2024, 1, 1, 12, 0, 0)
+    db_us.upsert_dict("t", {key_us: {"v": 1}})
+    db_s.upsert_dict("t", {key_s: {"v": 2}})
+
+    assert db_us.get_dict(["t"])["t"] == {key_us: {"v": 1}}
+    assert db_s.get_dict(["t"])["t"] == {key_s: {"v": 2}}
+
+def test_init_does_not_rewrite_configmeta_if_unchanged(db_folder):
+    """Test that __init__ skips config.meta rewrite when value unchanged"""
+    db = FolderDB(db_folder)
+    config_path = os.path.join(db_folder, "config.meta")
+
+    # Read content after first init
+    with open(config_path, 'rb') as f:
+        content_before = f.read()
+    size_before = os.path.getsize(config_path)
+
+    # Re-init — should not rewrite (verify via content identity)
+    db2 = FolderDB(db_folder)
+
+    with open(config_path, 'rb') as f:
+        content_after = f.read()
+
+    assert content_before == content_after
+
+def test_lint_db_batches_meta_writes(db_folder, sample_data):
+    """Test that lint_db writes db.meta only once at the end, not per file"""
+    df, data_dict = sample_data
+    db = FolderDB(db_folder)
+    db.upsert_df("users", df)
+    db.upsert_dict("products", data_dict)
+
+    # Track calls to update_dbmeta
+    call_count = 0
+    original_update = db.update_dbmeta
+    def counting_update(*args, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        return original_update(*args, **kwargs)
+    db.update_dbmeta = counting_update
+
+    db.lint_db()
+
+    # Should NOT call update_dbmeta per file anymore
+    assert call_count == 0
+
+    # But metadata should still be correct
+    metadata = select_jsonl(os.path.join(db_folder, "db.meta"))
+    assert metadata["users"]["linted"] is True
+    assert metadata["products"]["linted"] is True
+
+def test_lint_db_force_parameter(db, sample_data):
+    """Test that lint_db passes force through to lint_jsonl"""
+    _, data_dict = sample_data
+    db.upsert_dict("test_table", data_dict)
+
+    # Append an orphaned line to the underlying file (not in index)
+    import orjson
+    file_path = db._get_file_path("test_table")
+    with open(file_path, 'ab') as f:
+        f.write(orjson.dumps({"orphan": {"v": 99}}) + b'\n')
+
+    # Touch index to appear fresh despite missing the orphan
+    os.utime(file_path + ".idx")
+
+exec
+/usr/bin/zsh -lc "sed -n '1,180p' .specdev/assignments/00006_feature_timespec-mismatch-guard/review/brainstorm-feedback.md 2>/dev/null || true" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+exec
+/usr/bin/zsh -lc 'git status --short' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 1763ms:
+ M .specdev/.current
+ M .specdev/_guides/assignment_guide.md
+ M .specdev/_guides/migration_guide.md
+ M .specdev/_guides/workflow.md
+ M .specdev/_index.md
+ M .specdev/_main.md
+ M .specdev/_templates/README.md
+ M .specdev/_templates/gate_checklist.md
+ M .specdev/_templates/review_report_template.md
+ M .specdev/project_scaffolding/_README.md
+ M .specdev/skills/README.md
+ M .specdev/skills/core/brainstorming/SKILL.md
+ M .specdev/skills/core/brainstorming/scripts/get-project-context.sh
+ M .specdev/skills/core/breakdown/SKILL.md
+ M .specdev/skills/core/diagnosis/SKILL.md
+ M .specdev/skills/core/implementing/SKILL.md
+ M .specdev/skills/core/implementing/prompts/implementer.md
+ M .specdev/skills/core/implementing/scripts/complete-task.sh
+ M .specdev/skills/core/implementing/scripts/extract-tasks.sh
+ M .specdev/skills/core/implementing/scripts/prepare-task.sh
+ M .specdev/skills/core/implementing/scripts/track-progress.sh
+ M .specdev/skills/core/investigation/SKILL.md
+ M .specdev/skills/core/knowledge-capture/SKILL.md
+ M .specdev/skills/core/parallel-worktrees/SKILL.md
+ M .specdev/skills/core/review-agent/SKILL.md
+ M .specdev/skills/core/review-agent/prompts/implementation-reviewer.md
+ M .specdev/skills/core/reviewloop/SKILL.md
+ M .specdev/skills/core/reviewloop/reviewers/claude.json
+ M .specdev/skills/core/reviewloop/reviewers/codex.json
+ M .specdev/skills/core/reviewloop/reviewers/cursor.json
+ M .specdev/skills/core/systematic-debugging/SKILL.md
+ M .specdev/skills/core/test-driven-development/SKILL.md
+?? .codex/
+?? .specdev/.session-state.json
+?? .specdev/_templates/agent-spec.schema.json
+?? .specdev/_templates/workflow_feedback_note.md
+?? .specdev/agents/
+?? .specdev/assignments/00003_bugfix_jsonl-write-path-integrity/
+?? .specdev/assignments/00004_bugfix_timespec-scoping-api-contracts/
+?? .specdev/assignments/00005_refactor_packaging-perf-cleanup/
+?? .specdev/assignments/00006_feature_timespec-mismatch-guard/
+?? .specdev/cache/
+?? .specdev/knowledge/workflow_feedback/
+?? .specdev/skills/core/reviewloop/reviewers/README.md
+?? .specdev/skills/core/reviewloop/reviewers/cursor-gemini.json
+?? .specdev/workflow.yaml
+
+codex
+Specdev: I have one architecture finding: the proposed detection only samples each table’s min/max keys, which can silently miss mixed precision inside the same table. I’m writing that into the required round-1 feedback file now.
+exec
+/usr/bin/zsh -lc "nl -ba .specdev/assignments/00006_feature_timespec-mismatch-guard/brainstorm/design.md | sed -n '1,140p'" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+     1	# Design: Auto-detect and heal timespec/data mismatches at FolderDB open
+     2	
+     3	## Overview
+     4	
+     5	A database written under the pre-00004 contamination bug can carry a `config.meta` timespec
+     6	that disagrees with the actual precision of its datetime keys. Keys then load as strings
+     7	instead of `datetime` objects. The fix detects the data's real precision when the database is
+     8	opened and self-heals the configuration.
+     9	
+    10	## Goals
+    11	
+    12	- Opening a mismatched database "just works": datetime keys deserialize correctly and
+    13	  `config.meta` is corrected on disk, with a visible warning.
+    14	- Zero cost for healthy databases beyond one `db.meta` read (already loaded data).
+    15	- No behavior change for direct `jsonlfile` users.
+    16	
+    17	## Non-Goals
+    18	
+    19	- **No read-side fallback in `_store_with_key`/`_is_datetime_string`.** Recovering a
+    20	  26-char key as a datetime in a seconds-configured DB and later re-serializing it at
+    21	  seconds precision would write it back under a *different* key (truncated micros),
+    22	  turning an update into a divergent insert. Detection stays strict; the heal happens once,
+    23	  at open, where reads and writes can be switched together.
+    24	- **No per-table timespec.** Mixed precisions across tables get a warning and keep the
+    25	  configured value; supporting heterogeneous precision is a separate design.
+    26	- **No full-file scans.** Detection uses only `db.meta` key ranges.
+    27	
+    28	## Design
+    29	
+    30	**`jsonlfile.detect_timespec(linekey: str) -> Optional[str]`** (new helper):
+    31	returns `'seconds'` / `'microseconds'` when the string is shape-matched by
+    32	`_is_datetime_string` for that precision *and* `datetime.fromisoformat` parses it;
+    33	`None` otherwise. Single source of truth for "what precision is this key".
+    34	
+    35	**`FolderDB._detect_data_timespec(self) -> Optional[str]`** (new private method):
+    36	reads `db.meta` (if present) and runs `detect_timespec` over every entry's
+    37	`min_index`/`max_index`. Returns the precision when all datetime-like keys agree;
+    38	returns `None` (and prints a mixed-precision warning) otherwise or when no datetime-like
+    39	keys exist.
+    40	
+    41	**`FolderDB.__init__`**: after the existing `db.meta` build/refresh block (so `db.meta`
+    42	exists and is current for fresh folders):
+    43	
+    44	```python
+    45	detected = self._detect_data_timespec()
+    46	if detected and detected != self.timespec:
+    47	    print(f"WARNING: config.meta timespec '{self.timespec}' does not match "
+    48	          f"data ('{detected}'); auto-correcting config.meta")
+    49	    self.timespec = detected
+    50	    self.build_configmeta()
+    51	```
+    52	
+    53	## Key Decisions
+    54	
+    55	- **Detect from `db.meta`, not the files:** `min_index`/`max_index` are maintained on every
+    56	  write and rebuilt by the same `__init__` when stale — representative of key shape at zero
+    57	  additional I/O. A table's min and max keys cover both ends of its range.
+    58	- **Heal persistently (rewrite `config.meta`)** rather than only in-memory: otherwise every
+    59	  open re-detects and other processes opening the folder stay broken.
+    60	- **Mixed precision → keep configured + warn:** any automatic choice silently breaks the
+    61	  other tables; surfacing the conflict is the only safe move.
+    62	- **Warning via `print`:** consistent with the library's existing diagnostics.
+    63	
+    64	## Success Criteria
+    65	
+    66	- New test: a DB whose `config.meta` says `seconds` but whose table contains
+    67	  microsecond-precision keys opens with `db.timespec == "microseconds"`, `config.meta`
+    68	  rewritten to `microseconds`, and `get_dict` returns microsecond `datetime` keys.
+    69	- Healthy databases (matching config, string-keyed, or empty) open with no warning and no
+    70	  `config.meta` rewrite (existing `test_init_does_not_rewrite_configmeta_if_unchanged`
+    71	  stays green).
+    72	- Full suite passes.
+    73	
+    74	## Testing Approach
+    75	
+    76	TDD: write the mismatch-heal test first (construct the contaminated state directly with
+    77	`save_jsonl(..., timespec='microseconds')` plus a `seconds` `config.meta`), watch it fail,
+    78	then add `detect_timespec`, `_detect_data_timespec`, and the `__init__` hook.
+
+exec
+/usr/bin/zsh -lc "nl -ba jsonldb/folderdb.py | sed -n '500,610p'" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+   500	
+   501	    # =============== Metadata Management ===============
+   502	    def _make_meta_entry(self, name: str, file_path: str, linted: bool = False,
+   503	                         lint_time: str = "") -> Dict[str, Any]:
+   504	        """Build one db.meta entry for a JSONL file from its index file.
+   505	
+   506	        Example: {"name": "users", "path": ".../users.jsonl", "min_index": "a",
+   507	                  "max_index": "z", "size": 123, "count": 3, "lint_time": "", "linted": False}
+   508	        """
+   509	        index_file = file_path + '.idx'
+   510	        min_index = max_index = None
+   511	        count = 0
+   512	        if os.path.exists(index_file):
+   513	            with open(index_file, 'rb') as f:
+   514	                index = orjson.loads(f.read())
+   515	            if index:
+   516	                keys = list(index.keys())
+   517	                min_index, max_index = keys[0], keys[-1]
+   518	                count = len(keys)
+   519	        return {
+   520	            "name": name,
+   521	            "path": file_path,
+   522	            "min_index": min_index,
+   523	            "max_index": max_index,
+   524	            "size": os.path.getsize(file_path),
+   525	            "count": count,
+   526	            "lint_time": lint_time,
+   527	            "linted": linted,
+   528	        }
+   529	
+   530	    def build_dbmeta(self) -> None:
+   531	        """
+   532	        Build or update the db.meta file with information about all JSONL files.
+   533	        
+   534	        The db.meta file contains metadata for each JSONL file including:
+   535	        - name: filename without .jsonl extension
+   536	        - min_index: smallest index from the index file
+   537	        - max_index: biggest index from the index file
+   538	        - size: size of the file in bytes
+   539	        - lint_time: ISO format timestamp of last lint
+   540	        - linted: boolean indicating if file has been linted
+   541	        """
+   542	        # Get all JSONL files
+   543	        jsonl_files = self.get_file_list()
+   544	        
+   545	        if not jsonl_files:
+   546	            # If no JSONL files are found, create an empty db.meta file
+   547	            with open(self.dbmeta_path, 'w', encoding='utf-8') as f:
+   548	                f.write('\n')
+   549	            return
+   550	            
+   551	        # Initialize metadata dictionary
+   552	        metadata = {}
+   553	        
+   554	        # Process each JSONL file
+   555	        for name in jsonl_files:
+   556	            file_path = self._get_file_path(name)
+   557	
+   558	            # Build index if it doesn't exist
+   559	            if not os.path.exists(file_path + '.idx'):
+   560	                build_jsonl_index(file_path)
+   561	
+   562	            metadata[name] = self._make_meta_entry(name, file_path)
+   563	        
+   564	        # Save metadata using jsonlfile
+   565	        save_jsonl(self.dbmeta_path, metadata)
+   566	
+   567	    def get_dbmeta(self) -> Dict[str, Any]:
+   568	        """
+   569	        Get the database metadata as a dictionary.
+   570	        
+   571	        Returns:
+   572	            Dictionary containing metadata for all JSONL files in the database
+   573	        """
+   574	        if not os.path.exists(self.dbmeta_path):
+   575	            self.build_dbmeta()
+   576	        return load_jsonl(self.dbmeta_path)
+   577	    
+   578	    def delete_dbmeta(self,name: str) -> None:
+   579	        """
+   580	        Delete the metadata for a specific JSONL file in db.meta.
+   581	        """
+   582	        if not os.path.exists(self.dbmeta_path):
+   583	            self.build_dbmeta()
+   584	        delete_jsonl(self.dbmeta_path, [name])
+   585	    
+   586	    def update_dbmeta(self, name: str, linted: bool = False) -> None:
+   587	        """
+   588	        Update the metadata for a specific JSONL file in db.meta.
+   589	        
+   590	        Args:
+   591	            name: Name of the JSONL file (with or without .jsonl extension)
+   592	            linted: Value to set for the linted field
+   593	        """
+   594	        # Metadata key is the name without the .jsonl extension
+   595	        meta_key = name[:-6] if name.endswith('.jsonl') else name
+   596	
+   597	        # Use hierarchical path for the data file
+   598	        file_path = self._get_file_path(name)
+   599	        lint_time = datetime.now().isoformat() if linted else ""
+   600	        entry = self._make_meta_entry(meta_key, file_path, linted, lint_time)
+   601	
+   602	        # Update metadata file using jsonlfile
+   603	        update_jsonl(self.dbmeta_path, {meta_key: entry})
+   604	
+   605	    def lint_db(self, force: bool = False) -> None:
+   606	        """Lint all JSONL files in the database.
+   607	
+   608	        Args:
+   609	            force: If True, run full mmap line-count verification on every file.
+   610	                   If False (default), skip the scan when the index is fresh.
+
+exec
+/usr/bin/zsh -lc "nl -ba jsonldb/jsonlfile.py | sed -n '232,292p'" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+   232	def _is_datetime_string(linekey: str, timespec: Optional[str] = None) -> bool:
+   233	    """Check if a string represents a datetime in ISO format.
+   234	
+   235	    Args:
+   236	        linekey: String to check
+   237	        timespec: Datetime precision ('seconds' or 'microseconds').
+   238	            Defaults to the module-level TIME_SPEC.
+   239	
+   240	    Returns:
+   241	        bool: True if the string appears to be a datetime in ISO format
+   242	    """
+   243	    if (timespec or TIME_SPEC) == 'seconds':
+   244	        return len(linekey) == 19 and 'T' in linekey and '-' in linekey and ':' in linekey
+   245	    else:  # microseconds
+   246	        return len(linekey) == 26 and 'T' in linekey and '-' in linekey and ':' in linekey
+   247	
+   248	def serialize_linekey(linekey: LineKey, timespec: Optional[str] = None) -> str:
+   249	    """
+   250	    Convert a linekey to its string representation.
+   251	
+   252	    Args:
+   253	        linekey: String or datetime object to serialize
+   254	        timespec: Datetime precision ('seconds' or 'microseconds').
+   255	            Defaults to the module-level TIME_SPEC.
+   256	
+   257	    Returns:
+   258	        String representation of the linekey
+   259	    """
+   260	    if isinstance(linekey, str):
+   261	        return linekey
+   262	    elif isinstance(linekey, dt.datetime):
+   263	        return linekey.isoformat(timespec=timespec or TIME_SPEC)
+   264	    return str(linekey)
+   265	
+   266	def deserialize_linekey(linekey_str: str, default_format: Optional[str] = None) -> LineKey:
+   267	    """
+   268	    Convert a string linekey back to its original type.
+   269	    
+   270	    Args:
+   271	        linekey_str: String to deserialize
+   272	        default_format: Format hint for deserialization ('datetime' supported)
+   273	        
+   274	    Returns:
+   275	        Original type of the linekey (datetime or string)
+   276	    """
+   277	    if default_format == "datetime":
+   278	        return dt.datetime.fromisoformat(linekey_str)
+   279	    return linekey_str
+   280	
+   281	def _store_with_key(result_dict: DataDict, linekey: str, value: dict,
+   282	                    auto_deserialize: bool, timespec: Optional[str] = None) -> None:
+   283	    """Store value under linekey, converting datetime-looking keys when requested.
+   284	
+   285	    Example: _store_with_key(d, "2024-01-01T00:00:00", {"v": 1}, True)
+   286	    stores under datetime(2024, 1, 1); non-datetime keys stay strings.
+   287	    """
+   288	    if auto_deserialize and _is_datetime_string(linekey, timespec):
+   289	        try:
+   290	            result_dict[deserialize_linekey(linekey, "datetime")] = value
+   291	            return
+   292	        except ValueError:
+
+codex
+Specdev: adding the review verdict and finding to `brainstorm-feedback.md` as required by the command output.
+apply patch
+patch: completed
+/mnt/h/oceanwave/lib/jsonldb/.specdev/assignments/00006_feature_timespec-mismatch-guard/review/brainstorm-feedback.md
+diff --git a/.specdev/assignments/00006_feature_timespec-mismatch-guard/review/brainstorm-feedback.md b/.specdev/assignments/00006_feature_timespec-mismatch-guard/review/brainstorm-feedback.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..721689d28ba35c6373e58796422ee0d632ade3c3
+--- /dev/null
++++ b/.specdev/assignments/00006_feature_timespec-mismatch-guard/review/brainstorm-feedback.md
+@@ -0,0 +1,9 @@
++## Round 1
++
++**Verdict:** needs-changes
++
++### Findings
++1. [F1.1] The design's mixed-precision guard only checks each table's `min_index` and `max_index`, so it can auto-correct `config.meta` even when a table contains both seconds and microsecond datetime keys. `db.meta` currently stores only the first and last index key from each `.idx` file (`jsonldb/folderdb.py:516`-`jsonldb/folderdb.py:517`), while the proposed detector explicitly reads only those two fields (`brainstorm/design.md:35`-`brainstorm/design.md:38`). Because ISO datetime keys sort lexicographically, a table like `2024-01-01T00:00:00`, `2024-01-01T00:30:00.123456`, `2024-01-01T01:00:00` would have seconds-shaped min/max and a microsecond-shaped interior key. The planned hook would detect `seconds`, keep or rewrite the DB to seconds, and the interior microsecond key would still deserialize as a string under the existing strict `_is_datetime_string` path (`jsonldb/jsonlfile.py:243`-`jsonldb/jsonlfile.py:246`). That violates the stated mixed-precision policy ("keep configured + warn") and makes the auto-heal unsafe for contaminated tables unless the design either scans all index keys for precision agreement or explicitly narrows the feature to uniform-precision tables with a test documenting that limitation.
++
++### Addressed from changelog
++- (none -- first round)
+
+diff --git a/.specdev/assignments/00006_feature_timespec-mismatch-guard/review/brainstorm-feedback.md b/.specdev/assignments/00006_feature_timespec-mismatch-guard/review/brainstorm-feedback.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..721689d28ba35c6373e58796422ee0d632ade3c3
+--- /dev/null
++++ b/.specdev/assignments/00006_feature_timespec-mismatch-guard/review/brainstorm-feedback.md
+@@ -0,0 +1,9 @@
++## Round 1
++
++**Verdict:** needs-changes
++
++### Findings
++1. [F1.1] The design's mixed-precision guard only checks each table's `min_index` and `max_index`, so it can auto-correct `config.meta` even when a table contains both seconds and microsecond datetime keys. `db.meta` currently stores only the first and last index key from each `.idx` file (`jsonldb/folderdb.py:516`-`jsonldb/folderdb.py:517`), while the proposed detector explicitly reads only those two fields (`brainstorm/design.md:35`-`brainstorm/design.md:38`). Because ISO datetime keys sort lexicographically, a table like `2024-01-01T00:00:00`, `2024-01-01T00:30:00.123456`, `2024-01-01T01:00:00` would have seconds-shaped min/max and a microsecond-shaped interior key. The planned hook would detect `seconds`, keep or rewrite the DB to seconds, and the interior microsecond key would still deserialize as a string under the existing strict `_is_datetime_string` path (`jsonldb/jsonlfile.py:243`-`jsonldb/jsonlfile.py:246`). That violates the stated mixed-precision policy ("keep configured + warn") and makes the auto-heal unsafe for contaminated tables unless the design either scans all index keys for precision agreement or explicitly narrows the feature to uniform-precision tables with a test documenting that limitation.
++
++### Addressed from changelog
++- (none -- first round)
+
+codex
+Specdev: verifying the feedback file contains the required Round 1 verdict before concluding.
+exec
+/usr/bin/zsh -lc "sed -n '1,220p' .specdev/assignments/00006_feature_timespec-mismatch-guard/review/brainstorm-feedback.md" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+## Round 1
+
+**Verdict:** needs-changes
+
+### Findings
+1. [F1.1] The design's mixed-precision guard only checks each table's `min_index` and `max_index`, so it can auto-correct `config.meta` even when a table contains both seconds and microsecond datetime keys. `db.meta` currently stores only the first and last index key from each `.idx` file (`jsonldb/folderdb.py:516`-`jsonldb/folderdb.py:517`), while the proposed detector explicitly reads only those two fields (`brainstorm/design.md:35`-`brainstorm/design.md:38`). Because ISO datetime keys sort lexicographically, a table like `2024-01-01T00:00:00`, `2024-01-01T00:30:00.123456`, `2024-01-01T01:00:00` would have seconds-shaped min/max and a microsecond-shaped interior key. The planned hook would detect `seconds`, keep or rewrite the DB to seconds, and the interior microsecond key would still deserialize as a string under the existing strict `_is_datetime_string` path (`jsonldb/jsonlfile.py:243`-`jsonldb/jsonlfile.py:246`). That violates the stated mixed-precision policy ("keep configured + warn") and makes the auto-heal unsafe for contaminated tables unless the design either scans all index keys for precision agreement or explicitly narrows the feature to uniform-precision tables with a test documenting that limitation.
+
+### Addressed from changelog
+- (none -- first round)
+
+exec
+/usr/bin/zsh -lc 'git diff -- .specdev/assignments/00006_feature_timespec-mismatch-guard/review/brainstorm-feedback.md' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+diff --git a/.specdev/assignments/00006_feature_timespec-mismatch-guard/review/brainstorm-feedback.md b/.specdev/assignments/00006_feature_timespec-mismatch-guard/review/brainstorm-feedback.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..721689d28ba35c6373e58796422ee0d632ade3c3
+--- /dev/null
++++ b/.specdev/assignments/00006_feature_timespec-mismatch-guard/review/brainstorm-feedback.md
+@@ -0,0 +1,9 @@
++## Round 1
++
++**Verdict:** needs-changes
++
++### Findings
++1. [F1.1] The design's mixed-precision guard only checks each table's `min_index` and `max_index`, so it can auto-correct `config.meta` even when a table contains both seconds and microsecond datetime keys. `db.meta` currently stores only the first and last index key from each `.idx` file (`jsonldb/folderdb.py:516`-`jsonldb/folderdb.py:517`), while the proposed detector explicitly reads only those two fields (`brainstorm/design.md:35`-`brainstorm/design.md:38`). Because ISO datetime keys sort lexicographically, a table like `2024-01-01T00:00:00`, `2024-01-01T00:30:00.123456`, `2024-01-01T01:00:00` would have seconds-shaped min/max and a microsecond-shaped interior key. The planned hook would detect `seconds`, keep or rewrite the DB to seconds, and the interior microsecond key would still deserialize as a string under the existing strict `_is_datetime_string` path (`jsonldb/jsonlfile.py:243`-`jsonldb/jsonlfile.py:246`). That violates the stated mixed-precision policy ("keep configured + warn") and makes the auto-heal unsafe for contaminated tables unless the design either scans all index keys for precision agreement or explicitly narrows the feature to uniform-precision tables with a test documenting that limitation.
++
++### Addressed from changelog
++- (none -- first round)
+
+codex
+Specdev: completed `specdev review brainstorm --round 1`.
+
+I wrote the Round 1 review to [.specdev/assignments/00006_feature_timespec-mismatch-guard/review/brainstorm-feedback.md](/mnt/h/oceanwave/lib/jsonldb/.specdev/assignments/00006_feature_timespec-mismatch-guard/review/brainstorm-feedback.md).
+
+Verdict: `needs-changes`.
+
+Main finding: the design samples only `min_index`/`max_index`, so it can miss mixed precision inside a single table and auto-heal to the wrong `timespec`. The feedback recommends scanning all index keys for precision agreement or explicitly narrowing the feature to uniform-precision tables with a test.
+diff --git a/.specdev/assignments/00006_feature_timespec-mismatch-guard/review/brainstorm-feedback.md b/.specdev/assignments/00006_feature_timespec-mismatch-guard/review/brainstorm-feedback.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..721689d28ba35c6373e58796422ee0d632ade3c3
+--- /dev/null
++++ b/.specdev/assignments/00006_feature_timespec-mismatch-guard/review/brainstorm-feedback.md
+@@ -0,0 +1,9 @@
++## Round 1
++
++**Verdict:** needs-changes
++
++### Findings
++1. [F1.1] The design's mixed-precision guard only checks each table's `min_index` and `max_index`, so it can auto-correct `config.meta` even when a table contains both seconds and microsecond datetime keys. `db.meta` currently stores only the first and last index key from each `.idx` file (`jsonldb/folderdb.py:516`-`jsonldb/folderdb.py:517`), while the proposed detector explicitly reads only those two fields (`brainstorm/design.md:35`-`brainstorm/design.md:38`). Because ISO datetime keys sort lexicographically, a table like `2024-01-01T00:00:00`, `2024-01-01T00:30:00.123456`, `2024-01-01T01:00:00` would have seconds-shaped min/max and a microsecond-shaped interior key. The planned hook would detect `seconds`, keep or rewrite the DB to seconds, and the interior microsecond key would still deserialize as a string under the existing strict `_is_datetime_string` path (`jsonldb/jsonlfile.py:243`-`jsonldb/jsonlfile.py:246`). That violates the stated mixed-precision policy ("keep configured + warn") and makes the auto-heal unsafe for contaminated tables unless the design either scans all index keys for precision agreement or explicitly narrows the feature to uniform-precision tables with a test documenting that limitation.
++
++### Addressed from changelog
++- (none -- first round)
+
+tokens used
+60,278
+Specdev: completed `specdev review brainstorm --round 1`.
+
+I wrote the Round 1 review to [.specdev/assignments/00006_feature_timespec-mismatch-guard/review/brainstorm-feedback.md](/mnt/h/oceanwave/lib/jsonldb/.specdev/assignments/00006_feature_timespec-mismatch-guard/review/brainstorm-feedback.md).
+
+Verdict: `needs-changes`.
+
+Main finding: the design samples only `min_index`/`max_index`, so it can miss mixed precision inside a single table and auto-heal to the wrong `timespec`. The feedback recommends scanning all index keys for precision agreement or explicitly narrowing the feature to uniform-precision tables with a test.
+
+----- end of reviewer output -----
+Ended:      2026-06-10T12:31:31.782Z
+Elapsed:    129s
+Exit code:  0
+Timed out:  false
+Verdict:    needs-changes

@@ -1,0 +1,65 @@
+{
+  "runId": "assignment-lifecycle-20260729T07073993",
+  "status": "active",
+  "rootGraph": "assignment-lifecycle",
+  "workflow": {
+    "id": "specdev-workspace",
+    "version": "1.0.0"
+  },
+  "position": {
+    "graph": "assignment-lifecycle",
+    "node": "design"
+  },
+  "createdAt": "2026-07-29T07:07:39.931Z",
+  "updatedAt": "2026-07-29T07:16:02.684Z",
+  "outputs": {
+    "create-assignment": {
+      "id": "00008",
+      "name": "00008_add-one-lifecycle-managed-opaque-jsonl-aux-compa",
+      "path": ".specdev/assignments/00008_add-one-lifecycle-managed-opaque-jsonl-aux-compa",
+      "description": "Add one lifecycle-managed opaque .jsonl.aux companion for each JSONL ticker, with JSONLDB owning its filesystem lifecycle without interpreting consumer content",
+      "review_policy": {
+        "brainstorm": "optional",
+        "implementation": "required"
+      }
+    },
+    "brainstorm": {
+      "contract": ".specdev/assignments/00008_add-one-lifecycle-managed-opaque-jsonl-aux-compa/brainstorm/contract.md",
+      "contract_hash": "673213ff7fe6e6c45abb4fe34d73d6f6f80c564ec00b976bc8d2dc6df5dab50c"
+    },
+    "approve-contract": {
+      "approved": true,
+      "contract_hash": "673213ff7fe6e6c45abb4fe34d73d6f6f80c564ec00b976bc8d2dc6df5dab50c",
+      "actor": "user",
+      "approved_at": "2026-07-29T07:16:02.668Z",
+      "review_override": false,
+      "review_policy": {
+        "brainstorm": "optional",
+        "implementation": "required"
+      },
+      "revision": "677591ffdd5d54c756a30694f2f121155e919741"
+    }
+  },
+  "gateDecisions": {
+    "approve-contract": {
+      "approved": true,
+      "contract_hash": "673213ff7fe6e6c45abb4fe34d73d6f6f80c564ec00b976bc8d2dc6df5dab50c",
+      "actor": "user",
+      "approved_at": "2026-07-29T07:16:02.668Z",
+      "review_override": false,
+      "review_policy": {
+        "brainstorm": "optional",
+        "implementation": "required"
+      },
+      "revision": "677591ffdd5d54c756a30694f2f121155e919741"
+    }
+  },
+  "graphSource": {
+    "kind": "package",
+    "graphId": "assignment-lifecycle",
+    "graphVersion": "2.2.0",
+    "packagePath": "workflows/assignment-lifecycle@2.2.0"
+  },
+  "stack": [],
+  "frameCounter": 0
+}

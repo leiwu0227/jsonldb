@@ -1,0 +1,27 @@
+{
+  "plan_file": ".specdev/assignments/00005_refactor_packaging-perf-cleanup/breakdown/plan.md",
+  "total_tasks": 3,
+  "tasks": [
+    {
+      "number": 1,
+      "status": "completed",
+      "started_at": "2026-06-10T11:32:34Z",
+      "completed_at": "2026-06-10T11:34:19Z",
+      "summary": "numba import removed (also from README); vercontrol imported lazily in commit/revert/version; setup.py: entry_points dropped, matplotlib added; __version__ aligned to 1.0.0; test test_import_contract_no_heavy_modules; suite 79 passed"
+    },
+    {
+      "number": 2,
+      "status": "completed",
+      "started_at": "2026-06-10T11:34:31Z",
+      "completed_at": "2026-06-10T11:35:35Z",
+      "summary": "Dropped python-side dict(sorted()) at 4 index-write sites (OPT_SORT_KEYS suffices, invariant verified); select_jsonl O(1) defaults; save_jsonl streams; BUFFER_SIZE comment fixed; check_dict_format and deleted_line dead code removed; suite 79 passed"
+    },
+    {
+      "number": 3,
+      "status": "completed",
+      "started_at": "2026-06-10T11:35:45Z",
+      "completed_at": "2026-06-10T11:37:13Z",
+      "summary": "_make_meta_entry helper replaces 3 duplicated builders (~55 lines removed); validate_name message says 'at least' matching >= check (stale test assertions updated); update_dbmeta strips .jsonl via endswith/slice; redundant local import orjson removed from lint_db; suite 79 passed"
+    }
+  ]
+}

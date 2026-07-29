@@ -1,0 +1,2380 @@
+Reviewloop reviewer log
+Reviewer:   codex
+Phase:      implementation
+Round:      2
+Started:    2026-06-12T08:48:42.895Z
+Timeout:    900s
+Command:    codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral "Run specdev review $SPECDEV_PHASE --round $SPECDEV_ROUND. Follow its instructions."
+Env:
+  SPECDEV_PHASE=implementation
+  SPECDEV_ASSIGNMENT=00007_bugfix_corrupt-idx-self-heal
+  SPECDEV_ROUND=2
+  SPECDEV_FEEDBACK_FILE=/mnt/h/oceanwave/lib/jsonldb/.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md
+  SPECDEV_CHANGELOG_FILE=/mnt/h/oceanwave/lib/jsonldb/.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-changelog.md
+  SPECDEV_FOCUS=Code efficiency — eliminate dead code, replace imperative loops with functional alternatives, extract magic numbers into constants, prefer pure functions with m
+
+----- reviewer output -----
+Reading additional input from stdin...
+OpenAI Codex v0.138.0
+--------
+workdir: /mnt/h/oceanwave/lib/jsonldb
+model: gpt-5.5
+provider: openai
+approval: never
+sandbox: danger-full-access
+reasoning effort: medium
+reasoning summaries: none
+session id: 019ebb04-ef64-73f1-970a-37229e39d801
+--------
+user
+Run specdev review implementation --round 2. Follow its instructions.
+codex
+Specdev: reading the review workflow for implementation round 2.
+exec
+/usr/bin/zsh -lc "sed -n '1,220p' /mnt/h/oceanwave/lib/jsonldb/.codex/skills/specdev-review/SKILL.md && sed -n '1,220p' .specdev/_main.md" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+---
+name: specdev-review
+description: Phase-aware manual review of the current assignment
+---
+
+Run `specdev review <phase>` where phase is brainstorm or implementation.
+
+Examples: `specdev review brainstorm`, `specdev review implementation`.
+
+Follow the printed instructions to review the appropriate artifacts.
+Discuss findings with the user before concluding.
+# SpecDev Workflow
+
+You are working in a project that uses SpecDev — a spec-driven development framework. You MUST follow this workflow for all work.
+
+## How SpecDev Works
+
+All work is organized into **assignments**. An assignment is a self-contained unit of work — a feature, bugfix, refactor, or investigation — tracked in its own folder under `assignments/`. Each assignment progresses through three required phases, with optional non-blocking phase-end knowledge capture when reusable knowledge was learned. The CLI enforces gates between phases so work cannot advance until artifacts are validated and the user approves.
+
+## CLI
+
+`specdev` is a Node.js CLI installed globally via npm. Run it directly as `specdev <command>`. It is NOT a Python package — never use pip/python/pipx.
+
+## First Steps
+
+1. Read `project_notes/big_picture.md` — understand the project
+2. Check `.specdev/.current` for the active assignment pointer.
+   - `.current` exists → keep it unless the user asks to switch; use `specdev focus <id>` only when needed.
+   - No active assignment → run `specdev assignment "<description>" --type=<type> --slug=<slug>` to create and focus one.
+   - For parallel exploration before committing to an assignment → run `specdev discussion "<description>"`
+3. Run `specdev next --json` for the canonical next workflow action. Follow the returned guide, command, blockers, choices, and hook outcomes.
+
+**Reference:** `_index.md` is the detailed lookup for all guides, skills, commands, and project context. Consult it when you need to find a specific resource.
+
+## Workflow FAQ
+
+If workflow instructions conflict, a SpecDev command fails unexpectedly, or you are unsure how to proceed, run `specdev knowledge search "<issue>"` and inspect `knowledge/workflow/` before guessing. Capture recurring workflow gotchas through optional phase-end knowledge capture.
+
+## The Workflow
+
+Every assignment follows the same 3 required phases in order:
+
+1. **Brainstorm** — understand the problem, explore approaches, produce a design or research output
+2. **Breakdown** — create a concise implementation plan with coherent tasks and verification guidance
+3. **Implement** — execute tasks using the plan's execution mode and task-level verification
+
+Optional phase-end knowledge capture may suggest durable notes when reusable knowledge was learned.
+
+Use `workflow.yaml` and `specdev next --json` as the source of truth for action selection. Read `_guides/workflow.md` when you need a human-readable reference for phases, artifacts, gates, and recovery paths.
+
+## Rules
+
+- Follow the phases in order. Do not skip phases.
+- No completion claims without evidence.
+- Announce subtasks with "Specdev: <action>".
+- Read `_guides/codestyle_guide.md` before writing any code.
+- When a specdev assignment is active, specdev skills take precedence over superpowers equivalents. See `_guides/superpowers_exclusions.md`.
+
+codex
+Specdev: running the requested implementation review command and collecting its instructions.
+exec
+/usr/bin/zsh -lc 'specdev review implementation --round 2' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 120ms:
+Manual Review: 00007_bugfix_corrupt-idx-self-heal
+   Phase: implementation
+
+Review scope: Spec compliance + code quality
+
+Artifacts to review:
+   - 00007_bugfix_corrupt-idx-self-heal/brainstorm/design.md (what was requested)
+   - 00007_bugfix_corrupt-idx-self-heal/breakdown/plan.md (what was planned)
+   - Changed code files (what was built)
+
+Check:
+  1. Spec compliance: does implementation match the design?
+  2. Code quality: architecture, testing, style
+  3. Tag findings as CRITICAL or MINOR
+  4. Prefer simplification over addition. If code can be made simpler
+     while preserving functionality, suggest that — not more code.
+     Flag patch-stacking: layered fixes that should be consolidated.
+  5. Flag special-case code that exists only to satisfy tests.
+     If tests are outdated, recommend updating the tests instead.
+
+Cost-benefit principle:
+  Only flag issues worth the cost of fixing. Skip unlikely edge cases,
+  speculative future-proofing, and stylistic preferences.
+  Accept [REJECTED] findings unless they would cause a real bug.
+
+Review Focus:
+   Code efficiency — eliminate dead code, replace imperative loops with functional alternatives, extract magic numbers into constants, prefer pure functions with minimal side effects, verify Big O complexity of algorithms.
+
+Write findings to:
+   00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md
+   Automated review requirement: append ## Round 1 with **Verdict:** approved or **Verdict:** needs-changes before exiting.
+   Do not only print a summary to stdout.
+
+Feedback format (append to file):
+  ```markdown
+  ## Round 1
+  
+  **Verdict:** approved | needs-changes
+  
+  ### Findings
+  1. [F1.1] Description of finding
+  
+  ### Addressed from changelog
+  - (none -- first round)
+  ```
+
+Reviewing assignment: 00007_bugfix_corrupt-idx-self-heal
+
+
+codex
+Specdev: reviewing the assignment artifacts and current code changes against the implementation scope.
+exec
+/usr/bin/zsh -lc "sed -n '1,260p' assignments/00007_bugfix_corrupt-idx-self-heal/brainstorm/design.md" in /mnt/h/oceanwave/lib/jsonldb
+ exited 2 in 0ms:
+sed: can't read assignments/00007_bugfix_corrupt-idx-self-heal/brainstorm/design.md: No such file or directory
+
+exec
+/usr/bin/zsh -lc "sed -n '1,260p' assignments/00007_bugfix_corrupt-idx-self-heal/breakdown/plan.md" in /mnt/h/oceanwave/lib/jsonldb
+ exited 2 in 0ms:
+sed: can't read assignments/00007_bugfix_corrupt-idx-self-heal/breakdown/plan.md: No such file or directory
+
+exec
+/usr/bin/zsh -lc 'git status --short && git diff --stat && git diff --name-only' in /mnt/h/oceanwave/lib/jsonldb
+exec
+/usr/bin/zsh -lc "sed -n '1,240p' assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md" in /mnt/h/oceanwave/lib/jsonldb
+ exited 2 in 0ms:
+sed: can't read assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md: No such file or directory
+
+ succeeded in 3111ms:
+ M .specdev/.current
+ M .specdev/_guides/assignment_guide.md
+ M .specdev/_guides/migration_guide.md
+ M .specdev/_guides/workflow.md
+ M .specdev/_index.md
+ M .specdev/_main.md
+ M .specdev/_templates/README.md
+ M .specdev/_templates/gate_checklist.md
+ M .specdev/_templates/review_report_template.md
+ M .specdev/project_scaffolding/_README.md
+ M .specdev/skills/README.md
+ M .specdev/skills/core/brainstorming/SKILL.md
+ M .specdev/skills/core/brainstorming/scripts/get-project-context.sh
+ M .specdev/skills/core/breakdown/SKILL.md
+ M .specdev/skills/core/diagnosis/SKILL.md
+ M .specdev/skills/core/implementing/SKILL.md
+ M .specdev/skills/core/implementing/prompts/implementer.md
+ M .specdev/skills/core/implementing/scripts/complete-task.sh
+ M .specdev/skills/core/implementing/scripts/extract-tasks.sh
+ M .specdev/skills/core/implementing/scripts/prepare-task.sh
+ M .specdev/skills/core/implementing/scripts/track-progress.sh
+ M .specdev/skills/core/investigation/SKILL.md
+ M .specdev/skills/core/knowledge-capture/SKILL.md
+ M .specdev/skills/core/parallel-worktrees/SKILL.md
+ M .specdev/skills/core/review-agent/SKILL.md
+ M .specdev/skills/core/review-agent/prompts/implementation-reviewer.md
+ M .specdev/skills/core/reviewloop/SKILL.md
+ M .specdev/skills/core/reviewloop/reviewers/claude.json
+ M .specdev/skills/core/reviewloop/reviewers/codex.json
+ M .specdev/skills/core/reviewloop/reviewers/cursor.json
+ M .specdev/skills/core/systematic-debugging/SKILL.md
+ M .specdev/skills/core/test-driven-development/SKILL.md
+?? .codex/
+?? .specdev/.session-state.json
+?? .specdev/_templates/agent-spec.schema.json
+?? .specdev/_templates/workflow_feedback_note.md
+?? .specdev/agents/
+?? .specdev/assignments/00003_bugfix_jsonl-write-path-integrity/
+?? .specdev/assignments/00004_bugfix_timespec-scoping-api-contracts/
+?? .specdev/assignments/00005_refactor_packaging-perf-cleanup/
+?? .specdev/assignments/00006_feature_timespec-mismatch-guard/
+?? .specdev/assignments/00007_bugfix_corrupt-idx-self-heal/
+?? .specdev/cache/
+?? .specdev/knowledge/workflow_feedback/
+?? .specdev/project_notes/thoughts/
+?? .specdev/skills/core/reviewloop/reviewers/README.md
+?? .specdev/skills/core/reviewloop/reviewers/cursor-gemini.json
+?? .specdev/workflow.yaml
+ .specdev/.current                                  |   2 +-
+ .specdev/_guides/assignment_guide.md               |  24 ++-
+ .specdev/_guides/migration_guide.md                | 179 +++++++++++++++++----
+ .specdev/_guides/workflow.md                       |  43 +++--
+ .specdev/_index.md                                 |  53 ++++--
+ .specdev/_main.md                                  |  24 +--
+ .specdev/_templates/README.md                      |  25 +--
+ .specdev/_templates/gate_checklist.md              |   6 +-
+ .specdev/_templates/review_report_template.md      |   4 +-
+ .specdev/project_scaffolding/_README.md            |  29 +++-
+ .specdev/skills/README.md                          |   6 +-
+ .specdev/skills/core/brainstorming/SKILL.md        |  19 ++-
+ .../brainstorming/scripts/get-project-context.sh   |  12 +-
+ .specdev/skills/core/breakdown/SKILL.md            | 123 ++++++++++----
+ .specdev/skills/core/diagnosis/SKILL.md            |   2 +
+ .specdev/skills/core/implementing/SKILL.md         |  79 ++++-----
+ .../core/implementing/prompts/implementer.md       |  23 +--
+ .../core/implementing/scripts/complete-task.sh     |  21 +--
+ .../core/implementing/scripts/extract-tasks.sh     |  14 +-
+ .../core/implementing/scripts/prepare-task.sh      |  10 +-
+ .../core/implementing/scripts/track-progress.sh    |   7 +
+ .specdev/skills/core/investigation/SKILL.md        |  13 +-
+ .specdev/skills/core/knowledge-capture/SKILL.md    | 164 ++++++++++---------
+ .specdev/skills/core/parallel-worktrees/SKILL.md   |   6 +-
+ .specdev/skills/core/review-agent/SKILL.md         |  30 ++--
+ .../prompts/implementation-reviewer.md             |  35 ++++
+ .specdev/skills/core/reviewloop/SKILL.md           |  31 ++--
+ .../skills/core/reviewloop/reviewers/claude.json   |   6 +-
+ .../skills/core/reviewloop/reviewers/codex.json    |   2 +-
+ .../skills/core/reviewloop/reviewers/cursor.json   |   2 +-
+ .specdev/skills/core/systematic-debugging/SKILL.md |   2 +-
+ .../skills/core/test-driven-development/SKILL.md   |  52 ++++--
+ 32 files changed, 683 insertions(+), 365 deletions(-)
+.specdev/.current
+.specdev/_guides/assignment_guide.md
+.specdev/_guides/migration_guide.md
+.specdev/_guides/workflow.md
+.specdev/_index.md
+.specdev/_main.md
+.specdev/_templates/README.md
+.specdev/_templates/gate_checklist.md
+.specdev/_templates/review_report_template.md
+.specdev/project_scaffolding/_README.md
+.specdev/skills/README.md
+.specdev/skills/core/brainstorming/SKILL.md
+.specdev/skills/core/brainstorming/scripts/get-project-context.sh
+.specdev/skills/core/breakdown/SKILL.md
+.specdev/skills/core/diagnosis/SKILL.md
+.specdev/skills/core/implementing/SKILL.md
+.specdev/skills/core/implementing/prompts/implementer.md
+.specdev/skills/core/implementing/scripts/complete-task.sh
+.specdev/skills/core/implementing/scripts/extract-tasks.sh
+.specdev/skills/core/implementing/scripts/prepare-task.sh
+.specdev/skills/core/implementing/scripts/track-progress.sh
+.specdev/skills/core/investigation/SKILL.md
+.specdev/skills/core/knowledge-capture/SKILL.md
+.specdev/skills/core/parallel-worktrees/SKILL.md
+.specdev/skills/core/review-agent/SKILL.md
+.specdev/skills/core/review-agent/prompts/implementation-reviewer.md
+.specdev/skills/core/reviewloop/SKILL.md
+.specdev/skills/core/reviewloop/reviewers/claude.json
+.specdev/skills/core/reviewloop/reviewers/codex.json
+.specdev/skills/core/reviewloop/reviewers/cursor.json
+.specdev/skills/core/systematic-debugging/SKILL.md
+.specdev/skills/core/test-driven-development/SKILL.md
+
+codex
+Specdev: the assignment lives under `.specdev/assignments`, so I’m switching to the canonical artifact paths and identifying the implementation files touched for this assignment.
+exec
+/usr/bin/zsh -lc "sed -n '1,260p' .specdev/assignments/00007_bugfix_corrupt-idx-self-heal/brainstorm/design.md" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+# Design: self-heal empty/corrupt `.idx` index files
+
+## Overview
+
+jsonldb stores, for each `foo.jsonl`, a sidecar `foo.jsonl.idx` mapping each
+linekey to its byte offset. The index is fully derived from the `.jsonl` and is
+always rebuildable via `build_jsonl_index`. Today the index is rebuilt only when
+it is **missing** or **older than the `.jsonl`** (mtime gate). An index that
+**exists but is empty or unparseable** — e.g. a zero-length file left by a write
+interrupted mid-flush — passes both checks (its mtime is fresh) and is trusted
+forever, after which every read crashes on `orjson.loads`. This bugfix makes an
+empty/corrupt index recover transparently, mirroring the rebuild-and-reread
+self-heal already present in `lint_jsonl`'s fast path (`jsonlfile.py:201-207`)
+and `_verify_and_compact` (`:134-137`).
+
+## Root Cause
+
+`ensure_index_exists` (`jsonlfile.py:88-111`) decides `should_rebuild` from
+existence + mtime only — it never inspects index **content**:
+
+```python
+should_rebuild = False
+if not os.path.exists(index_file_path):
+    should_rebuild = True
+else:
+    if os.path.getmtime(jsonl) > os.path.getmtime(index_file_path):
+        should_rebuild = True
+```
+
+A zero-length `.idx` with mtime ≥ the `.jsonl` is therefore never rebuilt. The
+read sites then parse it unconditionally with no recovery. The same
+"guard existence, then raw `orjson.loads(f.read())`" pattern repeats, none
+validating content:
+
+- `jsonlfile.py:451` (`select_jsonl` range), `:521` (`select_line_jsonl`),
+  `:565` (`update_jsonl`), `:638` (`delete_jsonl`) — all preceded by
+  `ensure_index_exists` but then a **raw** load with no try/except.
+- `folderdb.py:164` (`_scan_index_timespecs`), `:532` (`delete_file_range`),
+  `:571` (`_make_meta_entry`) — raw loads.
+- `visual.py:64, 129, 228, 258, 342, 371` (`visualize_jsonl_bokeh`,
+  `visualize_jsonl_matplot`, `visualize_folderdb_bokeh`,
+  `visualize_folderdb_matplot`) — raw `json.load(f)`, and worse, they
+  `raise FileNotFoundError` instead of building when the index is missing.
+  These public visualization paths would still crash on an empty/corrupt index.
+- `lint_jsonl` (`:203` fast path, `:219`/`:224` full mmac line-count path) and
+  `_verify_and_compact` (`:136`) read the idx during maintenance/compaction.
+  The fast path and the `_verify_and_compact` reload **already** rebuild-and-reread
+  on failure — the pattern we generalize — but `lint_jsonl(force=True)` reaches a
+  **raw** `orjson.loads(f.read())` at `:219`/`:224` that a non-empty/garbage idx
+  would still crash. (`load_jsonl`, `:377-419`, does not read the `.idx` at all.)
+
+The `size==0` case is the one seen in production; a non-empty-but-truncated/garbage
+index is the rarer sibling. Both must heal.
+
+## Fix Design
+
+Two coordinated changes in `jsonlfile.py`, plus routing all index reads through
+one helper.
+
+### 1. `ensure_index_exists` — treat empty as missing, and warn
+
+Add a zero-length trigger to the rebuild condition, and emit a corruption
+warning **only** for the empty case (stale-mtime rebuilds stay silent, matching
+today's behavior):
+
+```python
+should_rebuild = False
+corrupt = False
+if not os.path.exists(index_file_path):
+    should_rebuild = True
+elif os.path.getsize(index_file_path) == 0:
+    should_rebuild = True
+    corrupt = True
+elif os.path.getmtime(jsonl_file_path) > os.path.getmtime(index_file_path):
+    should_rebuild = True
+if should_rebuild:
+    if corrupt:
+        print(f"WARNING: rebuilt empty index {index_file_path}")
+    build_jsonl_index(jsonl_file_path)
+```
+
+A valid empty index is `b'{}'` (2 bytes), never 0 bytes, so `size==0` reliably
+means truncation/corruption — no false-positive rebuilds.
+
+### 2. `load_index` — single robust loader (parse-failure fallback)
+
+Introduce one helper that becomes the only way index dicts are read:
+
+```python
+def load_index(jsonl_file_path: str) -> dict:
+    """Load a JSONL file's index, rebuilding it if empty/missing/unparseable."""
+    ensure_index_exists(jsonl_file_path)          # heals missing/empty/stale
+    index_path = f"{jsonl_file_path}.idx"
+    try:
+        with open(index_path, 'rb') as f:
+            return orjson.loads(f.read())
+    except (orjson.JSONDecodeError, OSError):
+        print(f"WARNING: rebuilt corrupt index {index_path}")
+        build_jsonl_index(jsonl_file_path)
+        with open(index_path, 'rb') as f:
+            return orjson.loads(f.read())
+```
+
+It is named without a leading underscore because it is shared across modules
+(`folderdb` already does `import jsonldb.jsonlfile as jsonlfile`).
+
+### 3. Route every raw index read through `load_index`
+
+Replace the `ensure_index_exists(...)` + raw `orjson.loads(f.read())` pairs with
+a single `index = jsonlfile.load_index(path)` call at:
+
+- `jsonlfile.py`: `select_jsonl` (range), `select_line_jsonl`, `update_jsonl`,
+  `delete_jsonl`, and the maintenance/lint path — `lint_jsonl`'s fast path (`:203`)
+  and full-path raw reads (`:219`/`:224`) plus `_verify_and_compact`'s reload
+  (`:136`) — consolidating the existing inline rebuild-reread fragments into the
+  one `load_index` helper so `lint_jsonl(force=True)` no longer hits a raw load.
+- `folderdb.py`: `_scan_index_timespecs:164`, `delete_file_range:532`,
+  `_make_meta_entry:571` (the last guarded by `if os.path.exists(index_file)`;
+  preserve that guard — `load_index` is only called when an index read is
+  actually intended).
+- `visual.py`: all six `json.load` reads in `visualize_jsonl_bokeh`,
+  `visualize_jsonl_matplot`, `visualize_folderdb_bokeh`,
+  `visualize_folderdb_matplot` → `jsonlfile.load_index(jsonl_path)`. This both
+  self-heals an empty/corrupt index and replaces the current "raise
+  FileNotFoundError when missing" with build-from-`.jsonl` (a benign improvement,
+  since the `.jsonl` is the source of truth). The keys returned by `load_index`
+  are the same string linekeys these functions already iterate, so downstream
+  numeric/datetime conversion is unchanged. The `if not os.path.exists(idx_path):
+  raise FileNotFoundError` guards are removed — `load_index` makes a missing index
+  recoverable. (Note: `visual.py` currently uses stdlib `json`; switching these
+  reads to `load_index` removes that second, divergent index-loading strategy.)
+
+Write paths (`update_jsonl`, `delete_jsonl`) still re-`orjson.dumps` the mutated
+index back out unchanged; only the **read** half is swapped for `load_index`.
+
+With these three modules routed through `load_index`, it is genuinely the single
+index-read path in the library — no raw `orjson.loads`/`json.load` of an `.idx`
+remains outside it.
+
+### Failure semantics / blast radius
+
+- Purely additive: the only behavior change is that a previously-fatal empty or
+  corrupt index now triggers a rebuild instead of an exception. Valid indexes are
+  untouched (no spurious rebuilds; the mtime fast-path is preserved).
+- Shared-library change — affects every jsonldb consumer — but it can only turn a
+  current hard crash into transparent recovery, so risk is one-directional.
+- Companion oceandata-side change (isolate-per-ticker + surface failed tickers in
+  `_flush_dirty_data`) is **out of scope** — tracked in the other repo.
+
+## Non-Goals
+
+- No change to the index file format or to `build_jsonl_index` itself.
+- No change to the mtime fast-path / stale-rebuild logic (stays silent).
+- No structured logging framework — match the existing `print("WARNING: …")`
+  house style.
+- No oceandata-side flush changes (separate repo).
+- Not attempting to *repair* a partially-written index in place — always a full
+  rebuild from the `.jsonl` source of truth.
+
+## Success Criteria
+
+1. Empty `.idx` (zero-length) + `upsert`/`select`/`update`/`delete`/meta-rebuild
+   → index is rebuilt and the operation succeeds (no `orjson` crash).
+2. Truncated/garbage non-empty `.idx` → same transparent rebuild-and-succeed via
+   `load_index`.
+3. A corruption-triggered rebuild prints exactly one `WARNING:` line naming the
+   index path; a normal stale-mtime rebuild prints nothing.
+4. Valid `.idx` → unchanged: no spurious rebuild, mtime fast-path intact, output
+   byte-identical to today.
+5. `.jsonl` newer than `.idx` → still rebuilds (existing behavior preserved).
+6. The folderdb paths (`_scan_index_timespecs`, `delete_file_range`,
+   `_make_meta_entry`) recover from a corrupt index instead of throwing.
+7. The `visual.py` visualization paths recover from an empty/corrupt index
+   instead of throwing, and no raw `orjson.loads`/`json.load` of an `.idx`
+   remains anywhere outside `load_index`.
+8. `lint_jsonl(force=True)` against a non-empty/garbage idx recovers via
+   `load_index` instead of crashing at the raw `:219`/`:224` read.
+9. Full existing test suite (82 tests) still passes.
+
+## Testing Approach
+
+TDD, mirroring the existing index/lint tests in `unit_tests/test_jsonlfile.py`
+and `unit_tests/test_folderdb.py`:
+
+- **Empty idx**: write a valid file, `open(path+'.idx','w').close()`, assert each
+  entry point (select/update/delete/upsert/meta) succeeds and the idx is repopulated.
+- **Corrupt idx**: write `b'not json'` (and `os.utime` to a fresh mtime so the
+  mtime gate would otherwise trust it), assert `load_index` rebuilds and returns
+  the correct dict; include a `lint_jsonl(path, force=True)` case so the
+  maintenance full-path read is exercised against the garbage idx.
+- **Warning emitted**: capture stdout, assert the `WARNING:` line appears for the
+  empty and corrupt cases and is absent for a normal stale rebuild.
+- **No false rebuild**: valid idx with fresh mtime — assert `build_jsonl_index` is
+  not called (e.g. monkeypatch/spy) and the idx mtime is unchanged.
+- **visual.py**: a unit test asserting the visualization functions no longer read
+  the index directly — e.g. an empty/corrupt idx is healed (assert the functions'
+  index-load step returns a rebuilt dict rather than raising). Heavy bokeh/matplot
+  rendering need not be exercised end-to-end; the index-load grep/assertion plus a
+  `load_index` call on a corrupt idx is sufficient to prove the second loader is
+  gone.
+- Run the full suite to confirm no regressions.
+
+exec
+/usr/bin/zsh -lc "sed -n '1,300p' .specdev/assignments/00007_bugfix_corrupt-idx-self-heal/breakdown/plan.md" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+# Implementation Plan: self-heal empty/corrupt `.idx` index files
+
+**Execution mode:** inline
+**Test budget (aggregate):** ≤ 5 new tests across the plan
+
+Source of truth: `brainstorm/design.md`. Two coherent slices — (1) the core
+loader + heal in `jsonlfile.py` and its own read sites, (2) routing the
+`folderdb.py` and `visual.py` read sites through the same loader.
+
+---
+
+### Task 1: Core self-heal loader + jsonlfile read sites
+**Mode:** full
+**Skills:** [test-driven-development]
+**Files:** jsonldb/jsonlfile.py, unit_tests/test_jsonlfile.py
+
+**Work:**
+- `ensure_index_exists`: add `os.path.getsize(index_file_path) == 0` as a rebuild
+  trigger (between the missing-check and the mtime-check). Track a `corrupt` flag
+  and `print(f"WARNING: rebuilt empty index {index_file_path}")` only for the
+  size==0 case; stale-mtime rebuild stays silent.
+- Add `load_index(jsonl_file_path) -> dict`: call `ensure_index_exists`, read +
+  `orjson.loads`; on `(orjson.JSONDecodeError, OSError)` print
+  `WARNING: rebuilt corrupt index {index_path}`, `build_jsonl_index`, re-read.
+- Route jsonlfile read sites through `load_index`: `select_jsonl` (range, :451),
+  `select_line_jsonl` (:521), `update_jsonl` (:565 read half), `delete_jsonl`
+  (:638 read half), `lint_jsonl` fast/full reads (:203/:219/:224), and
+  `_verify_and_compact`'s reload (:136). Write paths keep their existing
+  `orjson.dumps` of the mutated index.
+
+**Verify:**
+- `python -m pytest unit_tests/test_jsonlfile.py -q`
+
+**Test Budget:** +3 in unit_tests/test_jsonlfile.py; focused (<30s) — (a) empty idx
+heals on select/update + emits warning, (b) garbage idx heals via
+`lint_jsonl(force=True)`, (c) valid idx → no spurious rebuild (mtime unchanged,
+no warning). Three because empty vs. garbage vs. no-false-rebuild are distinct
+contracts that cannot share a fixture.
+
+**Test Pruning:**
+- Reuse existing index/lint fixtures in test_jsonlfile.py; replace any older
+  ad-hoc empty-index test rather than adding alongside.
+
+**Commit:** `git commit -m "fix: self-heal empty/corrupt .idx via load_index in jsonlfile"`
+
+---
+
+### Task 2: Route folderdb + visual.py reads through load_index
+**Mode:** standard
+**Skills:** []
+**Files:** jsonldb/folderdb.py, jsonldb/visual.py, unit_tests/test_folderdb.py
+
+**Work:**
+- `folderdb.py`: replace raw `orjson.loads(f.read())` at `_scan_index_timespecs`
+  (:164), `delete_file_range` (:532), `_make_meta_entry` (:571) with
+  `jsonlfile.load_index(path)`. Preserve `_make_meta_entry`'s
+  `if os.path.exists(index_file)` guard.
+- `visual.py`: replace the six `json.load(f)` reads (`:64, :129, :228, :258,
+  :342, :371`) with `jsonlfile.load_index(jsonl_path)`; remove the preceding
+  `if not os.path.exists(idx_path): raise FileNotFoundError` guards (load_index
+  builds from the `.jsonl`). Drop the now-unused stdlib `json` import if nothing
+  else uses it.
+
+**Verify:**
+- `python -m pytest unit_tests/test_folderdb.py unit_tests/test_jsonlfile.py -q`
+- text-only: `grep -n "orjson.loads(f.read())\|json.load(f)" jsonldb/folderdb.py jsonldb/visual.py` returns no `.idx` read sites.
+
+**Test Budget:** +2 in unit_tests/test_folderdb.py; focused (<30s) — (a) corrupt
+idx + meta-rebuild/`delete_file_range` recovers, (b) visual index-load on a
+corrupt idx returns a rebuilt dict instead of raising. Two because folderdb and
+visual are separate modules/entry points.
+
+**Test Pruning:**
+- Check test_folderdb.py for existing meta/timespec idx fixtures and extend them
+  rather than duplicating setup.
+
+**Commit:** `git commit -m "fix: route folderdb and visual index reads through load_index"`
+
+---
+
+## Final Verification
+- `python -m pytest unit_tests/ -q` — full suite green (82 existing + new).
+- `grep -rn "orjson.loads(f.read())\|json.load(f)" jsonldb/*.py` — no remaining
+  raw `.idx` read outside `load_index`.
+
+exec
+/usr/bin/zsh -lc 'find .specdev/assignments/00007_bugfix_corrupt-idx-self-heal -maxdepth 3 -type f -print | sort' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/brainstorm/design.md
+.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/brainstorm/proposal.md
+.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/breakdown/plan.md
+.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/implementation/progress.json
+.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/brainstorm-changelog.md
+.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/brainstorm-feedback.md
+.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/brainstorm-reviewer-codex-round-1.log
+.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/brainstorm-reviewer-codex-round-2.log
+.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/brainstorm-reviewer-codex-round-3.log
+.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-changelog.md
+.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md
+.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-reviewer-codex-round-1.log
+.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-reviewer-codex-round-2.log
+.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/status.json
+
+exec
+/usr/bin/zsh -lc "find . -maxdepth 3 -type f | sort | sed -n '1,240p'" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 291ms:
+./.claude/hooks/specdev-session-start.sh
+./.claude/settings.json
+./.claude/settings.local.json
+./.cursor/rules
+./.git/COMMIT_EDITMSG
+./.git/FETCH_HEAD
+./.git/HEAD
+./.git/ORIG_HEAD
+./.git/config
+./.git/description
+./.git/hooks/applypatch-msg.sample
+./.git/hooks/commit-msg.sample
+./.git/hooks/fsmonitor-watchman.sample
+./.git/hooks/post-update.sample
+./.git/hooks/pre-applypatch.sample
+./.git/hooks/pre-commit.sample
+./.git/hooks/pre-merge-commit.sample
+./.git/hooks/pre-push.sample
+./.git/hooks/pre-rebase.sample
+./.git/hooks/pre-receive.sample
+./.git/hooks/prepare-commit-msg.sample
+./.git/hooks/push-to-checkout.sample
+./.git/hooks/update.sample
+./.git/index
+./.git/info/exclude
+./.git/logs/HEAD
+./.git/packed-refs
+./.gitignore
+./.journal/current_stage.md
+./.journal/nextstep_guide.md
+./.journal/project_notes.md
+./.prodinclude
+./.pytest_cache/.gitignore
+./.pytest_cache/CACHEDIR.TAG
+./.pytest_cache/README.md
+./.specdev/.current
+./.specdev/.session-state.json
+./.specdev/_guides/assignment_guide.md
+./.specdev/_guides/codestyle_guide.md
+./.specdev/_guides/migration_guide.md
+./.specdev/_guides/superpowers_exclusions.md
+./.specdev/_guides/update_guide.md
+./.specdev/_guides/workflow.md
+./.specdev/_index.md
+./.specdev/_main.md
+./.specdev/_templates/README.md
+./.specdev/_templates/agent-spec.schema.json
+./.specdev/_templates/brainstorm-design.md
+./.specdev/_templates/gate_checklist.md
+./.specdev/_templates/review_report_template.md
+./.specdev/_templates/review_request_schema.json
+./.specdev/_templates/scaffolding_template.md
+./.specdev/_templates/workflow_feedback_note.md
+./.specdev/agents/README.md
+./.specdev/assignments/.gitkeep
+./.specdev/cache/knowledge.sqlite
+./.specdev/knowledge/.processed_captures.json
+./.specdev/knowledge/_index.md
+./.specdev/project_notes/assignment_progress.md
+./.specdev/project_notes/big_picture.md
+./.specdev/project_notes/feature_descriptions.md
+./.specdev/project_notes/lint_db_performance.md
+./.specdev/project_scaffolding/_README.md
+./.specdev/skills/README.md
+./.specdev/workflow.yaml
+./AGENTS.md
+./CLAUDE.md
+./README.md
+./dist/jsonldb-1.0.0-py3-none-any.whl
+./dist/jsonldb-1.0.0.tar.gz
+./examples/example_folderdb/basic_operations.ipynb
+./examples/example_folderdb/dict_operations.ipynb
+./examples/example_folderdb/hierarchy.ipynb
+./examples/example_folderdb/hierarchy_test.ipynb
+./examples/example_folderdb/timeseries_data.ipynb
+./examples/example_folderdb/version_control_examples.ipynb
+./examples/example_jsonldf/basic_operations.ipynb
+./examples/example_jsonldf/large_dataset.ipynb
+./examples/example_jsonldf/timeseries_data.ipynb
+./examples/example_jsonlfile/basic_operations.ipynb
+./examples/example_jsonlfile/performance_test.ipynb
+./examples/example_jsonlfile/timeseries_example.ipynb
+./examples/example_vercontrol/version_control_example.ipynb
+./examples/example_visual/overlapping_datetime_example.ipynb
+./examples/example_visual/visualization_examples.ipynb
+./examples/example_visual/visualize_folder.ipynb
+./jsonldb.egg-info/PKG-INFO
+./jsonldb.egg-info/SOURCES.txt
+./jsonldb.egg-info/dependency_links.txt
+./jsonldb.egg-info/entry_points.txt
+./jsonldb.egg-info/requires.txt
+./jsonldb.egg-info/top_level.txt
+./jsonldb/__init__.py
+./jsonldb/__pycache__/__init__.cpython-311.pyc
+./jsonldb/__pycache__/__init__.cpython-312.pyc
+./jsonldb/__pycache__/folderdb.cpython-311.pyc
+./jsonldb/__pycache__/folderdb.cpython-312.pyc
+./jsonldb/__pycache__/jsonldf.cpython-311.pyc
+./jsonldb/__pycache__/jsonldf.cpython-312.pyc
+./jsonldb/__pycache__/jsonlfile.cpython-311.pyc
+./jsonldb/__pycache__/jsonlfile.cpython-312.pyc
+./jsonldb/__pycache__/vercontrol.cpython-311.pyc
+./jsonldb/__pycache__/vercontrol.cpython-312.pyc
+./jsonldb/__pycache__/visual.cpython-312.pyc
+./jsonldb/folderdb.py
+./jsonldb/folderdb.py.tmp
+./jsonldb/jsonldf.py
+./jsonldb/jsonlfile.py
+./jsonldb/vercontrol.py
+./jsonldb/visual.py
+./profile_test/benchmark.py
+./profile_test/profile_jsonlfile.py
+./setup.py
+./unit_tests/__pycache__/test_folderdb.cpython-312-pytest-9.0.2.pyc
+./unit_tests/__pycache__/test_jsonldf.cpython-312-pytest-9.0.2.pyc
+./unit_tests/__pycache__/test_jsonlfile.cpython-312-pytest-9.0.2.pyc
+./unit_tests/test_folderdb.py
+./unit_tests/test_jsonldf.py
+./unit_tests/test_jsonlfile.py
+
+codex
+Specdev: reading the previous implementation feedback/changelog and the concrete diffs in the library and tests.
+exec
+/usr/bin/zsh -lc "sed -n '1,260p' .specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md" in /mnt/h/oceanwave/lib/jsonldb
+exec
+/usr/bin/zsh -lc "sed -n '1,260p' .specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-changelog.md" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+## Round 1
+
+- [F1.1] **Addressed.** Removed the missing-`.idx` skip guards
+  (`if not os.path.exists(idx_path): print(...); continue`) from all four
+  folder-level visualization loops in `visualize_folderdb_bokeh` and
+  `visualize_folderdb_matplot`. They now call
+  `index_data = load_index(folderdb._get_file_path(file_name))` directly, so a
+  missing sidecar index is rebuilt from the `.jsonl` source of truth — consistent
+  with the single-file visualizers and the "missing index is recoverable"
+  contract. Empty returned indexes are still skipped by the existing
+  `if not index_data` / `if index_data:` checks after the loader has had a chance
+  to rebuild. `import os` became unused in `visual.py` and was removed.
+
+- [F1.2] **Addressed.** `_verify_and_compact`'s spot-check fallback no longer does
+  a raw `orjson.loads(f2.read())` after rebuilding. It now keeps the explicit
+  `build_jsonl_index(jsonl_file_path)` (still required — `load_index` alone will
+  not rebuild a parseable-but-wrong/bad-offset index) and then re-reads through
+  `index_dict = load_index(jsonl_file_path)`. After the explicit rebuild the index
+  is valid, so `load_index` reads it without re-rebuilding, and no raw `.idx` read
+  remains outside `load_index` (the only two `orjson.loads(f.read())` calls left
+  are the read and rebuild-reread *inside* `load_index` itself). Bad-offset
+  recovery is preserved — `test_lint_bad_index_offsets_recovery` and
+  `test_lint_non_integer_index_offsets_recovery` still pass.
+
+Full suite: 87 passed.
+
+ succeeded in 0ms:
+## Round 1
+
+**Verdict:** needs-changes
+
+### Findings
+1. [F1.1] MINOR - `visualize_folderdb_bokeh` and `visualize_folderdb_matplot` still skip files whose `.idx` is missing before calling `load_index` (`jsonldb/visual.py:207`, `jsonldb/visual.py:236`, `jsonldb/visual.py:319`, `jsonldb/visual.py:347`). The design explicitly says to remove those missing-index guards because `load_index(jsonl_path)` should build from the `.jsonl` source of truth. As implemented, folder-level visualizations still do not recover from a missing sidecar index, so the visualization behavior is inconsistent with the single-file visualizers and the planned "missing index is recoverable" contract. Simplest fix: compute the JSONL path once per file and call `load_index(path)` directly in both the datetime-detection and plotting loops, letting empty returned indexes be skipped only after the loader has had a chance to rebuild.
+2. [F1.2] MINOR - `_verify_and_compact` still performs a direct raw `.idx` parse after rebuilding (`jsonldb/jsonlfile.py:170-171`). The design and success criteria require no raw `orjson.loads(...read())` / `json.load(...)` index reads outside `load_index`, so this leaves a second index-loading strategy in the core module. This is easy to consolidate by replacing the open/read block with `index_dict = load_index(jsonl_file_path)` after `build_jsonl_index(jsonl_file_path)`.
+
+### Addressed from changelog
+- (none -- first round)
+
+exec
+/usr/bin/zsh -lc 'git diff -- jsonldb/jsonlfile.py jsonldb/folderdb.py jsonldb/visual.py unit_tests/test_jsonlfile.py unit_tests/test_folderdb.py' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+exec
+/usr/bin/zsh -lc "sed -n '1,220p' .specdev/assignments/00007_bugfix_corrupt-idx-self-heal/implementation/progress.json" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+{
+  "plan_file": ".specdev/assignments/00007_bugfix_corrupt-idx-self-heal/breakdown/plan.md",
+  "total_tasks": 2,
+  "tasks": [
+    {
+      "number": 1,
+      "status": "completed",
+      "started_at": "2026-06-12T08:33:48Z",
+      "completed_at": "2026-06-12T08:40:10Z",
+      "summary": "load_index helper + ensure_index_exists size==0 trigger; routed select/select_line/update/delete/lint reads through load_index; _verify_and_compact keeps unconditional rebuild for bad-offset case; +3 tests; full suite 85 passed; code-reviewer PASS/READY"
+    },
+    {
+      "number": 2,
+      "status": "completed",
+      "started_at": "2026-06-12T08:40:16Z",
+      "completed_at": "2026-06-12T08:44:23Z",
+      "summary": "Routed folderdb (_scan_index_timespecs/delete_file_range/_make_meta_entry) and all 6 visual.py json.load reads through jsonlfile.load_index; removed FileNotFoundError guards on single-file visualizers, kept skip-on-missing on loops; dropped unused orjson/json imports; routed lint cardinality reread through load_index (no raw .idx read remains outside load_index); +2 tests; full suite 87 passed"
+    }
+  ]
+}
+codex
+Specdev: the implementation files are not showing as a working-tree diff, so I’m reviewing their current contents directly and checking for the remaining raw index-read patterns.
+exec
+/usr/bin/zsh -lc "rg -n \"def ensure_index_exists|def load_index|orjson\\.loads\\(f\\.read\\(\\)\\)|json\\.load\\(f\\)|load_index|idx_path|index_file\" jsonldb/jsonlfile.py jsonldb/folderdb.py jsonldb/visual.py" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+jsonldb/visual.py:14:from jsonldb.jsonlfile import load_jsonl, select_jsonl, load_index
+jsonldb/visual.py:55:    index_data = load_index(jsonl_path)
+jsonldb/visual.py:113:    index_data = load_index(jsonl_path)
+jsonldb/visual.py:206:        index_data = load_index(folderdb._get_file_path(file_name))
+jsonldb/visual.py:230:        index_data = load_index(folderdb._get_file_path(file_name))
+jsonldb/visual.py:308:        index_data = load_index(folderdb._get_file_path(file_name))
+jsonldb/visual.py:331:        index_data = load_index(folderdb._get_file_path(file_name))
+jsonldb/folderdb.py:162:            index = jsonlfile.load_index(file_path)  # heals empty/corrupt
+jsonldb/folderdb.py:524:        index = jsonlfile.load_index(file_path)
+jsonldb/folderdb.py:558:        index_file = file_path + '.idx'
+jsonldb/folderdb.py:561:        if os.path.exists(index_file):
+jsonldb/folderdb.py:562:            index = jsonlfile.load_index(file_path)  # heals empty/corrupt
+jsonldb/folderdb.py:748:                    idx_path = file_path + '.idx'
+jsonldb/folderdb.py:749:                    if os.path.exists(idx_path):
+jsonldb/folderdb.py:751:                        shutil.move(idx_path, idx_dest)
+jsonldb/folderdb.py:773:                idx_path = file_path + '.idx'
+jsonldb/folderdb.py:774:                if os.path.exists(idx_path):
+jsonldb/folderdb.py:776:                    shutil.move(idx_path, idx_target)
+jsonldb/folderdb.py:840:                idx_path = file_path + '.idx'
+jsonldb/folderdb.py:841:                if os.path.exists(idx_path):
+jsonldb/folderdb.py:843:                    shutil.move(idx_path, idx_target)
+jsonldb/jsonlfile.py:44:    index_file_path = f"{jsonl_file_path}.idx"
+jsonldb/jsonlfile.py:52:        with open(index_file_path, 'wb') as f:
+jsonldb/jsonlfile.py:82:        with open(index_file_path, 'wb') as f:
+jsonldb/jsonlfile.py:88:def ensure_index_exists(jsonl_file_path: str) -> None:
+jsonldb/jsonlfile.py:98:    index_file_path = f"{jsonl_file_path}.idx"
+jsonldb/jsonlfile.py:102:    if not os.path.exists(index_file_path):
+jsonldb/jsonlfile.py:104:    elif os.path.getsize(index_file_path) == 0:
+jsonldb/jsonlfile.py:109:    elif os.path.getmtime(jsonl_file_path) > os.path.getmtime(index_file_path):
+jsonldb/jsonlfile.py:115:            print(f"WARNING: rebuilt empty index {index_file_path}")
+jsonldb/jsonlfile.py:119:def load_index(jsonl_file_path: str) -> dict:
+jsonldb/jsonlfile.py:133:    index_file_path = f"{jsonl_file_path}.idx"
+jsonldb/jsonlfile.py:136:        with open(index_file_path, 'rb') as f:
+jsonldb/jsonlfile.py:137:            return orjson.loads(f.read())
+jsonldb/jsonlfile.py:140:        print(f"WARNING: rebuilt corrupt index {index_file_path}")
+jsonldb/jsonlfile.py:142:        with open(index_file_path, 'rb') as f:
+jsonldb/jsonlfile.py:143:            return orjson.loads(f.read())
+jsonldb/jsonlfile.py:168:            # load_index only heals empty/unparseable indexes, so force a rebuild
+jsonldb/jsonlfile.py:171:            index_dict = load_index(jsonl_file_path)
+jsonldb/jsonlfile.py:235:            index_dict = load_index(jsonl_file_path)
+jsonldb/jsonlfile.py:246:    index_dict = load_index(jsonl_file_path)
+jsonldb/jsonlfile.py:252:        index_dict = load_index(jsonl_file_path)
+jsonldb/jsonlfile.py:475:        index_dict = load_index(jsonl_file_path)
+jsonldb/jsonlfile.py:541:    index_dict = load_index(jsonl_file_path)
+jsonldb/jsonlfile.py:582:        index = load_index(jsonl_file_path)
+jsonldb/jsonlfile.py:652:        index = load_index(jsonl_file_path)
+
+exec
+/usr/bin/zsh -lc "sed -n '1,180p' jsonldb/visual.py && sed -n '190,390p' jsonldb/visual.py" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+"""
+Visualization functions for JSONL files and FolderDB using Bokeh and Matplotlib.
+"""
+
+from datetime import datetime
+from typing import Dict, List, Union, Optional
+import pandas as pd
+from bokeh.plotting import figure
+from bokeh.models import ColumnDataSource, HoverTool
+from bokeh.palettes import Category10
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+from jsonldb.jsonlfile import load_jsonl, select_jsonl, load_index
+from jsonldb.folderdb import FolderDB
+
+def _parse_linekey(linekey: str) -> Union[float, datetime]:
+    """
+    Parse a linekey string into either a number or datetime.
+    Returns a float if the string can be converted to a number,
+    or a datetime if the string matches a datetime format.
+    """
+    try:
+        # Try to convert to float first
+        return float(linekey)
+    except ValueError:
+        try:
+            # Try to parse as datetime
+            return datetime.fromisoformat(linekey)
+        except ValueError:
+            # If neither, use the string's hash as a number
+            return float(hash(linekey))
+
+def _is_datetime_key(key: str) -> bool:
+    """
+    Check if a key string is in datetime format.
+    """
+    try:
+        datetime.fromisoformat(key)
+        return True
+    except ValueError:
+        return False
+
+def visualize_jsonl_bokeh(jsonl_path: str) -> figure:
+    """
+    Create a scatter plot visualization of a JSONL file's linekeys using Bokeh.
+    
+    Args:
+        jsonl_path: Path to the JSONL file
+        
+    Returns:
+        Bokeh figure object showing the scatter plot
+    """
+    # Read the index file (self-heals missing/empty/corrupt from the .jsonl)
+    index_data = load_index(jsonl_path)
+
+    # Convert linekeys to numbers or datetimes
+    linekeys = [_parse_linekey(k) for k in index_data.keys()]
+    line_numbers = list(index_data.values())
+    
+
+    # Determine if linekeys are datetime
+    x_axis_type = "datetime" if isinstance(linekeys[0], datetime) else "linear"
+    
+    # Create the figure
+    p = figure(
+        title="JSONL Line Keys Distribution",
+        x_axis_label="Line Key",
+        y_axis_label="Line Number",
+        tools="pan,wheel_zoom,box_zoom,reset,save",
+        x_axis_type=x_axis_type
+    )
+    
+    # Add hover tool
+    hover = HoverTool(
+        tooltips=[
+            ("Line Key", "@x{%F %T}" if x_axis_type == "datetime" else "@x"),
+            ("Line Number", "@y")
+        ],
+        formatters={
+            '@x': 'datetime' if x_axis_type == "datetime" else 'numeral'
+        }
+    )
+    p.add_tools(hover)
+    
+    # Create the scatter plot
+    source = ColumnDataSource(data={
+        'x': linekeys,
+        'y': line_numbers
+    })
+    
+    p.scatter('x', 'y', source=source, size=1, alpha=0.6)
+    
+    # Customize the plot
+    p.grid.grid_line_color = "gray"
+    p.grid.grid_line_alpha = 0.3
+    
+    return p
+
+def visualize_jsonl_matplot(jsonl_path: str, start_index = None, end_index = None):
+    """
+    Create a scatter plot visualization of a JSONL file's linekeys using Matplotlib.
+
+    Args:
+        jsonl_path: Path to the JSONL file
+        start_index: Start linekey value for filtering (inclusive)
+        end_index: End linekey value for filtering (exclusive)
+
+    Returns:
+        Matplotlib figure and axes objects
+    """
+    # Read the index file (self-heals missing/empty/corrupt from the .jsonl)
+    index_data = load_index(jsonl_path)
+
+    # Convert linekeys to numbers or datetimes
+    all_linekeys = [_parse_linekey(k) for k in index_data.keys()]
+    all_line_numbers = list(index_data.values())
+
+    # Apply start_index and end_index filtering based on linekey values
+    if start_index is not None or end_index is not None:
+        filtered_data = []
+        for linekey, line_num in zip(all_linekeys, all_line_numbers):
+            include = True
+            if start_index is not None:
+                if isinstance(linekey, datetime) and isinstance(start_index, str):
+                    start_parsed = _parse_linekey(start_index)
+                    include = include and linekey >= start_parsed
+                else:
+                    include = include and linekey >= start_index
+            if end_index is not None:
+                if isinstance(linekey, datetime) and isinstance(end_index, str):
+                    end_parsed = _parse_linekey(end_index)
+                    include = include and linekey < end_parsed
+                else:
+                    include = include and linekey < end_index
+            if include:
+                filtered_data.append((linekey, line_num))
+
+        if filtered_data:
+            linekeys, line_numbers = zip(*filtered_data)
+            linekeys = list(linekeys)
+            line_numbers = list(line_numbers)
+        else:
+            linekeys, line_numbers = [], []
+    else:
+        linekeys = all_linekeys
+        line_numbers = all_line_numbers
+
+    # Create the figure and axis
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # Determine if linekeys are datetime (check if we have any data)
+    is_datetime = len(linekeys) > 0 and isinstance(linekeys[0], datetime)
+
+    # Create the scatter plot
+    ax.scatter(linekeys, line_numbers, s=1, alpha=0.6, color='blue')
+
+    # Set labels and title
+    ax.set_xlabel("Line Key")
+    ax.set_ylabel("Line Number")
+    ax.set_title("JSONL Line Keys Distribution")
+
+    # Format x-axis for datetime if needed
+    if is_datetime:
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))
+        plt.xticks(rotation=45)
+
+    # Add grid
+    ax.grid(True, alpha=0.3, color='gray')
+
+    # Adjust layout to prevent label cutoff
+    plt.tight_layout()
+
+    return fig, ax
+
+def visualize_folderdb_bokeh(folderdb: FolderDB,prefix: str = None,height=1200) -> figure:
+    """
+    Create a scatter plot visualization of all JSONL files in a FolderDB using Bokeh.
+    
+    Args:
+    if not jsonl_files:
+        raise FileNotFoundError(f"No JSONL files found in: {folderdb.folder_path}")
+    
+    print(f"Found {len(jsonl_files)} JSONL files in {folderdb.folder_path}")
+
+    if prefix is not None:
+        jsonl_files = [file for file in jsonl_files if file.startswith(prefix)]
+        print(f"Found {len(jsonl_files)} JSONL files with prefix: {prefix}")
+    
+    # Prepare data for plotting
+    colors = ["orange"]  # Use orange color for all files
+    
+    # Check if all first keys are datetime
+    all_datetime = True
+    for file_name in jsonl_files:
+        # Read the index file (self-heals missing/empty/corrupt from the .jsonl)
+        index_data = load_index(folderdb._get_file_path(file_name))
+        
+        if index_data:
+            first_key = next(iter(index_data.keys()))
+            if not _is_datetime_key(first_key):
+                all_datetime = False
+                break
+    
+    # Create the figure with appropriate x-axis type
+    p = figure(
+        title="FolderDB Line Keys Distribution",
+        x_axis_label="Line Key",
+        y_axis_label="File Name",
+        tools="pan,wheel_zoom,box_zoom,reset,save",
+        x_axis_type="datetime" if all_datetime else "linear",
+        y_range=[file_name.replace('.jsonl', '') for file_name in jsonl_files],  # Set y-axis as categorical with filenames
+        width=800,
+        height=height
+    )
+    
+    # Plot each file's data
+    has_data = False
+    for i, file_name in enumerate(jsonl_files):
+        # Read the index file (self-heals missing/empty/corrupt from the .jsonl)
+        index_data = load_index(folderdb._get_file_path(file_name))
+        
+        if not index_data:  # Skip empty files
+            print(f"Warning: Empty index file for {file_name}")
+            continue
+            
+        # print(f"Processing {file_name} with {len(index_data)} entries")
+            
+        # Convert linekeys to numbers or datetimes
+        linekeys = [_parse_linekey(k) for k in index_data.keys()]
+        
+        # Create data source for this file
+        source = ColumnDataSource(data={
+            'x': linekeys,
+            'y': [file_name.replace('.jsonl', '')] * len(linekeys),
+            'filename': [file_name.replace('.jsonl', '')] * len(linekeys)
+
+        })
+  
+        # Add scatter plot
+        p.scatter(
+            'x', 'y',
+            source=source,
+            size=1,
+            alpha=0.6,
+            color="orange",
+            legend_label=file_name.replace('.jsonl', '')
+        )
+        has_data = True
+        # print(f"Added {len(linekeys)} points for {file_name}")
+    
+    if not has_data:
+        print("Warning: No valid data found to plot")
+        # Add a dummy point to prevent the "no renderers" warning
+        p.scatter([0], ["No Data"], size=0, alpha=0)
+    
+    # Customize the plot
+    p.grid.grid_line_color = "gray"
+    p.grid.grid_line_alpha = 0.3
+    
+    # Only set legend properties if we have data
+    if has_data:
+        p.legend.click_policy = "hide"  # Allow toggling visibility of each file
+
+    p.legend.visible = False
+
+    return p
+
+def visualize_folderdb_matplot(folderdb: FolderDB, prefix: str = None, height: int = 10, start_index = None, end_index = None):
+    """
+    Create a scatter plot visualization of all JSONL files in a FolderDB using Matplotlib.
+
+    Args:
+        folderdb: FolderDB instance
+        prefix: Optional prefix to filter files
+        height: Maximum figure height in inches
+        start_index: Start linekey value for filtering data points (inclusive)
+        end_index: End linekey value for filtering data points (exclusive)
+
+    Returns:
+        Matplotlib figure and axes objects
+    """
+    # Get all JSONL files in the folder
+    jsonl_files = folderdb.get_file_list()
+
+    if not jsonl_files:
+        raise FileNotFoundError(f"No JSONL files found in: {folderdb.folder_path}")
+
+    print(f"Found {len(jsonl_files)} JSONL files in {folderdb.folder_path}")
+
+    if prefix is not None:
+        jsonl_files = [file for file in jsonl_files if file.startswith(prefix)]
+        print(f"Found {len(jsonl_files)} JSONL files with prefix: {prefix}")
+
+    # Check if all first keys are datetime
+    all_datetime = True
+    for file_name in jsonl_files:
+        # Read the index file (self-heals missing/empty/corrupt from the .jsonl)
+        index_data = load_index(folderdb._get_file_path(file_name))
+
+        if index_data:
+            first_key = next(iter(index_data.keys()))
+            if not _is_datetime_key(first_key):
+                all_datetime = False
+                break
+
+    # Calculate auto-adjusting height based on number of files
+    # Use a minimum height per file to ensure readability
+    min_height_per_file = 0.5  # inches per file
+    auto_height = max(3, len(jsonl_files) * min_height_per_file)  # minimum 3 inches
+    actual_height = min(auto_height, height)  # use smaller of auto or user-specified
+
+    # Create the figure with appropriate size
+    fig, ax = plt.subplots(figsize=(12, actual_height))
+
+    # Plot each file's data
+    has_data = False
+    colors = plt.cm.tab10(np.linspace(0, 1, len(jsonl_files)))
+
+    for i, file_name in enumerate(jsonl_files):
+        # Read the index file (self-heals missing/empty/corrupt from the .jsonl)
+        index_data = load_index(folderdb._get_file_path(file_name))
+
+        if not index_data:  # Skip empty files
+            print(f"Warning: Empty index file for {file_name}")
+            continue
+
+        # Convert linekeys to numbers or datetimes
+        all_linekeys = [_parse_linekey(k) for k in index_data.keys()]
+
+        # Apply start_index and end_index filtering based on linekey values
+        if start_index is not None or end_index is not None:
+            filtered_linekeys = []
+            for linekey in all_linekeys:
+                include = True
+                if start_index is not None:
+                    if isinstance(linekey, datetime) and isinstance(start_index, str):
+                        start_parsed = _parse_linekey(start_index)
+                        include = include and linekey >= start_parsed
+                    else:
+                        include = include and linekey >= start_index
+                if end_index is not None:
+                    if isinstance(linekey, datetime) and isinstance(end_index, str):
+                        end_parsed = _parse_linekey(end_index)
+                        include = include and linekey < end_parsed
+                    else:
+                        include = include and linekey < end_index
+                if include:
+                    filtered_linekeys.append(linekey)
+            linekeys = filtered_linekeys
+        else:
+            linekeys = all_linekeys
+
+        # Only plot if we have data after filtering
+        if linekeys:
+            # Create scatter plot for this file
+            y_position = [i] * len(linekeys)  # Use file index as y position
+            ax.scatter(
+                linekeys,
+                y_position,
+                s=1,
+                alpha=0.6,
+                color=colors[i],
+                label=file_name.replace('.jsonl', '')
+            )
+            has_data = True
+
+    if not has_data:
+        print("Warning: No valid data found to plot")
+        ax.text(0.5, 0.5, 'No Data', transform=ax.transAxes, ha='center', va='center')
+
+    # Set labels and title
+    ax.set_xlabel("Line Key")
+    ax.set_ylabel("File")
+    ax.set_title("FolderDB Line Keys Distribution")
+
+    # Set y-axis with file names
+    file_labels = [file.replace('.jsonl', '') for file in jsonl_files]
+    ax.set_yticks(range(len(jsonl_files)))
+    ax.set_yticklabels(file_labels)
+
+
+exec
+/usr/bin/zsh -lc "sed -n '70,190p' jsonldb/jsonlfile.py && sed -n '420,680p' jsonldb/jsonlfile.py" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+
+                    try:
+                        data = orjson.loads(line)
+                        linekey = next(iter(data))
+                        index_dict[linekey] = current_pos
+                    except (orjson.JSONDecodeError, ValueError, StopIteration):
+                        print("WARNING: invalid JSON line " + line.decode('utf-8', errors='replace'))
+                        continue
+
+                    current_pos = mm.tell()
+
+        # Save index (OPT_SORT_KEYS sorts on dump)
+        with open(index_file_path, 'wb') as f:
+            f.write(orjson.dumps(index_dict, option=orjson.OPT_SORT_KEYS))
+            
+    except OSError as e:
+        raise OSError(f"Failed to build index for {jsonl_file_path}: {str(e)}")
+
+def ensure_index_exists(jsonl_file_path: str) -> None:
+    """
+    Ensure an index file exists for the given JSONL file.
+    
+    Creates the index if it doesn't exist or if the JSONL file is newer
+    than the index file.
+    
+    Args:
+        jsonl_file_path: Path to the JSONL file
+    """
+    index_file_path = f"{jsonl_file_path}.idx"
+
+    should_rebuild = False
+    corrupt = False
+    if not os.path.exists(index_file_path):
+        should_rebuild = True
+    elif os.path.getsize(index_file_path) == 0:
+        # An empty .idx (e.g. left by an interrupted write) is corrupt: a valid
+        # empty index is b'{}' (2 bytes), never zero-length. Treat it as missing.
+        should_rebuild = True
+        corrupt = True
+    elif os.path.getmtime(jsonl_file_path) > os.path.getmtime(index_file_path):
+        # Rebuild if JSONL file is newer than index (stale, but not corrupt)
+        should_rebuild = True
+
+    if should_rebuild:
+        if corrupt:
+            print(f"WARNING: rebuilt empty index {index_file_path}")
+        build_jsonl_index(jsonl_file_path)
+
+
+def load_index(jsonl_file_path: str) -> dict:
+    """Load a JSONL file's index, self-healing if it is missing/empty/corrupt.
+
+    The .idx is fully derived from the .jsonl (the source of truth), so an empty
+    or unparseable index is treated exactly like a missing one: rebuilt via
+    build_jsonl_index and re-read. This is the single index-read path for the
+    library — every other read site routes through here.
+
+    Args:
+        jsonl_file_path: Path to the JSONL file
+
+    Returns:
+        dict: key -> byte offset index
+    """
+    index_file_path = f"{jsonl_file_path}.idx"
+    ensure_index_exists(jsonl_file_path)  # heals missing / empty / stale
+    try:
+        with open(index_file_path, 'rb') as f:
+            return orjson.loads(f.read())
+    except (orjson.JSONDecodeError, OSError):
+        # Non-empty but unparseable/unreadable index -> rebuild from the .jsonl
+        print(f"WARNING: rebuilt corrupt index {index_file_path}")
+        build_jsonl_index(jsonl_file_path)
+        with open(index_file_path, 'rb') as f:
+            return orjson.loads(f.read())
+
+def _verify_and_compact(jsonl_file_path: str, index_dict: dict) -> bool:
+    """Spot-check, sort-verify, and compact a JSONL file using a pre-loaded index.
+
+    Args:
+        jsonl_file_path: Path to the JSONL file
+        index_dict: Pre-loaded index dictionary (key -> byte offset)
+
+    Returns:
+        True if file exists and was processed, False if index is empty
+    """
+    if index_dict:
+        keys = list(index_dict.keys())
+        try:
+            with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
+                for check_key in [keys[0], keys[-1]]:
+                    f.seek(index_dict[check_key])
+                    line = f.readline()
+                    data = orjson.loads(line)
+                    parsed_key = next(iter(data))
+                    if parsed_key != check_key:
+                        raise ValueError("key mismatch")
+        except (orjson.JSONDecodeError, ValueError, TypeError, OSError):
+            # Spot-check failed on a parseable-but-wrong index (bad offsets/keys):
+            # load_index only heals empty/unparseable indexes, so force a rebuild
+            # first, then re-read through the single loader.
+            build_jsonl_index(jsonl_file_path)
+            index_dict = load_index(jsonl_file_path)
+
+    if not index_dict:
+        return True
+
+    keys = list(index_dict.keys())
+    is_sorted = all(keys[i] <= keys[i+1] for i in range(len(keys)-1))
+
+    if is_sorted:
+        if index_dict[keys[0]] == 0:
+            with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
+                f.seek(index_dict[keys[-1]])
+                last_line = f.readline()
+                expected_end = index_dict[keys[-1]] + len(last_line)
+                actual_size = os.path.getsize(jsonl_file_path)
+                if expected_end == actual_size:
+                    return True
+
+    sorted_keys = sorted(keys, key=str)
+    tmp_path = jsonl_file_path + '.tmp'
+        FileNotFoundError: If the file doesn't exist
+        OSError: If file operations fail
+    """
+    if not os.path.exists(jsonl_file_path):
+        raise FileNotFoundError(f"JSONL file not found: {jsonl_file_path}")
+
+    result_dict: DataDict = {}
+    
+    try:
+        with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+
+                try:
+                    data = orjson.loads(line)
+                    if isinstance(data, dict) and len(data) == 1:
+                        linekey = next(iter(data))
+                        _store_with_key(result_dict, linekey, data[linekey], auto_deserialize, timespec)
+                except (orjson.JSONDecodeError, ValueError):
+                    print("WARNING: invalid JSON line " + line.decode('utf-8', errors='replace'))
+                    continue  # Skip invalid JSON lines
+
+        return result_dict
+
+    except OSError as e:
+        raise OSError(f"Failed to load JSONL file {jsonl_file_path}: {str(e)}")
+
+def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, upper_key: Optional[LineKey] = None, auto_deserialize: bool = True, timespec: Optional[str] = None) -> DataDict:
+    """
+    Select records from a JSONL file within a key range.
+    
+    Args:
+        jsonl_file_path: Path to the JSONL file
+        lower_key: Lower bound key (inclusive). If None, uses smallest key.
+        upper_key: Upper bound key (inclusive). If None, uses largest key.
+        auto_deserialize: Whether to auto-deserialize datetime keys
+        
+    Returns:
+        Dictionary of records within the range
+        
+    Raises:
+        FileNotFoundError: If file or index doesn't exist
+        OSError: If file operations fail
+    """
+    # If both keys are None, return all records
+    if lower_key is None and upper_key is None:
+        return load_jsonl(jsonl_file_path, auto_deserialize, timespec)
+
+    if lower_key == upper_key:
+        return select_line_jsonl(jsonl_file_path, lower_key, auto_deserialize, timespec)
+
+    try:
+        # Load index (self-heals an empty/corrupt .idx)
+        index_dict = load_index(jsonl_file_path)
+
+        # If no keys in index, return empty dict
+        if not index_dict:
+            return {}
+            
+        # Get all keys from index
+        all_keys = list(index_dict.keys())
+        
+        # Set default values if None
+        if lower_key is None:
+            lower_key = all_keys[0]   # index keys are stored sorted
+        if upper_key is None:
+            upper_key = all_keys[-1]
+            
+        # Serialize the keys
+        lower_key = serialize_linekey(lower_key, timespec)
+        upper_key = serialize_linekey(upper_key, timespec)
+        
+        # Use bisect for O(log n) range selection
+        lo = bisect_left(all_keys, lower_key)
+        hi = bisect_right(all_keys, upper_key)
+        selected_linekeys = all_keys[lo:hi]
+
+        # Read in offset order for sequential I/O
+        offset_key_pairs = sorted(
+            [(index_dict[k], k) for k in selected_linekeys]
+        )
+        raw_results = {}
+        with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
+            for offset, linekey in offset_key_pairs:
+                f.seek(offset)
+                line = f.readline()
+                data = orjson.loads(line)
+                raw_results[linekey] = data[linekey]
+
+        # Rebuild in sorted key order with deserialization
+        result_dict = {}
+        for linekey in selected_linekeys:
+            _store_with_key(result_dict, linekey, raw_results[linekey], auto_deserialize, timespec)
+        return result_dict
+        
+    except OSError as e:
+        raise OSError(f"Failed to select from JSONL file {jsonl_file_path}: {str(e)}")
+
+def select_line_jsonl(jsonl_file_path: str, linekey: LineKey, auto_serialize: bool = True, timespec: Optional[str] = None) -> DataDict:
+    """
+    Get a single record from a JSONL file based on the linekey.
+
+    Args:
+        jsonl_file_path: Path to the JSONL file
+        linekey: The key to look for
+        auto_serialize: Whether to serialize the lookup key and deserialize
+            datetime-looking keys in the result
+        timespec: Datetime precision ('seconds' or 'microseconds').
+            Defaults to the module-level TIME_SPEC.
+
+    Returns:
+        Single-record dict {linekey: value} if found, {} otherwise.
+        Example: {"key1": {"v": 1}}
+    """
+    # Serialize the key if needed
+    if auto_serialize:
+        linekey = serialize_linekey(linekey, timespec)
+    
+    # Read the index file (self-heals an empty/corrupt .idx)
+    index_dict = load_index(jsonl_file_path)
+
+    # Check if key exists in index
+    if linekey not in index_dict:
+        return {}
+    
+    result_dict: DataDict = {}
+        
+
+    # Load selected records
+    with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
+        try:
+            f.seek(index_dict[linekey])
+            line = f.readline().strip()
+            data = orjson.loads(line)
+            _store_with_key(result_dict, linekey, data[linekey], auto_serialize, timespec)
+        except (orjson.JSONDecodeError, ValueError, KeyError):
+            return {}
+
+    return result_dict
+
+
+
+def update_jsonl(jsonl_file_path: str, update_dict: DataDict, timespec: Optional[str] = None) -> None:
+    """
+    Update or insert records in a JSONL file.
+    
+    Efficiently handles both updates and inserts:
+    - Updates in place if new record fits in old space
+    - Appends to file if record grows
+    - Maintains index automatically
+    
+    Args:
+        jsonl_file_path: Path to the JSONL file
+        update_dict: Dictionary of records to update/insert
+        
+    Raises:
+        OSError: If file operations fail
+    """
+    try:
+        # Load index (self-heals an empty/corrupt .idx)
+        index = load_index(jsonl_file_path)
+
+        updates = []
+        appends = []
+        
+        # Process records
+        with open(jsonl_file_path, 'rb+', buffering=BUFFER_SIZE) as f:
+            f.seek(0, os.SEEK_END)
+            # Heal a missing trailing newline so appends start on a fresh line
+            if f.tell() > 0:
+                f.seek(-1, os.SEEK_END)
+                if f.read(1) != b'\n':
+                    f.write(b'\n')
+            append_pos = f.tell()
+
+            for linekey, data in update_dict.items():
+                linekey = serialize_linekey(linekey, timespec)
+                new_line = _fast_dumps({linekey: data}).encode('utf-8')
+
+                if linekey in index:
+                    f.seek(index[linekey])
+                    old_line = f.readline()
+                    
+                    if len(new_line) <= len(old_line):
+                        updates.append((index[linekey], new_line, len(old_line)))
+                    else:
+                        updates.append((index[linekey], b' ' * (len(old_line) - 1) + b'\n', len(old_line)))
+                        appends.append((linekey, new_line))
+                else:
+                    appends.append((linekey, new_line))
+
+            # Apply updates
+            for pos, line, old_len in updates:
+                if len(line) < old_len:
+                    # Pad before the newline so the record keeps its exact old
+                    # length and the line stays newline-terminated
+                    line = line[:-1] + b' ' * (old_len - len(line)) + b'\n'
+                f.seek(pos)
+                f.write(line)
+
+            # Apply appends
+            if appends:
+                f.seek(append_pos)
+                for linekey, line in appends:
+                    index[linekey] = f.tell()
+                    f.write(line)
+
+        # Update index
+        with open(f"{jsonl_file_path}.idx", 'wb') as f:
+            f.write(orjson.dumps(index, option=orjson.OPT_SORT_KEYS))
+            
+    except OSError as e:
+        raise OSError(f"Failed to update JSONL file {jsonl_file_path}: {str(e)}")
+
+def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey], timespec: Optional[str] = None) -> None:
+    """
+    Delete records from a JSONL file.
+    
+    Marks deleted lines with spaces and updates the index.
+    Maintains file size but removes entries from index.
+    
+    Args:
+        jsonl_file_path: Path to the JSONL file
+        linekeys: List of keys to delete
+        
+    Raises:
+        OSError: If file operations fail
+    """
+    try:
+        # Load index (self-heals an empty/corrupt .idx)
+        index = load_index(jsonl_file_path)
+
+        # Process deletions
+        linekeys = [serialize_linekey(key, timespec) for key in linekeys]
+        
+        # Use regular file operations like update_jsonl
+        with open(jsonl_file_path, 'rb+', buffering=BUFFER_SIZE) as f:
+            for linekey in linekeys:
+                if linekey in index:
+                    f.seek(index[linekey])
+                    line = f.readline()
+                    if not line.endswith(b'\n'):
+                        line += b'\n'
+                    
+                    f.seek(index[linekey])
+                    f.write(b' ' * (len(line) - 1) + b'\n')
+                    del index[linekey]
+
+        # Update index using orjson for faster JSON serialization
+        with open(f"{jsonl_file_path}.idx", 'wb') as f:
+            f.write(orjson.dumps(index, option=orjson.OPT_SORT_KEYS))
+            
+    except OSError as e:
+        raise OSError(f"Failed to delete from JSONL file {jsonl_file_path}: {str(e)}")
+
+
+
+exec
+/usr/bin/zsh -lc "sed -n '130,190p' jsonldb/folderdb.py && sed -n '500,590p' jsonldb/folderdb.py" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+
+    def _detect_data_timespec(self) -> Optional[str]:
+        """Stage 1 trigger: candidate precision from db.meta boundary keys.
+
+        Returns a precision only when a datetime-like min/max key disagrees
+        with self.timespec; None when boundaries look healthy or db.meta is
+        missing. Costs no I/O beyond one db.meta read.
+        """
+        if not os.path.exists(self.dbmeta_path):
+            return None
+        metadata = select_jsonl(self.dbmeta_path)
+        for info in metadata.values():
+            if not isinstance(info, dict):
+                continue
+            for key in (info.get("min_index"), info.get("max_index")):
+                if isinstance(key, str):
+                    spec = detect_timespec(key)
+                    if spec and spec != self.timespec:
+                        return spec
+        return None
+
+    def _scan_index_timespecs(self) -> set:
+        """Stage 2 confirmation: datetime-key precisions across every .idx file.
+
+        Example: {'microseconds'} for a uniformly contaminated database,
+        {'seconds', 'microseconds'} for mixed data, set() for string keys only.
+        """
+        found = set()
+        for name in self.get_file_list():
+            file_path = self._get_file_path(name)
+            if not os.path.exists(file_path + '.idx'):
+                continue
+            index = jsonlfile.load_index(file_path)  # heals empty/corrupt
+            for key in index:
+                spec = detect_timespec(key)
+                if spec:
+                    found.add(spec)
+        return found
+
+
+    def validate_name(self, name: str) -> bool:
+        """
+        Validate a file name according to the current mode.
+        
+        Args:
+            name: Name of the file to validate
+            
+        Returns:
+            bool: True if the name is valid, False otherwise
+        """
+        if not self.use_hierarchy:
+            return True
+            
+        # Remove .jsonl extension if present
+        if name.endswith('.jsonl'):
+            name = name[:-6]
+            
+        # Count delimiters
+        delimiter_count = name.count(self.delimiter)
+        
+        # In hierarchy mode, name must contain at least hierarchy_depth-1 delimiters
+
+        Args:
+            name: Name of the JSONL file
+            keys: List of keys to delete
+        """
+        file_path = self._get_file_path(name)
+        if os.path.exists(file_path):
+            delete_jsonl(file_path, keys, self.timespec)
+            self.update_dbmeta(self._get_file_name(name))
+
+    def delete_file_range(self, name: str, lower_key: Any, upper_key: Any) -> None:
+        """
+        Delete all keys within a range from a JSONL file.
+
+        Args:
+            name: Name of the JSONL file
+            lower_key: Lower bound of the key range
+            upper_key: Upper bound of the key range
+        """
+        file_path = self._get_file_path(name)
+        if not os.path.exists(file_path):
+            return
+            
+        # Read the index file (self-heals missing/empty/corrupt)
+        index = jsonlfile.load_index(file_path)
+            
+        # Filter keys within range (bounds must use the same serialization as
+        # stored keys — str(datetime) uses a space, isoformat uses 'T')
+        lower_str = serialize_linekey(lower_key, self.timespec)
+        upper_str = serialize_linekey(upper_key, self.timespec)
+        keys_to_delete = [
+            key for key in index.keys()
+            if lower_str <= key <= upper_str
+        ]
+        
+        if keys_to_delete:
+            delete_jsonl(file_path, keys_to_delete)
+
+    def delete_range(self, names: List[str], lower_key: Any, upper_key: Any) -> None:
+        """
+        Delete all keys within a range from multiple JSONL files.
+        
+        Args:
+            names: List of JSONL file names
+            lower_key: Lower bound of the key range
+            upper_key: Upper bound of the key range
+        """
+        for name in names:
+            self.delete_file_range(name, lower_key, upper_key)
+
+    # =============== Metadata Management ===============
+    def _make_meta_entry(self, name: str, file_path: str, linted: bool = False,
+                         lint_time: str = "") -> Dict[str, Any]:
+        """Build one db.meta entry for a JSONL file from its index file.
+
+        Example: {"name": "users", "path": ".../users.jsonl", "min_index": "a",
+                  "max_index": "z", "size": 123, "count": 3, "lint_time": "", "linted": False}
+        """
+        index_file = file_path + '.idx'
+        min_index = max_index = None
+        count = 0
+        if os.path.exists(index_file):
+            index = jsonlfile.load_index(file_path)  # heals empty/corrupt
+            if index:
+                keys = list(index.keys())
+                min_index, max_index = keys[0], keys[-1]
+                count = len(keys)
+        return {
+            "name": name,
+            "path": file_path,
+            "min_index": min_index,
+            "max_index": max_index,
+            "size": os.path.getsize(file_path),
+            "count": count,
+            "lint_time": lint_time,
+            "linted": linted,
+        }
+
+    def build_dbmeta(self) -> None:
+        """
+        Build or update the db.meta file with information about all JSONL files.
+        
+        The db.meta file contains metadata for each JSONL file including:
+        - name: filename without .jsonl extension
+        - min_index: smallest index from the index file
+        - max_index: biggest index from the index file
+        - size: size of the file in bytes
+        - lint_time: ISO format timestamp of last lint
+        - linted: boolean indicating if file has been linted
+        """
+        # Get all JSONL files
+
+codex
+Specdev: the round 1 items appear addressed in code; I’m checking the added tests and running the focused verification before deciding whether round 2 has any cost-worthy findings.
+exec
+/usr/bin/zsh -lc 'rg -n "empty idx|corrupt|load_index|visual|mtime|spurious|lint_jsonl|delete_file_range|dbmeta|idx" unit_tests/test_jsonlfile.py unit_tests/test_folderdb.py' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+unit_tests/test_folderdb.py:92:    assert os.path.exists(os.path.join(test_folder, "test1.jsonl.idx"))
+unit_tests/test_folderdb.py:133:    assert os.path.exists(os.path.join(test_folder, "test1.jsonl.idx"))
+unit_tests/test_folderdb.py:232:    """delete_file must remove the data file even when its .idx is missing"""
+unit_tests/test_folderdb.py:235:    os.remove(os.path.join(test_folder, "test1.jsonl.idx"))
+unit_tests/test_folderdb.py:249:    db.delete_file_range("test1", "key1", "key2")
+unit_tests/test_folderdb.py:258:def test_delete_file_range_datetime_bounds(test_folder):
+unit_tests/test_folderdb.py:266:    db.delete_file_range("t", datetime(2024, 1, 2, 0, 30), datetime(2024, 1, 2, 23, 30))
+unit_tests/test_folderdb.py:271:    db.delete_file_range("t2", datetime(2024, 1, 2, 12, 0), datetime(2024, 1, 3))
+unit_tests/test_folderdb.py:308:def test_build_dbmeta(db, sample_data):
+unit_tests/test_folderdb.py:317:    db.build_dbmeta()
+unit_tests/test_folderdb.py:332:def test_update_dbmeta(db, sample_data):
+unit_tests/test_folderdb.py:338:    db.build_dbmeta()
+unit_tests/test_folderdb.py:341:    db.update_dbmeta("users", linted=True)
+unit_tests/test_folderdb.py:356:    db.build_dbmeta()
+unit_tests/test_folderdb.py:376:    db.build_dbmeta()
+unit_tests/test_folderdb.py:403:        if f.endswith(('.jsonl', '.idx'))
+unit_tests/test_folderdb.py:447:    idx_path = os.path.join(db.folder_path, "org", "hr", "employees", "org.hr.employees.jsonl.idx")
+unit_tests/test_folderdb.py:449:    assert not os.path.exists(idx_path)
+unit_tests/test_folderdb.py:640:    # Track calls to update_dbmeta
+unit_tests/test_folderdb.py:642:    original_update = db.update_dbmeta
+unit_tests/test_folderdb.py:647:    db.update_dbmeta = counting_update
+unit_tests/test_folderdb.py:651:    # Should NOT call update_dbmeta per file anymore
+unit_tests/test_folderdb.py:660:    """Test that lint_db passes force through to lint_jsonl"""
+unit_tests/test_folderdb.py:671:    os.utime(file_path + ".idx")
+unit_tests/test_folderdb.py:679:# --- Self-heal of empty/corrupt .idx across folderdb + visual (00007) -------
+unit_tests/test_folderdb.py:681:def test_corrupt_idx_self_heals_in_meta_and_delete_range(test_folder, sample_dict, capsys):
+unit_tests/test_folderdb.py:682:    """build_dbmeta (_make_meta_entry) and delete_file_range recover from a
+unit_tests/test_folderdb.py:683:    non-empty garbage .idx instead of crashing on orjson.loads."""
+unit_tests/test_folderdb.py:686:    idx = db._get_file_path("test1") + ".idx"
+unit_tests/test_folderdb.py:688:    # Corrupt the index (parseable-as-bytes garbage) with a fresh mtime so the
+unit_tests/test_folderdb.py:689:    # mtime gate alone would trust it.
+unit_tests/test_folderdb.py:690:    with open(idx, "wb") as f:
+unit_tests/test_folderdb.py:692:    os.utime(idx, None)
+unit_tests/test_folderdb.py:695:    db.build_dbmeta()
+unit_tests/test_folderdb.py:698:    assert "WARNING: rebuilt corrupt index" in capsys.readouterr().out
+unit_tests/test_folderdb.py:700:    # delete_file_range path heals too
+unit_tests/test_folderdb.py:701:    with open(idx, "wb") as f:
+unit_tests/test_folderdb.py:703:    os.utime(idx, None)
+unit_tests/test_folderdb.py:704:    db.delete_file_range("test1", "key1", "key2")
+unit_tests/test_folderdb.py:709:def test_visual_index_reads_route_through_load_index(test_folder, sample_dict):
+unit_tests/test_folderdb.py:710:    """visual.py no longer reads .idx directly; its load_index recovers a corrupt
+unit_tests/test_folderdb.py:711:    index instead of raising (covers the visualization paths without rendering)."""
+unit_tests/test_folderdb.py:712:    import jsonldb.visual as visual
+unit_tests/test_folderdb.py:714:    # No raw index-loading strategy remains in the visualization module
+unit_tests/test_folderdb.py:716:    src = inspect.getsource(visual)
+unit_tests/test_folderdb.py:720:    # The loader visual now calls heals an existing empty/corrupt index
+unit_tests/test_folderdb.py:723:    idx = db._get_file_path("test1") + ".idx"
+unit_tests/test_folderdb.py:724:    open(idx, "w").close()  # empty, as left by an interrupted write
+unit_tests/test_folderdb.py:725:    os.utime(idx, None)
+unit_tests/test_folderdb.py:727:    index_data = visual.load_index(db._get_file_path("test1"))
+unit_tests/test_jsonlfile.py:12:    lint_jsonl, build_jsonl_index, select_jsonl
+unit_tests/test_jsonlfile.py:23:    if os.path.exists(filename + ".idx"):
+unit_tests/test_jsonlfile.py:24:        os.remove(filename + ".idx")
+unit_tests/test_jsonlfile.py:125:    with open(test_file + '.idx', 'rb') as f:
+unit_tests/test_jsonlfile.py:226:    """Test that lint_jsonl properly sorts string keys"""
+unit_tests/test_jsonlfile.py:236:    lint_jsonl(test_file)
+unit_tests/test_jsonlfile.py:245:    """Test that lint_jsonl properly sorts datetime keys"""
+unit_tests/test_jsonlfile.py:256:    lint_jsonl(test_file)
+unit_tests/test_jsonlfile.py:265:    """Test that lint_jsonl removes space-marked deleted records"""
+unit_tests/test_jsonlfile.py:272:    lint_jsonl(test_file)
+unit_tests/test_jsonlfile.py:280:    """Test that lint_jsonl handles empty files correctly"""
+unit_tests/test_jsonlfile.py:285:    lint_jsonl(test_file)
+unit_tests/test_jsonlfile.py:292:    """Test that lint_jsonl handles mixed key types correctly"""
+unit_tests/test_jsonlfile.py:303:    lint_jsonl(test_file)
+unit_tests/test_jsonlfile.py:435:    """Test that lint_jsonl skips rewrite for already sorted, compact files"""
+unit_tests/test_jsonlfile.py:438:    lint_jsonl(test_file)  # First lint to ensure clean state
+unit_tests/test_jsonlfile.py:445:    result = lint_jsonl(test_file)
+unit_tests/test_jsonlfile.py:459:    lint_jsonl(test_file)
+unit_tests/test_jsonlfile.py:471:    """Test lint_jsonl returns False for non-existent file"""
+unit_tests/test_jsonlfile.py:472:    result = lint_jsonl("/nonexistent/path/test.jsonl")
+unit_tests/test_jsonlfile.py:486:    with open(test_file + ".idx", 'rb') as f:
+unit_tests/test_jsonlfile.py:497:def test_lint_mtime_skip_path(test_file, sample_data):
+unit_tests/test_jsonlfile.py:498:    """Test that lint_jsonl skips mmap scan when index is fresh"""
+unit_tests/test_jsonlfile.py:500:    lint_jsonl(test_file, force=True)  # Ensure clean state
+unit_tests/test_jsonlfile.py:503:    mtime_before = os.path.getmtime(test_file)
+unit_tests/test_jsonlfile.py:506:    result = lint_jsonl(test_file)
+unit_tests/test_jsonlfile.py:509:    # File should not have been rewritten (mtime unchanged)
+unit_tests/test_jsonlfile.py:510:    mtime_after = os.path.getmtime(test_file)
+unit_tests/test_jsonlfile.py:511:    assert mtime_before == mtime_after
+unit_tests/test_jsonlfile.py:525:    os.utime(test_file + ".idx")
+unit_tests/test_jsonlfile.py:528:    lint_jsonl(test_file, force=True)
+unit_tests/test_jsonlfile.py:543:    os.utime(test_file + ".idx")
+unit_tests/test_jsonlfile.py:546:    lint_jsonl(test_file, force=False)
+unit_tests/test_jsonlfile.py:559:    with open(test_file + ".idx", 'wb') as f:
+unit_tests/test_jsonlfile.py:561:    os.utime(test_file + ".idx")
+unit_tests/test_jsonlfile.py:563:    result = lint_jsonl(test_file)
+unit_tests/test_jsonlfile.py:576:    with open(test_file + ".idx", 'wb') as f:
+unit_tests/test_jsonlfile.py:578:    os.utime(test_file + ".idx")
+unit_tests/test_jsonlfile.py:580:    result = lint_jsonl(test_file)
+unit_tests/test_jsonlfile.py:588:    """Test that lint_jsonl handles a stale index gracefully"""
+unit_tests/test_jsonlfile.py:592:    # then the mtime gate will see a fresh index and use the fast path.
+unit_tests/test_jsonlfile.py:594:    os.utime(test_file + ".idx", (0, 0))
+unit_tests/test_jsonlfile.py:596:    result = lint_jsonl(test_file)
+unit_tests/test_jsonlfile.py:604:def test_lint_corrupt_index_fast_path_recovery(test_file, sample_data):
+unit_tests/test_jsonlfile.py:605:    """Test that corrupt index on fast path triggers rebuild"""
+unit_tests/test_jsonlfile.py:609:    with open(test_file + ".idx", 'wb') as f:
+unit_tests/test_jsonlfile.py:613:    os.utime(test_file + ".idx")
+unit_tests/test_jsonlfile.py:616:    result = lint_jsonl(test_file)
+unit_tests/test_jsonlfile.py:625:    """Test that .idx files are written in compact format (no indentation)"""
+unit_tests/test_jsonlfile.py:627:    with open(test_file + ".idx", "rb") as f:
+unit_tests/test_jsonlfile.py:634:# --- Self-heal of empty/corrupt .idx (00007) -------------------------------
+unit_tests/test_jsonlfile.py:636:def test_empty_idx_self_heals_on_read_and_write(test_file, sample_data, capsys):
+unit_tests/test_jsonlfile.py:637:    """An existing-but-empty .idx is rebuilt (not crashed on) and a WARNING is emitted.
+unit_tests/test_jsonlfile.py:640:    .idx with a fresh mtime, so the mtime gate would otherwise trust it.
+unit_tests/test_jsonlfile.py:643:    idx = test_file + ".idx"
+unit_tests/test_jsonlfile.py:645:    # Truncate the index to zero bytes, then make its mtime fresher than the data
+unit_tests/test_jsonlfile.py:646:    open(idx, "w").close()
+unit_tests/test_jsonlfile.py:647:    assert os.path.getsize(idx) == 0
+unit_tests/test_jsonlfile.py:648:    os.utime(idx, None)  # fresh mtime -> mtime gate alone would trust it
+unit_tests/test_jsonlfile.py:652:    # short-circuits to load_jsonl, which does not read the .idx at all).
+unit_tests/test_jsonlfile.py:655:    assert os.path.getsize(idx) > 0  # rebuilt
+unit_tests/test_jsonlfile.py:661:    open(idx, "w").close()
+unit_tests/test_jsonlfile.py:662:    os.utime(idx, None)
+unit_tests/test_jsonlfile.py:667:def test_corrupt_idx_self_heals_via_load_index_and_lint_force(test_file, sample_data, capsys):
+unit_tests/test_jsonlfile.py:668:    """A non-empty garbage .idx is rebuilt by load_index and by lint_jsonl(force=True)."""
+unit_tests/test_jsonlfile.py:669:    from jsonldb.jsonlfile import load_index
+unit_tests/test_jsonlfile.py:671:    idx = test_file + ".idx"
+unit_tests/test_jsonlfile.py:673:    # Non-empty but unparseable, with a fresh mtime
+unit_tests/test_jsonlfile.py:674:    with open(idx, "wb") as f:
+unit_tests/test_jsonlfile.py:676:    os.utime(idx, None)
+unit_tests/test_jsonlfile.py:678:    # load_index recovers and returns the correct key set
+unit_tests/test_jsonlfile.py:679:    recovered = load_index(test_file)
+unit_tests/test_jsonlfile.py:681:    assert "WARNING: rebuilt corrupt index" in capsys.readouterr().out
+unit_tests/test_jsonlfile.py:684:    with open(idx, "wb") as f:
+unit_tests/test_jsonlfile.py:686:    os.utime(idx, None)
+unit_tests/test_jsonlfile.py:687:    assert lint_jsonl(test_file, force=True) is True
+unit_tests/test_jsonlfile.py:691:def test_valid_idx_not_spuriously_rebuilt(test_file, sample_data, capsys, monkeypatch):
+unit_tests/test_jsonlfile.py:692:    """A valid, fresh .idx is neither rebuilt nor warned about."""
+unit_tests/test_jsonlfile.py:695:    idx = test_file + ".idx"
+unit_tests/test_jsonlfile.py:696:    mtime_before = os.path.getmtime(idx)
+unit_tests/test_jsonlfile.py:702:    result = jf.load_index(test_file)
+unit_tests/test_jsonlfile.py:705:    assert os.path.getmtime(idx) == mtime_before         # untouched
+
+exec
+/usr/bin/zsh -lc "nl -ba jsonldb/jsonlfile.py | sed -n '88,180p'; nl -ba jsonldb/visual.py | sed -n '190,340p'; nl -ba jsonldb/folderdb.py | sed -n '150,170p;520,565p'" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+    88	def ensure_index_exists(jsonl_file_path: str) -> None:
+    89	    """
+    90	    Ensure an index file exists for the given JSONL file.
+    91	    
+    92	    Creates the index if it doesn't exist or if the JSONL file is newer
+    93	    than the index file.
+    94	    
+    95	    Args:
+    96	        jsonl_file_path: Path to the JSONL file
+    97	    """
+    98	    index_file_path = f"{jsonl_file_path}.idx"
+    99	
+   100	    should_rebuild = False
+   101	    corrupt = False
+   102	    if not os.path.exists(index_file_path):
+   103	        should_rebuild = True
+   104	    elif os.path.getsize(index_file_path) == 0:
+   105	        # An empty .idx (e.g. left by an interrupted write) is corrupt: a valid
+   106	        # empty index is b'{}' (2 bytes), never zero-length. Treat it as missing.
+   107	        should_rebuild = True
+   108	        corrupt = True
+   109	    elif os.path.getmtime(jsonl_file_path) > os.path.getmtime(index_file_path):
+   110	        # Rebuild if JSONL file is newer than index (stale, but not corrupt)
+   111	        should_rebuild = True
+   112	
+   113	    if should_rebuild:
+   114	        if corrupt:
+   115	            print(f"WARNING: rebuilt empty index {index_file_path}")
+   116	        build_jsonl_index(jsonl_file_path)
+   117	
+   118	
+   119	def load_index(jsonl_file_path: str) -> dict:
+   120	    """Load a JSONL file's index, self-healing if it is missing/empty/corrupt.
+   121	
+   122	    The .idx is fully derived from the .jsonl (the source of truth), so an empty
+   123	    or unparseable index is treated exactly like a missing one: rebuilt via
+   124	    build_jsonl_index and re-read. This is the single index-read path for the
+   125	    library — every other read site routes through here.
+   126	
+   127	    Args:
+   128	        jsonl_file_path: Path to the JSONL file
+   129	
+   130	    Returns:
+   131	        dict: key -> byte offset index
+   132	    """
+   133	    index_file_path = f"{jsonl_file_path}.idx"
+   134	    ensure_index_exists(jsonl_file_path)  # heals missing / empty / stale
+   135	    try:
+   136	        with open(index_file_path, 'rb') as f:
+   137	            return orjson.loads(f.read())
+   138	    except (orjson.JSONDecodeError, OSError):
+   139	        # Non-empty but unparseable/unreadable index -> rebuild from the .jsonl
+   140	        print(f"WARNING: rebuilt corrupt index {index_file_path}")
+   141	        build_jsonl_index(jsonl_file_path)
+   142	        with open(index_file_path, 'rb') as f:
+   143	            return orjson.loads(f.read())
+   144	
+   145	def _verify_and_compact(jsonl_file_path: str, index_dict: dict) -> bool:
+   146	    """Spot-check, sort-verify, and compact a JSONL file using a pre-loaded index.
+   147	
+   148	    Args:
+   149	        jsonl_file_path: Path to the JSONL file
+   150	        index_dict: Pre-loaded index dictionary (key -> byte offset)
+   151	
+   152	    Returns:
+   153	        True if file exists and was processed, False if index is empty
+   154	    """
+   155	    if index_dict:
+   156	        keys = list(index_dict.keys())
+   157	        try:
+   158	            with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
+   159	                for check_key in [keys[0], keys[-1]]:
+   160	                    f.seek(index_dict[check_key])
+   161	                    line = f.readline()
+   162	                    data = orjson.loads(line)
+   163	                    parsed_key = next(iter(data))
+   164	                    if parsed_key != check_key:
+   165	                        raise ValueError("key mismatch")
+   166	        except (orjson.JSONDecodeError, ValueError, TypeError, OSError):
+   167	            # Spot-check failed on a parseable-but-wrong index (bad offsets/keys):
+   168	            # load_index only heals empty/unparseable indexes, so force a rebuild
+   169	            # first, then re-read through the single loader.
+   170	            build_jsonl_index(jsonl_file_path)
+   171	            index_dict = load_index(jsonl_file_path)
+   172	
+   173	    if not index_dict:
+   174	        return True
+   175	
+   176	    keys = list(index_dict.keys())
+   177	    is_sorted = all(keys[i] <= keys[i+1] for i in range(len(keys)-1))
+   178	
+   179	    if is_sorted:
+   180	        if index_dict[keys[0]] == 0:
+   190	    if not jsonl_files:
+   191	        raise FileNotFoundError(f"No JSONL files found in: {folderdb.folder_path}")
+   192	    
+   193	    print(f"Found {len(jsonl_files)} JSONL files in {folderdb.folder_path}")
+   194	
+   195	    if prefix is not None:
+   196	        jsonl_files = [file for file in jsonl_files if file.startswith(prefix)]
+   197	        print(f"Found {len(jsonl_files)} JSONL files with prefix: {prefix}")
+   198	    
+   199	    # Prepare data for plotting
+   200	    colors = ["orange"]  # Use orange color for all files
+   201	    
+   202	    # Check if all first keys are datetime
+   203	    all_datetime = True
+   204	    for file_name in jsonl_files:
+   205	        # Read the index file (self-heals missing/empty/corrupt from the .jsonl)
+   206	        index_data = load_index(folderdb._get_file_path(file_name))
+   207	        
+   208	        if index_data:
+   209	            first_key = next(iter(index_data.keys()))
+   210	            if not _is_datetime_key(first_key):
+   211	                all_datetime = False
+   212	                break
+   213	    
+   214	    # Create the figure with appropriate x-axis type
+   215	    p = figure(
+   216	        title="FolderDB Line Keys Distribution",
+   217	        x_axis_label="Line Key",
+   218	        y_axis_label="File Name",
+   219	        tools="pan,wheel_zoom,box_zoom,reset,save",
+   220	        x_axis_type="datetime" if all_datetime else "linear",
+   221	        y_range=[file_name.replace('.jsonl', '') for file_name in jsonl_files],  # Set y-axis as categorical with filenames
+   222	        width=800,
+   223	        height=height
+   224	    )
+   225	    
+   226	    # Plot each file's data
+   227	    has_data = False
+   228	    for i, file_name in enumerate(jsonl_files):
+   229	        # Read the index file (self-heals missing/empty/corrupt from the .jsonl)
+   230	        index_data = load_index(folderdb._get_file_path(file_name))
+   231	        
+   232	        if not index_data:  # Skip empty files
+   233	            print(f"Warning: Empty index file for {file_name}")
+   234	            continue
+   235	            
+   236	        # print(f"Processing {file_name} with {len(index_data)} entries")
+   237	            
+   238	        # Convert linekeys to numbers or datetimes
+   239	        linekeys = [_parse_linekey(k) for k in index_data.keys()]
+   240	        
+   241	        # Create data source for this file
+   242	        source = ColumnDataSource(data={
+   243	            'x': linekeys,
+   244	            'y': [file_name.replace('.jsonl', '')] * len(linekeys),
+   245	            'filename': [file_name.replace('.jsonl', '')] * len(linekeys)
+   246	
+   247	        })
+   248	  
+   249	        # Add scatter plot
+   250	        p.scatter(
+   251	            'x', 'y',
+   252	            source=source,
+   253	            size=1,
+   254	            alpha=0.6,
+   255	            color="orange",
+   256	            legend_label=file_name.replace('.jsonl', '')
+   257	        )
+   258	        has_data = True
+   259	        # print(f"Added {len(linekeys)} points for {file_name}")
+   260	    
+   261	    if not has_data:
+   262	        print("Warning: No valid data found to plot")
+   263	        # Add a dummy point to prevent the "no renderers" warning
+   264	        p.scatter([0], ["No Data"], size=0, alpha=0)
+   265	    
+   266	    # Customize the plot
+   267	    p.grid.grid_line_color = "gray"
+   268	    p.grid.grid_line_alpha = 0.3
+   269	    
+   270	    # Only set legend properties if we have data
+   271	    if has_data:
+   272	        p.legend.click_policy = "hide"  # Allow toggling visibility of each file
+   273	
+   274	    p.legend.visible = False
+   275	
+   276	    return p
+   277	
+   278	def visualize_folderdb_matplot(folderdb: FolderDB, prefix: str = None, height: int = 10, start_index = None, end_index = None):
+   279	    """
+   280	    Create a scatter plot visualization of all JSONL files in a FolderDB using Matplotlib.
+   281	
+   282	    Args:
+   283	        folderdb: FolderDB instance
+   284	        prefix: Optional prefix to filter files
+   285	        height: Maximum figure height in inches
+   286	        start_index: Start linekey value for filtering data points (inclusive)
+   287	        end_index: End linekey value for filtering data points (exclusive)
+   288	
+   289	    Returns:
+   290	        Matplotlib figure and axes objects
+   291	    """
+   292	    # Get all JSONL files in the folder
+   293	    jsonl_files = folderdb.get_file_list()
+   294	
+   295	    if not jsonl_files:
+   296	        raise FileNotFoundError(f"No JSONL files found in: {folderdb.folder_path}")
+   297	
+   298	    print(f"Found {len(jsonl_files)} JSONL files in {folderdb.folder_path}")
+   299	
+   300	    if prefix is not None:
+   301	        jsonl_files = [file for file in jsonl_files if file.startswith(prefix)]
+   302	        print(f"Found {len(jsonl_files)} JSONL files with prefix: {prefix}")
+   303	
+   304	    # Check if all first keys are datetime
+   305	    all_datetime = True
+   306	    for file_name in jsonl_files:
+   307	        # Read the index file (self-heals missing/empty/corrupt from the .jsonl)
+   308	        index_data = load_index(folderdb._get_file_path(file_name))
+   309	
+   310	        if index_data:
+   311	            first_key = next(iter(index_data.keys()))
+   312	            if not _is_datetime_key(first_key):
+   313	                all_datetime = False
+   314	                break
+   315	
+   316	    # Calculate auto-adjusting height based on number of files
+   317	    # Use a minimum height per file to ensure readability
+   318	    min_height_per_file = 0.5  # inches per file
+   319	    auto_height = max(3, len(jsonl_files) * min_height_per_file)  # minimum 3 inches
+   320	    actual_height = min(auto_height, height)  # use smaller of auto or user-specified
+   321	
+   322	    # Create the figure with appropriate size
+   323	    fig, ax = plt.subplots(figsize=(12, actual_height))
+   324	
+   325	    # Plot each file's data
+   326	    has_data = False
+   327	    colors = plt.cm.tab10(np.linspace(0, 1, len(jsonl_files)))
+   328	
+   329	    for i, file_name in enumerate(jsonl_files):
+   330	        # Read the index file (self-heals missing/empty/corrupt from the .jsonl)
+   331	        index_data = load_index(folderdb._get_file_path(file_name))
+   332	
+   333	        if not index_data:  # Skip empty files
+   334	            print(f"Warning: Empty index file for {file_name}")
+   335	            continue
+   336	
+   337	        # Convert linekeys to numbers or datetimes
+   338	        all_linekeys = [_parse_linekey(k) for k in index_data.keys()]
+   339	
+   340	        # Apply start_index and end_index filtering based on linekey values
+   150	
+   151	    def _scan_index_timespecs(self) -> set:
+   152	        """Stage 2 confirmation: datetime-key precisions across every .idx file.
+   153	
+   154	        Example: {'microseconds'} for a uniformly contaminated database,
+   155	        {'seconds', 'microseconds'} for mixed data, set() for string keys only.
+   156	        """
+   157	        found = set()
+   158	        for name in self.get_file_list():
+   159	            file_path = self._get_file_path(name)
+   160	            if not os.path.exists(file_path + '.idx'):
+   161	                continue
+   162	            index = jsonlfile.load_index(file_path)  # heals empty/corrupt
+   163	            for key in index:
+   164	                spec = detect_timespec(key)
+   165	                if spec:
+   166	                    found.add(spec)
+   167	        return found
+   168	
+   169	
+   170	    def validate_name(self, name: str) -> bool:
+   520	        if not os.path.exists(file_path):
+   521	            return
+   522	            
+   523	        # Read the index file (self-heals missing/empty/corrupt)
+   524	        index = jsonlfile.load_index(file_path)
+   525	            
+   526	        # Filter keys within range (bounds must use the same serialization as
+   527	        # stored keys — str(datetime) uses a space, isoformat uses 'T')
+   528	        lower_str = serialize_linekey(lower_key, self.timespec)
+   529	        upper_str = serialize_linekey(upper_key, self.timespec)
+   530	        keys_to_delete = [
+   531	            key for key in index.keys()
+   532	            if lower_str <= key <= upper_str
+   533	        ]
+   534	        
+   535	        if keys_to_delete:
+   536	            delete_jsonl(file_path, keys_to_delete)
+   537	
+   538	    def delete_range(self, names: List[str], lower_key: Any, upper_key: Any) -> None:
+   539	        """
+   540	        Delete all keys within a range from multiple JSONL files.
+   541	        
+   542	        Args:
+   543	            names: List of JSONL file names
+   544	            lower_key: Lower bound of the key range
+   545	            upper_key: Upper bound of the key range
+   546	        """
+   547	        for name in names:
+   548	            self.delete_file_range(name, lower_key, upper_key)
+   549	
+   550	    # =============== Metadata Management ===============
+   551	    def _make_meta_entry(self, name: str, file_path: str, linted: bool = False,
+   552	                         lint_time: str = "") -> Dict[str, Any]:
+   553	        """Build one db.meta entry for a JSONL file from its index file.
+   554	
+   555	        Example: {"name": "users", "path": ".../users.jsonl", "min_index": "a",
+   556	                  "max_index": "z", "size": 123, "count": 3, "lint_time": "", "linted": False}
+   557	        """
+   558	        index_file = file_path + '.idx'
+   559	        min_index = max_index = None
+   560	        count = 0
+   561	        if os.path.exists(index_file):
+   562	            index = jsonlfile.load_index(file_path)  # heals empty/corrupt
+   563	            if index:
+   564	                keys = list(index.keys())
+   565	                min_index, max_index = keys[0], keys[-1]
+
+exec
+/usr/bin/zsh -lc "rg -n \"orjson\\.loads\\(f\\.read\\(\\)\\)|json\\.load\\(f\\)\" jsonldb/*.py" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+jsonldb/jsonlfile.py:137:            return orjson.loads(f.read())
+jsonldb/jsonlfile.py:143:            return orjson.loads(f.read())
+
+exec
+/usr/bin/zsh -lc 'python -m pytest unit_tests/test_jsonlfile.py unit_tests/test_folderdb.py -q' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 3736ms:
+........................................................................ [ 96%]
+...                                                                      [100%]
+75 passed in 3.14s
+
+codex
+Specdev: focused tests pass and the raw `.idx` read check now only finds the two reads inside `load_index`, which is expected. I’m doing one full-suite pass, then I’ll write the round 2 verdict into the review artifact.
+exec
+/usr/bin/zsh -lc 'python -m pytest unit_tests/ -q' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 3707ms:
+........................................................................ [ 82%]
+...............                                                          [100%]
+87 passed in 3.08s
+
+codex
+Specdev: appending the round 2 implementation review verdict to `implementation-feedback.md`.
+apply patch
+patch: completed
+/mnt/h/oceanwave/lib/jsonldb/.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md
+diff --git a/.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md b/.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md
+index 87fc254d83c1e48c52f41aa5ba018e70d4c4ad7e..1d19e159f51a3739c52f24a595f09a449d237799
+--- a/.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md
++++ b/.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md
+@@ -8,3 +8,14 @@
+ 
+ ### Addressed from changelog
+ - (none -- first round)
++
++## Round 2
++
++**Verdict:** approved
++
++### Findings
++- (none)
++
++### Addressed from changelog
++- [F1.1] Addressed. The folder-level visualization loops now call `load_index(folderdb._get_file_path(file_name))` directly, so missing, empty, and corrupt sidecar indexes get rebuilt before any empty-index skip logic runs.
++- [F1.2] Addressed. `_verify_and_compact` now forces the bad-offset rebuild and then re-reads through `load_index`, leaving no raw `.idx` reads outside the loader.
+
+diff --git a/.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md b/.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md
+index 87fc254d83c1e48c52f41aa5ba018e70d4c4ad7e..1d19e159f51a3739c52f24a595f09a449d237799
+--- a/.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md
++++ b/.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md
+@@ -8,3 +8,14 @@
+ 
+ ### Addressed from changelog
+ - (none -- first round)
++
++## Round 2
++
++**Verdict:** approved
++
++### Findings
++- (none)
++
++### Addressed from changelog
++- [F1.1] Addressed. The folder-level visualization loops now call `load_index(folderdb._get_file_path(file_name))` directly, so missing, empty, and corrupt sidecar indexes get rebuilt before any empty-index skip logic runs.
++- [F1.2] Addressed. `_verify_and_compact` now forces the bad-offset rebuild and then re-reads through `load_index`, leaving no raw `.idx` reads outside the loader.
+
+codex
+Specdev: verifying the review artifact and final evidence after writing round 2.
+exec
+/usr/bin/zsh -lc 'tail -n 40 .specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+## Round 1
+
+**Verdict:** needs-changes
+
+### Findings
+1. [F1.1] MINOR - `visualize_folderdb_bokeh` and `visualize_folderdb_matplot` still skip files whose `.idx` is missing before calling `load_index` (`jsonldb/visual.py:207`, `jsonldb/visual.py:236`, `jsonldb/visual.py:319`, `jsonldb/visual.py:347`). The design explicitly says to remove those missing-index guards because `load_index(jsonl_path)` should build from the `.jsonl` source of truth. As implemented, folder-level visualizations still do not recover from a missing sidecar index, so the visualization behavior is inconsistent with the single-file visualizers and the planned "missing index is recoverable" contract. Simplest fix: compute the JSONL path once per file and call `load_index(path)` directly in both the datetime-detection and plotting loops, letting empty returned indexes be skipped only after the loader has had a chance to rebuild.
+2. [F1.2] MINOR - `_verify_and_compact` still performs a direct raw `.idx` parse after rebuilding (`jsonldb/jsonlfile.py:170-171`). The design and success criteria require no raw `orjson.loads(...read())` / `json.load(...)` index reads outside `load_index`, so this leaves a second index-loading strategy in the core module. This is easy to consolidate by replacing the open/read block with `index_dict = load_index(jsonl_file_path)` after `build_jsonl_index(jsonl_file_path)`.
+
+### Addressed from changelog
+- (none -- first round)
+
+## Round 2
+
+**Verdict:** approved
+
+### Findings
+- (none)
+
+### Addressed from changelog
+- [F1.1] Addressed. The folder-level visualization loops now call `load_index(folderdb._get_file_path(file_name))` directly, so missing, empty, and corrupt sidecar indexes get rebuilt before any empty-index skip logic runs.
+- [F1.2] Addressed. `_verify_and_compact` now forces the bad-offset rebuild and then re-reads through `load_index`, leaving no raw `.idx` reads outside the loader.
+
+exec
+/usr/bin/zsh -lc 'git diff -- .specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+diff --git a/.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md b/.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md
+index 87fc254d83c1e48c52f41aa5ba018e70d4c4ad7e..1d19e159f51a3739c52f24a595f09a449d237799
+--- a/.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md
++++ b/.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md
+@@ -8,3 +8,14 @@
+ 
+ ### Addressed from changelog
+ - (none -- first round)
++
++## Round 2
++
++**Verdict:** approved
++
++### Findings
++- (none)
++
++### Addressed from changelog
++- [F1.1] Addressed. The folder-level visualization loops now call `load_index(folderdb._get_file_path(file_name))` directly, so missing, empty, and corrupt sidecar indexes get rebuilt before any empty-index skip logic runs.
++- [F1.2] Addressed. `_verify_and_compact` now forces the bad-offset rebuild and then re-reads through `load_index`, leaving no raw `.idx` reads outside the loader.
+
+codex
+Specdev: implementation review round 2 is complete.
+
+Verdict: approved. I appended `## Round 2` to `.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md` with no new findings, and noted both round 1 findings as addressed.
+
+Verification run:
+- `python -m pytest unit_tests/test_jsonlfile.py unit_tests/test_folderdb.py -q` -> 75 passed
+- `python -m pytest unit_tests/ -q` -> 87 passed
+- Raw `.idx` read grep only finds the two expected reads inside `load_index`.
+diff --git a/.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md b/.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md
+index 87fc254d83c1e48c52f41aa5ba018e70d4c4ad7e..1d19e159f51a3739c52f24a595f09a449d237799
+--- a/.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md
++++ b/.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md
+@@ -8,3 +8,14 @@
+ 
+ ### Addressed from changelog
+ - (none -- first round)
++
++## Round 2
++
++**Verdict:** approved
++
++### Findings
++- (none)
++
++### Addressed from changelog
++- [F1.1] Addressed. The folder-level visualization loops now call `load_index(folderdb._get_file_path(file_name))` directly, so missing, empty, and corrupt sidecar indexes get rebuilt before any empty-index skip logic runs.
++- [F1.2] Addressed. `_verify_and_compact` now forces the bad-offset rebuild and then re-reads through `load_index`, leaving no raw `.idx` reads outside the loader.
+
+tokens used
+56,165
+Specdev: implementation review round 2 is complete.
+
+Verdict: approved. I appended `## Round 2` to `.specdev/assignments/00007_bugfix_corrupt-idx-self-heal/review/implementation-feedback.md` with no new findings, and noted both round 1 findings as addressed.
+
+Verification run:
+- `python -m pytest unit_tests/test_jsonlfile.py unit_tests/test_folderdb.py -q` -> 75 passed
+- `python -m pytest unit_tests/ -q` -> 87 passed
+- Raw `.idx` read grep only finds the two expected reads inside `load_index`.
+
+----- end of reviewer output -----
+Ended:      2026-06-12T08:51:34.357Z
+Elapsed:    172s
+Exit code:  0
+Timed out:  false
+Verdict:    approved

@@ -1,0 +1,3434 @@
+Reviewloop reviewer log
+Reviewer:   codex
+Phase:      brainstorm
+Round:      1
+Started:    2026-06-10T11:02:58.228Z
+Timeout:    900s
+Command:    codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral "Run specdev review $SPECDEV_PHASE --round $SPECDEV_ROUND. Follow its instructions."
+Env:
+  SPECDEV_PHASE=brainstorm
+  SPECDEV_ASSIGNMENT=00003_bugfix_jsonl-write-path-integrity
+  SPECDEV_ROUND=1
+  SPECDEV_FEEDBACK_FILE=/mnt/h/oceanwave/lib/jsonldb/.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-feedback.md
+  SPECDEV_CHANGELOG_FILE=/mnt/h/oceanwave/lib/jsonldb/.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-changelog.md
+  SPECDEV_FOCUS=Architecture & structure — review modularity, separation of concerns, API design, and dependency direction. Identify structural issues.
+
+----- reviewer output -----
+Reading additional input from stdin...
+OpenAI Codex v0.138.0
+--------
+workdir: /mnt/h/oceanwave/lib/jsonldb
+model: gpt-5.5
+provider: openai
+approval: never
+sandbox: danger-full-access
+reasoning effort: medium
+reasoning summaries: none
+session id: 019eb133-2229-7ff2-b9da-fe9cdc9a3d34
+--------
+user
+Run specdev review brainstorm --round 1. Follow its instructions.
+codex
+Specdev: reading the workflow entrypoint and the review instructions so I can run the requested brainstorm review correctly.
+exec
+/usr/bin/zsh -lc "sed -n '1,220p' /mnt/h/oceanwave/lib/jsonldb/.codex/skills/specdev-review/SKILL.md" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+---
+name: specdev-review
+description: Phase-aware manual review of the current assignment
+---
+
+Run `specdev review <phase>` where phase is brainstorm or implementation.
+
+Examples: `specdev review brainstorm`, `specdev review implementation`.
+
+Follow the printed instructions to review the appropriate artifacts.
+Discuss findings with the user before concluding.
+
+exec
+/usr/bin/zsh -lc "sed -n '1,220p' .specdev/_main.md" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+# SpecDev Workflow
+
+You are working in a project that uses SpecDev — a spec-driven development framework. You MUST follow this workflow for all work.
+
+## How SpecDev Works
+
+All work is organized into **assignments**. An assignment is a self-contained unit of work — a feature, bugfix, refactor, or investigation — tracked in its own folder under `assignments/`. Each assignment progresses through three required phases, with optional non-blocking phase-end knowledge capture when reusable knowledge was learned. The CLI enforces gates between phases so work cannot advance until artifacts are validated and the user approves.
+
+## CLI
+
+`specdev` is a Node.js CLI installed globally via npm. Run it directly as `specdev <command>`. It is NOT a Python package — never use pip/python/pipx.
+
+## First Steps
+
+1. Read `project_notes/big_picture.md` — understand the project
+2. Check `.specdev/.current` for the active assignment pointer.
+   - `.current` exists → keep it unless the user asks to switch; use `specdev focus <id>` only when needed.
+   - No active assignment → run `specdev assignment "<description>" --type=<type> --slug=<slug>` to create and focus one.
+   - For parallel exploration before committing to an assignment → run `specdev discussion "<description>"`
+3. Run `specdev next --json` for the canonical next workflow action. Follow the returned guide, command, blockers, choices, and hook outcomes.
+
+**Reference:** `_index.md` is the detailed lookup for all guides, skills, commands, and project context. Consult it when you need to find a specific resource.
+
+## Workflow FAQ
+
+If workflow instructions conflict, a SpecDev command fails unexpectedly, or you are unsure how to proceed, run `specdev knowledge search "<issue>"` and inspect `knowledge/workflow/` before guessing. Capture recurring workflow gotchas through optional phase-end knowledge capture.
+
+## The Workflow
+
+Every assignment follows the same 3 required phases in order:
+
+1. **Brainstorm** — understand the problem, explore approaches, produce a design or research output
+2. **Breakdown** — create a concise implementation plan with coherent tasks and verification guidance
+3. **Implement** — execute tasks using the plan's execution mode and task-level verification
+
+Optional phase-end knowledge capture may suggest durable notes when reusable knowledge was learned.
+
+Use `workflow.yaml` and `specdev next --json` as the source of truth for action selection. Read `_guides/workflow.md` when you need a human-readable reference for phases, artifacts, gates, and recovery paths.
+
+## Rules
+
+- Follow the phases in order. Do not skip phases.
+- No completion claims without evidence.
+- Announce subtasks with "Specdev: <action>".
+- Read `_guides/codestyle_guide.md` before writing any code.
+- When a specdev assignment is active, specdev skills take precedence over superpowers equivalents. See `_guides/superpowers_exclusions.md`.
+
+codex
+Specdev: checking the active assignment and project context before invoking the brainstorm review command.
+exec
+/usr/bin/zsh -lc 'test -f .specdev/.current && cat .specdev/.current || true' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+00003_bugfix_jsonl-write-path-integrity
+exec
+/usr/bin/zsh -lc "sed -n '1,220p' .specdev/project_notes/big_picture.md" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+# Project Big Picture
+
+## Overview
+JSONLDB is a file-based database library that stores data in JSONL (JSON Lines) format. It provides efficient key-based querying, hierarchical folder organization, built-in Git version control, and data visualization.
+
+## Users / Consumers
+Internal team use.
+
+## Tech Stack
+- **Language:** Python (>= 3.8)
+- **Key dependencies:** pandas, orjson, numpy, gitpython, bokeh, matplotlib, mmap, bisect (stdlib)
+
+## Architecture
+- **Layered design:** `jsonlfile` (low-level single-file CRUD with byte-offset indexing via `.idx` files) → `jsonldf` (DataFrame adapter over jsonlfile) → `folderdb` (folder-level DB managing multiple JSONL tables with metadata)
+- **Index-driven reads:** Each `.jsonl` file has a companion `.idx` file mapping linekeys to byte offsets for O(1) lookups and range queries
+- **Sorted keys:** Records are kept sorted by linekey; bisect is used for O(log n) range selection on sorted index keys
+- **In-place updates:** Updates that fit in the existing line space are written in-place; oversized updates append and blank the old line
+- **Hierarchical storage:** Optional `hierarchy_depth` splits files into subdirectories based on dot-delimited key prefixes (e.g. `A.B.ticker.jsonl` → `A/B/ticker.jsonl`)
+- **Metadata files:** `db.meta` (per-table stats), `h.meta` (hierarchy config), `config.meta` (runtime config like time precision)
+- **Modular imports:** `vercontrol` (Git wrapper) and `visual` (Bokeh/Matplotlib) are lazy-loaded to avoid pulling heavy deps unnecessarily
+
+## Conventions & Constraints
+- Each JSONL line is `{"linekey": {value_dict}}` — one top-level key per line, value must be a non-empty dict
+- Linekeys can be strings or ISO datetimes; datetime precision is configurable (`seconds` or `microseconds`)
+- Serialization uses orjson exclusively (no stdlib json fallback)
+- Files are written with large buffer sizes (50 MB) for throughput
+- `lint_jsonl(path, force=False)` uses mtime-based fast path: when `.idx` is fresh, skips O(file_size) mmap scan and does spot check + sort/compaction only; `force=True` runs full mmap line-count verification for crash recovery or maintenance
+- `FolderDB.lint_db(force=False)` orchestrates linting across all tables, passing `force` through to each `lint_jsonl` call
+- `.idx` files use compact (no-indent) orjson format for minimal disk I/O
+- `profile_test/benchmark.py` provides performance benchmarks with `--save`/`--compare` for before/after comparison
+
+exec
+/usr/bin/zsh -lc 'specdev next --json' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 115ms:
+{
+  "command": "next",
+  "version": 1,
+  "status": "ok",
+  "assignment": "00003_bugfix_jsonl-write-path-integrity",
+  "assignment_path": "/mnt/h/oceanwave/lib/jsonldb/.specdev/assignments/00003_bugfix_jsonl-write-path-integrity",
+  "state": "brainstorm_checkpoint_ready",
+  "workflow": {
+    "source": "manifest",
+    "path": "/mnt/h/oceanwave/lib/jsonldb/.specdev/workflow.yaml",
+    "contract_version": 2
+  },
+  "next_action": {
+    "id": "brainstorm.checkpoint",
+    "phase": "brainstorm",
+    "step": "checkpoint",
+    "kind": "command",
+    "evidence": {
+      "exit_code": 0
+    },
+    "command_line": "specdev checkpoint brainstorm"
+  },
+  "interaction": {
+    "type": "choice",
+    "prompt": "How do you want to proceed from brainstorm?",
+    "choices": [
+      {
+        "id": "reviewloop_autocontinue",
+        "label": "Automated review, then continue",
+        "description": "Runs reviewloop and continues to the next phase if approved.",
+        "command": "specdev reviewloop brainstorm --reviewer=<name> --autocontinue",
+        "requires_reviewer": true,
+        "autocontinue": true,
+        "reviewers": []
+      },
+      {
+        "id": "reviewloop_only",
+        "label": "Automated review only",
+        "description": "Runs reviewloop and stops after phase approval.",
+        "command": "specdev reviewloop brainstorm --reviewer=<name>",
+        "requires_reviewer": true,
+        "autocontinue": false,
+        "reviewers": []
+      },
+      {
+        "id": "manual_review",
+        "label": "Manual review",
+        "description": "Starts a separate manual review session.",
+        "command": "specdev review brainstorm"
+      },
+      {
+        "id": "approve_skip_review",
+        "label": "Approve without review",
+        "description": "Approves the brainstorm gate without running review.",
+        "command": "specdev approve brainstorm"
+      }
+    ]
+  },
+  "hook_outcomes": [
+    {
+      "id": "brainstorm_knowledge_prompt",
+      "phase": "brainstorm",
+      "slot": "phase:end",
+      "order": 50,
+      "kind": "guide",
+      "guide": ".specdev/skills/core/knowledge-capture/SKILL.md",
+      "blocking": false,
+      "outcome": "skipped",
+      "reason": "advisory phase-end knowledge capture hook is available; workflow progress is not blocked"
+    }
+  ],
+  "trace": [
+    "brainstorm artifacts are present",
+    "brainstorm approval gate is pending",
+    "next action is to run the brainstorm checkpoint"
+  ],
+  "blockers": [],
+  "progress": {
+    "source": "none",
+    "totalTasks": 0,
+    "completedTasks": 0,
+    "inProgressTasks": 0,
+    "pendingTasks": 0,
+    "summary": "No implementation/progress.json found"
+  }
+}
+
+codex
+Specdev: running the requested manual brainstorm review for round 1.
+exec
+/usr/bin/zsh -lc 'specdev review brainstorm --round 1' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 114ms:
+Manual Review: 00003_bugfix_jsonl-write-path-integrity
+   Phase: brainstorm
+
+Review scope: Design completeness and feasibility
+
+Artifacts to review:
+   - 00003_bugfix_jsonl-write-path-integrity/brainstorm/proposal.md
+   - 00003_bugfix_jsonl-write-path-integrity/brainstorm/design.md
+
+Check:
+  1. Is the design complete? Any missing sections?
+  2. Is it feasible with the current tech stack?
+  3. Is the scope appropriate (not too large)?
+  4. ALWAYS scan the codebase to verify claims — never assume.
+     Read the actual files, grep for symbols, check dependencies.
+     Take eager effort to find answers; do not take shortcuts.
+
+Cost-benefit principle:
+  Only flag issues worth the cost of fixing. Skip unlikely edge cases,
+  speculative future-proofing, and stylistic preferences.
+  Accept [REJECTED] findings unless they would cause a real bug.
+
+Review Focus:
+   Architecture & structure — review modularity, separation of concerns, API design, and dependency direction. Identify structural issues.
+
+Write findings to:
+   00003_bugfix_jsonl-write-path-integrity/review/brainstorm-feedback.md
+   Automated review requirement: append ## Round 1 with **Verdict:** approved or **Verdict:** needs-changes before exiting.
+   Do not only print a summary to stdout.
+
+Feedback format (append to file):
+  ```markdown
+  ## Round 1
+  
+  **Verdict:** approved | needs-changes
+  
+  ### Findings
+  1. [F1.1] Description of finding
+  
+  ### Addressed from changelog
+  - (none -- first round)
+  ```
+
+Reviewing assignment: 00003_bugfix_jsonl-write-path-integrity
+
+
+codex
+Specdev: reading the brainstorm artifacts and locating the code paths they reference so the review can verify claims against the implementation.
+exec
+/usr/bin/zsh -lc "sed -n '1,320p' .specdev/assignments/00003_bugfix_jsonl-write-path-integrity/brainstorm/design.md" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+# Design: Fix data-integrity bugs in the JSONL write path
+
+## Overview
+
+Five verified bugs, all in the write/delete path. Each was reproduced with a live script before
+this assignment was created, so every fix starts from a known-failing test. All fixes are
+behavior-preserving: no public API signatures change.
+
+| # | Bug | Location | Severity |
+|---|-----|----------|----------|
+| 1 | Append corrupts file when last line lacks trailing newline | `jsonlfile.py` `update_jsonl` (~line 599) | Silent data loss |
+| 2 | Shrink-in-place update overwrites the line terminator | `jsonlfile.py` `update_jsonl` (~lines 620-624) | Structural corruption |
+| 3 | `delete_file_range` uses `str(datetime)` for bounds | `folderdb.py` (~lines 481-484) | Wrong rows deleted / kept |
+| 4 | `clear_folder` only clears the root folder | `folderdb.py` (~lines 426-428) | Data survives a forced clear |
+| 5 | `delete_file` crashes when `.idx` is missing | `folderdb.py` (~line 441) | Crash |
+
+## Root Cause
+
+1. **Append without newline guard:** `update_jsonl` seeks to EOF and appends. If the existing last
+   line has no trailing `\n` (file written externally or truncated), the appended record
+   concatenates onto it: `{"a":...}{"b":...}` — invalid JSON, both records unreadable.
+   `delete_jsonl` already guards this case; `update_jsonl` does not.
+2. **Shrink padding placement:** when a record shrinks, the code writes the new line (ending in
+   `\n`) and then pads with raw spaces *after* it. The padding overwrites the old line's final
+   `\n`, so the padding merges with the next record's line. Reads survive only because orjson
+   tolerates leading whitespace; index offsets drift onto padding bytes. The grow path and
+   `delete_jsonl` both correctly write `spaces + b'\n'`.
+3. **Bound serialization mismatch:** index keys are stored via `serialize_linekey()`
+   (`isoformat()`, `T` separator) but `delete_file_range` compares against `str(key)` (space
+   separator). Lexically `' ' < 'T'`, so any bound sharing a date with data compares wrong —
+   verified to both over-delete and under-delete.
+4. **`os.listdir` vs tree walk:** hierarchy mode stores files in nested folders; `clear_folder`
+   lists only the root.
+5. **Unconditional `os.remove` of the `.idx`** with no existence check.
+
+## Fix Design
+
+1. **Append guard (`update_jsonl`):** after `f.seek(0, os.SEEK_END)`, if the file is non-empty and
+   its last byte is not `\n`, write `b'\n'` before recording `append_pos`/appending. Mirrors the
+   existing guard in `delete_jsonl`.
+2. **Shrink padding (`update_jsonl`):** when `len(new_line) < len(old_line)`, write
+   `new_line[:-1] + b' ' * (old_len - new_len) + b'\n'` — the record region keeps its exact old
+   length and its terminating newline. Trailing spaces inside a line are valid JSON whitespace, so
+   `readline()` + `orjson.loads()` round-trips. Equal-length writes stay as-is.
+3. **Bounds (`delete_file_range`):** replace `str(lower_key)`/`str(upper_key)` with
+   `serialize_linekey(lower_key)`/`serialize_linekey(upper_key)` (import from `jsonlfile`).
+   String keys are unaffected (`serialize_linekey` is identity for `str`).
+4. **`clear_folder`:** walk the tree with `os.walk` and remove `.jsonl`/`.idx`/`.meta` files at any
+   depth, then call `delete_empty_folders()` and `build_dbmeta()` as today. Keep skipping
+   hidden directories (e.g. `.git`, `.invalid_tickers`) so version control data is untouched.
+5. **`delete_file`:** remove the `.idx` only if it exists; switch the three delete methods
+   (`delete_file`, `delete_file_keys`, `delete_file_range`) from `_get_or_create_file_path` to
+   `_get_file_path` so deletes stop creating directories.
+
+## Key Decisions
+
+- **Pad-before-newline (not blank-and-append) for shrink:** keeps the in-place update O(1) and
+  preserves the existing file-size behavior; only the placement of the padding changes.
+- **Heal-on-append (write the missing `\n`) rather than reject:** matches `delete_jsonl`'s
+  existing precedent and repairs files damaged by older versions instead of failing on them.
+- **`_get_file_path` for deletes:** a delete should never create folders; behavior for existing
+  files is identical.
+
+## Success Criteria
+
+- Five new failing-first tests (converted from the verification scripts) pass:
+  1. Append to a file with no trailing newline → both records load correctly.
+  2. Shrink-update → raw bytes show the padded region ends with `\n`; rebuilt index points at
+     real record starts; round-trip load matches.
+  3. Datetime range delete: same-day range deletes exactly the in-range keys; a noon lower bound
+     does not delete a 1 AM key.
+  4. `clear_folder(force=True)` on a hierarchy DB leaves no `.jsonl` files anywhere in the tree.
+  5. `delete_file` with a missing `.idx` deletes the data file without raising.
+- The full existing suite (`unit_tests/`) still passes.
+- No public API signature changes.
+
+## Testing Approach
+
+TDD per task: add the failing test to the matching file in `unit_tests/` (`test_jsonlfile.py` for
+fixes 1-2, `test_folderdb.py` for 3-5), confirm it fails for the expected reason, apply the
+minimal fix, confirm green, then run the whole suite.
+
+exec
+/usr/bin/zsh -lc "sed -n '1,260p' .specdev/assignments/00003_bugfix_jsonl-write-path-integrity/brainstorm/proposal.md" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+# Proposal: Fix data-integrity bugs in the JSONL write path
+
+A verification pass (live reproduction scripts run against the current code) confirmed five
+data-integrity bugs in `jsonldb/jsonlfile.py` and `jsonldb/folderdb.py`. The worst one silently
+destroys records: appending via `update_jsonl` to a file whose last line lacks a trailing newline
+concatenates the new record onto the old line, producing one invalid JSON line — both records
+become unreadable. The others corrupt file structure (shrink-in-place updates overwrite the line
+terminator), apply wrong datetime range-delete boundaries, leave data behind on `clear_folder` in
+hierarchy mode, and crash `delete_file` when an index file is missing.
+
+This assignment fixes all five as pure behavior-preserving bugfixes (no API changes), each driven
+by a failing test converted from the verification scripts.
+
+exec
+/usr/bin/zsh -lc "rg -n \"jsonlfile|dump_jsonl|write|linekey|hierarchy|lint_jsonl|idx|rename|replace|move\" -S . --glob '"'!/.git/**'"' --glob '"'!*.idx'"'" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 165ms:
+./examples/example_visual/overlapping_datetime_example.ipynb:9:    "This notebook demonstrates how to visualize multiple JSONL files with overlapping datetime linekeys using the visualization functions."
+./examples/example_visual/overlapping_datetime_example.ipynb:57:      "application/javascript": "(function(root) {\n  function now() {\n    return new Date();\n  }\n\n  const force = true;\n\n  if (typeof root._bokeh_onload_callbacks === \"undefined\" || force === true) {\n    root._bokeh_onload_callbacks = [];\n    root._bokeh_is_loading = undefined;\n  }\n\nconst JS_MIME_TYPE = 'application/javascript';\n  const HTML_MIME_TYPE = 'text/html';\n  const EXEC_MIME_TYPE = 'application/vnd.bokehjs_exec.v0+json';\n  const CLASS_NAME = 'output_bokeh rendered_html';\n\n  /**\n   * Render data to the DOM node\n   */\n  function render(props, node) {\n    const script = document.createElement(\"script\");\n    node.appendChild(script);\n  }\n\n  /**\n   * Handle when an output is cleared or removed\n   */\n  function handleClearOutput(event, handle) {\n    const cell = handle.cell;\n\n    const id = cell.output_area._bokeh_element_id;\n    const server_id = cell.output_area._bokeh_server_id;\n    // Clean up Bokeh references\n    if (id != null && id in Bokeh.index) {\n      Bokeh.index[id].model.document.clear();\n      delete Bokeh.index[id];\n    }\n\n    if (server_id !== undefined) {\n      // Clean up Bokeh references\n      const cmd_clean = \"from bokeh.io.state import curstate; print(curstate().uuid_to_server['\" + server_id + \"'].get_sessions()[0].document.roots[0]._id)\";\n      cell.notebook.kernel.execute(cmd_clean, {\n        iopub: {\n          output: function(msg) {\n            const id = msg.content.text.trim();\n            if (id in Bokeh.index) {\n              Bokeh.index[id].model.document.clear();\n              delete Bokeh.index[id];\n            }\n          }\n        }\n      });\n      // Destroy server and session\n      const cmd_destroy = \"import bokeh.io.notebook as ion; ion.destroy_server('\" + server_id + \"')\";\n      cell.notebook.kernel.execute(cmd_destroy);\n    }\n  }\n\n  /**\n   * Handle when a new output is added\n   */\n  function handleAddOutput(event, handle) {\n    const output_area = handle.output_area;\n    const output = handle.output;\n\n    // limit handleAddOutput to display_data with EXEC_MIME_TYPE content only\n    if ((output.output_type != \"display_data\") || (!Object.prototype.hasOwnProperty.call(output.data, EXEC_MIME_TYPE))) {\n      return\n    }\n\n    const toinsert = output_area.element.find(\".\" + CLASS_NAME.split(' ')[0]);\n\n    if (output.metadata[EXEC_MIME_TYPE][\"id\"] !== undefined) {\n      toinsert[toinsert.length - 1].firstChild.textContent = output.data[JS_MIME_TYPE];\n      // store reference to embed id on output_area\n      output_area._bokeh_element_id = output.metadata[EXEC_MIME_TYPE][\"id\"];\n    }\n    if (output.metadata[EXEC_MIME_TYPE][\"server_id\"] !== undefined) {\n      const bk_div = document.createElement(\"div\");\n      bk_div.innerHTML = output.data[HTML_MIME_TYPE];\n      const script_attrs = bk_div.children[0].attributes;\n      for (let i = 0; i < script_attrs.length; i++) {\n        toinsert[toinsert.length - 1].firstChild.setAttribute(script_attrs[i].name, script_attrs[i].value);\n        toinsert[toinsert.length - 1].firstChild.textContent = bk_div.children[0].textContent\n      }\n      // store reference to server id on output_area\n      output_area._bokeh_server_id = output.metadata[EXEC_MIME_TYPE][\"server_id\"];\n    }\n  }\n\n  function register_renderer(events, OutputArea) {\n\n    function append_mime(data, metadata, element) {\n      // create a DOM node to render to\n      const toinsert = this.create_output_subarea(\n        metadata,\n        CLASS_NAME,\n        EXEC_MIME_TYPE\n      );\n      this.keyboard_manager.register_events(toinsert);\n      // Render to node\n      const props = {data: data, metadata: metadata[EXEC_MIME_TYPE]};\n      render(props, toinsert[toinsert.length - 1]);\n      element.append(toinsert);\n      return toinsert\n    }\n\n    /* Handle when an output is cleared or removed */\n    events.on('clear_output.CodeCell', handleClearOutput);\n    events.on('delete.Cell', handleClearOutput);\n\n    /* Handle when a new output is added */\n    events.on('output_added.OutputArea', handleAddOutput);\n\n    /**\n     * Register the mime type and append_mime function with output_area\n     */\n    OutputArea.prototype.register_mime_type(EXEC_MIME_TYPE, append_mime, {\n      /* Is output safe? */\n      safe: true,\n      /* Index of renderer in `output_area.display_order` */\n      index: 0\n    });\n  }\n\n  // register the mime type if in Jupyter Notebook environment and previously unregistered\n  if (root.Jupyter !== undefined) {\n    const events = require('base/js/events');\n    const OutputArea = require('notebook/js/outputarea').OutputArea;\n\n    if (OutputArea.prototype.mime_types().indexOf(EXEC_MIME_TYPE) == -1) {\n      register_renderer(events, OutputArea);\n    }\n  }\n  if (typeof (root._bokeh_timeout) === \"undefined\" || force === true) {\n    root._bokeh_timeout = Date.now() + 5000;\n    root._bokeh_failed_load = false;\n  }\n\n  const NB_LOAD_WARNING = {'data': {'text/html':\n     \"<div style='background-color: #fdd'>\\n\"+\n     \"<p>\\n\"+\n     \"BokehJS does not appear to have successfully loaded. If loading BokehJS from CDN, this \\n\"+\n     \"may be due to a slow or bad network connection. Possible fixes:\\n\"+\n     \"</p>\\n\"+\n     \"<ul>\\n\"+\n     \"<li>re-rerun `output_notebook()` to attempt to load from CDN again, or</li>\\n\"+\n     \"<li>use INLINE resources instead, as so:</li>\\n\"+\n     \"</ul>\\n\"+\n     \"<code>\\n\"+\n     \"from bokeh.resources import INLINE\\n\"+\n     \"output_notebook(resources=INLINE)\\n\"+\n     \"</code>\\n\"+\n     \"</div>\"}};\n\n  function display_loaded() {\n    const el = document.getElementById(\"1002\");\n    if (el != null) {\n      el.textContent = \"BokehJS is loading...\";\n    }\n    if (root.Bokeh !== undefined) {\n      if (el != null) {\n        el.textContent = \"BokehJS \" + root.Bokeh.version + \" successfully loaded.\";\n      }\n    } else if (Date.now() < root._bokeh_timeout) {\n      setTimeout(display_loaded, 100)\n    }\n  }\n\n  function run_callbacks() {\n    try {\n      root._bokeh_onload_callbacks.forEach(function(callback) {\n        if (callback != null)\n          callback();\n      });\n    } finally {\n      delete root._bokeh_onload_callbacks\n    }\n    console.debug(\"Bokeh: all callbacks have finished\");\n  }\n\n  function load_libs(css_urls, js_urls, callback) {\n    if (css_urls == null) css_urls = [];\n    if (js_urls == null) js_urls = [];\n\n    root._bokeh_onload_callbacks.push(callback);\n    if (root._bokeh_is_loading > 0) {\n      console.debug(\"Bokeh: BokehJS is being loaded, scheduling callback at\", now());\n      return null;\n    }\n    if (js_urls == null || js_urls.length === 0) {\n      run_callbacks();\n      return null;\n    }\n    console.debug(\"Bokeh: BokehJS not loaded, scheduling load and callback at\", now());\n    root._bokeh_is_loading = css_urls.length + js_urls.length;\n\n    function on_load() {\n      root._bokeh_is_loading--;\n      if (root._bokeh_is_loading === 0) {\n        console.debug(\"Bokeh: all BokehJS libraries/stylesheets loaded\");\n        run_callbacks()\n      }\n    }\n\n    function on_error(url) {\n      console.error(\"failed to load \" + url);\n    }\n\n    for (let i = 0; i < css_urls.length; i++) {\n      const url = css_urls[i];\n      const element = document.createElement(\"link\");\n      element.onload = on_load;\n      element.onerror = on_error.bind(null, url);\n      element.rel = \"stylesheet\";\n      element.type = \"text/css\";\n      element.href = url;\n      console.debug(\"Bokeh: injecting link tag for BokehJS stylesheet: \", url);\n      document.body.appendChild(element);\n    }\n\n    for (let i = 0; i < js_urls.length; i++) {\n      const url = js_urls[i];\n      const element = document.createElement('script');\n      element.onload = on_load;\n      element.onerror = on_error.bind(null, url);\n      element.async = false;\n      element.src = url;\n      console.debug(\"Bokeh: injecting script tag for BokehJS library: \", url);\n      document.head.appendChild(element);\n    }\n  };\n\n  function inject_raw_css(css) {\n    const element = document.createElement(\"style\");\n    element.appendChild(document.createTextNode(css));\n    document.body.appendChild(element);\n  }\n\n  const js_urls = [\"https://cdn.bokeh.org/bokeh/release/bokeh-2.4.3.min.js\", \"https://cdn.bokeh.org/bokeh/release/bokeh-gl-2.4.3.min.js\", \"https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.4.3.min.js\", \"https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.4.3.min.js\", \"https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-2.4.3.min.js\"];\n  const css_urls = [];\n\n  const inline_js = [    function(Bokeh) {\n      Bokeh.set_log_level(\"info\");\n    },\nfunction(Bokeh) {\n    }\n  ];\n\n  function run_inline_js() {\n    if (root.Bokeh !== undefined || force === true) {\n          for (let i = 0; i < inline_js.length; i++) {\n      inline_js[i].call(root, root.Bokeh);\n    }\nif (force === true) {\n        display_loaded();\n      }} else if (Date.now() < root._bokeh_timeout) {\n      setTimeout(run_inline_js, 100);\n    } else if (!root._bokeh_failed_load) {\n      console.log(\"Bokeh: BokehJS failed to load within specified timeout.\");\n      root._bokeh_failed_load = true;\n    } else if (force !== true) {\n      const cell = $(document.getElementById(\"1002\")).parents('.cell').data().cell;\n      cell.output_area.append_execute_result(NB_LOAD_WARNING)\n    }\n  }\n\n  if (root._bokeh_is_loading === 0) {\n    console.debug(\"Bokeh: BokehJS loaded, going straight to plotting\");\n    run_inline_js();\n  } else {\n    load_libs(css_urls, js_urls, function() {\n      console.debug(\"Bokeh: BokehJS plotting callback run at\", now());\n      run_inline_js();\n    });\n  }\n}(window));",
+./examples/example_visual/overlapping_datetime_example.ipynb:74:    "Let's create a sample FolderDB with multiple JSONL files that have overlapping datetime linekeys."
+./examples/example_visual/overlapping_datetime_example.ipynb:274:    "Now let's visualize all the data together to see how the overlapping datetime linekeys are handled."
+./examples/example_visual/overlapping_datetime_example.ipynb:348:    "# Remove the temporary database\n",
+./examples/example_visual/overlapping_datetime_example.ipynb:350:    "    os.remove(os.path.join(db_folder, file))\n",
+
+codex
+Specdev: narrowing the review to the concrete functions named by the design and checking whether the proposed fixes line up with current behavior.
+exec
+/usr/bin/zsh -lc "nl -ba jsonldb/jsonlfile.py | sed -n '240,700p'" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+   240	        bool: True if the string appears to be a datetime in ISO format
+   241	    """
+   242	    if TIME_SPEC == 'seconds':
+   243	        return len(linekey) == 19 and 'T' in linekey and '-' in linekey and ':' in linekey
+   244	    else:  # microseconds
+   245	        return len(linekey) == 26 and 'T' in linekey and '-' in linekey and ':' in linekey
+   246	
+   247	def serialize_linekey(linekey: LineKey) -> str:
+   248	    """
+   249	    Convert a linekey to its string representation.
+   250	    
+   251	    Args:
+   252	        linekey: String or datetime object to serialize
+   253	        
+   254	    Returns:
+   255	        String representation of the linekey
+   256	    """
+   257	    if isinstance(linekey, str):
+   258	        return linekey
+   259	    elif isinstance(linekey, dt.datetime):
+   260	        return linekey.isoformat(timespec=TIME_SPEC)
+   261	    return str(linekey)
+   262	
+   263	def deserialize_linekey(linekey_str: str, default_format: Optional[str] = None) -> LineKey:
+   264	    """
+   265	    Convert a string linekey back to its original type.
+   266	    
+   267	    Args:
+   268	        linekey_str: String to deserialize
+   269	        default_format: Format hint for deserialization ('datetime' supported)
+   270	        
+   271	    Returns:
+   272	        Original type of the linekey (datetime or string)
+   273	    """
+   274	    if default_format == "datetime":
+   275	        return dt.datetime.fromisoformat(linekey_str)
+   276	    return linekey_str
+   277	
+   278	def _fast_dumps(obj: dict) -> str:
+   279	    """
+   280	    Fast JSON serialization using orjson if available.
+   281	    
+   282	    Args:
+   283	        obj: Dictionary to serialize
+   284	        
+   285	    Returns:
+   286	        JSON string with newline
+   287	    """
+   288	    return orjson.dumps(obj, option=orjson.OPT_SERIALIZE_NUMPY).decode('utf-8') + '\n'
+   289	
+   290	def check_dict_format(data_dict: Dict[Any, Any]) -> bool:
+   291	    """Check if a dictionary follows the required JSONL format.
+   292	    
+   293	    Required format:
+   294	    {
+   295	        "linekey1": {"value1": 10, "value2": 11},
+   296	        "linekey2": {"value1": 11, "value2": 12}
+   297	    }
+   298	    
+   299	    Args:
+   300	        data_dict (Dict[str, Any]): Dictionary to check
+   301	        
+   302	    Returns:
+   303	        bool: True if format is valid, False otherwise
+   304	        
+   305	    Raises:
+   306	        ValueError: If format is invalid, with specific error message
+   307	    """
+   308	    if not isinstance(data_dict, dict):
+   309	        raise ValueError("Input must be a dictionary")
+   310	        
+   311	    # if not data_dict:
+   312	    #     raise ValueError("Dictionary cannot be empty")
+   313	        
+   314	    # Check each key-value pair
+   315	    for linekey, value in data_dict.items():
+   316	        # Check if linekey is a string
+   317	        # No need to check if linekey is a string
+   318	            
+   319	        # Check if value is a dictionary
+   320	        if not isinstance(value, dict):
+   321	            raise ValueError(f"Value for linekey '{linekey}' must be a dictionary")
+   322	            
+   323	        # Check if value dictionary is not empty
+   324	        if not value:
+   325	            raise ValueError(f"Value dictionary for linekey '{linekey}' cannot be empty")
+   326	            
+   327	    # Check for duplicate linekeys
+   328	    linekeys = list(data_dict.keys())
+   329	    if len(linekeys) != len(set(linekeys)):
+   330	        raise ValueError("Duplicate linekeys found")
+   331	        
+   332	    return True
+   333	
+   334	# --------------------------------------------------------
+   335	# Core CRUD Functions
+   336	# --------------------------------------------------------
+   337	
+   338	def save_jsonl(jsonl_file_path: str, db_dict: DataDict) -> None:
+   339	    """
+   340	    Save a dictionary to a JSONL file with automatic indexing.
+   341	    
+   342	    Efficiently writes records and maintains an index of byte positions.
+   343	    Handles empty dictionaries and ensures atomic writes.
+   344	    
+   345	    Args:
+   346	        jsonl_file_path: Path to save the JSONL file
+   347	        db_dict: Dictionary of records to save
+   348	        
+   349	    Raises:
+   350	        OSError: If file operations fail
+   351	    """
+   352	    index: IndexDict = {}
+   353	    
+   354	    try:
+   355	        # Handle empty dictionary case
+   356	        if not db_dict:
+   357	            with open(jsonl_file_path, 'wb') as f:
+   358	                pass  # create empty file
+   359	            with open(f"{jsonl_file_path}.idx", 'wb') as f:
+   360	                f.write(orjson.dumps({}, option=orjson.OPT_SORT_KEYS))
+   361	            return
+   362	
+   363	        byte_offset = 0
+   364	        lines = []
+   365	        
+   366	        # Pre-process all lines
+   367	        for linekey, data in db_dict.items():
+   368	            serialized_key = serialize_linekey(linekey)
+   369	            line_dict = {serialized_key: data}
+   370	            line = _fast_dumps(line_dict).encode('utf-8')
+   371	            lines.append(line)
+   372	            index[serialized_key] = byte_offset
+   373	            byte_offset += len(line)
+   374	
+   375	        # Write all lines at once
+   376	        with open(jsonl_file_path, 'wb', buffering=BUFFER_SIZE) as f:
+   377	            for line in lines:
+   378	                f.write(line)
+   379	
+   380	        # Write index atomically
+   381	        with open(f"{jsonl_file_path}.idx", 'wb') as f:
+   382	            f.write(orjson.dumps(dict(sorted(index.items())), option=orjson.OPT_SORT_KEYS))
+   383	            
+   384	    except OSError as e:
+   385	        raise OSError(f"Failed to save JSONL file {jsonl_file_path}: {str(e)}")
+   386	
+   387	def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True) -> DataDict:
+   388	    """
+   389	    Load a JSONL file into a dictionary.
+   390	    
+   391	    Reads each line as a JSON object and builds a dictionary.
+   392	    Handles datetime deserialization and skips invalid lines.
+   393	    
+   394	    Args:
+   395	        jsonl_file_path: Path to the JSONL file to load
+   396	        auto_deserialize: Whether to convert datetime strings back to datetime objects
+   397	        
+   398	    Returns:
+   399	        Dictionary of loaded records
+   400	        
+   401	    Raises:
+   402	        FileNotFoundError: If the file doesn't exist
+   403	        OSError: If file operations fail
+   404	    """
+   405	    if not os.path.exists(jsonl_file_path):
+   406	        raise FileNotFoundError(f"JSONL file not found: {jsonl_file_path}")
+   407	
+   408	    result_dict: DataDict = {}
+   409	    
+   410	    try:
+   411	        with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
+   412	            for line in f:
+   413	                line = line.strip()
+   414	                if not line:
+   415	                    continue
+   416	
+   417	                try:
+   418	                    data = orjson.loads(line)
+   419	                    if isinstance(data, dict) and len(data) == 1:
+   420	                        linekey = next(iter(data))
+   421	                        if auto_deserialize and _is_datetime_string(linekey):
+   422	                            try:
+   423	                                actual_key = deserialize_linekey(linekey, "datetime")
+   424	                                result_dict[actual_key] = data[linekey]
+   425	                            except ValueError:
+   426	                                result_dict[linekey] = data[linekey]
+   427	                        else:
+   428	                            result_dict[linekey] = data[linekey]
+   429	                except (orjson.JSONDecodeError, ValueError):
+   430	                    print("WARNING: invalid JSON line " + line.decode('utf-8', errors='replace'))
+   431	                    continue  # Skip invalid JSON lines
+   432	
+   433	        return result_dict
+   434	
+   435	    except OSError as e:
+   436	        raise OSError(f"Failed to load JSONL file {jsonl_file_path}: {str(e)}")
+   437	
+   438	def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, upper_key: Optional[LineKey] = None, auto_deserialize: bool = True) -> DataDict:
+   439	    """
+   440	    Select records from a JSONL file within a key range.
+   441	    
+   442	    Args:
+   443	        jsonl_file_path: Path to the JSONL file
+   444	        lower_key: Lower bound key (inclusive). If None, uses smallest key.
+   445	        upper_key: Upper bound key (inclusive). If None, uses largest key.
+   446	        auto_deserialize: Whether to auto-deserialize datetime keys
+   447	        
+   448	    Returns:
+   449	        Dictionary of records within the range
+   450	        
+   451	    Raises:
+   452	        FileNotFoundError: If file or index doesn't exist
+   453	        OSError: If file operations fail
+   454	    """
+   455	    # If both keys are None, return all records
+   456	    if lower_key is None and upper_key is None:
+   457	        return load_jsonl(jsonl_file_path, auto_deserialize)
+   458	
+   459	    if lower_key == upper_key:
+   460	        return select_line_jsonl(jsonl_file_path, lower_key, auto_deserialize)
+   461	
+   462	    ensure_index_exists(jsonl_file_path)
+   463	
+   464	    
+   465	    try:
+   466	        # Load index
+   467	        with open(f"{jsonl_file_path}.idx", 'rb') as f:
+   468	            index_dict = orjson.loads(f.read())
+   469	
+   470	        # If no keys in index, return empty dict
+   471	        if not index_dict:
+   472	            return {}
+   473	            
+   474	        # Get all keys from index
+   475	        all_keys = list(index_dict.keys())
+   476	        
+   477	        # Set default values if None
+   478	        if lower_key is None:
+   479	            lower_key = min(all_keys)
+   480	        if upper_key is None:
+   481	            upper_key = max(all_keys)
+   482	            
+   483	        # Serialize the keys
+   484	        lower_key = serialize_linekey(lower_key)
+   485	        upper_key = serialize_linekey(upper_key)
+   486	        
+   487	        # Use bisect for O(log n) range selection
+   488	        lo = bisect_left(all_keys, lower_key)
+   489	        hi = bisect_right(all_keys, upper_key)
+   490	        selected_linekeys = all_keys[lo:hi]
+   491	
+   492	        # Read in offset order for sequential I/O
+   493	        offset_key_pairs = sorted(
+   494	            [(index_dict[k], k) for k in selected_linekeys]
+   495	        )
+   496	        raw_results = {}
+   497	        with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
+   498	            for offset, linekey in offset_key_pairs:
+   499	                f.seek(offset)
+   500	                line = f.readline()
+   501	                data = orjson.loads(line)
+   502	                raw_results[linekey] = data[linekey]
+   503	
+   504	        # Rebuild in sorted key order with deserialization
+   505	        result_dict = {}
+   506	        for linekey in selected_linekeys:
+   507	            if auto_deserialize and _is_datetime_string(linekey):
+   508	                try:
+   509	                    actual_key = deserialize_linekey(linekey, "datetime")
+   510	                    result_dict[actual_key] = raw_results[linekey]
+   511	                except ValueError:
+   512	                    result_dict[linekey] = raw_results[linekey]
+   513	            else:
+   514	                result_dict[linekey] = raw_results[linekey]
+   515	        return result_dict
+   516	        
+   517	    except OSError as e:
+   518	        raise OSError(f"Failed to select from JSONL file {jsonl_file_path}: {str(e)}")
+   519	
+   520	def select_line_jsonl(jsonl_file_path: str, linekey: LineKey, auto_serialize: bool = True) -> Optional[str]:
+   521	    """
+   522	    Get a specific line from a JSONL file based on the linekey.
+   523	    
+   524	    Args:
+   525	        jsonl_file_path: Path to the JSONL file
+   526	        linekey: The key to look for
+   527	        auto_serialize: Whether to automatically serialize the key
+   528	        
+   529	    Returns:
+   530	        The line as a string if found, None otherwise
+   531	    """
+   532	    # Serialize the key if needed
+   533	    if auto_serialize:
+   534	        linekey = serialize_linekey(linekey)
+   535	    
+   536	    ensure_index_exists(jsonl_file_path)
+   537	    
+   538	    index_path = jsonl_file_path + '.idx'
+   539	    # Read the index file
+   540	    with open(index_path, 'rb') as f:
+   541	        index_dict = orjson.loads(f.read())
+   542	    
+   543	    # Check if key exists in index
+   544	    if linekey not in index_dict:
+   545	        return {}
+   546	    
+   547	    result_dict: DataDict = {}
+   548	        
+   549	
+   550	    # Load selected records
+   551	    with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
+   552	        try:
+   553	            f.seek(index_dict[linekey])
+   554	            line = f.readline().strip()
+   555	            data = orjson.loads(line)
+   556	
+   557	            if auto_serialize and _is_datetime_string(linekey):
+   558	                try:
+   559	                    actual_key = deserialize_linekey(linekey, "datetime")
+   560	                    result_dict[actual_key] = data[linekey]
+   561	                except ValueError:
+   562	                    result_dict[linekey] = data[linekey]
+   563	            else:
+   564	                result_dict[linekey] = data[linekey]
+   565	        except (orjson.JSONDecodeError, ValueError, KeyError):
+   566	            return {}
+   567	
+   568	    return result_dict
+   569	
+   570	
+   571	
+   572	def update_jsonl(jsonl_file_path: str, update_dict: DataDict) -> None:
+   573	    """
+   574	    Update or insert records in a JSONL file.
+   575	    
+   576	    Efficiently handles both updates and inserts:
+   577	    - Updates in place if new record fits in old space
+   578	    - Appends to file if record grows
+   579	    - Maintains index automatically
+   580	    
+   581	    Args:
+   582	        jsonl_file_path: Path to the JSONL file
+   583	        update_dict: Dictionary of records to update/insert
+   584	        
+   585	    Raises:
+   586	        OSError: If file operations fail
+   587	    """
+   588	    ensure_index_exists(jsonl_file_path)
+   589	    
+   590	    try:
+   591	        # Load index
+   592	        with open(f"{jsonl_file_path}.idx", 'rb') as f:
+   593	            index = orjson.loads(f.read())
+   594	
+   595	        updates = []
+   596	        appends = []
+   597	        
+   598	        # Process records
+   599	        with open(jsonl_file_path, 'rb+', buffering=BUFFER_SIZE) as f:
+   600	            f.seek(0, os.SEEK_END)
+   601	            append_pos = f.tell()
+   602	            
+   603	            for linekey, data in update_dict.items():
+   604	                linekey = serialize_linekey(linekey)
+   605	                new_line = _fast_dumps({linekey: data}).encode('utf-8')
+   606	
+   607	                if linekey in index:
+   608	                    f.seek(index[linekey])
+   609	                    old_line = f.readline()
+   610	                    
+   611	                    if len(new_line) <= len(old_line):
+   612	                        updates.append((index[linekey], new_line, len(old_line)))
+   613	                    else:
+   614	                        updates.append((index[linekey], b' ' * (len(old_line) - 1) + b'\n', len(old_line)))
+   615	                        appends.append((linekey, new_line))
+   616	                else:
+   617	                    appends.append((linekey, new_line))
+   618	
+   619	            # Apply updates
+   620	            for pos, line, old_len in updates:
+   621	                f.seek(pos)
+   622	                f.write(line)
+   623	                if len(line) < old_len:
+   624	                    f.write(b' ' * (old_len - len(line)))
+   625	
+   626	            # Apply appends
+   627	            if appends:
+   628	                f.seek(append_pos)
+   629	                for linekey, line in appends:
+   630	                    index[linekey] = f.tell()
+   631	                    f.write(line)
+   632	
+   633	        # Update index
+   634	        with open(f"{jsonl_file_path}.idx", 'wb') as f:
+   635	            f.write(orjson.dumps(dict(sorted(index.items())), option=orjson.OPT_SORT_KEYS))
+   636	            
+   637	    except OSError as e:
+   638	        raise OSError(f"Failed to update JSONL file {jsonl_file_path}: {str(e)}")
+   639	
+   640	def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey]) -> None:
+   641	    """
+   642	    Delete records from a JSONL file.
+   643	    
+   644	    Marks deleted lines with spaces and updates the index.
+   645	    Maintains file size but removes entries from index.
+   646	    
+   647	    Args:
+   648	        jsonl_file_path: Path to the JSONL file
+   649	        linekeys: List of keys to delete
+   650	        
+   651	    Raises:
+   652	        OSError: If file operations fail
+   653	    """
+   654	    ensure_index_exists(jsonl_file_path)
+   655	    
+   656	    try:
+   657	        # Load index using orjson for faster JSON parsing
+   658	        with open(f"{jsonl_file_path}.idx", 'rb') as f:
+   659	            index = orjson.loads(f.read())
+   660	
+   661	        # Process deletions
+   662	        linekeys = [serialize_linekey(key) for key in linekeys]
+   663	        
+   664	        # Use regular file operations like update_jsonl
+   665	        with open(jsonl_file_path, 'rb+', buffering=BUFFER_SIZE) as f:
+   666	            for linekey in linekeys:
+   667	                if linekey in index:
+   668	                    f.seek(index[linekey])
+   669	                    line = f.readline()
+   670	                    if not line.endswith(b'\n'):
+   671	                        line += b'\n'
+   672	                    
+   673	                    # Mark as deleted using _fast_dumps for consistency
+   674	                    deleted_line = _fast_dumps({linekey: {}}).encode('utf-8')
+   675	                    f.seek(index[linekey])
+   676	                    f.write(b' ' * (len(line) - 1) + b'\n')
+   677	                    del index[linekey]
+   678	
+   679	        # Update index using orjson for faster JSON serialization
+   680	        with open(f"{jsonl_file_path}.idx", 'wb') as f:
+   681	            f.write(orjson.dumps(dict(sorted(index.items())), option=orjson.OPT_SORT_KEYS))
+   682	            
+   683	    except OSError as e:
+   684	        raise OSError(f"Failed to delete from JSONL file {jsonl_file_path}: {str(e)}")
+   685	
+   686	
+
+exec
+/usr/bin/zsh -lc "nl -ba jsonldb/folderdb.py | sed -n '1,540p'" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+     1	"""
+     2	A simple file-based database that stores data in JSONL format.
+     3	Each table is stored in a separate JSONL file.
+     4	"""
+     5	
+     6	import os
+     7	import orjson
+     8	import pandas as pd
+     9	from typing import Dict, List, Union, Optional, Any
+    10	from datetime import datetime
+    11	from jsonldb.jsonlfile import (
+    12	    save_jsonl, load_jsonl, select_jsonl, update_jsonl, delete_jsonl,
+    13	    lint_jsonl, build_jsonl_index, select_line_jsonl
+    14	)
+    15	from jsonldb.jsonldf import (
+    16	    save_jsonldf, load_jsonldf, update_jsonldf, select_jsonldf, delete_jsonldf
+    17	)
+    18	import jsonldb.jsonlfile as jsonlfile
+    19	
+    20	from .vercontrol import init_folder, commit as vercontrol_commit, revert as vercontrol_revert, list_version, is_versioned
+    21	
+    22	class FolderDB:
+    23	    """
+    24	    A simple file-based database that stores data in JSONL format.
+    25	    Each table is stored in a separate JSONL file.
+    26	    """
+    27	    
+    28	    # =============== Core/Initialization ===============
+    29	    def __init__(self, folder_path: str,hierarchy_depth: int = None):
+    30	        """
+    31	        Initialize the database.
+    32	        
+    33	        Args:
+    34	            folder_path: Path to the folder where the database files will be stored
+    35	            
+    36	        Raises:
+    37	            FileNotFoundError: If the folder doesn't exist
+    38	        """
+    39	        self.folder_path = folder_path
+    40	        if not os.path.exists(folder_path):
+    41	            raise FileNotFoundError(f"Folder not found: {folder_path}")
+    42	
+    43	        self.use_hierarchy = False
+    44	        self.delimiter = '.'
+    45	
+    46	        # Initialize all paths first
+    47	        self.hmeta_path = os.path.join(folder_path, "h.meta")
+    48	        self.dbmeta_path = os.path.join(folder_path, "db.meta")
+    49	        self.configmeta_path = os.path.join(folder_path, "config.meta")
+    50	        self.invalid_tickers_path = os.path.join(folder_path, ".invalid_tickers")
+    51	
+    52	        if os.path.exists(self.hmeta_path):
+    53	            hmeta = select_jsonl(self.hmeta_path)
+    54	            self.use_hierarchy = hmeta["use_hierarchy"]
+    55	            self.delimiter = hmeta["delimiter"]
+    56	            self.hierarchy_depth = hmeta["hierarchy_depth"]
+    57	
+    58	            if hierarchy_depth is not None and self.hierarchy_depth != hierarchy_depth: 
+    59	                #current hierarchy depth is not the same as the one provided, so we need to lint the hierarchy
+    60	                self.lint_hierarchy(hierarchy_depth)
+    61	        else:
+    62	            #no h.meta file found, so we need to build it
+    63	            if hierarchy_depth is not None:
+    64	                self.use_hierarchy = True 
+    65	                self.hierarchy_depth = hierarchy_depth
+    66	                self.lint_hierarchy(hierarchy_depth)
+    67	
+    68	        if os.path.exists(self.configmeta_path):
+    69	            config_meta = select_jsonl(self.configmeta_path) 
+    70	            if config_meta:
+    71	               if "timespec" in config_meta:
+    72	                #    print(f"Using timespec: {config_meta['timespec']}")
+    73	                   jsonlfile.TIME_SPEC = config_meta["timespec"]
+    74	
+    75	
+    76	        # Only rebuild db.meta if it doesn't exist or the folder has been
+    77	        # modified externally.  Writes already call update_dbmeta()
+    78	        # incrementally, so db.meta stays in sync during normal operation.
+    79	        if os.path.exists(self.dbmeta_path):
+    80	            dbmeta_mtime = os.path.getmtime(self.dbmeta_path)
+    81	            folder_mtime = os.path.getmtime(self.folder_path)
+    82	            if folder_mtime > dbmeta_mtime:
+    83	                self.build_dbmeta()
+    84	        else:
+    85	            self.build_dbmeta()
+    86	
+    87	        # Only rewrite config.meta if it doesn't exist or timespec changed
+    88	        # Note: config.meta stores {"timespec": value} as a flat JSONL record
+    89	        # select_jsonl returns {"timespec": value} where "timespec" is the linekey
+    90	        if os.path.exists(self.configmeta_path):
+    91	            config_meta = select_jsonl(self.configmeta_path)
+    92	            if not config_meta or config_meta.get("timespec") != jsonlfile.TIME_SPEC:
+    93	                self.build_configmeta()
+    94	        else:
+    95	            self.build_configmeta()
+    96	
+    97	
+    98	   
+    99	
+   100	    def build_hmeta(self) -> None:
+   101	        """
+   102	        Save the folder information to a file.
+   103	        """
+   104	        if self.use_hierarchy:
+   105	            hierachy_info= {
+   106	                "use_hierarchy": self.use_hierarchy,
+   107	                "delimiter": self.delimiter,
+   108	                "hierarchy_depth": self.hierarchy_depth
+   109	            }
+   110	            save_jsonl(self.hmeta_path, hierachy_info)
+   111	
+   112	
+   113	    def build_configmeta(self) -> None:
+   114	        """
+   115	        Save the folder information to a file.
+   116	        """
+   117	        config_info = {
+   118	            "timespec": jsonlfile.TIME_SPEC
+   119	        }
+   120	        save_jsonl(self.configmeta_path, config_info)
+   121	
+   122	
+   123	    def validate_name(self, name: str) -> bool:
+   124	        """
+   125	        Validate a file name according to the current mode.
+   126	        
+   127	        Args:
+   128	            name: Name of the file to validate
+   129	            
+   130	        Returns:
+   131	            bool: True if the name is valid, False otherwise
+   132	        """
+   133	        if not self.use_hierarchy:
+   134	            return True
+   135	            
+   136	        # Remove .jsonl extension if present
+   137	        if name.endswith('.jsonl'):
+   138	            name = name[:-6]
+   139	            
+   140	        # Count delimiters
+   141	        delimiter_count = name.count(self.delimiter)
+   142	        
+   143	        # In hierarchy mode, name must contain exactly hierarchy_depth-1 delimiters
+   144	        # e.g., for depth=3: "users.level1.level2" has 2 delimiters
+   145	        return delimiter_count >= self.hierarchy_depth - 1
+   146	
+   147	
+   148	    def __str__(self) -> str:
+   149	        """Return a string representation of the database."""
+   150	        result = f"FolderDB at {self.folder_path}\n"
+   151	        result += "-" * 50 + "\n"
+   152	        
+   153	        # Get metadata
+   154	        if os.path.exists(self.dbmeta_path):
+   155	            metadata = select_jsonl(self.dbmeta_path)
+   156	            result += f"Found {len(metadata)} JSONL files\n\n"
+   157	            
+   158	            for name, info in metadata.items():
+   159	                result += f"{name}:\n"
+   160	                result += f"  Size: {info['size']} bytes\n"
+   161	                result += f"  Count: {info['count']}\n"
+   162	                result += f"  Key range: {info['min_index']} to {info['max_index']}\n"
+   163	                result += f"  Linted: {info['linted']}\n\n"
+   164	        
+   165	        return result
+   166	    
+   167	    def __repr__(self) -> str:
+   168	        return self.__str__()
+   169	
+   170	    # =============== File Path Management ===============
+   171	
+   172	    def _get_hierarchy_path(self, name: str) -> str:
+   173	        """
+   174	        Get the hierarchical path for a file.
+   175	        
+   176	        Args:
+   177	            name: Name of the file (with or without .jsonl extension)
+   178	            
+   179	        Returns:
+   180	            str: Full path to the directory where the file should be stored
+   181	        """
+   182	        if self.use_hierarchy:
+   183	            # Take first hierarchy_depth parts for the path
+   184	            parts = name.split(self.delimiter)[:self.hierarchy_depth]
+   185	            return os.path.join(self.folder_path, *parts)
+   186	        return self.folder_path
+   187	
+   188	
+   189	    def create_folder(self, folder_path: str) -> None:
+   190	        if not os.path.exists(folder_path):
+   191	            os.makedirs(folder_path, exist_ok=True)
+   192	
+   193	    def _get_file_path(self, name: str) -> str:
+   194	        """Get the full path for a JSONL file (read-only, no folder creation)"""
+   195	        if self.use_hierarchy and not self.validate_name(name):
+   196	            raise ValueError(f"Invalid hierarchical name '{name}'. Name must contain exactly {self.hierarchy_depth-1} '{self.delimiter}' delimiters")
+   197	        folder_path = self._get_hierarchy_path(name)
+   198	        if name.endswith('.jsonl'):
+   199	            return os.path.join(folder_path, name)
+   200	        return os.path.join(folder_path, f"{name}.jsonl")
+   201	
+   202	    def _get_or_create_file_path(self, name: str) -> str:
+   203	        """Get the full path for a JSONL file, creating folders as needed (for writes)"""
+   204	        if self.use_hierarchy and not self.validate_name(name):
+   205	            raise ValueError(f"Invalid hierarchical name '{name}'. Name must contain exactly {self.hierarchy_depth-1} '{self.delimiter}' delimiters")
+   206	
+   207	        folder_path = self._get_hierarchy_path(name)
+   208	        self.create_folder(folder_path) #create the folder if it doesn't exist
+   209	
+   210	        if name.endswith('.jsonl'):
+   211	            return os.path.join(folder_path, name)
+   212	        return os.path.join(folder_path, f"{name}.jsonl")
+   213	    
+   214	    def _get_file_name(self, name: str) -> str:
+   215	        """Get the name of a JSONL file"""
+   216	        if name.endswith('.jsonl'):
+   217	            return name
+   218	        return f"{name}.jsonl"
+   219	    
+   220	
+   221	    
+   222	    def get_file_list(self) -> List[str]:
+   223	        """
+   224	        Get a list of all JSONL file names in the database without the .jsonl extension.
+   225	        If use_hierarchy is True, it will search through subfolders and return
+   226	        paths relative to the root folder with the specified delimiter.
+   227	        
+   228	        Returns:
+   229	            List of file names (without .jsonl extension). If use_hierarchy is True,
+   230	            names will include the full hierarchical path using the specified delimiter.
+   231	        """
+   232	        if self.use_hierarchy:
+   233	            result = []
+   234	            
+   235	            for root, dirs, files in os.walk(self.folder_path, topdown=True):
+   236	                # Skip hidden/system directories (starting with '.')
+   237	                dirs[:] = [d for d in dirs if not d.startswith('.')]
+   238	                # Skip .invalid_tickers folder
+   239	                if '.invalid_tickers' in root:  # this is important to skip the .invalid_tickers folder
+   240	                    continue
+   241	                # Add all JSONL files in this directory
+   242	                for file in files:
+   243	                    if file.endswith('.jsonl'):
+   244	                        name = os.path.splitext(file)[0]
+   245	                        result.append(name)
+   246	                
+   247	            return result
+   248	        else:
+   249	            # Original behavior for non-hierarchical mode - exclude .invalid_tickers
+   250	            jsonl_files = []
+   251	            for f in os.listdir(self.folder_path):
+   252	                if f.endswith('.jsonl') and f != '.invalid_tickers':
+   253	                    jsonl_files.append(f)
+   254	            return [os.path.splitext(f)[0] for f in jsonl_files]
+   255	        
+   256	    def search_file_list(self, regex: str) -> List[str]:
+   257	        """
+   258	        Search for file names that match a regular expression pattern.
+   259	        
+   260	        Args:
+   261	            regex: Regular expression pattern to match against file names
+   262	            
+   263	        Returns:
+   264	            List of file names that match the regex pattern
+   265	        """
+   266	        import re
+   267	        
+   268	        # Get all file names
+   269	        all_files = self.get_file_list()
+   270	        
+   271	        # Filter files that match the regex pattern
+   272	        pattern = re.compile(regex)
+   273	        matching_files = [f for f in all_files if pattern.search(f)]
+   274	        
+   275	        return matching_files
+   276	
+   277	    # =============== DataFrame Operations ===============
+   278	    def overwrite_df(self, name: str, df: pd.DataFrame) -> None:
+   279	        file_path = self._get_or_create_file_path(name)
+   280	        if os.path.exists(file_path):
+   281	           os.remove(file_path)
+   282	      
+   283	        save_jsonldf(file_path, df)
+   284	        self.update_dbmeta(self._get_file_name(name))
+   285	
+   286	    def overwrite_dfs(self, dict_dfs: Dict[Any, pd.DataFrame]) -> None:
+   287	        """
+   288	        Update or insert multiple DataFrames into JSONL files.
+   289	        
+   290	        Args:
+   291	            dict_dfs: Dictionary mapping file names to DataFrames
+   292	        """
+   293	        for name, df in dict_dfs.items():
+   294	            self.overwrite_df(name, df)
+   295	
+   296	    def upsert_df(self, name: str, df: pd.DataFrame) -> None:
+   297	        """
+   298	        Update or insert a DataFrame into a JSONL file.
+   299	
+   300	        Args:
+   301	            name: Name of the JSONL file
+   302	            df: DataFrame to save/update
+   303	        """
+   304	        file_path = self._get_or_create_file_path(name)
+   305	        if os.path.exists(file_path):
+   306	            update_jsonldf(file_path, df)
+   307	        else:
+   308	            save_jsonldf(file_path, df)
+   309	        
+   310	        self.update_dbmeta(self._get_file_name(name))
+   311	
+   312	    def upsert_dfs(self, dict_dfs: Dict[Any, pd.DataFrame]) -> None:
+   313	        """
+   314	        Update or insert multiple DataFrames into JSONL files.
+   315	        
+   316	        Args:
+   317	            dict_dfs: Dictionary mapping file names to DataFrames
+   318	        """
+   319	        for name, df in dict_dfs.items():
+   320	            self.upsert_df(name, df)
+   321	
+   322	    def get_df(self, names: List[str]=None, lower_key: Optional[Any] = None, upper_key: Optional[Any] = None,auto_deserialize: bool = True) -> Dict[str, pd.DataFrame]:
+   323	        """
+   324	        Get DataFrames from multiple JSONL files within a key range.
+   325	        
+   326	        Args:
+   327	            names: List of JSONL file names
+   328	            lower_key: Lower bound of the key range
+   329	            upper_key: Upper bound of the key range
+   330	            auto_deserialize: Whether to automatically deserialize datetime keys
+   331	
+   332	        Returns:
+   333	            Dictionary mapping file names to selected DataFrames
+   334	        """
+   335	        if names is None:
+   336	            names = self.get_file_list()
+   337	
+   338	        result = {}
+   339	        for name in names:
+   340	            file_path = self._get_file_path(name)
+   341	            if os.path.exists(file_path):
+   342	                result[name] = select_jsonldf(file_path, lower_key, upper_key, auto_deserialize)
+   343	            else:
+   344	                print(f"File {name} not found")
+   345	        return result
+   346	
+   347	    # =============== Dictionary Operations ===============
+   348	    def overwrite_dict(self, name: str, data_dict: Dict[Any, Dict[str, Any]]) -> None:
+   349	        file_path = self._get_or_create_file_path(name)
+   350	        if os.path.exists(file_path):
+   351	           os.remove(file_path)
+   352	      
+   353	        save_jsonl(file_path, data_dict)
+   354	        self.update_dbmeta(self._get_file_name(name))
+   355	
+   356	    def overwrite_dicts(self, dict_dicts: Dict[Any, Dict[str, Dict[str, Any]]]) -> None:
+   357	        """
+   358	        Update or insert multiple DataFrames into JSONL files.
+   359	        
+   360	        Args:
+   361	            dict_dfs: Dictionary mapping file names to DataFrames
+   362	        """
+   363	        for name, data_dict in dict_dicts.items():
+   364	            self.overwrite_dict(name, data_dict)
+   365	
+   366	    def upsert_dict(self, name: str, data_dict: Dict[Any, Dict[str, Any]]) -> None:
+   367	        """
+   368	        Update or insert a dictionary into a JSONL file.
+   369	        
+   370	        Args:
+   371	            name: Name of the JSONL file
+   372	            data_dict: Dictionary to save/update
+   373	        """
+   374	        file_path = self._get_or_create_file_path(name)
+   375	        if os.path.exists(file_path):
+   376	            update_jsonl(file_path, data_dict)
+   377	        else:
+   378	            save_jsonl(file_path, data_dict)
+   379	
+   380	        self.update_dbmeta(self._get_file_name(name))
+   381	
+   382	    def upsert_dicts(self, dict_dicts: Dict[Any, Dict[str, Dict[str, Any]]]) -> None:
+   383	        """
+   384	        Update or insert multiple dictionaries into JSONL files.
+   385	        
+   386	        Args:
+   387	            dict_dicts: Dictionary mapping file names to data dictionaries
+   388	        """
+   389	        for name, data_dict in dict_dicts.items():
+   390	            self.upsert_dict(name, data_dict)
+   391	
+   392	    def get_dict(self, names: List[str]=None, lower_key: Optional[Any] = None, upper_key: Optional[Any] = None,auto_deserialize: bool = True) -> Dict[str, Dict[str, Dict[str, Any]]]:
+   393	        """
+   394	        Get dictionaries from multiple JSONL files within a key range.
+   395	        
+   396	        Args:
+   397	            names: List of JSONL file names
+   398	            lower_key: Lower bound of the key range
+   399	            upper_key: Upper bound of the key range
+   400	            auto_deserialize: Whether to automatically deserialize datetime keys
+   401	
+   402	        Returns:
+   403	            Dictionary mapping file names to selected data dictionaries
+   404	        """
+   405	        if names is None:
+   406	            names = self.get_file_list()
+   407	
+   408	        if not isinstance(names, list):
+   409	            names = [names]
+   410	
+   411	        result = {}
+   412	        for name in names:
+   413	            file_path = self._get_file_path(name)
+   414	            if os.path.exists(file_path):
+   415	                result[name] = select_jsonl(file_path, lower_key, upper_key, auto_deserialize)
+   416	        return result
+   417	
+   418	    # =============== Delete Operations ===============
+   419	    def clear_folder(self,force=False) -> None:
+   420	        """
+   421	        Clear all JSONL files in the database folder.
+   422	        """
+   423	        if not force:
+   424	            print("WARNING: This will delete all data in the database folder. Call clear_folder with force=True to proceed.")
+   425	            return
+   426	        for file in os.listdir(self.folder_path):
+   427	            if file.endswith(('.idx', '.jsonl', '.meta')):
+   428	                os.remove(os.path.join(self.folder_path, file))
+   429	        self.build_dbmeta()
+   430	
+   431	    def delete_file(self, name: str) -> None:
+   432	        """
+   433	        Delete a JSONL file.
+   434	
+   435	        Args:
+   436	            name: Name of the JSONL file
+   437	        """
+   438	        file_path = self._get_or_create_file_path(name)
+   439	        if os.path.exists(file_path):
+   440	            os.remove(file_path)
+   441	            os.remove(os.path.join(file_path + '.idx'))
+   442	            if self.use_hierarchy:
+   443	                self.delete_empty_folders()
+   444	
+   445	    def delete_file_keys(self, name: str, keys: List[str]) -> None:
+   446	        """
+   447	        Delete specific keys from a JSONL file.
+   448	
+   449	        Args:
+   450	            name: Name of the JSONL file
+   451	            keys: List of keys to delete
+   452	        """
+   453	        file_path = self._get_or_create_file_path(name)
+   454	        if os.path.exists(file_path):
+   455	            delete_jsonl(file_path, keys)
+   456	            self.update_dbmeta(self._get_file_name(name))
+   457	
+   458	    def delete_file_range(self, name: str, lower_key: Any, upper_key: Any) -> None:
+   459	        """
+   460	        Delete all keys within a range from a JSONL file.
+   461	
+   462	        Args:
+   463	            name: Name of the JSONL file
+   464	            lower_key: Lower bound of the key range
+   465	            upper_key: Upper bound of the key range
+   466	        """
+   467	        file_path = self._get_or_create_file_path(name)
+   468	        if not os.path.exists(file_path):
+   469	            return
+   470	            
+   471	        # Get all keys from the index
+   472	        index_path = file_path + '.idx'
+   473	        if not os.path.exists(index_path):
+   474	            build_jsonl_index(file_path)
+   475	            
+   476	        # Read the index file
+   477	        with open(index_path, 'rb') as f:
+   478	            index = orjson.loads(f.read())
+   479	            
+   480	        # Filter keys within range
+   481	        keys_to_delete = [
+   482	            key for key in index.keys()
+   483	            if str(lower_key) <= key <= str(upper_key)
+   484	        ]
+   485	        
+   486	        if keys_to_delete:
+   487	            delete_jsonl(file_path, keys_to_delete)
+   488	
+   489	    def delete_range(self, names: List[str], lower_key: Any, upper_key: Any) -> None:
+   490	        """
+   491	        Delete all keys within a range from multiple JSONL files.
+   492	        
+   493	        Args:
+   494	            names: List of JSONL file names
+   495	            lower_key: Lower bound of the key range
+   496	            upper_key: Upper bound of the key range
+   497	        """
+   498	        for name in names:
+   499	            self.delete_file_range(name, lower_key, upper_key)
+   500	
+   501	    # =============== Metadata Management ===============
+   502	    def build_dbmeta(self) -> None:
+   503	        """
+   504	        Build or update the db.meta file with information about all JSONL files.
+   505	        
+   506	        The db.meta file contains metadata for each JSONL file including:
+   507	        - name: filename without .jsonl extension
+   508	        - min_index: smallest index from the index file
+   509	        - max_index: biggest index from the index file
+   510	        - size: size of the file in bytes
+   511	        - lint_time: ISO format timestamp of last lint
+   512	        - linted: boolean indicating if file has been linted
+   513	        """
+   514	        # Get all JSONL files
+   515	        jsonl_files = self.get_file_list()
+   516	        
+   517	        if not jsonl_files:
+   518	            # If no JSONL files are found, create an empty db.meta file
+   519	            with open(self.dbmeta_path, 'w', encoding='utf-8') as f:
+   520	                f.write('\n')
+   521	            return
+   522	            
+   523	        # Initialize metadata dictionary
+   524	        metadata = {}
+   525	        
+   526	        # Process each JSONL file
+   527	        for name in jsonl_files:
+   528	            # print(name)
+   529	            file_path = self._get_file_path(name)
+   530	            index_file = file_path + '.idx'
+   531	            
+   532	            # Build index if it doesn't exist
+   533	            if not os.path.exists(index_file):
+   534	                build_jsonl_index(file_path)
+   535	            
+   536	            # Get index range from index file
+   537	            min_index = None
+   538	            max_index = None
+   539	            count = 0
+   540	            
+
+exec
+/usr/bin/zsh -lc 'rg -n "delete_file|delete_file_range|clear_folder|update_jsonl|serialize_linekey|select_jsonl|lint_jsonl" unit_tests jsonldb -S' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+jsonldb/jsonlfile.py:170:def lint_jsonl(jsonl_file_path: str, force: bool = False) -> bool:
+jsonldb/jsonlfile.py:247:def serialize_linekey(linekey: LineKey) -> str:
+jsonldb/jsonlfile.py:263:def deserialize_linekey(linekey_str: str, default_format: Optional[str] = None) -> LineKey:
+jsonldb/jsonlfile.py:368:            serialized_key = serialize_linekey(linekey)
+jsonldb/jsonlfile.py:423:                                actual_key = deserialize_linekey(linekey, "datetime")
+jsonldb/jsonlfile.py:438:def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, upper_key: Optional[LineKey] = None, auto_deserialize: bool = True) -> DataDict:
+jsonldb/jsonlfile.py:484:        lower_key = serialize_linekey(lower_key)
+jsonldb/jsonlfile.py:485:        upper_key = serialize_linekey(upper_key)
+jsonldb/jsonlfile.py:509:                    actual_key = deserialize_linekey(linekey, "datetime")
+jsonldb/jsonlfile.py:534:        linekey = serialize_linekey(linekey)
+jsonldb/jsonlfile.py:559:                    actual_key = deserialize_linekey(linekey, "datetime")
+jsonldb/jsonlfile.py:572:def update_jsonl(jsonl_file_path: str, update_dict: DataDict) -> None:
+jsonldb/jsonlfile.py:604:                linekey = serialize_linekey(linekey)
+jsonldb/jsonlfile.py:662:        linekeys = [serialize_linekey(key) for key in linekeys]
+jsonldb/jsonlfile.py:664:        # Use regular file operations like update_jsonl
+jsonldb/visual.py:16:from jsonldb.jsonlfile import load_jsonl, select_jsonl
+jsonldb/vercontrol.py:8:from jsonldb.jsonlfile import lint_jsonl
+jsonldb/folderdb.py.tmp:12:    save_jsonl, load_jsonl, select_jsonl, update_jsonl, delete_jsonl,
+jsonldb/folderdb.py.tmp:13:    lint_jsonl, build_jsonl_index, select_line_jsonl
+jsonldb/folderdb.py.tmp:16:    save_jsonldf, load_jsonldf, update_jsonldf, select_jsonldf, delete_jsonldf
+jsonldb/folderdb.py.tmp:55:            hmeta = select_jsonl(self.hmeta_path)
+jsonldb/folderdb.py.tmp:71:            config_meta = select_jsonl(self.configmeta_path) 
+jsonldb/folderdb.py.tmp:139:            metadata = select_jsonl(self.dbmeta_path)
+jsonldb/folderdb.py.tmp:281:            update_jsonldf(file_path, df)
+jsonldb/folderdb.py.tmp:317:                result[name] = select_jsonldf(file_path, lower_key, upper_key, auto_deserialize)
+jsonldb/folderdb.py.tmp:351:            update_jsonl(file_path, data_dict)
+jsonldb/folderdb.py.tmp:390:                result[name] = select_jsonl(file_path, lower_key, upper_key, auto_deserialize)
+jsonldb/folderdb.py.tmp:394:    def clear_folder(self,force=False) -> None:
+jsonldb/folderdb.py.tmp:399:            print("WARNING: This will delete all data in the database folder. Call clear_folder with force=True to proceed.")
+jsonldb/folderdb.py.tmp:406:    def delete_file(self, name: str) -> None:
+jsonldb/folderdb.py.tmp:420:    def delete_file_keys(self, name: str, keys: List[str]) -> None:
+jsonldb/folderdb.py.tmp:433:    def delete_file_range(self, name: str, lower_key: Any, upper_key: Any) -> None:
+jsonldb/folderdb.py.tmp:474:            self.delete_file_range(name, lower_key, upper_key)
+jsonldb/folderdb.py.tmp:611:        update_jsonl(self.dbmeta_path, {meta_key: metadata[meta_key]})
+jsonldb/folderdb.py.tmp:619:        metadata = select_jsonl(meta_file)
+jsonldb/folderdb.py.tmp:628:            exist_flag = lint_jsonl(file_path)
+jsonldb/folderdb.py.tmp:639:        lint_jsonl(self.dbmeta_path)
+jsonldb/folderdb.py.tmp:643:            lint_jsonl(self.hmeta_path)
+jsonldb/folderdb.py:12:    save_jsonl, load_jsonl, select_jsonl, update_jsonl, delete_jsonl,
+jsonldb/folderdb.py:13:    lint_jsonl, build_jsonl_index, select_line_jsonl
+jsonldb/folderdb.py:16:    save_jsonldf, load_jsonldf, update_jsonldf, select_jsonldf, delete_jsonldf
+jsonldb/folderdb.py:53:            hmeta = select_jsonl(self.hmeta_path)
+jsonldb/folderdb.py:69:            config_meta = select_jsonl(self.configmeta_path) 
+jsonldb/folderdb.py:89:        # select_jsonl returns {"timespec": value} where "timespec" is the linekey
+jsonldb/folderdb.py:91:            config_meta = select_jsonl(self.configmeta_path)
+jsonldb/folderdb.py:155:            metadata = select_jsonl(self.dbmeta_path)
+jsonldb/folderdb.py:306:            update_jsonldf(file_path, df)
+jsonldb/folderdb.py:342:                result[name] = select_jsonldf(file_path, lower_key, upper_key, auto_deserialize)
+jsonldb/folderdb.py:376:            update_jsonl(file_path, data_dict)
+jsonldb/folderdb.py:415:                result[name] = select_jsonl(file_path, lower_key, upper_key, auto_deserialize)
+jsonldb/folderdb.py:419:    def clear_folder(self,force=False) -> None:
+jsonldb/folderdb.py:424:            print("WARNING: This will delete all data in the database folder. Call clear_folder with force=True to proceed.")
+jsonldb/folderdb.py:431:    def delete_file(self, name: str) -> None:
+jsonldb/folderdb.py:445:    def delete_file_keys(self, name: str, keys: List[str]) -> None:
+jsonldb/folderdb.py:458:    def delete_file_range(self, name: str, lower_key: Any, upper_key: Any) -> None:
+jsonldb/folderdb.py:499:            self.delete_file_range(name, lower_key, upper_key)
+jsonldb/folderdb.py:636:        update_jsonl(self.dbmeta_path, {meta_key: metadata[meta_key]})
+jsonldb/folderdb.py:650:        metadata = select_jsonl(meta_file)
+jsonldb/folderdb.py:658:            exist_flag = lint_jsonl(file_path, force=force)
+jsonldb/folderdb.py:689:        lint_jsonl(self.dbmeta_path, force=force)
+jsonldb/folderdb.py:692:            lint_jsonl(self.hmeta_path, force=force)
+unit_tests/test_jsonldf.py:8:    save_jsonldf, load_jsonldf, update_jsonldf, 
+unit_tests/test_jsonldf.py:9:    delete_jsonldf, select_jsonldf, lint_jsonldf
+unit_tests/test_jsonldf.py:67:def test_update_jsonldf(test_file, sample_df):
+unit_tests/test_jsonldf.py:78:    update_jsonldf(test_file, update_df)
+unit_tests/test_jsonldf.py:107:def test_select_jsonldf_with_range(test_file, sample_df):
+unit_tests/test_jsonldf.py:113:    selected = select_jsonldf(test_file, lower_key="key1", upper_key="key2")
+unit_tests/test_jsonldf.py:125:def test_select_jsonldf_with_lower_bound(test_file, sample_df):
+unit_tests/test_jsonldf.py:131:    selected = select_jsonldf(test_file, lower_key="key2")
+unit_tests/test_jsonldf.py:143:def test_select_jsonldf_with_upper_bound(test_file, sample_df):
+unit_tests/test_jsonldf.py:149:    selected = select_jsonldf(test_file, upper_key="key2")
+unit_tests/test_jsonldf.py:161:def test_select_jsonldf_all_records(test_file, sample_df):
+unit_tests/test_jsonldf.py:167:    selected = select_jsonldf(test_file)
+unit_tests/test_jsonldf.py:177:def test_select_jsonldf_empty_range(test_file, sample_df):
+unit_tests/test_jsonldf.py:183:    selected = select_jsonldf(test_file, lower_key="key4", upper_key="key5")
+unit_tests/test_jsonldf.py:192:def test_select_jsonldf_single_record(test_file, sample_df):
+unit_tests/test_jsonldf.py:198:    selected = select_jsonldf(test_file, lower_key="key2", upper_key="key2")
+unit_tests/test_jsonldf.py:209:def test_select_jsonldf_with_datetime_keys(test_file, datetime_df):
+unit_tests/test_jsonldf.py:216:    selected = select_jsonldf(
+unit_tests/test_jsonldf.py:232:def test_lint_jsonldf(test_file, sample_df):
+unit_tests/test_jsonldf.py:238:    result = lint_jsonldf(test_file)
+unit_tests/test_folderdb.py:7:from jsonldb.jsonlfile import select_jsonl
+unit_tests/test_folderdb.py:214:def test_delete_file(test_folder, sample_dict):
+unit_tests/test_folderdb.py:222:    db.delete_file_keys("test1", ["key1", "key2"])
+unit_tests/test_folderdb.py:239:    db.delete_file_range("test1", "key1", "key2")
+unit_tests/test_folderdb.py:298:    metadata = select_jsonl(meta_file)
+unit_tests/test_folderdb.py:319:    metadata = select_jsonl(meta_file)
+unit_tests/test_folderdb.py:337:    metadata = select_jsonl(meta_file)
+unit_tests/test_folderdb.py:359:    metadata = select_jsonl(meta_file)
+unit_tests/test_folderdb.py:401:    db.delete_file("org.hr.employees")
+unit_tests/test_folderdb.py:509:    metadata = select_jsonl(os.path.join(db_folder, "db.meta"))
+unit_tests/test_folderdb.py:514:    """Test that lint_db passes force through to lint_jsonl"""
+jsonldb/jsonldf.py:9:from jsonldb.jsonlfile import save_jsonl, load_jsonl, select_jsonl, update_jsonl, delete_jsonl, build_jsonl_index, lint_jsonl
+jsonldb/jsonldf.py:51:def update_jsonldf(jsonl_file_path: str, df: pd.DataFrame) -> None:
+jsonldb/jsonldf.py:62:    update_jsonl(jsonl_file_path, updates_dict)
+jsonldb/jsonldf.py:64:def select_jsonldf(
+jsonldb/jsonldf.py:86:    records = select_jsonl(
+jsonldb/jsonldf.py:109:def lint_jsonldf(jsonl_file_path: str) -> None:
+jsonldb/jsonldf.py:115:    lint_jsonl(jsonl_file_path) 
+unit_tests/test_jsonlfile.py:11:    save_jsonl, load_jsonl, update_jsonl, delete_jsonl, 
+unit_tests/test_jsonlfile.py:12:    lint_jsonl, build_jsonl_index, select_jsonl
+unit_tests/test_jsonlfile.py:53:    update_jsonl(test_file, updates)
+unit_tests/test_jsonlfile.py:73:    update_jsonl(test_file, updates)
+unit_tests/test_jsonlfile.py:89:    update_jsonl(test_file, updates)
+unit_tests/test_jsonlfile.py:107:    update_jsonl(test_file, updates)
+unit_tests/test_jsonlfile.py:172:    """Test that lint_jsonl properly sorts string keys"""
+unit_tests/test_jsonlfile.py:182:    lint_jsonl(test_file)
+unit_tests/test_jsonlfile.py:191:    """Test that lint_jsonl properly sorts datetime keys"""
+unit_tests/test_jsonlfile.py:202:    lint_jsonl(test_file)
+unit_tests/test_jsonlfile.py:211:    """Test that lint_jsonl removes space-marked deleted records"""
+unit_tests/test_jsonlfile.py:218:    lint_jsonl(test_file)
+unit_tests/test_jsonlfile.py:226:    """Test that lint_jsonl handles empty files correctly"""
+unit_tests/test_jsonlfile.py:231:    lint_jsonl(test_file)
+unit_tests/test_jsonlfile.py:238:    """Test that lint_jsonl handles mixed key types correctly"""
+unit_tests/test_jsonlfile.py:249:    lint_jsonl(test_file)
+unit_tests/test_jsonlfile.py:266:    selected = select_jsonl(test_file)
+unit_tests/test_jsonlfile.py:277:    selected = select_jsonl(test_file, lower_key="key2")
+unit_tests/test_jsonlfile.py:290:    selected = select_jsonl(test_file, upper_key="key2")
+unit_tests/test_jsonlfile.py:303:    selected = select_jsonl(test_file, lower_key="key1", upper_key="key2")
+unit_tests/test_jsonlfile.py:317:    selected = select_jsonl(
+unit_tests/test_jsonlfile.py:334:    selected = select_jsonl(test_file, lower_key="key4", upper_key="key5")
+unit_tests/test_jsonlfile.py:344:    selected = select_jsonl(test_file, lower_key="key2", upper_key="key2")
+unit_tests/test_jsonlfile.py:367:    """Test that select_jsonl uses bisect, not numpy for range selection"""
+unit_tests/test_jsonlfile.py:372:        raise AssertionError("np.array should not be called during select_jsonl")
+unit_tests/test_jsonlfile.py:375:        selected = select_jsonl(test_file, lower_key="key1", upper_key="key2")
+unit_tests/test_jsonlfile.py:381:    """Test that lint_jsonl skips rewrite for already sorted, compact files"""
+unit_tests/test_jsonlfile.py:384:    lint_jsonl(test_file)  # First lint to ensure clean state
+unit_tests/test_jsonlfile.py:391:    result = lint_jsonl(test_file)
+unit_tests/test_jsonlfile.py:405:    lint_jsonl(test_file)
+unit_tests/test_jsonlfile.py:417:    """Test lint_jsonl returns False for non-existent file"""
+unit_tests/test_jsonlfile.py:418:    result = lint_jsonl("/nonexistent/path/test.jsonl")
+unit_tests/test_jsonlfile.py:444:    """Test that lint_jsonl skips mmap scan when index is fresh"""
+unit_tests/test_jsonlfile.py:446:    lint_jsonl(test_file, force=True)  # Ensure clean state
+unit_tests/test_jsonlfile.py:452:    result = lint_jsonl(test_file)
+unit_tests/test_jsonlfile.py:474:    lint_jsonl(test_file, force=True)
+unit_tests/test_jsonlfile.py:492:    lint_jsonl(test_file, force=False)
+unit_tests/test_jsonlfile.py:509:    result = lint_jsonl(test_file)
+unit_tests/test_jsonlfile.py:526:    result = lint_jsonl(test_file)
+unit_tests/test_jsonlfile.py:534:    """Test that lint_jsonl handles a stale index gracefully"""
+unit_tests/test_jsonlfile.py:542:    result = lint_jsonl(test_file)
+unit_tests/test_jsonlfile.py:562:    result = lint_jsonl(test_file)
+
+codex
+Specdev: checking hierarchy metadata behavior and existing tests around delete/clear operations, since those are the most likely places for structural design gaps.
+exec
+/usr/bin/zsh -lc "nl -ba unit_tests/test_folderdb.py | sed -n '1,560p'" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+     1	import pytest
+     2	import pandas as pd
+     3	import os
+     4	from datetime import datetime, timedelta
+     5	from jsonldb import FolderDB
+     6	import json
+     7	from jsonldb.jsonlfile import select_jsonl
+     8	
+     9	@pytest.fixture
+    10	def test_folder(tmp_path):
+    11	    """Create a temporary test folder"""
+    12	    return str(tmp_path)
+    13	
+    14	@pytest.fixture
+    15	def sample_df():
+    16	    """Create a sample DataFrame"""
+    17	    return pd.DataFrame({
+    18	        'value': [1, 2, 3]
+    19	    }, index=['key1', 'key2', 'key3'])
+    20	
+    21	@pytest.fixture
+    22	def datetime_df():
+    23	    """Create a DataFrame with datetime keys"""
+    24	    base_time = datetime(2024, 1, 1, 12, 0)
+    25	    return pd.DataFrame({
+    26	        'value': [1, 2, 3]
+    27	    }, index=[
+    28	        base_time,
+    29	        base_time + timedelta(hours=1),
+    30	        base_time + timedelta(hours=2)
+    31	    ])
+    32	
+    33	@pytest.fixture
+    34	def sample_dict():
+    35	    """Create a sample dictionary"""
+    36	    return {
+    37	        'key1': {'value': 1},
+    38	        'key2': {'value': 2},
+    39	        'key3': {'value': 3}
+    40	    }
+    41	
+    42	@pytest.fixture
+    43	def sample_data():
+    44	    """Create sample data for testing."""
+    45	    # Create sample DataFrame
+    46	    df = pd.DataFrame({
+    47	        'name': ['Alice', 'Bob', 'Charlie'],
+    48	        'age': [25, 30, 35],
+    49	        'city': ['New York', 'London', 'Paris']
+    50	    }, index=['user1', 'user2', 'user3'])
+    51	    
+    52	    # Create sample dictionary
+    53	    data_dict = {
+    54	        'prod1': {'name': 'Laptop', 'price': 1000},
+    55	        'prod2': {'name': 'Phone', 'price': 500}
+    56	    }
+    57	    
+    58	    return df, data_dict
+    59	
+    60	@pytest.fixture
+    61	def db_folder(tmp_path):
+    62	    """Create a temporary folder for testing."""
+    63	    folder = tmp_path / "test_db"
+    64	    folder.mkdir()
+    65	    return str(folder)
+    66	
+    67	@pytest.fixture
+    68	def db(db_folder):
+    69	    """Create a FolderDB instance for testing."""
+    70	    return FolderDB(db_folder)
+    71	
+    72	def test_init(test_folder):
+    73	    """Test FolderDB initialization"""
+    74	    # Test with existing folder
+    75	    db = FolderDB(test_folder)
+    76	    assert db.folder_path == test_folder
+    77	    
+    78	    # Test with non-existent folder
+    79	    nonexistent_path = os.path.join(os.path.dirname(test_folder), "nonexistent_folder")
+    80	    if os.path.exists(nonexistent_path):
+    81	        os.rmdir(nonexistent_path)
+    82	    with pytest.raises(FileNotFoundError):
+    83	        FolderDB(nonexistent_path)
+    84	
+    85	def test_upsert_df(test_folder, sample_df):
+    86	    """Test upserting DataFrame"""
+    87	    db = FolderDB(test_folder)
+    88	    
+    89	    # Test creating new file
+    90	    db.upsert_df("test1", sample_df)
+    91	    assert os.path.exists(os.path.join(test_folder, "test1.jsonl"))
+    92	    assert os.path.exists(os.path.join(test_folder, "test1.jsonl.idx"))
+    93	    
+    94	    # Test updating existing file
+    95	    updated_df = pd.DataFrame({
+    96	        'value': [10, 20]
+    97	    }, index=['key1', 'key2'])
+    98	    db.upsert_df("test1", updated_df)
+    99	    
+   100	    # Verify update
+   101	    loaded_df = db.get_df(["test1"])["test1"]
+   102	    assert loaded_df.loc['key1', 'value'] == 10
+   103	    assert loaded_df.loc['key2', 'value'] == 20
+   104	    assert loaded_df.loc['key3', 'value'] == 3
+   105	
+   106	def test_upsert_dfs(test_folder, sample_df, datetime_df):
+   107	    """Test upserting multiple DataFrames"""
+   108	    db = FolderDB(test_folder)
+   109	    
+   110	    # Test creating multiple files
+   111	    dict_dfs = {
+   112	        "test1": sample_df,
+   113	        "test2": datetime_df
+   114	    }
+   115	    db.upsert_dfs(dict_dfs)
+   116	    
+   117	    # Verify files were created
+   118	    assert os.path.exists(os.path.join(test_folder, "test1.jsonl"))
+   119	    assert os.path.exists(os.path.join(test_folder, "test2.jsonl"))
+   120	    
+   121	    # Verify data
+   122	    loaded_dfs = db.get_df(["test1", "test2"])
+   123	    pd.testing.assert_frame_equal(loaded_dfs["test1"], sample_df)
+   124	    pd.testing.assert_frame_equal(loaded_dfs["test2"], datetime_df)
+   125	
+   126	def test_upsert_dict(test_folder, sample_dict):
+   127	    """Test upserting dictionary"""
+   128	    db = FolderDB(test_folder)
+   129	    
+   130	    # Test creating new file
+   131	    db.upsert_dict("test1", sample_dict)
+   132	    assert os.path.exists(os.path.join(test_folder, "test1.jsonl"))
+   133	    assert os.path.exists(os.path.join(test_folder, "test1.jsonl.idx"))
+   134	    
+   135	    # Test updating existing file
+   136	    updated_dict = {
+   137	        'key1': {'value': 10},
+   138	        'key2': {'value': 20}
+   139	    }
+   140	    db.upsert_dict("test1", updated_dict)
+   141	    
+   142	    # Verify update
+   143	    loaded_dict = db.get_dict(["test1"])["test1"]
+   144	    assert loaded_dict['key1']['value'] == 10
+   145	    assert loaded_dict['key2']['value'] == 20
+   146	    assert loaded_dict['key3']['value'] == 3
+   147	
+   148	def test_upsert_dicts(test_folder, sample_dict):
+   149	    """Test upserting multiple dictionaries"""
+   150	    db = FolderDB(test_folder)
+   151	    
+   152	    # Test creating multiple files
+   153	    dict_dicts = {
+   154	        "test1": sample_dict,
+   155	        "test2": {k: {'value': v['value'] * 2} for k, v in sample_dict.items()}
+   156	    }
+   157	    db.upsert_dicts(dict_dicts)
+   158	    
+   159	    # Verify files were created
+   160	    assert os.path.exists(os.path.join(test_folder, "test1.jsonl"))
+   161	    assert os.path.exists(os.path.join(test_folder, "test2.jsonl"))
+   162	    
+   163	    # Verify data
+   164	    loaded_dicts = db.get_dict(["test1", "test2"])
+   165	    assert loaded_dicts["test1"] == sample_dict
+   166	    assert loaded_dicts["test2"] == {k: {'value': v['value'] * 2} for k, v in sample_dict.items()}
+   167	
+   168	def test_get_df(test_folder, sample_df, datetime_df):
+   169	    """Test getting DataFrames"""
+   170	    db = FolderDB(test_folder)
+   171	    
+   172	    # Setup test data
+   173	    db.upsert_df("test1", sample_df)
+   174	    db.upsert_df("test2", datetime_df)
+   175	    
+   176	    # Test getting all records
+   177	    result = db.get_df(["test1", "test2"])
+   178	    pd.testing.assert_frame_equal(result["test1"], sample_df)
+   179	    pd.testing.assert_frame_equal(result["test2"], datetime_df)
+   180	    
+   181	    # Test getting records in range
+   182	    base_time = datetime(2024, 1, 1, 12, 0)
+   183	    result = db.get_df(
+   184	        ["test2"],
+   185	        lower_key=base_time,
+   186	        upper_key=base_time + timedelta(hours=1)
+   187	    )
+   188	    assert len(result["test2"]) == 2
+   189	    assert base_time in result["test2"].index
+   190	    assert base_time + timedelta(hours=1) in result["test2"].index
+   191	
+   192	def test_get_dict(test_folder, sample_dict):
+   193	    """Test getting dictionaries"""
+   194	    db = FolderDB(test_folder)
+   195	    
+   196	    # Setup test data
+   197	    db.upsert_dict("test1", sample_dict)
+   198	    
+   199	    # Test getting all records
+   200	    result = db.get_dict(["test1"])
+   201	    assert result["test1"] == sample_dict
+   202	    
+   203	    # Test getting records in range
+   204	    result = db.get_dict(
+   205	        ["test1"],
+   206	        lower_key="key1",
+   207	        upper_key="key2"
+   208	    )
+   209	    assert len(result["test1"]) == 2
+   210	    assert "key1" in result["test1"]
+   211	    assert "key2" in result["test1"]
+   212	    assert "key3" not in result["test1"]
+   213	
+   214	def test_delete_file(test_folder, sample_dict):
+   215	    """Test deleting specific keys"""
+   216	    db = FolderDB(test_folder)
+   217	    
+   218	    # Setup test data
+   219	    db.upsert_dict("test1", sample_dict)
+   220	    
+   221	    # Delete specific keys
+   222	    db.delete_file_keys("test1", ["key1", "key2"])
+   223	    
+   224	    # Verify deletion
+   225	    result = db.get_dict(["test1"])
+   226	    assert len(result["test1"]) == 1
+   227	    assert "key3" in result["test1"]
+   228	    assert "key1" not in result["test1"]
+   229	    assert "key2" not in result["test1"]
+   230	
+   231	def test__range(test_folder, sample_dict):
+   232	    """Test deleting keys in range"""
+   233	    db = FolderDB(test_folder)
+   234	    
+   235	    # Setup test data
+   236	    db.upsert_dict("test1", sample_dict)
+   237	    
+   238	    # Delete keys in range
+   239	    db.delete_file_range("test1", "key1", "key2")
+   240	    
+   241	    # Verify deletion
+   242	    result = db.get_dict(["test1"])
+   243	    assert len(result["test1"]) == 1
+   244	    assert "key3" in result["test1"]
+   245	    assert "key1" not in result["test1"]
+   246	    assert "key2" not in result["test1"]
+   247	
+   248	def test_delete_range(test_folder, sample_dict):
+   249	    """Test deleting keys in range from multiple files"""
+   250	    db = FolderDB(test_folder)
+   251	    
+   252	    # Setup test data
+   253	    db.upsert_dict("test1", sample_dict)
+   254	    db.upsert_dict("test2", sample_dict)
+   255	    
+   256	    # Delete keys in range from both files
+   257	    db.delete_range(["test1", "test2"], "key1", "key2")
+   258	    
+   259	    # Verify deletion
+   260	    result = db.get_dict(["test1", "test2"])
+   261	    for name in ["test1", "test2"]:
+   262	        assert len(result[name]) == 1
+   263	        assert "key3" in result[name]
+   264	        assert "key1" not in result[name]
+   265	        assert "key2" not in result[name]
+   266	
+   267	def test_str_representation(test_folder, sample_dict):
+   268	    """Test string representation"""
+   269	    db = FolderDB(test_folder)
+   270	    
+   271	    # Setup test data
+   272	    db.upsert_dict("test1", sample_dict)
+   273	    
+   274	    # Get string representation
+   275	    str_rep = str(db)
+   276	    
+   277	    # Verify content
+   278	    assert "FolderDB at" in str_rep
+   279	    assert "Found 1 JSONL files" in str_rep
+   280	    assert "test1:" in str_rep  # Check for name without extension
+   281	
+   282	def test_build_dbmeta(db, sample_data):
+   283	    """Test building the db.meta file."""
+   284	    df, data_dict = sample_data
+   285	    
+   286	    # Add some data to the database
+   287	    db.upsert_df("users", df)
+   288	    db.upsert_dict("products", data_dict)
+   289	    
+   290	    # Build metadata
+   291	    db.build_dbmeta()
+   292	    
+   293	    # Check if db.meta exists
+   294	    meta_file = os.path.join(db.folder_path, "db.meta")
+   295	    assert os.path.exists(meta_file)
+   296	    
+   297	    # Read and verify metadata
+   298	    metadata = select_jsonl(meta_file)
+   299	    
+   300	    # Verify metadata structure
+   301	    assert "users" in metadata
+   302	    assert "products" in metadata
+   303	    assert metadata["users"]["count"] == 3
+   304	    assert metadata["products"]["count"] == 2
+   305	
+   306	def test_update_dbmeta(db, sample_data):
+   307	    """Test updating metadata for a specific file."""
+   308	    df, _ = sample_data
+   309	    
+   310	    # Add data and build initial metadata
+   311	    db.upsert_df("users", df)
+   312	    db.build_dbmeta()
+   313	    
+   314	    # Update metadata for users
+   315	    db.update_dbmeta("users", linted=True)
+   316	    
+   317	    # Verify the update
+   318	    meta_file = os.path.join(db.folder_path, "db.meta")
+   319	    metadata = select_jsonl(meta_file)
+   320	    users_meta = metadata["users"]
+   321	    assert users_meta["linted"] is True
+   322	
+   323	def test_lint_db(db, sample_data):
+   324	    """Test linting database files and updating metadata."""
+   325	    df, data_dict = sample_data
+   326	    
+   327	    # Add data and build initial metadata
+   328	    db.upsert_df("users", df)
+   329	    db.upsert_dict("products", data_dict)
+   330	    db.build_dbmeta()
+   331	    
+   332	    # Lint the database
+   333	    db.lint_db()
+   334	    
+   335	    # Read and verify metadata
+   336	    meta_file = os.path.join(db.folder_path, "db.meta")
+   337	    metadata = select_jsonl(meta_file)
+   338	    
+   339	    # Verify both files are marked as linted
+   340	    assert metadata["users"]["linted"] is True
+   341	    assert metadata["products"]["linted"] is True
+   342	
+   343	def test_metadata_persistence(db, sample_data):
+   344	    """Test that metadata persists between operations."""
+   345	    df, data_dict = sample_data
+   346	    
+   347	    # Initial setup
+   348	    db.upsert_df("users", df)
+   349	    db.upsert_dict("products", data_dict)
+   350	    db.build_dbmeta()
+   351	    
+   352	    # Create a new FolderDB instance
+   353	    new_db = FolderDB(db.folder_path)
+   354	    
+   355	    # Verify metadata is still accessible
+   356	    meta_file = os.path.join(db.folder_path, "db.meta")
+   357	    assert os.path.exists(meta_file)
+   358	    
+   359	    metadata = select_jsonl(meta_file)
+   360	    assert "users" in metadata
+   361	    assert "products" in metadata
+   362	    assert metadata["users"]["count"] == 3
+   363	    assert metadata["products"]["count"] == 2
+   364	
+   365	def test_enable_hierarchy_mode(db_folder):
+   366	    """Test enabling hierarchy mode and its settings."""
+   367	    # Test with hierarchy_depth=3
+   368	    db = FolderDB(db_folder, hierarchy_depth=3)
+   369	    assert db.use_hierarchy is True
+   370	    assert db.delimiter == '.'
+   371	    assert db.hierarchy_depth == 3
+   372	
+   373	    # Test with different hierarchy_depth
+   374	    db2 = FolderDB(db_folder, hierarchy_depth=2)
+   375	    assert db2.use_hierarchy is True
+   376	    assert db2.delimiter == '.'
+   377	    assert db2.hierarchy_depth == 2
+   378	
+   379	def test_hierarchical_file_operations(db_folder, sample_data):
+   380	    """Test file operations in hierarchical mode."""
+   381	    df, data_dict = sample_data
+   382	    db = FolderDB(db_folder, hierarchy_depth=3)
+   383	
+   384	    # Test creating files in hierarchy
+   385	    db.upsert_df("region.north.users", df)  # 2 delimiters for depth=3
+   386	    db.upsert_dict("region.south.products", data_dict)
+   387	
+   388	    # Verify files were created in correct folders
+   389	    assert os.path.exists(os.path.join(db.folder_path, "region", "north", "users", "region.north.users.jsonl"))
+   390	    assert os.path.exists(os.path.join(db.folder_path, "region", "south", "products", "region.south.products.jsonl"))
+   391	
+   392	def test_hierarchical_file_deletion(db_folder, sample_data):
+   393	    """Test file deletion in hierarchical mode."""
+   394	    df, _ = sample_data
+   395	    db = FolderDB(db_folder, hierarchy_depth=3)
+   396	
+   397	    # Create hierarchical data
+   398	    db.upsert_df("org.hr.employees", df)
+   399	
+   400	    # Delete file
+   401	    db.delete_file("org.hr.employees")
+   402	
+   403	    # Verify file and its index are deleted
+   404	    file_path = os.path.join(db.folder_path, "org", "hr", "employees", "org.hr.employees.jsonl")
+   405	    idx_path = os.path.join(db.folder_path, "org", "hr", "employees", "org.hr.employees.jsonl.idx")
+   406	    assert not os.path.exists(file_path)
+   407	    assert not os.path.exists(idx_path)
+   408	
+   409	    # Verify empty folders are cleaned up
+   410	    assert not os.path.exists(os.path.join(db.folder_path, "org", "hr", "employees"))
+   411	
+   412	def test_hierarchical_validation(db_folder):
+   413	    """Test validation of hierarchical paths."""
+   414	    db = FolderDB(db_folder, hierarchy_depth=3)
+   415	
+   416	    # Test invalid path (not enough delimiters)
+   417	    with pytest.raises(ValueError, match=r"Name must contain exactly \d+ '.' delimiters"):
+   418	        db.upsert_df("invalid_no_hierarchy", pd.DataFrame())
+   419	
+   420	    # Test invalid path (too few delimiters)
+   421	    with pytest.raises(ValueError, match=r"Name must contain exactly \d+ '.' delimiters"):
+   422	        db.upsert_df("only.one", pd.DataFrame())
+   423	
+   424	    # Test valid path
+   425	    db.upsert_df("this.is.valid", pd.DataFrame())
+   426	
+   427	def test_hierarchical_search(db_folder, sample_data):
+   428	    """Test searching files in hierarchical mode."""
+   429	    df, data_dict = sample_data
+   430	    db = FolderDB(db_folder, hierarchy_depth=3)
+   431	    
+   432	    # Create test data in different hierarchies
+   433	    db.upsert_df("us.west.users", df)
+   434	    db.upsert_df("us.east.users", df)
+   435	    db.upsert_dict("eu.west.products", data_dict)
+   436	    
+   437	    # Test searching with regex
+   438	    us_files = db.search_file_list(r"^us\.")
+   439	    assert len(us_files) == 2
+   440	    assert "us.west.users" in us_files
+   441	    assert "us.east.users" in us_files
+   442	    
+   443	    west_files = db.search_file_list(r"\.west\.")
+   444	    assert len(west_files) == 2
+   445	    assert "us.west.users" in west_files
+   446	    assert "eu.west.products" in west_files
+   447	
+   448	def test_get_dict_does_not_create_folders(db_folder, sample_data):
+   449	    """Test that reading via get_dict does not create new directories in hierarchy mode"""
+   450	    df, data_dict = sample_data
+   451	    db = FolderDB(db_folder, hierarchy_depth=2)
+   452	    db.upsert_dict("region.users", data_dict)
+   453	
+   454	    # Count all directories recursively before read
+   455	    def count_dirs(path):
+   456	        count = 0
+   457	        for root, dirs, files in os.walk(path):
+   458	            count += len(dirs)
+   459	        return count
+   460	
+   461	    dir_count_before = count_dirs(db_folder)
+   462	
+   463	    # Try to read a non-existent hierarchical file — should NOT create its directory
+   464	    result = db.get_dict(["other.nonexistent"])
+   465	
+   466	    dir_count_after = count_dirs(db_folder)
+   467	    assert dir_count_before == dir_count_after
+   468	
+   469	def test_init_does_not_rewrite_configmeta_if_unchanged(db_folder):
+   470	    """Test that __init__ skips config.meta rewrite when value unchanged"""
+   471	    db = FolderDB(db_folder)
+   472	    config_path = os.path.join(db_folder, "config.meta")
+   473	
+   474	    # Read content after first init
+   475	    with open(config_path, 'rb') as f:
+   476	        content_before = f.read()
+   477	    size_before = os.path.getsize(config_path)
+   478	
+   479	    # Re-init — should not rewrite (verify via content identity)
+   480	    db2 = FolderDB(db_folder)
+   481	
+   482	    with open(config_path, 'rb') as f:
+   483	        content_after = f.read()
+   484	
+   485	    assert content_before == content_after
+   486	
+   487	def test_lint_db_batches_meta_writes(db_folder, sample_data):
+   488	    """Test that lint_db writes db.meta only once at the end, not per file"""
+   489	    df, data_dict = sample_data
+   490	    db = FolderDB(db_folder)
+   491	    db.upsert_df("users", df)
+   492	    db.upsert_dict("products", data_dict)
+   493	
+   494	    # Track calls to update_dbmeta
+   495	    call_count = 0
+   496	    original_update = db.update_dbmeta
+   497	    def counting_update(*args, **kwargs):
+   498	        nonlocal call_count
+   499	        call_count += 1
+   500	        return original_update(*args, **kwargs)
+   501	    db.update_dbmeta = counting_update
+   502	
+   503	    db.lint_db()
+   504	
+   505	    # Should NOT call update_dbmeta per file anymore
+   506	    assert call_count == 0
+   507	
+   508	    # But metadata should still be correct
+   509	    metadata = select_jsonl(os.path.join(db_folder, "db.meta"))
+   510	    assert metadata["users"]["linted"] is True
+   511	    assert metadata["products"]["linted"] is True
+   512	
+   513	def test_lint_db_force_parameter(db, sample_data):
+   514	    """Test that lint_db passes force through to lint_jsonl"""
+   515	    _, data_dict = sample_data
+   516	    db.upsert_dict("test_table", data_dict)
+   517	
+   518	    # Append an orphaned line to the underlying file (not in index)
+   519	    import orjson
+   520	    file_path = db._get_file_path("test_table")
+   521	    with open(file_path, 'ab') as f:
+   522	        f.write(orjson.dumps({"orphan": {"v": 99}}) + b'\n')
+   523	
+   524	    # Touch index to appear fresh despite missing the orphan
+   525	    os.utime(file_path + ".idx")
+   526	
+   527	    # force=True: mmap scan detects cardinality mismatch, rebuilds index
+   528	    db.lint_db(force=True)
+   529	    result = db.get_dict(["test_table"])
+   530	    assert "orphan" in result["test_table"]
+
+exec
+/usr/bin/zsh -lc "nl -ba jsonldb/folderdb.py | sed -n '540,850p'" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+   540	            
+   541	            if os.path.exists(index_file):
+   542	                with open(index_file, 'rb') as f:
+   543	                    index = orjson.loads(f.read())
+   544	                    if index:
+   545	                        keys = list(index.keys())
+   546	                        if keys:
+   547	                            min_index = keys[0]
+   548	                            max_index = keys[-1]
+   549	                            count = len(keys)
+   550	
+   551	            file_path = self._get_file_path(name)
+   552	            # Create metadata entry using name without extension as key
+   553	            metadata[name] = {
+   554	                "name": name,
+   555	                "path": file_path,
+   556	                "min_index": min_index,
+   557	                "max_index": max_index,
+   558	                "size": os.path.getsize(file_path),
+   559	                "count": count,
+   560	                "lint_time": "",
+   561	                "linted": False,  # Default to False
+   562	            }
+   563	        
+   564	        # Save metadata using jsonlfile
+   565	        save_jsonl(self.dbmeta_path, metadata)
+   566	
+   567	    def get_dbmeta(self) -> Dict[str, Any]:
+   568	        """
+   569	        Get the database metadata as a dictionary.
+   570	        
+   571	        Returns:
+   572	            Dictionary containing metadata for all JSONL files in the database
+   573	        """
+   574	        if not os.path.exists(self.dbmeta_path):
+   575	            self.build_dbmeta()
+   576	        return load_jsonl(self.dbmeta_path)
+   577	    
+   578	    def delete_dbmeta(self,name: str) -> None:
+   579	        """
+   580	        Delete the metadata for a specific JSONL file in db.meta.
+   581	        """
+   582	        if not os.path.exists(self.dbmeta_path):
+   583	            self.build_dbmeta()
+   584	        delete_jsonl(self.dbmeta_path, [name])
+   585	    
+   586	    def update_dbmeta(self, name: str, linted: bool = False) -> None:
+   587	        """
+   588	        Update the metadata for a specific JSONL file in db.meta.
+   589	        
+   590	        Args:
+   591	            name: Name of the JSONL file (with or without .jsonl extension)
+   592	            linted: Value to set for the linted field
+   593	        """
+   594	        # Get name without extension for metadata key
+   595	        jsonl_file = name if name.endswith('.jsonl') else f"{name}.jsonl"
+   596	        meta_key = name.replace('.jsonl', '')
+   597	
+   598	        # Load existing metadata
+   599	        metadata = {}
+   600	        if os.path.exists(self.dbmeta_path):
+   601	            metadata = select_line_jsonl(self.dbmeta_path, meta_key)
+   602	        
+   603	        # Get index range from index file (use hierarchical path)
+   604	        file_path = self._get_file_path(name)
+   605	        index_file = file_path + ".idx"
+   606	        min_index = None
+   607	        max_index = None
+   608	        count = 0
+   609	
+   610	        if os.path.exists(index_file):
+   611	            with open(index_file, 'rb') as f:
+   612	                index = orjson.loads(f.read())
+   613	                if index:
+   614	                    keys = list(index.keys())
+   615	                    if keys:
+   616	                        min_index = keys[0]
+   617	                        max_index = keys[-1]
+   618	                        count = len(keys)
+   619	
+   620	        lint_time = datetime.now().isoformat() if linted else ""
+   621	        # print(f"Updating metadata for {name} with path {file_path}")
+   622	
+   623	        # Update metadata for the specified file using name without extension as key
+   624	        metadata[meta_key] = {
+   625	            "name": meta_key,
+   626	            "path": file_path,
+   627	            "min_index": min_index,
+   628	            "max_index": max_index,
+   629	            "size": os.path.getsize(file_path),
+   630	            "count": count,
+   631	            "lint_time": lint_time,
+   632	            "linted": linted
+   633	        }
+   634	        
+   635	        # Update metadata file using jsonlfile
+   636	        update_jsonl(self.dbmeta_path, {meta_key: metadata[meta_key]})
+   637	
+   638	    def lint_db(self, force: bool = False) -> None:
+   639	        """Lint all JSONL files in the database.
+   640	
+   641	        Args:
+   642	            force: If True, run full mmap line-count verification on every file.
+   643	                   If False (default), skip the scan when the index is fresh.
+   644	        """
+   645	        import orjson
+   646	        meta_file = os.path.join(self.folder_path, "db.meta")
+   647	        if not os.path.exists(meta_file):
+   648	            self.build_dbmeta()
+   649	
+   650	        metadata = select_jsonl(meta_file)
+   651	        print(f"Found {len(metadata)} JSONL files to lint.")
+   652	
+   653	        all_meta = {}
+   654	
+   655	        for name in metadata:
+   656	            print(f"Linting file: {name}")
+   657	            file_path = self._get_file_path(name)
+   658	            exist_flag = lint_jsonl(file_path, force=force)
+   659	
+   660	            if not exist_flag:
+   661	                print(f"File {name} no longer exist, deleting metadata.")
+   662	                # Simply skip — don't add to all_meta
+   663	            else:
+   664	                # Build metadata entry inline
+   665	                index_file = file_path + ".idx"
+   666	                min_index = max_index = None
+   667	                count = 0
+   668	                if os.path.exists(index_file):
+   669	                    with open(index_file, 'rb') as f:
+   670	                        index = orjson.loads(f.read())
+   671	                        if index:
+   672	                            keys = list(index.keys())
+   673	                            min_index, max_index = keys[0], keys[-1]
+   674	                            count = len(keys)
+   675	
+   676	                all_meta[name] = {
+   677	                    "name": name,
+   678	                    "path": file_path,
+   679	                    "min_index": min_index,
+   680	                    "max_index": max_index,
+   681	                    "size": os.path.getsize(file_path),
+   682	                    "count": count,
+   683	                    "lint_time": datetime.now().isoformat(),
+   684	                    "linted": True
+   685	                }
+   686	
+   687	        # Single write for all metadata
+   688	        save_jsonl(self.dbmeta_path, all_meta)
+   689	        lint_jsonl(self.dbmeta_path, force=force)
+   690	
+   691	        if self.use_hierarchy:
+   692	            lint_jsonl(self.hmeta_path, force=force)
+   693	            self.delete_empty_folders()
+   694	
+   695	    def lint_hierarchy(self, hierarchy_depth:int) -> None:
+   696	        """
+   697	        Reorganize JSONL files according to hierarchy levels and move invalid files to .invalid_tickers.
+   698	        
+   699	        Args:
+   700	            hierarchy_level: Target hierarchy level. If None, uses value from h.meta or defaults to 1
+   701	        """
+   702	
+   703	        if hierarchy_depth < 1:
+   704	            raise ValueError("Hierarchy level must be positive")
+   705	
+   706	        import shutil
+   707	            
+   708	        print(f"Organizing files for hierarchy level {hierarchy_depth}")
+   709	            
+   710	        self.use_hierarchy = True
+   711	        self.hierarchy_depth = hierarchy_depth
+   712	
+   713	
+   714	        # Create .invalid_tickers folder if it doesn't exist
+   715	        if not os.path.exists(self.invalid_tickers_path):
+   716	            os.makedirs(self.invalid_tickers_path, exist_ok=True)
+   717	        
+   718	        # Get all JSONL files in the root folder and immediate subdirectories
+   719	        all_files = []
+   720	        for root, dirs, files in os.walk(self.folder_path, topdown=True):
+   721	            # Skip hidden/system directories (starting with '.')
+   722	            dirs[:] = [d for d in dirs if not d.startswith('.')]
+   723	            # Skip .invalid_tickers folder
+   724	            if '.invalid_tickers' in root:
+   725	                continue
+   726	            for file in files:
+   727	                if file.endswith('.jsonl'):
+   728	                    file_path = os.path.join(root, file)
+   729	                    name = os.path.splitext(file)[0]
+   730	                    all_files.append((name, file_path))
+   731	        
+   732	        valid_files = []
+   733	        invalid_files = []
+   734	        
+   735	        # Categorize files as valid or invalid
+   736	        for name, file_path in all_files:
+   737	            if self.validate_name(name):
+   738	                valid_files.append((name, file_path))
+   739	            else:
+   740	                invalid_files.append((name, file_path))
+   741	        
+   742	        print(f"Found {len(valid_files)} valid files and {len(invalid_files)} invalid files")
+   743	        
+   744	        # Move invalid files to .invalid_tickers folder
+   745	        for name, file_path in invalid_files:
+   746	            try:
+   747	                dest_path = os.path.join(self.invalid_tickers_path, os.path.basename(file_path))
+   748	                if file_path != dest_path:  # Avoid moving file to itself
+   749	                    shutil.move(file_path, dest_path)
+   750	                    print(f"Moved invalid file {name} to .invalid_tickers")
+   751	                    
+   752	                    # Also move .idx file if it exists
+   753	                    idx_path = file_path + '.idx'
+   754	                    if os.path.exists(idx_path):
+   755	                        idx_dest = dest_path + '.idx'
+   756	                        shutil.move(idx_path, idx_dest)
+   757	            except Exception as e:
+   758	                print(f"Warning: Could not move invalid file {name}: {str(e)}")
+   759	        
+   760	        # Reorganize valid files according to hierarchy
+   761	        for name, file_path in valid_files:
+   762	            try:
+   763	                target_dir = self._get_hierarchy_path(name)
+   764	                target_file = os.path.join(target_dir, os.path.basename(file_path))
+   765	                
+   766	                # Skip if file is already in correct location
+   767	                if file_path == target_file:
+   768	                    continue
+   769	                    
+   770	                # Create target directory if needed
+   771	                self.create_folder(target_dir)
+   772	                
+   773	                # Move JSONL file
+   774	                shutil.move(file_path, target_file)
+   775	                print(f"Moved {name} to {target_dir}")
+   776	                
+   777	                # Move .idx file if it exists
+   778	                idx_path = file_path + '.idx'
+   779	                if os.path.exists(idx_path):
+   780	                    idx_target = target_file + '.idx'
+   781	                    shutil.move(idx_path, idx_target)
+   782	                    
+   783	            except Exception as e:
+   784	                print(f"Warning: Could not move valid file {name}: {str(e)}")
+   785	        
+   786	        # Clean up empty directories
+   787	        self.delete_empty_folders()
+   788	        
+   789	        # Rebuild metadata to reflect new structure
+   790	        self.build_dbmeta()
+   791	        self.build_hmeta()
+   792	        
+   793	        print("Hierarchy organization completed")
+   794	
+   795	    def reprocess_invalid_tickers(self) -> None:
+   796	        """
+   797	        Reprocess files in .invalid_tickers folder and move any that now match naming convention.
+   798	        """
+   799	        import shutil
+   800	        
+   801	        if not os.path.exists(self.invalid_tickers_path):
+   802	            print("No .invalid_tickers folder found")
+   803	            return
+   804	            
+   805	        # Get all JSONL files in .invalid_tickers folder
+   806	        invalid_files = []
+   807	        for file in os.listdir(self.invalid_tickers_path):
+   808	            if file.endswith('.jsonl'):
+   809	                file_path = os.path.join(self.invalid_tickers_path, file)
+   810	                name = os.path.splitext(file)[0]
+   811	                invalid_files.append((name, file_path))
+   812	        
+   813	        if not invalid_files:
+   814	            print("No files found in .invalid_tickers folder")
+   815	            return
+   816	            
+   817	        print(f"Found {len(invalid_files)} files to reprocess")
+   818	        
+   819	        now_valid_files = []
+   820	        still_invalid_files = []
+   821	        
+   822	        # Check each file against current naming rules
+   823	        for name, file_path in invalid_files:
+   824	            if self.validate_name(name):
+   825	                now_valid_files.append((name, file_path))
+   826	            else:
+   827	                still_invalid_files.append((name, file_path))
+   828	        
+   829	        print(f"{len(now_valid_files)} files are now valid, {len(still_invalid_files)} remain invalid")
+   830	        
+   831	        # Move now-valid files to appropriate hierarchy folders
+   832	        for name, file_path in now_valid_files:
+   833	            try:
+   834	                target_dir = self._get_hierarchy_path(name)
+   835	                target_file = os.path.join(target_dir, os.path.basename(file_path))
+   836	                
+   837	                # Create target directory if needed
+   838	                self.create_folder(target_dir)
+   839	                
+   840	                # Move JSONL file
+   841	                shutil.move(file_path, target_file)
+   842	                print(f"Moved {name} from .invalid_tickers to {target_dir}")
+   843	                
+   844	                # Move .idx file if it exists (but don't build new one yet)
+   845	                idx_path = file_path + '.idx'
+   846	                if os.path.exists(idx_path):
+   847	                    idx_target = target_file + '.idx'
+   848	                    shutil.move(idx_path, idx_target)
+   849	                else:
+   850	                    # Build index for newly valid file
+
+exec
+/usr/bin/zsh -lc "nl -ba unit_tests/test_jsonlfile.py | sed -n '1,580p'" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+     1	import os
+     2	import sys
+     3	import pytest
+     4	from datetime import datetime, timedelta
+     5	import json
+     6	
+     7	# Add parent directory to Python path
+     8	sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+     9	
+    10	from jsonldb.jsonlfile import (
+    11	    save_jsonl, load_jsonl, update_jsonl, delete_jsonl, 
+    12	    lint_jsonl, build_jsonl_index, select_jsonl
+    13	)
+    14	
+    15	# Test fixtures
+    16	@pytest.fixture
+    17	def test_file():
+    18	    filename = "test_data.jsonl"
+    19	    yield filename
+    20	    # Cleanup
+    21	    if os.path.exists(filename):
+    22	        os.remove(filename)
+    23	    if os.path.exists(filename + ".idx"):
+    24	        os.remove(filename + ".idx")
+    25	
+    26	@pytest.fixture
+    27	def sample_data():
+    28	    return {
+    29	        "key1": {"value": 1, "name": "test1"},
+    30	        "key2": {"value": 2, "name": "test2"},
+    31	        "key3": {"value": 3, "name": "test3"}
+    32	    }
+    33	
+    34	@pytest.fixture
+    35	def datetime_data():
+    36	    base_time = datetime(2024, 1, 1, 12, 0)
+    37	    return {
+    38	        base_time: {"temp": 20.5, "humidity": 45},
+    39	        base_time + timedelta(hours=1): {"temp": 21.5, "humidity": 46},
+    40	        base_time + timedelta(hours=2): {"temp": 22.5, "humidity": 47}
+    41	    }
+    42	
+    43	# Update Tests
+    44	def test_update_existing_records(test_file, sample_data):
+    45	    """Test updating existing records with same size data"""
+    46	    save_jsonl(test_file, sample_data)
+    47	    
+    48	    # Update existing records
+    49	    updates = {
+    50	        "key1": {"value": 10, "name": "updated1"},
+    51	        "key2": {"value": 20, "name": "updated2"}
+    52	    }
+    53	    update_jsonl(test_file, updates)
+    54	    
+    55	    # Verify updates
+    56	    loaded_data = load_jsonl(test_file)
+    57	    assert loaded_data["key1"]["value"] == 10
+    58	    assert loaded_data["key2"]["name"] == "updated2"
+    59	    assert loaded_data["key3"] == sample_data["key3"]  # Unchanged
+    60	
+    61	def test_update_with_larger_data(test_file, sample_data):
+    62	    """Test updating records with larger data that won't fit in place"""
+    63	    save_jsonl(test_file, sample_data)
+    64	    
+    65	    # Update with larger data
+    66	    updates = {
+    67	        "key1": {
+    68	            "value": 10,
+    69	            "name": "updated1",
+    70	            "extra": "this makes the record larger"
+    71	        }
+    72	    }
+    73	    update_jsonl(test_file, updates)
+    74	    
+    75	    # Verify updates
+    76	    loaded_data = load_jsonl(test_file)
+    77	    assert loaded_data["key1"]["extra"] == "this makes the record larger"
+    78	    assert loaded_data["key2"] == sample_data["key2"]  # Unchanged
+    79	
+    80	def test_update_with_new_records(test_file, sample_data):
+    81	    """Test adding new records via update"""
+    82	    save_jsonl(test_file, sample_data)
+    83	    
+    84	    # Add new records
+    85	    updates = {
+    86	        "key4": {"value": 4, "name": "test4"},
+    87	        "key5": {"value": 5, "name": "test5"}
+    88	    }
+    89	    update_jsonl(test_file, updates)
+    90	    
+    91	    # Verify updates
+    92	    loaded_data = load_jsonl(test_file)
+    93	    assert len(loaded_data) == 5
+    94	    assert loaded_data["key4"]["value"] == 4
+    95	    assert loaded_data["key5"]["name"] == "test5"
+    96	
+    97	def test_update_with_datetime_keys(test_file, datetime_data):
+    98	    """Test updating records with datetime keys"""
+    99	    save_jsonl(test_file, datetime_data)
+   100	    
+   101	    # Update existing and add new datetime records
+   102	    base_time = datetime(2024, 1, 1, 12, 0)
+   103	    updates = {
+   104	        base_time: {"temp": 25.0, "humidity": 50},  # Update existing
+   105	        base_time + timedelta(hours=3): {"temp": 23.5, "humidity": 48}  # New record
+   106	    }
+   107	    update_jsonl(test_file, updates)
+   108	    
+   109	    # Verify updates
+   110	    loaded_data = load_jsonl(test_file)
+   111	    assert loaded_data[base_time]["temp"] == 25.0
+   112	    assert base_time + timedelta(hours=3) in loaded_data
+   113	    assert len(loaded_data) == 4
+   114	
+   115	# Delete Tests
+   116	def test_delete_single_record(test_file, sample_data):
+   117	    """Test deleting a single record"""
+   118	    save_jsonl(test_file, sample_data)
+   119	    
+   120	    # Delete one record
+   121	    delete_jsonl(test_file, ["key2"])
+   122	    
+   123	    # Verify deletion
+   124	    loaded_data = load_jsonl(test_file)
+   125	    assert "key2" not in loaded_data
+   126	    assert len(loaded_data) == 2
+   127	    assert loaded_data["key1"] == sample_data["key1"]
+   128	    assert loaded_data["key3"] == sample_data["key3"]
+   129	
+   130	def test_delete_multiple_records(test_file, sample_data):
+   131	    """Test deleting multiple records"""
+   132	    save_jsonl(test_file, sample_data)
+   133	    
+   134	    # Delete multiple records
+   135	    delete_jsonl(test_file, ["key1", "key3"])
+   136	    
+   137	    # Verify deletions
+   138	    loaded_data = load_jsonl(test_file)
+   139	    assert len(loaded_data) == 1
+   140	    assert "key1" not in loaded_data
+   141	    assert "key3" not in loaded_data
+   142	    assert loaded_data["key2"] == sample_data["key2"]
+   143	
+   144	def test_delete_with_datetime_keys(test_file, datetime_data):
+   145	    """Test deleting records with datetime keys"""
+   146	    save_jsonl(test_file, datetime_data)
+   147	    
+   148	    # Delete records with datetime keys
+   149	    base_time = datetime(2024, 1, 1, 12, 0)
+   150	    delete_jsonl(test_file, [base_time, base_time + timedelta(hours=1)])
+   151	    
+   152	    # Verify deletions
+   153	    loaded_data = load_jsonl(test_file)
+   154	    assert len(loaded_data) == 1
+   155	    assert base_time not in loaded_data
+   156	    assert base_time + timedelta(hours=1) not in loaded_data
+   157	    assert base_time + timedelta(hours=2) in loaded_data
+   158	
+   159	def test_delete_nonexistent_records(test_file, sample_data):
+   160	    """Test deleting records that don't exist"""
+   161	    save_jsonl(test_file, sample_data)
+   162	    
+   163	    # Try to delete nonexistent records
+   164	    delete_jsonl(test_file, ["nonexistent1", "nonexistent2"])
+   165	    
+   166	    # Verify no changes
+   167	    loaded_data = load_jsonl(test_file)
+   168	    assert loaded_data == sample_data
+   169	
+   170	# Lint Tests
+   171	def test_lint_sorts_string_keys(test_file):
+   172	    """Test that lint_jsonl properly sorts string keys"""
+   173	    # Save data in unsorted order
+   174	    data = {
+   175	        "key3": {"value": 3},
+   176	        "key1": {"value": 1},
+   177	        "key2": {"value": 2}
+   178	    }
+   179	    save_jsonl(test_file, data)
+   180	    
+   181	    # Lint the file
+   182	    lint_jsonl(test_file)
+   183	    
+   184	    # Verify sorting
+   185	    loaded_data = load_jsonl(test_file)
+   186	    keys = list(loaded_data.keys())
+   187	    assert keys == sorted(keys)
+   188	    assert keys == ["key1", "key2", "key3"]
+   189	
+   190	def test_lint_sorts_datetime_keys(test_file):
+   191	    """Test that lint_jsonl properly sorts datetime keys"""
+   192	    # Save data in unsorted order
+   193	    base_time = datetime(2024, 1, 1, 12, 0)
+   194	    data = {
+   195	        base_time + timedelta(hours=2): {"value": 3},
+   196	        base_time: {"value": 1},
+   197	        base_time + timedelta(hours=1): {"value": 2}
+   198	    }
+   199	    save_jsonl(test_file, data)
+   200	    
+   201	    # Lint the file
+   202	    lint_jsonl(test_file)
+   203	    
+   204	    # Verify sorting
+   205	    loaded_data = load_jsonl(test_file)
+   206	    keys = list(loaded_data.keys())
+   207	    assert keys == sorted(keys)
+   208	    assert keys[0] == base_time
+   209	
+   210	def test_lint_removes_deleted_records(test_file, sample_data):
+   211	    """Test that lint_jsonl removes space-marked deleted records"""
+   212	    save_jsonl(test_file, sample_data)
+   213	    
+   214	    # Delete some records
+   215	    delete_jsonl(test_file, ["key1", "key2"])
+   216	    
+   217	    # Lint the file
+   218	    lint_jsonl(test_file)
+   219	    
+   220	    # Verify deleted records are removed
+   221	    loaded_data = load_jsonl(test_file)
+   222	    assert len(loaded_data) == 1
+   223	    assert list(loaded_data.keys()) == ["key3"]
+   224	
+   225	def test_lint_handles_empty_file(test_file):
+   226	    """Test that lint_jsonl handles empty files correctly"""
+   227	    # Create empty file
+   228	    save_jsonl(test_file, {})
+   229	    
+   230	    # Lint the empty file
+   231	    lint_jsonl(test_file)
+   232	    
+   233	    # Verify file remains empty
+   234	    loaded_data = load_jsonl(test_file)
+   235	    assert len(loaded_data) == 0
+   236	
+   237	def test_lint_mixed_key_types(test_file):
+   238	    """Test that lint_jsonl handles mixed key types correctly"""
+   239	    # Create data with mixed key types
+   240	    base_time = datetime(2024, 1, 1, 12, 0)
+   241	    data = {
+   242	        "key2": {"value": 2},
+   243	        base_time: {"value": 1},
+   244	        "key1": {"value": 3}
+   245	    }
+   246	    save_jsonl(test_file, data)
+   247	    
+   248	    # Lint the file
+   249	    lint_jsonl(test_file)
+   250	    
+   251	    # Verify proper sorting
+   252	    loaded_data = load_jsonl(test_file)
+   253	    keys = list(loaded_data.keys())
+   254	    string_keys = [k for k in keys if isinstance(k, str)]
+   255	    datetime_keys = [k for k in keys if isinstance(k, datetime)]
+   256	    
+   257	    assert sorted(string_keys) == string_keys
+   258	    assert sorted(datetime_keys) == datetime_keys
+   259	
+   260	# Select Tests
+   261	def test_select_all_records(test_file, sample_data):
+   262	    """Test selecting all records when no range is specified"""
+   263	    save_jsonl(test_file, sample_data)
+   264	    
+   265	    # Select all records
+   266	    selected = select_jsonl(test_file)
+   267	    
+   268	    # Verify all records are returned
+   269	    assert selected == sample_data
+   270	    assert len(selected) == 3
+   271	
+   272	def test_select_with_lower_bound(test_file, sample_data):
+   273	    """Test selecting records with only lower bound specified"""
+   274	    save_jsonl(test_file, sample_data)
+   275	    
+   276	    # Select records from key2 onwards
+   277	    selected = select_jsonl(test_file, lower_key="key2")
+   278	    
+   279	    # Verify selection
+   280	    assert len(selected) == 2
+   281	    assert "key1" not in selected
+   282	    assert "key2" in selected
+   283	    assert "key3" in selected
+   284	
+   285	def test_select_with_upper_bound(test_file, sample_data):
+   286	    """Test selecting records with only upper bound specified"""
+   287	    save_jsonl(test_file, sample_data)
+   288	    
+   289	    # Select records up to key2
+   290	    selected = select_jsonl(test_file, upper_key="key2")
+   291	    
+   292	    # Verify selection
+   293	    assert len(selected) == 2
+   294	    assert "key1" in selected
+   295	    assert "key2" in selected
+   296	    assert "key3" not in selected
+   297	
+   298	def test_select_with_both_bounds(test_file, sample_data):
+   299	    """Test selecting records with both bounds specified"""
+   300	    save_jsonl(test_file, sample_data)
+   301	    
+   302	    # Select records between key1 and key2
+   303	    selected = select_jsonl(test_file, lower_key="key1", upper_key="key2")
+   304	    
+   305	    # Verify selection
+   306	    assert len(selected) == 2
+   307	    assert "key1" in selected
+   308	    assert "key2" in selected
+   309	    assert "key3" not in selected
+   310	
+   311	def test_select_with_datetime_keys(test_file, datetime_data):
+   312	    """Test selecting records with datetime keys"""
+   313	    save_jsonl(test_file, datetime_data)
+   314	    
+   315	    # Select records between two times
+   316	    base_time = datetime(2024, 1, 1, 12, 0)
+   317	    selected = select_jsonl(
+   318	        test_file,
+   319	        lower_key=base_time,
+   320	        upper_key=base_time + timedelta(hours=1)
+   321	    )
+   322	    
+   323	    # Verify selection
+   324	    assert len(selected) == 2
+   325	    assert base_time in selected
+   326	    assert base_time + timedelta(hours=1) in selected
+   327	    assert base_time + timedelta(hours=2) not in selected
+   328	
+   329	def test_select_empty_range(test_file, sample_data):
+   330	    """Test selecting records with a range that has no matches"""
+   331	    save_jsonl(test_file, sample_data)
+   332	    
+   333	    # Select records between non-existent keys
+   334	    selected = select_jsonl(test_file, lower_key="key4", upper_key="key5")
+   335	    
+   336	    # Verify empty result
+   337	    assert len(selected) == 0
+   338	
+   339	def test_select_single_record(test_file, sample_data):
+   340	    """Test selecting a single record using same lower and upper bound"""
+   341	    save_jsonl(test_file, sample_data)
+   342	
+   343	    # Select just key2
+   344	    selected = select_jsonl(test_file, lower_key="key2", upper_key="key2")
+   345	
+   346	    # Verify selection
+   347	    assert len(selected) == 1
+   348	    assert "key2" in selected
+   349	    assert selected["key2"] == sample_data["key2"]
+   350	
+   351	def test_load_jsonl_uses_orjson(test_file, sample_data, monkeypatch):
+   352	    """Test that load_jsonl works with orjson parsing (bytes input)"""
+   353	    save_jsonl(test_file, sample_data)
+   354	    # Monkeypatch json.loads to raise — proving orjson is used instead
+   355	    import json as json_mod
+   356	    original_loads = json_mod.loads
+   357	    def patched_loads(*args, **kwargs):
+   358	        raise AssertionError("json.loads should not be called during load_jsonl")
+   359	    monkeypatch.setattr(json_mod, "loads", patched_loads)
+   360	    try:
+   361	        loaded = load_jsonl(test_file)
+   362	        assert loaded == sample_data
+   363	    finally:
+   364	        monkeypatch.setattr(json_mod, "loads", original_loads)
+   365	
+   366	def test_select_does_not_use_numpy(test_file, sample_data, monkeypatch):
+   367	    """Test that select_jsonl uses bisect, not numpy for range selection"""
+   368	    save_jsonl(test_file, sample_data)
+   369	    import numpy as np_mod
+   370	    original_array = np_mod.array
+   371	    def patched_array(*args, **kwargs):
+   372	        raise AssertionError("np.array should not be called during select_jsonl")
+   373	    monkeypatch.setattr(np_mod, "array", patched_array)
+   374	    try:
+   375	        selected = select_jsonl(test_file, lower_key="key1", upper_key="key2")
+   376	        assert len(selected) == 2
+   377	    finally:
+   378	        monkeypatch.setattr(np_mod, "array", original_array)
+   379	
+   380	def test_lint_skips_already_clean_file(test_file, sample_data):
+   381	    """Test that lint_jsonl skips rewrite for already sorted, compact files"""
+   382	    save_jsonl(test_file, sample_data)
+   383	    # File is already sorted and compact after save
+   384	    lint_jsonl(test_file)  # First lint to ensure clean state
+   385	
+   386	    # Read file content after first lint
+   387	    with open(test_file, 'rb') as f:
+   388	        content_before = f.read()
+   389	
+   390	    # Second lint should skip (file unchanged) — verify via content hash
+   391	    result = lint_jsonl(test_file)
+   392	
+   393	    with open(test_file, 'rb') as f:
+   394	        content_after = f.read()
+   395	
+   396	    assert result is True
+   397	    assert content_before == content_after  # File bytes unchanged — skip path taken
+   398	
+   399	def test_lint_stream_compacts_dead_lines(test_file, sample_data):
+   400	    """Test that stream lint removes dead lines from delete operations"""
+   401	    save_jsonl(test_file, sample_data)
+   402	    delete_jsonl(test_file, ["key1"])
+   403	
+   404	    size_before = os.path.getsize(test_file)
+   405	    lint_jsonl(test_file)
+   406	    size_after = os.path.getsize(test_file)
+   407	
+   408	    # File should be smaller after compaction
+   409	    assert size_after < size_before
+   410	
+   411	    # Data should still be correct
+   412	    loaded = load_jsonl(test_file)
+   413	    assert len(loaded) == 2
+   414	    assert "key1" not in loaded
+   415	
+   416	def test_lint_returns_false_for_missing_file():
+   417	    """Test lint_jsonl returns False for non-existent file"""
+   418	    result = lint_jsonl("/nonexistent/path/test.jsonl")
+   419	    assert result is False
+   420	
+   421	def test_verify_and_compact_sorts_unsorted(test_file):
+   422	    """Test that _verify_and_compact sorts unsorted keys"""
+   423	    from jsonldb.jsonlfile import _verify_and_compact, build_jsonl_index
+   424	    import orjson
+   425	    # Write keys out of order
+   426	    data = {"c": {"v": 3}, "a": {"v": 1}, "b": {"v": 2}}
+   427	    with open(test_file, 'wb') as f:
+   428	        for k, v in data.items():
+   429	            f.write(orjson.dumps({k: v}) + b'\n')
+   430	    build_jsonl_index(test_file)
+   431	
+   432	    with open(test_file + ".idx", 'rb') as f:
+   433	        index_dict = orjson.loads(f.read())
+   434	
+   435	    _verify_and_compact(test_file, index_dict)
+   436	
+   437	    # Verify file is now sorted
+   438	    with open(test_file, 'rb') as f:
+   439	        lines = f.readlines()
+   440	    keys = [next(iter(orjson.loads(line))) for line in lines]
+   441	    assert keys == ["a", "b", "c"]
+   442	
+   443	def test_lint_mtime_skip_path(test_file, sample_data):
+   444	    """Test that lint_jsonl skips mmap scan when index is fresh"""
+   445	    save_jsonl(test_file, sample_data)
+   446	    lint_jsonl(test_file, force=True)  # Ensure clean state
+   447	
+   448	    # Get file state before
+   449	    mtime_before = os.path.getmtime(test_file)
+   450	
+   451	    # Call lint without force — should use fast path (index is fresh)
+   452	    result = lint_jsonl(test_file)
+   453	    assert result is True
+   454	
+   455	    # File should not have been rewritten (mtime unchanged)
+   456	    mtime_after = os.path.getmtime(test_file)
+   457	    assert mtime_before == mtime_after
+   458	
+   459	
+   460	def test_lint_force_detects_orphan_lines(test_file, sample_data):
+   461	    """Test that force=True detects orphaned lines via mmap cardinality scan"""
+   462	    save_jsonl(test_file, sample_data)
+   463	
+   464	    # Append an orphaned line (not in index)
+   465	    import orjson as _orjson
+   466	    with open(test_file, 'ab') as f:
+   467	        f.write(_orjson.dumps({"orphan": {"v": 99}}) + b'\n')
+   468	
+   469	    # Touch index to appear fresh despite missing the orphan entry.
+   470	    # This prevents ensure_index_exists() from rebuilding.
+   471	    os.utime(test_file + ".idx")
+   472	
+   473	    # force=True: mmap scan counts 4 lines, index has 3 → rebuilds index
+   474	    lint_jsonl(test_file, force=True)
+   475	    loaded = load_jsonl(test_file)
+   476	    assert "orphan" in loaded
+   477	
+   478	
+   479	def test_lint_default_compacts_orphan_lines(test_file, sample_data):
+   480	    """Test that force=False compacts away orphaned lines via sort/compaction"""
+   481	    save_jsonl(test_file, sample_data)
+   482	
+   483	    # Append an orphaned line (not in index)
+   484	    import orjson as _orjson
+   485	    with open(test_file, 'ab') as f:
+   486	        f.write(_orjson.dumps({"orphan": {"v": 99}}) + b'\n')
+   487	
+   488	    # Touch index to appear fresh despite missing the orphan entry
+   489	    os.utime(test_file + ".idx")
+   490	
+   491	    # force=False: fast path loads old index, compaction removes orphan
+   492	    lint_jsonl(test_file, force=False)
+   493	    loaded = load_jsonl(test_file)
+   494	    assert "orphan" not in loaded
+   495	    assert len(loaded) == len(sample_data)
+   496	
+   497	
+   498	def test_lint_bad_index_offsets_recovery(test_file, sample_data):
+   499	    """Test that lint recovers when index has valid JSON but wrong offsets"""
+   500	    import orjson as _orjson
+   501	    save_jsonl(test_file, sample_data)
+   502	
+   503	    # Write a valid JSON index with bad byte offsets
+   504	    bad_index = {"a": 1, "b": 999999}
+   505	    with open(test_file + ".idx", 'wb') as f:
+   506	        f.write(_orjson.dumps(bad_index))
+   507	    os.utime(test_file + ".idx")
+   508	
+   509	    result = lint_jsonl(test_file)
+   510	    assert result is True
+   511	
+   512	    loaded = load_jsonl(test_file)
+   513	    assert len(loaded) == len(sample_data)
+   514	
+   515	
+   516	def test_lint_non_integer_index_offsets_recovery(test_file, sample_data):
+   517	    """Test that lint recovers when index has non-integer offset values"""
+   518	    import orjson as _orjson
+   519	    save_jsonl(test_file, sample_data)
+   520	
+   521	    bad_index = {"key1": "not-an-int", "key2": 0}
+   522	    with open(test_file + ".idx", 'wb') as f:
+   523	        f.write(_orjson.dumps(bad_index))
+   524	    os.utime(test_file + ".idx")
+   525	
+   526	    result = lint_jsonl(test_file)
+   527	    assert result is True
+   528	
+   529	    loaded = load_jsonl(test_file)
+   530	    assert len(loaded) == len(sample_data)
+   531	
+   532	
+   533	def test_lint_stale_index_recovers(test_file, sample_data):
+   534	    """Test that lint_jsonl handles a stale index gracefully"""
+   535	    save_jsonl(test_file, sample_data)
+   536	
+   537	    # Make the index appear old — ensure_index_exists() will rebuild it,
+   538	    # then the mtime gate will see a fresh index and use the fast path.
+   539	    # Either way, data integrity is maintained.
+   540	    os.utime(test_file + ".idx", (0, 0))
+   541	
+   542	    result = lint_jsonl(test_file)
+   543	    assert result is True
+   544	
+   545	    # Verify data is intact after recovery
+   546	    loaded = load_jsonl(test_file)
+   547	    assert len(loaded) == len(sample_data)
+   548	
+   549	
+   550	def test_lint_corrupt_index_fast_path_recovery(test_file, sample_data):
+   551	    """Test that corrupt index on fast path triggers rebuild"""
+   552	    save_jsonl(test_file, sample_data)
+   553	
+   554	    # Corrupt the index file
+   555	    with open(test_file + ".idx", 'wb') as f:
+   556	        f.write(b'not valid json')
+   557	
+   558	    # Touch index to make it appear fresh
+   559	    os.utime(test_file + ".idx")
+   560	
+   561	    # lint should recover via rebuild
+   562	    result = lint_jsonl(test_file)
+   563	    assert result is True
+   564	
+   565	    # Data should still be readable
+   566	    loaded = load_jsonl(test_file)
+   567	    assert len(loaded) == len(sample_data)
+   568	
+   569	
+   570	def test_index_file_is_compact(test_file, sample_data):
+   571	    """Test that .idx files are written in compact format (no indentation)"""
+   572	    save_jsonl(test_file, sample_data)
+   573	    with open(test_file + ".idx", "rb") as f:
+   574	        raw = f.read()
+   575	    # Compact format has no newlines within the JSON object
+   576	    decoded = raw.decode("utf-8")
+   577	    assert "\n" not in decoded.strip()
+
+codex
+Specdev: verifying whether the design’s proposed helper choices create new side effects, especially around metadata and missing-file deletes.
+exec
+/usr/bin/zsh -lc "nl -ba jsonldb/folderdb.py | sed -n '850,930p'" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+   850	                    # Build index for newly valid file
+   851	                    build_jsonl_index(target_file)
+   852	                
+   853	                # Update metadata for this file
+   854	                self.update_dbmeta(name)
+   855	                    
+   856	            except Exception as e:
+   857	                print(f"Warning: Could not move file {name}: {str(e)}")
+   858	        
+   859	        # Rebuild metadata to include newly valid files
+   860	        if now_valid_files:
+   861	            self.build_dbmeta()
+   862	            
+   863	        print("Reprocessing completed")
+   864	
+   865	    def delete_empty_folders(self) -> None:
+   866	        """
+   867	        Delete empty folders in the database.
+   868	        Recursively removes empty folders from bottom up.
+   869	        """
+   870	        for root, dirs, files in os.walk(self.folder_path, topdown=False):
+   871	            if root == self.folder_path:
+   872	                continue
+   873	            try:
+   874	                if not os.listdir(root):
+   875	                    os.rmdir(root)
+   876	            except OSError:
+   877	                pass
+   878	
+   879	    # =============== Version Control ===============
+   880	    def commit(self, msg: str = "") -> None:
+   881	        """
+   882	        Commit changes in the database folder.
+   883	        
+   884	        If the folder is not already a git repository, it will be initialized first.
+   885	        
+   886	        Args:
+   887	            msg: Optional commit message. If empty, an auto-generated message will be used.
+   888	            
+   889	        Raises:
+   890	            git.exc.GitCommandError: If git commands fail
+   891	        """
+   892	        # Check if folder is a git repo, if not initialize it
+   893	        if not is_versioned(self.folder_path):
+   894	            init_folder(self.folder_path)
+   895	            
+   896	        # Commit changes
+   897	        vercontrol_commit(self.folder_path, msg)
+   898	        print("Commit successful.")
+   899	    
+   900	    def revert(self, version_hash: str) -> None:
+   901	        """
+   902	        Revert the database to a previous version.
+   903	        
+   904	        Args:
+   905	            version_hash: Hash of the commit to revert to
+   906	            
+   907	        Raises:
+   908	            git.exc.GitCommandError: If git commands fail
+   909	            ValueError: If the specified commit is not found
+   910	        """
+   911	        vercontrol_revert(self.folder_path, version_hash)
+   912	        print(f"Successfully reverted the folder: {self.folder_path} to version: {version_hash}")
+   913	    
+   914	    def version(self) -> Dict[str, str]:
+   915	        """
+   916	        List all versions of the database.
+   917	        
+   918	        Returns:
+   919	            Dictionary with commit hashes as keys and commit messages as values
+   920	            
+   921	        Raises:
+   922	            git.exc.GitCommandError: If git commands fail
+   923	        """
+   924	        return list_version(self.folder_path)
+
+exec
+/usr/bin/zsh -lc 'find .specdev/assignments/00003_bugfix_jsonl-write-path-integrity -maxdepth 3 -type f -print | sort' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/brainstorm/design.md
+.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/brainstorm/proposal.md
+.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-reviewer-codex-round-1.log
+
+exec
+/usr/bin/zsh -lc "rg -n \"jsonlfile.py.tmp|folderdb.py.tmp|\\.tmp\" -S .gitignore pyproject.toml setup.py setup.cfg MANIFEST.in pytest.ini .  --glob '"'!examples/**'"' --glob '"'!*.ipynb'"'" in /mnt/h/oceanwave/lib/jsonldb
+ exited 2 in 0ms:
+rg: pyproject.toml: No such file or directory (os error 2)
+rg: setup.cfg: No such file or directory (os error 2)
+rg: MANIFEST.in: No such file or directory (os error 2)
+rg: pytest.ini: No such file or directory (os error 2)
+./jsonldb/jsonlfile.py:157:    tmp_path = jsonl_file_path + '.tmp'
+
+codex
+Specdev: running focused reproductions for the write-path claims rather than relying only on source inspection.
+exec
+/usr/bin/zsh -lc "python - <<'PY'
+import os, tempfile, orjson
+from jsonldb.jsonlfile import save_jsonl, update_jsonl, load_jsonl, build_jsonl_index
+
+with tempfile.TemporaryDirectory() as d:
+    p=os.path.join(d,'t.jsonl')
+    save_jsonl(p, {'a': {'value':'xxxxxxxxxx'}, 'b': {'value':'yyyy'}})
+    before=open(p,'rb').read()
+    update_jsonl(p, {'a': {'v':1}})
+    after=open(p,'rb').read()
+    print('before', before)
+    print('after ', after)
+    print('splitlines', after.splitlines(True))
+    build_jsonl_index(p)
+    print('idx', orjson.loads(open(p+'.idx','rb').read()))
+    print('load', load_jsonl(p))
+
+with tempfile.TemporaryDirectory() as d:
+    p=os.path.join(d,'t.jsonl')
+    save_jsonl(p, {'a': {'v':1}})
+    raw=open(p,'rb').read().rstrip(b'\\n')
+    open(p,'wb').write(raw)
+    update_jsonl(p, {'b': {'v':2}})
+    print('append raw', open(p,'rb').read())
+    print('append load', load_jsonl(p))
+PY" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 1410ms:
+before b'{"a":{"value":"xxxxxxxxxx"}}\n{"b":{"value":"yyyy"}}\n'
+after  b'{"a":{"v":1}}\n               {"b":{"value":"yyyy"}}\n'
+splitlines [b'{"a":{"v":1}}\n', b'               {"b":{"value":"yyyy"}}\n']
+idx {'a': 0, 'b': 14}
+load {'a': {'v': 1}, 'b': {'value': 'yyyy'}}
+append raw b'{"a":{"v":1}}{"b":{"v":2}}\n'
+WARNING: invalid JSON line {"a":{"v":1}}{"b":{"v":2}}
+append load {}
+
+codex
+Specdev: checking prior review artifacts for this assignment so the round-1 feedback file is appended in the expected format.
+exec
+/usr/bin/zsh -lc "test -f .specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-feedback.md && sed -n '1,220p' .specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-feedback.md || true" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+exec
+/usr/bin/zsh -lc "sed -n '1,220p' .specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-reviewer-codex-round-1.log" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 185ms:
+Reviewloop reviewer log
+Reviewer:   codex
+Phase:      brainstorm
+Round:      1
+Started:    2026-06-10T11:02:58.228Z
+Timeout:    900s
+Command:    codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral "Run specdev review $SPECDEV_PHASE --round $SPECDEV_ROUND. Follow its instructions."
+Env:
+  SPECDEV_PHASE=brainstorm
+  SPECDEV_ASSIGNMENT=00003_bugfix_jsonl-write-path-integrity
+  SPECDEV_ROUND=1
+  SPECDEV_FEEDBACK_FILE=/mnt/h/oceanwave/lib/jsonldb/.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-feedback.md
+  SPECDEV_CHANGELOG_FILE=/mnt/h/oceanwave/lib/jsonldb/.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-changelog.md
+  SPECDEV_FOCUS=Architecture & structure — review modularity, separation of concerns, API design, and dependency direction. Identify structural issues.
+
+----- reviewer output -----
+Reading additional input from stdin...
+OpenAI Codex v0.138.0
+--------
+workdir: /mnt/h/oceanwave/lib/jsonldb
+model: gpt-5.5
+provider: openai
+approval: never
+sandbox: danger-full-access
+reasoning effort: medium
+reasoning summaries: none
+session id: 019eb133-2229-7ff2-b9da-fe9cdc9a3d34
+--------
+user
+Run specdev review brainstorm --round 1. Follow its instructions.
+codex
+Specdev: reading the workflow entrypoint and the review instructions so I can run the requested brainstorm review correctly.
+exec
+/usr/bin/zsh -lc "sed -n '1,220p' /mnt/h/oceanwave/lib/jsonldb/.codex/skills/specdev-review/SKILL.md" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+---
+name: specdev-review
+description: Phase-aware manual review of the current assignment
+---
+
+Run `specdev review <phase>` where phase is brainstorm or implementation.
+
+Examples: `specdev review brainstorm`, `specdev review implementation`.
+
+Follow the printed instructions to review the appropriate artifacts.
+Discuss findings with the user before concluding.
+
+exec
+/usr/bin/zsh -lc "sed -n '1,220p' .specdev/_main.md" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+# SpecDev Workflow
+
+You are working in a project that uses SpecDev — a spec-driven development framework. You MUST follow this workflow for all work.
+
+## How SpecDev Works
+
+All work is organized into **assignments**. An assignment is a self-contained unit of work — a feature, bugfix, refactor, or investigation — tracked in its own folder under `assignments/`. Each assignment progresses through three required phases, with optional non-blocking phase-end knowledge capture when reusable knowledge was learned. The CLI enforces gates between phases so work cannot advance until artifacts are validated and the user approves.
+
+## CLI
+
+`specdev` is a Node.js CLI installed globally via npm. Run it directly as `specdev <command>`. It is NOT a Python package — never use pip/python/pipx.
+
+## First Steps
+
+1. Read `project_notes/big_picture.md` — understand the project
+2. Check `.specdev/.current` for the active assignment pointer.
+   - `.current` exists → keep it unless the user asks to switch; use `specdev focus <id>` only when needed.
+   - No active assignment → run `specdev assignment "<description>" --type=<type> --slug=<slug>` to create and focus one.
+   - For parallel exploration before committing to an assignment → run `specdev discussion "<description>"`
+3. Run `specdev next --json` for the canonical next workflow action. Follow the returned guide, command, blockers, choices, and hook outcomes.
+
+**Reference:** `_index.md` is the detailed lookup for all guides, skills, commands, and project context. Consult it when you need to find a specific resource.
+
+## Workflow FAQ
+
+If workflow instructions conflict, a SpecDev command fails unexpectedly, or you are unsure how to proceed, run `specdev knowledge search "<issue>"` and inspect `knowledge/workflow/` before guessing. Capture recurring workflow gotchas through optional phase-end knowledge capture.
+
+## The Workflow
+
+Every assignment follows the same 3 required phases in order:
+
+1. **Brainstorm** — understand the problem, explore approaches, produce a design or research output
+2. **Breakdown** — create a concise implementation plan with coherent tasks and verification guidance
+3. **Implement** — execute tasks using the plan's execution mode and task-level verification
+
+Optional phase-end knowledge capture may suggest durable notes when reusable knowledge was learned.
+
+Use `workflow.yaml` and `specdev next --json` as the source of truth for action selection. Read `_guides/workflow.md` when you need a human-readable reference for phases, artifacts, gates, and recovery paths.
+
+## Rules
+
+- Follow the phases in order. Do not skip phases.
+- No completion claims without evidence.
+- Announce subtasks with "Specdev: <action>".
+- Read `_guides/codestyle_guide.md` before writing any code.
+- When a specdev assignment is active, specdev skills take precedence over superpowers equivalents. See `_guides/superpowers_exclusions.md`.
+
+codex
+Specdev: checking the active assignment and project context before invoking the brainstorm review command.
+exec
+/usr/bin/zsh -lc 'test -f .specdev/.current && cat .specdev/.current || true' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+00003_bugfix_jsonl-write-path-integrity
+exec
+/usr/bin/zsh -lc "sed -n '1,220p' .specdev/project_notes/big_picture.md" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+# Project Big Picture
+
+## Overview
+JSONLDB is a file-based database library that stores data in JSONL (JSON Lines) format. It provides efficient key-based querying, hierarchical folder organization, built-in Git version control, and data visualization.
+
+## Users / Consumers
+Internal team use.
+
+## Tech Stack
+- **Language:** Python (>= 3.8)
+- **Key dependencies:** pandas, orjson, numpy, gitpython, bokeh, matplotlib, mmap, bisect (stdlib)
+
+## Architecture
+- **Layered design:** `jsonlfile` (low-level single-file CRUD with byte-offset indexing via `.idx` files) → `jsonldf` (DataFrame adapter over jsonlfile) → `folderdb` (folder-level DB managing multiple JSONL tables with metadata)
+- **Index-driven reads:** Each `.jsonl` file has a companion `.idx` file mapping linekeys to byte offsets for O(1) lookups and range queries
+- **Sorted keys:** Records are kept sorted by linekey; bisect is used for O(log n) range selection on sorted index keys
+- **In-place updates:** Updates that fit in the existing line space are written in-place; oversized updates append and blank the old line
+- **Hierarchical storage:** Optional `hierarchy_depth` splits files into subdirectories based on dot-delimited key prefixes (e.g. `A.B.ticker.jsonl` → `A/B/ticker.jsonl`)
+- **Metadata files:** `db.meta` (per-table stats), `h.meta` (hierarchy config), `config.meta` (runtime config like time precision)
+- **Modular imports:** `vercontrol` (Git wrapper) and `visual` (Bokeh/Matplotlib) are lazy-loaded to avoid pulling heavy deps unnecessarily
+
+## Conventions & Constraints
+- Each JSONL line is `{"linekey": {value_dict}}` — one top-level key per line, value must be a non-empty dict
+- Linekeys can be strings or ISO datetimes; datetime precision is configurable (`seconds` or `microseconds`)
+- Serialization uses orjson exclusively (no stdlib json fallback)
+- Files are written with large buffer sizes (50 MB) for throughput
+- `lint_jsonl(path, force=False)` uses mtime-based fast path: when `.idx` is fresh, skips O(file_size) mmap scan and does spot check + sort/compaction only; `force=True` runs full mmap line-count verification for crash recovery or maintenance
+- `FolderDB.lint_db(force=False)` orchestrates linting across all tables, passing `force` through to each `lint_jsonl` call
+- `.idx` files use compact (no-indent) orjson format for minimal disk I/O
+- `profile_test/benchmark.py` provides performance benchmarks with `--save`/`--compare` for before/after comparison
+
+exec
+/usr/bin/zsh -lc 'specdev next --json' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 115ms:
+{
+  "command": "next",
+  "version": 1,
+  "status": "ok",
+  "assignment": "00003_bugfix_jsonl-write-path-integrity",
+  "assignment_path": "/mnt/h/oceanwave/lib/jsonldb/.specdev/assignments/00003_bugfix_jsonl-write-path-integrity",
+  "state": "brainstorm_checkpoint_ready",
+  "workflow": {
+    "source": "manifest",
+    "path": "/mnt/h/oceanwave/lib/jsonldb/.specdev/workflow.yaml",
+    "contract_version": 2
+  },
+  "next_action": {
+    "id": "brainstorm.checkpoint",
+    "phase": "brainstorm",
+    "step": "checkpoint",
+    "kind": "command",
+    "evidence": {
+      "exit_code": 0
+    },
+    "command_line": "specdev checkpoint brainstorm"
+  },
+  "interaction": {
+    "type": "choice",
+    "prompt": "How do you want to proceed from brainstorm?",
+    "choices": [
+      {
+        "id": "reviewloop_autocontinue",
+        "label": "Automated review, then continue",
+        "description": "Runs reviewloop and continues to the next phase if approved.",
+        "command": "specdev reviewloop brainstorm --reviewer=<name> --autocontinue",
+        "requires_reviewer": true,
+        "autocontinue": true,
+        "reviewers": []
+      },
+      {
+        "id": "reviewloop_only",
+        "label": "Automated review only",
+        "description": "Runs reviewloop and stops after phase approval.",
+        "command": "specdev reviewloop brainstorm --reviewer=<name>",
+        "requires_reviewer": true,
+        "autocontinue": false,
+        "reviewers": []
+      },
+      {
+        "id": "manual_review",
+        "label": "Manual review",
+        "description": "Starts a separate manual review session.",
+        "command": "specdev review brainstorm"
+      },
+      {
+        "id": "approve_skip_review",
+        "label": "Approve without review",
+        "description": "Approves the brainstorm gate without running review.",
+        "command": "specdev approve brainstorm"
+      }
+    ]
+  },
+  "hook_outcomes": [
+    {
+      "id": "brainstorm_knowledge_prompt",
+      "phase": "brainstorm",
+      "slot": "phase:end",
+      "order": 50,
+      "kind": "guide",
+      "guide": ".specdev/skills/core/knowledge-capture/SKILL.md",
+      "blocking": false,
+      "outcome": "skipped",
+      "reason": "advisory phase-end knowledge capture hook is available; workflow progress is not blocked"
+    }
+  ],
+  "trace": [
+    "brainstorm artifacts are present",
+    "brainstorm approval gate is pending",
+    "next action is to run the brainstorm checkpoint"
+  ],
+  "blockers": [],
+  "progress": {
+    "source": "none",
+    "totalTasks": 0,
+
+codex
+Specdev: writing the round-1 brainstorm review verdict to the required feedback artifact.
+apply patch
+patch: completed
+/mnt/h/oceanwave/lib/jsonldb/.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-feedback.md
+diff --git a/.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-feedback.md b/.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-feedback.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..66c07729fa596c67b8dc02d92e319231ff4f1d2e
+--- /dev/null
++++ b/.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-feedback.md
+@@ -0,0 +1,9 @@
++## Round 1
++
++**Verdict:** approved
++
++### Findings
++1. No findings. The design is complete for the five verified write/delete-path defects, stays within the existing `jsonlfile` -> `folderdb` layering, and the proposed fixes are feasible with the current code structure.
++
++### Addressed from changelog
++- (none -- first round)
+
+diff --git a/.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-feedback.md b/.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-feedback.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..66c07729fa596c67b8dc02d92e319231ff4f1d2e
+--- /dev/null
++++ b/.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-feedback.md
+@@ -0,0 +1,9 @@
++## Round 1
++
++**Verdict:** approved
++
++### Findings
++1. No findings. The design is complete for the five verified write/delete-path defects, stays within the existing `jsonlfile` -> `folderdb` layering, and the proposed fixes are feasible with the current code structure.
++
++### Addressed from changelog
++- (none -- first round)
+
+codex
+Specdev: verifying the feedback artifact contains the required round and verdict before concluding.
+exec
+/usr/bin/zsh -lc "sed -n '1,120p' .specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-feedback.md" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+## Round 1
+
+**Verdict:** approved
+
+### Findings
+1. No findings. The design is complete for the five verified write/delete-path defects, stays within the existing `jsonlfile` -> `folderdb` layering, and the proposed fixes are feasible with the current code structure.
+
+### Addressed from changelog
+- (none -- first round)
+
+diff --git a/.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-feedback.md b/.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-feedback.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..66c07729fa596c67b8dc02d92e319231ff4f1d2e
+--- /dev/null
++++ b/.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-feedback.md
+@@ -0,0 +1,9 @@
++## Round 1
++
++**Verdict:** approved
++
++### Findings
++1. No findings. The design is complete for the five verified write/delete-path defects, stays within the existing `jsonlfile` -> `folderdb` layering, and the proposed fixes are feasible with the current code structure.
++
++### Addressed from changelog
++- (none -- first round)
+
+codex
+Specdev review completed for brainstorm round 1.
+
+Verdict: `approved`
+
+I wrote the required feedback to [.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-feedback.md](/mnt/h/oceanwave/lib/jsonldb/.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-feedback.md). I verified the design against the referenced `jsonlfile.py` and `folderdb.py` paths, plus the existing tests and focused reproductions for the write-path issues.
+diff --git a/.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-feedback.md b/.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-feedback.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..66c07729fa596c67b8dc02d92e319231ff4f1d2e
+--- /dev/null
++++ b/.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-feedback.md
+@@ -0,0 +1,9 @@
++## Round 1
++
++**Verdict:** approved
++
++### Findings
++1. No findings. The design is complete for the five verified write/delete-path defects, stays within the existing `jsonlfile` -> `folderdb` layering, and the proposed fixes are feasible with the current code structure.
++
++### Addressed from changelog
++- (none -- first round)
+
+tokens used
+63,212
+Specdev review completed for brainstorm round 1.
+
+Verdict: `approved`
+
+I wrote the required feedback to [.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-feedback.md](/mnt/h/oceanwave/lib/jsonldb/.specdev/assignments/00003_bugfix_jsonl-write-path-integrity/review/brainstorm-feedback.md). I verified the design against the referenced `jsonlfile.py` and `folderdb.py` paths, plus the existing tests and focused reproductions for the write-path issues.
+
+----- end of reviewer output -----
+Ended:      2026-06-10T11:05:09.478Z
+Elapsed:    132s
+Exit code:  0
+Timed out:  false
+Verdict:    approved

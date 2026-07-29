@@ -1,0 +1,41 @@
+{
+  "plan_file": ".specdev/assignments/00003_bugfix_jsonl-write-path-integrity/breakdown/plan.md",
+  "total_tasks": 5,
+  "tasks": [
+    {
+      "number": 1,
+      "status": "completed",
+      "started_at": "2026-06-10T11:06:27Z",
+      "completed_at": "2026-06-10T11:07:55Z",
+      "summary": "Trailing-newline heal in update_jsonl before append_pos; test test_update_append_heals_missing_trailing_newline (local, unit_tests/ is gitignored); full suite 71 passed"
+    },
+    {
+      "number": 2,
+      "status": "completed",
+      "started_at": "2026-06-10T11:08:02Z",
+      "completed_at": "2026-06-10T11:09:12Z",
+      "summary": "Shrink padding now goes before the newline (line keeps exact old length); test test_update_shrink_keeps_line_terminator; full suite 72 passed"
+    },
+    {
+      "number": 3,
+      "status": "completed",
+      "started_at": "2026-06-10T11:09:20Z",
+      "completed_at": "2026-06-10T11:10:25Z",
+      "summary": "delete_file_range bounds now go through serialize_linekey (ISO 'T' format) instead of str(); test test_delete_file_range_datetime_bounds; full suite 73 passed"
+    },
+    {
+      "number": 4,
+      "status": "completed",
+      "started_at": "2026-06-10T11:10:32Z",
+      "completed_at": "2026-06-10T11:11:40Z",
+      "summary": "clear_folder now walks the tree (skipping hidden dirs) and removes empty folders; test test_clear_folder_clears_hierarchy_subfolders; full suite 74 passed"
+    },
+    {
+      "number": 5,
+      "status": "completed",
+      "started_at": "2026-06-10T11:11:48Z",
+      "completed_at": "2026-06-10T11:12:40Z",
+      "summary": "delete_file removes .idx only if present; delete_file/delete_file_keys/delete_file_range use _get_file_path (no folder creation on delete); test test_delete_file_tolerates_missing_index; full suite 75 passed"
+    }
+  ]
+}

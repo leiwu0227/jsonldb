@@ -1,0 +1,20 @@
+{
+  "plan_file": ".specdev/assignments/00007_bugfix_corrupt-idx-self-heal/breakdown/plan.md",
+  "total_tasks": 2,
+  "tasks": [
+    {
+      "number": 1,
+      "status": "completed",
+      "started_at": "2026-06-12T08:33:48Z",
+      "completed_at": "2026-06-12T08:40:10Z",
+      "summary": "load_index helper + ensure_index_exists size==0 trigger; routed select/select_line/update/delete/lint reads through load_index; _verify_and_compact keeps unconditional rebuild for bad-offset case; +3 tests; full suite 85 passed; code-reviewer PASS/READY"
+    },
+    {
+      "number": 2,
+      "status": "completed",
+      "started_at": "2026-06-12T08:40:16Z",
+      "completed_at": "2026-06-12T08:44:23Z",
+      "summary": "Routed folderdb (_scan_index_timespecs/delete_file_range/_make_meta_entry) and all 6 visual.py json.load reads through jsonlfile.load_index; removed FileNotFoundError guards on single-file visualizers, kept skip-on-missing on loops; dropped unused orjson/json imports; routed lint cardinality reread through load_index (no raw .idx read remains outside load_index); +2 tests; full suite 87 passed"
+    }
+  ]
+}

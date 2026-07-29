@@ -1,0 +1,20 @@
+{
+  "plan_file": ".specdev/assignments/00006_feature_timespec-mismatch-guard/breakdown/plan.md",
+  "total_tasks": 2,
+  "tasks": [
+    {
+      "number": 1,
+      "status": "completed",
+      "started_at": "2026-06-10T12:39:00Z",
+      "completed_at": "2026-06-10T12:40:16Z",
+      "summary": "detect_timespec helper (shape match + fromisoformat validation); test test_detect_timespec; suite 80 passed"
+    },
+    {
+      "number": 2,
+      "status": "completed",
+      "started_at": "2026-06-10T12:40:40Z",
+      "completed_at": "2026-06-10T12:41:49Z",
+      "summary": "_detect_data_timespec (db.meta boundary trigger) + _scan_index_timespecs (full idx confirmation) + __init__ heal/warn hook; tests test_timespec_mismatch_auto_heal + test_timespec_mismatch_mixed_and_camouflage; suite 82 passed"
+    }
+  ]
+}

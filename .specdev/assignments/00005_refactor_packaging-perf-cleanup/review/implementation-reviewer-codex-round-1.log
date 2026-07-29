@@ -1,0 +1,1970 @@
+Reviewloop reviewer log
+Reviewer:   codex
+Phase:      implementation
+Round:      1
+Started:    2026-06-10T11:37:22.196Z
+Timeout:    900s
+Command:    codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral "Run specdev review $SPECDEV_PHASE --round $SPECDEV_ROUND. Follow its instructions."
+Env:
+  SPECDEV_PHASE=implementation
+  SPECDEV_ASSIGNMENT=00005_refactor_packaging-perf-cleanup
+  SPECDEV_ROUND=1
+  SPECDEV_FEEDBACK_FILE=/mnt/h/oceanwave/lib/jsonldb/.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-feedback.md
+  SPECDEV_CHANGELOG_FILE=/mnt/h/oceanwave/lib/jsonldb/.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-changelog.md
+  SPECDEV_FOCUS=Architecture & structure — review modularity, separation of concerns, API design, and dependency direction. Identify structural issues.
+
+----- reviewer output -----
+Reading additional input from stdin...
+OpenAI Codex v0.138.0
+--------
+workdir: /mnt/h/oceanwave/lib/jsonldb
+model: gpt-5.5
+provider: openai
+approval: never
+sandbox: danger-full-access
+reasoning effort: medium
+reasoning summaries: none
+session id: 019eb152-9fe9-79f3-8ebc-b4e6ef4d9379
+--------
+user
+Run specdev review implementation --round 1. Follow its instructions.
+codex
+Specdev: reading the review workflow instructions for `specdev review implementation --round 1`.
+exec
+/usr/bin/zsh -lc "sed -n '1,220p' /mnt/h/oceanwave/lib/jsonldb/.codex/skills/specdev-review/SKILL.md" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+---
+name: specdev-review
+description: Phase-aware manual review of the current assignment
+---
+
+Run `specdev review <phase>` where phase is brainstorm or implementation.
+
+Examples: `specdev review brainstorm`, `specdev review implementation`.
+
+Follow the printed instructions to review the appropriate artifacts.
+Discuss findings with the user before concluding.
+
+codex
+Specdev: running the implementation review command and then I’ll follow the printed checklist.
+exec
+/usr/bin/zsh -lc 'specdev review implementation --round 1' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+Manual Review: 00005_refactor_packaging-perf-cleanup
+   Phase: implementation
+
+Review scope: Spec compliance + code quality
+
+Artifacts to review:
+   - 00005_refactor_packaging-perf-cleanup/brainstorm/design.md (what was requested)
+   - 00005_refactor_packaging-perf-cleanup/breakdown/plan.md (what was planned)
+   - Changed code files (what was built)
+
+Check:
+  1. Spec compliance: does implementation match the design?
+  2. Code quality: architecture, testing, style
+  3. Tag findings as CRITICAL or MINOR
+  4. Prefer simplification over addition. If code can be made simpler
+     while preserving functionality, suggest that — not more code.
+     Flag patch-stacking: layered fixes that should be consolidated.
+  5. Flag special-case code that exists only to satisfy tests.
+     If tests are outdated, recommend updating the tests instead.
+
+Cost-benefit principle:
+  Only flag issues worth the cost of fixing. Skip unlikely edge cases,
+  speculative future-proofing, and stylistic preferences.
+  Accept [REJECTED] findings unless they would cause a real bug.
+
+Review Focus:
+   Architecture & structure — review modularity, separation of concerns, API design, and dependency direction. Identify structural issues.
+
+Write findings to:
+   00005_refactor_packaging-perf-cleanup/review/implementation-feedback.md
+   Automated review requirement: append ## Round 1 with **Verdict:** approved or **Verdict:** needs-changes before exiting.
+   Do not only print a summary to stdout.
+
+Feedback format (append to file):
+  ```markdown
+  ## Round 1
+  
+  **Verdict:** approved | needs-changes
+  
+  ### Findings
+  1. [F1.1] Description of finding
+  
+  ### Addressed from changelog
+  - (none -- first round)
+  ```
+
+Reviewing assignment: 00005_refactor_packaging-perf-cleanup
+
+
+codex
+Specdev: reading the SpecDev rules and the assignment artifacts before checking the implementation diff.
+exec
+/usr/bin/zsh -lc "sed -n '1,240p' 00005_refactor_packaging-perf-cleanup/brainstorm/design.md" in /mnt/h/oceanwave/lib/jsonldb
+ exited 2 in 0ms:
+sed: can't read 00005_refactor_packaging-perf-cleanup/brainstorm/design.md: No such file or directory
+
+exec
+/usr/bin/zsh -lc "sed -n '1,240p' .specdev/_main.md" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+# SpecDev Workflow
+
+You are working in a project that uses SpecDev — a spec-driven development framework. You MUST follow this workflow for all work.
+
+## How SpecDev Works
+
+All work is organized into **assignments**. An assignment is a self-contained unit of work — a feature, bugfix, refactor, or investigation — tracked in its own folder under `assignments/`. Each assignment progresses through three required phases, with optional non-blocking phase-end knowledge capture when reusable knowledge was learned. The CLI enforces gates between phases so work cannot advance until artifacts are validated and the user approves.
+
+## CLI
+
+`specdev` is a Node.js CLI installed globally via npm. Run it directly as `specdev <command>`. It is NOT a Python package — never use pip/python/pipx.
+
+## First Steps
+
+1. Read `project_notes/big_picture.md` — understand the project
+2. Check `.specdev/.current` for the active assignment pointer.
+   - `.current` exists → keep it unless the user asks to switch; use `specdev focus <id>` only when needed.
+   - No active assignment → run `specdev assignment "<description>" --type=<type> --slug=<slug>` to create and focus one.
+   - For parallel exploration before committing to an assignment → run `specdev discussion "<description>"`
+3. Run `specdev next --json` for the canonical next workflow action. Follow the returned guide, command, blockers, choices, and hook outcomes.
+
+**Reference:** `_index.md` is the detailed lookup for all guides, skills, commands, and project context. Consult it when you need to find a specific resource.
+
+## Workflow FAQ
+
+If workflow instructions conflict, a SpecDev command fails unexpectedly, or you are unsure how to proceed, run `specdev knowledge search "<issue>"` and inspect `knowledge/workflow/` before guessing. Capture recurring workflow gotchas through optional phase-end knowledge capture.
+
+## The Workflow
+
+Every assignment follows the same 3 required phases in order:
+
+1. **Brainstorm** — understand the problem, explore approaches, produce a design or research output
+2. **Breakdown** — create a concise implementation plan with coherent tasks and verification guidance
+3. **Implement** — execute tasks using the plan's execution mode and task-level verification
+
+Optional phase-end knowledge capture may suggest durable notes when reusable knowledge was learned.
+
+Use `workflow.yaml` and `specdev next --json` as the source of truth for action selection. Read `_guides/workflow.md` when you need a human-readable reference for phases, artifacts, gates, and recovery paths.
+
+## Rules
+
+- Follow the phases in order. Do not skip phases.
+- No completion claims without evidence.
+- Announce subtasks with "Specdev: <action>".
+- Read `_guides/codestyle_guide.md` before writing any code.
+- When a specdev assignment is active, specdev skills take precedence over superpowers equivalents. See `_guides/superpowers_exclusions.md`.
+
+exec
+/usr/bin/zsh -lc "sed -n '1,260p' 00005_refactor_packaging-perf-cleanup/breakdown/plan.md" in /mnt/h/oceanwave/lib/jsonldb
+ exited 2 in 0ms:
+sed: can't read 00005_refactor_packaging-perf-cleanup/breakdown/plan.md: No such file or directory
+
+exec
+/usr/bin/zsh -lc 'git status --short' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 863ms:
+ M .specdev/.current
+ M .specdev/_guides/assignment_guide.md
+ M .specdev/_guides/migration_guide.md
+ M .specdev/_guides/workflow.md
+ M .specdev/_index.md
+ M .specdev/_main.md
+ M .specdev/_templates/README.md
+ M .specdev/_templates/gate_checklist.md
+ M .specdev/_templates/review_report_template.md
+ M .specdev/project_scaffolding/_README.md
+ M .specdev/skills/README.md
+ M .specdev/skills/core/brainstorming/SKILL.md
+ M .specdev/skills/core/brainstorming/scripts/get-project-context.sh
+ M .specdev/skills/core/breakdown/SKILL.md
+ M .specdev/skills/core/diagnosis/SKILL.md
+ M .specdev/skills/core/implementing/SKILL.md
+ M .specdev/skills/core/implementing/prompts/implementer.md
+ M .specdev/skills/core/implementing/scripts/complete-task.sh
+ M .specdev/skills/core/implementing/scripts/extract-tasks.sh
+ M .specdev/skills/core/implementing/scripts/prepare-task.sh
+ M .specdev/skills/core/implementing/scripts/track-progress.sh
+ M .specdev/skills/core/investigation/SKILL.md
+ M .specdev/skills/core/knowledge-capture/SKILL.md
+ M .specdev/skills/core/parallel-worktrees/SKILL.md
+ M .specdev/skills/core/review-agent/SKILL.md
+ M .specdev/skills/core/review-agent/prompts/implementation-reviewer.md
+ M .specdev/skills/core/reviewloop/SKILL.md
+ M .specdev/skills/core/reviewloop/reviewers/claude.json
+ M .specdev/skills/core/reviewloop/reviewers/codex.json
+ M .specdev/skills/core/reviewloop/reviewers/cursor.json
+ M .specdev/skills/core/systematic-debugging/SKILL.md
+ M .specdev/skills/core/test-driven-development/SKILL.md
+?? .codex/
+?? .specdev/.session-state.json
+?? .specdev/_templates/agent-spec.schema.json
+?? .specdev/_templates/workflow_feedback_note.md
+?? .specdev/agents/
+?? .specdev/assignments/00003_bugfix_jsonl-write-path-integrity/
+?? .specdev/assignments/00004_bugfix_timespec-scoping-api-contracts/
+?? .specdev/assignments/00005_refactor_packaging-perf-cleanup/
+?? .specdev/cache/
+?? .specdev/knowledge/workflow_feedback/
+?? .specdev/skills/core/reviewloop/reviewers/README.md
+?? .specdev/skills/core/reviewloop/reviewers/cursor-gemini.json
+?? .specdev/workflow.yaml
+
+codex
+Specdev: the assignment artifacts live under `.specdev/assignments`, so I’m switching to that path and checking the project context plus code style guide.
+exec
+/usr/bin/zsh -lc "sed -n '1,220p' .specdev/project_notes/big_picture.md" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+# Project Big Picture
+
+## Overview
+JSONLDB is a file-based database library that stores data in JSONL (JSON Lines) format. It provides efficient key-based querying, hierarchical folder organization, built-in Git version control, and data visualization.
+
+## Users / Consumers
+Internal team use.
+
+## Tech Stack
+- **Language:** Python (>= 3.8)
+- **Key dependencies:** pandas, orjson, numpy, gitpython, bokeh, matplotlib, mmap, bisect (stdlib)
+
+## Architecture
+- **Layered design:** `jsonlfile` (low-level single-file CRUD with byte-offset indexing via `.idx` files) → `jsonldf` (DataFrame adapter over jsonlfile) → `folderdb` (folder-level DB managing multiple JSONL tables with metadata)
+- **Index-driven reads:** Each `.jsonl` file has a companion `.idx` file mapping linekeys to byte offsets for O(1) lookups and range queries
+- **Sorted keys:** Records are kept sorted by linekey; bisect is used for O(log n) range selection on sorted index keys
+- **In-place updates:** Updates that fit in the existing line space are written in-place; oversized updates append and blank the old line
+- **Hierarchical storage:** Optional `hierarchy_depth` splits files into subdirectories based on dot-delimited key prefixes (e.g. `A.B.ticker.jsonl` → `A/B/ticker.jsonl`)
+- **Metadata files:** `db.meta` (per-table stats), `h.meta` (hierarchy config), `config.meta` (runtime config like time precision)
+- **Modular imports:** `vercontrol` (Git wrapper) and `visual` (Bokeh/Matplotlib) are lazy-loaded to avoid pulling heavy deps unnecessarily
+
+## Conventions & Constraints
+- Each JSONL line is `{"linekey": {value_dict}}` — one top-level key per line, value must be a non-empty dict
+- Linekeys can be strings or ISO datetimes; datetime precision is configurable (`seconds` or `microseconds`)
+- Serialization uses orjson exclusively (no stdlib json fallback)
+- Files are written with large buffer sizes (50 MB) for throughput
+- `lint_jsonl(path, force=False)` uses mtime-based fast path: when `.idx` is fresh, skips O(file_size) mmap scan and does spot check + sort/compaction only; `force=True` runs full mmap line-count verification for crash recovery or maintenance
+- `FolderDB.lint_db(force=False)` orchestrates linting across all tables, passing `force` through to each `lint_jsonl` call
+- `.idx` files use compact (no-indent) orjson format for minimal disk I/O
+- `profile_test/benchmark.py` provides performance benchmarks with `--save`/`--compare` for before/after comparison
+
+exec
+/usr/bin/zsh -lc "sed -n '1,220p' .specdev/_guides/codestyle_guide.md" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+## Coding Philosophy
+
+**Independent Modules**
+- Each module stands alone and does one domain well
+- No hidden cross-module dependencies; only use explicit imports.
+- Benefit: Users can pick and choose without tight coupling.
+
+**Pure by Default (No Side Effects)**
+- Functions are pure: same inputs → same outputs, no hidden state changes unless its for classes 
+- Functions should not modify inputs 
+- Allowed exception: clearly named setup/config functions (e.g., setup_logging) that establish global state.
+- Benefit: Predictable, testable, and safe for parallel use.
+
+**Single-Responsibility Functions**
+- Each function does one thing clearly.
+- Simple signatures, clear names; avoid giant config dicts unless the flexibility is the goal.
+- Benefit: Easier to read, test, and maintain.
+
+**Be Explicit**
+
+- Behavior and return types are consistent and predictable.
+- Include example output in the comment
+- Required params are positional; optional params are keyword with defaults.
+- Benefit: No surprises; intent is clear from the signature.
+
+**Documentation**
+
+- Public functions have docstrings (purpose, params, returns).
+- Complex logic has inline comments.
+- Major modules have example notebooks showing usage, only when user request it
+
+**Code Organization**
+- No circular imports.
+exec
+/usr/bin/zsh -lc "sed -n '1,260p' .specdev/assignments/00005_refactor_packaging-perf-cleanup/brainstorm/design.md" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+# Design: Packaging, performance, and cleanup sweep
+
+## Overview
+
+Behavior-preserving sweep over four areas, all findings verified against the current code:
+
+| Area | Items |
+|------|-------|
+| Packaging | unused `numba` import (breaks fresh installs); `setup.py` phantom `jsonldb=jsonldb.cli:main` entry point; matplotlib missing from deps while `visual.py` imports it; version `1.0.0` (setup.py) vs `0.1.0` (`__init__.py`); `build/`/`dist/` not gitignored |
+| Import hygiene | `folderdb.py` eagerly imports `vercontrol` → gitpython loads on `from jsonldb import FolderDB`, contradicting the `__init__.py` modular-import docstring |
+| Performance | double index sorting on every write (`dict(sorted(...))` + `OPT_SORT_KEYS`) in `build_jsonl_index`, `save_jsonl`, `update_jsonl`, `delete_jsonl`; O(n) `min`/`max` over already-sorted index keys in `select_jsonl`; `save_jsonl` buffers all encoded lines in a list before writing; `BUFFER_SIZE` comment says 10MB for a 50MB value |
+| Dead code / dedup | `check_dict_format` never called; `deleted_line` computed and unused in `delete_jsonl`; three near-identical metadata-entry builders (`build_dbmeta`, `update_dbmeta`, `lint_db`); `validate_name` enforces `>=` but error text says "exactly"; `update_dbmeta` strips `.jsonl` with `str.replace` (removes the substring anywhere); redundant local `import orjson` in `lint_db` |
+
+## Non-Goals
+
+- **No vercontrol.py changes** — version-control bugs were explicitly excluded by the owner.
+- **No visual.py changes** — plotting code is untested and low-traffic; its duplicate index
+  reads and `.replace('.jsonl','')` calls stay as-is.
+- **No print→logging migration** — that changes observable behavior and deserves its own
+  decision.
+- **No API changes** — all public signatures stay identical.
+
+## Design
+
+**Task A — packaging & import hygiene:**
+- Delete `from numba import jit` (`jsonldf.py:8`). numba is unused everywhere.
+- `setup.py`: remove the `entry_points` block (no `cli.py` exists); add `matplotlib>=3.0.0`
+  to `install_requires` (visual.py imports it; bokeh is already listed); keep `setup.py`
+  version `1.0.0` and set `__init__.py` `__version__ = "1.0.0"` to match the published wheel.
+- `.gitignore`: add `build/` and `dist/` (a stale built copy of the lib sits in `build/`).
+- `folderdb.py`: move the `from .vercontrol import ...` to inside the three version-control
+  methods (`commit`, `revert`, `version`) so gitpython loads only when used. Update the
+  `__init__.py` docstring example (`from jsonldb.visual import plot` → an actual function).
+- New test (subprocess): `import jsonldb` then assert `'numba' not in sys.modules and
+  'git' not in sys.modules` — pins the import contract.
+
+**Task B — jsonlfile performance & dead code:**
+- Index writes: keep `OPT_SORT_KEYS`, drop the Python-side `dict(sorted(...))` wrappers
+  (4 sites). `build_jsonl_index` keeps a single sort path the same way.
+- `select_jsonl`: replace `min(all_keys)`/`max(all_keys)` with `all_keys[0]`/`all_keys[-1]`
+  (the index file is written key-sorted; orjson preserves object order on load).
+- `save_jsonl`: write lines as they are encoded while tracking the byte offset, instead of
+  accumulating the whole list first.
+- Fix the `BUFFER_SIZE` comment (50MB).
+- Delete `check_dict_format` (never called) and the unused `deleted_line` assignment.
+
+**Task C — folderdb dedup & messages:**
+- Extract `_make_meta_entry(name, file_path, linted=False, lint_time="") -> dict` that reads
+  the `.idx` and returns the metadata dict; use it in `build_dbmeta`, `update_dbmeta`, and
+  `lint_db` (removes ~50 duplicated lines).
+- `validate_name` error text: "at least N delimiters" to match the `>=` check.
+- `update_dbmeta`: strip the `.jsonl` suffix with `name[:-6] if name.endswith('.jsonl')`
+  (consistent with `_get_file_name`; `removesuffix` is unavailable on the supported 3.8).
+- Remove the redundant `import orjson` inside `lint_db`.
+
+## Success Criteria
+
+- New subprocess import test passes: core import loads neither `numba` nor `git`.
+- Full suite (79 after the new test) passes unchanged — behavior-preserving guarantee.
+- `pip`-fresh simulation: `python -c "import jsonldb"` works in an environment without numba
+  (equivalently: `grep numba jsonldb/` returns nothing).
+- `setup.py` has no `entry_points`, lists matplotlib, and `jsonldb.__version__ == "1.0.0"`.
+- Index files produced after the change are byte-identical to before (same sorted-key JSON).
+
+## Testing Approach
+
+One new executable test (the subprocess import contract). Everything else is covered by the
+existing suite, which exercises every touched function; `profile_test/benchmark.py` remains
+available for manual perf comparison but is not part of the gate.
+
+exec
+/usr/bin/zsh -lc "sed -n '1,320p' .specdev/assignments/00005_refactor_packaging-perf-cleanup/breakdown/plan.md" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+# Packaging, Performance & Cleanup — Implementation Plan
+
+> **For agent:** Implement this plan task-by-task. Match verification effort to task mode.
+
+**Goal:** Behavior-preserving sweep: fix install-breaking packaging defects, defer heavy imports, remove redundant work in the hot write path, and delete verified dead code.
+
+**Architecture:** Three independent slices: packaging/import hygiene (jsonldf, setup.py, __init__, folderdb imports, README), jsonlfile performance/dead code, folderdb dedup. See `brainstorm/design.md`. Reviewer notes: `.gitignore` already covers `build/` and `dist/` (no change needed); README.md also lists numba and must be updated.
+
+**Tech Stack:** Python, orjson, pytest (`unit_tests/`, local-only per repo convention)
+
+**Execution Mode:** inline
+
+**Test Budget:** ≤ 1 new test across all tasks (behavior-preserving refactor; existing 78-test suite is the gate).
+
+---
+
+### Task 1: Packaging and import hygiene
+**Mode:** standard
+**Skills:** [test-driven-development]
+**Files:** jsonldb/jsonldf.py, jsonldb/folderdb.py, jsonldb/__init__.py, setup.py, README.md, unit_tests/test_folderdb.py
+
+**Work:**
+- Delete `from numba import jit` from jsonldf.py; remove numba from README.md requirements.
+- setup.py: remove `entry_points` block; add `matplotlib>=3.0.0` to install_requires.
+- `__init__.py`: set `__version__ = "1.0.0"`; fix the docstring example for visual.
+- folderdb.py: move the `.vercontrol` import inside `commit`/`revert`/`version` methods.
+
+**Verify:**
+- `python -m pytest unit_tests/test_folderdb.py -k import_contract -x -q`
+
+**Test Budget:** +1 in unit_tests/test_folderdb.py; focused (<30s) — subprocess asserts `import jsonldb` loads neither `numba` nor `git`
+
+**Test Pruning:**
+- None needed.
+
+**Commit:** `git commit -m "fix: remove unused numba import, defer gitpython, repair setup.py metadata"`
+
+### Task 2: jsonlfile performance and dead code
+**Mode:** standard
+**Skills:** [test-driven-development]
+**Files:** jsonldb/jsonlfile.py
+
+**Work:**
+- Drop Python-side `dict(sorted(...))` at the 4 index-write sites (keep `OPT_SORT_KEYS`).
+- `select_jsonl`: `all_keys[0]`/`all_keys[-1]` instead of `min`/`max`.
+- `save_jsonl`: stream lines to the file while building the index (no list accumulation).
+- Fix `BUFFER_SIZE` comment; delete `check_dict_format` and the unused `deleted_line` line.
+
+**Verify:**
+- `python -m pytest unit_tests/ -q` (behavior-preserving; full suite is the contract, <2 min)
+
+**Test Budget:** +0; covered by existing suite
+
+**Test Pruning:**
+- None needed (no test references check_dict_format).
+
+**Commit:** `git commit -m "perf: single-sort index writes, O(1) range defaults, streaming save"`
+
+### Task 3: folderdb metadata dedup and message fixes
+**Mode:** standard
+**Skills:** [test-driven-development]
+**Files:** jsonldb/folderdb.py
+
+**Work:**
+- Extract `_make_meta_entry(name, file_path, linted=False, lint_time="")`; use in `build_dbmeta`, `update_dbmeta`, `lint_db`.
+- `validate_name` error message: "at least" instead of "exactly".
+- `update_dbmeta`: suffix-strip `.jsonl` via endswith/slice instead of `str.replace`.
+- Remove redundant `import orjson` in `lint_db`.
+
+**Verify:**
+- `python -m pytest unit_tests/test_folderdb.py -q`
+- Final: `python -m pytest unit_tests/ -q`
+
+**Test Budget:** +0; covered by existing suite (build_dbmeta/update_dbmeta/lint_db all tested)
+
+**Test Pruning:**
+- None needed.
+
+**Commit:** `git commit -m "refactor: dedupe metadata entry builder, fix validate_name message"`
+
+exec
+/usr/bin/zsh -lc 'find .specdev/assignments/00005_refactor_packaging-perf-cleanup -maxdepth 3 -type f | sort' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+.specdev/assignments/00005_refactor_packaging-perf-cleanup/brainstorm/design.md
+.specdev/assignments/00005_refactor_packaging-perf-cleanup/brainstorm/proposal.md
+.specdev/assignments/00005_refactor_packaging-perf-cleanup/breakdown/plan.md
+.specdev/assignments/00005_refactor_packaging-perf-cleanup/implementation/progress.json
+.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/brainstorm-feedback.md
+.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/brainstorm-reviewer-codex-round-1.log
+.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-reviewer-codex-round-1.log
+.specdev/assignments/00005_refactor_packaging-perf-cleanup/status.json
+
+codex
+Specdev: checking the implementation progress and code diffs against the planned file list.
+exec
+/usr/bin/zsh -lc "sed -n '1,220p' .specdev/assignments/00005_refactor_packaging-perf-cleanup/implementation/progress.json" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+{
+  "plan_file": ".specdev/assignments/00005_refactor_packaging-perf-cleanup/breakdown/plan.md",
+  "total_tasks": 3,
+  "tasks": [
+    {
+      "number": 1,
+      "status": "completed",
+      "started_at": "2026-06-10T11:32:34Z",
+      "completed_at": "2026-06-10T11:34:19Z",
+      "summary": "numba import removed (also from README); vercontrol imported lazily in commit/revert/version; setup.py: entry_points dropped, matplotlib added; __version__ aligned to 1.0.0; test test_import_contract_no_heavy_modules; suite 79 passed"
+    },
+    {
+      "number": 2,
+      "status": "completed",
+      "started_at": "2026-06-10T11:34:31Z",
+      "completed_at": "2026-06-10T11:35:35Z",
+      "summary": "Dropped python-side dict(sorted()) at 4 index-write sites (OPT_SORT_KEYS suffices, invariant verified); select_jsonl O(1) defaults; save_jsonl streams; BUFFER_SIZE comment fixed; check_dict_format and deleted_line dead code removed; suite 79 passed"
+    },
+    {
+      "number": 3,
+      "status": "completed",
+      "started_at": "2026-06-10T11:35:45Z",
+      "completed_at": "2026-06-10T11:37:13Z",
+      "summary": "_make_meta_entry helper replaces 3 duplicated builders (~55 lines removed); validate_name message says 'at least' matching >= check (stale test assertions updated); update_dbmeta strips .jsonl via endswith/slice; redundant local import orjson removed from lint_db; suite 79 passed"
+    }
+  ]
+}
+exec
+/usr/bin/zsh -lc 'git diff -- jsonldb/jsonldf.py jsonldb/folderdb.py jsonldb/__init__.py jsonldb/jsonlfile.py setup.py README.md unit_tests/test_folderdb.py' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+exec
+/usr/bin/zsh -lc 'git diff --stat -- jsonldb setup.py README.md unit_tests' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+exec
+/usr/bin/zsh -lc 'git ls-files --others --exclude-standard jsonldb setup.py README.md unit_tests .specdev/assignments/00005_refactor_packaging-perf-cleanup/review' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/brainstorm-feedback.md
+.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/brainstorm-reviewer-codex-round-1.log
+.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-reviewer-codex-round-1.log
+
+codex
+Specdev: there is no working-tree diff for the code files, so I’m locating the implementation commits and reviewing those changes directly.
+exec
+/usr/bin/zsh -lc 'git log --oneline --decorate -8' in /mnt/h/oceanwave/lib/jsonldb
+exec
+/usr/bin/zsh -lc 'git show --stat --oneline --name-only HEAD~3..HEAD' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+30d16ce refactor: dedupe metadata entry builder, fix validate_name message
+jsonldb/folderdb.py
+c87540e perf: single-sort index writes, O(1) range defaults, streaming save
+jsonldb/jsonlfile.py
+c40e773 fix: remove unused numba import, defer gitpython, repair setup.py metadata
+README.md
+jsonldb/__init__.py
+jsonldb/folderdb.py
+jsonldb/jsonldf.py
+setup.py
+
+exec
+/usr/bin/zsh -lc 'git diff HEAD~3..HEAD -- jsonldb/jsonldf.py jsonldb/folderdb.py jsonldb/__init__.py jsonldb/jsonlfile.py setup.py README.md unit_tests/test_folderdb.py' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 120ms:
+0976750 fix: scope timespec per FolderDB instance instead of mutating module global
+dbfbf3d refactor: pass timespec through jsonldf wrappers
+d7d97bc refactor: thread optional timespec through jsonlfile, fix select_line_jsonl contract
+d768d86 fix: delete_file tolerates missing .idx and deletes stop creating folders
+ce748c9 fix: clear_folder removes files in hierarchy subfolders
+
+ succeeded in 185ms:
+diff --git a/README.md b/README.md
+index 003e64e..46ad16c 100644
+--- a/README.md
++++ b/README.md
+@@ -149,7 +149,7 @@ db.update_metadata("table_name", {"new": "metadata"})
+ - bokeh >= 3.0.0
+ - numpy >= 1.20.0
+ - orjson >= 3.6.0
+-- numba >= 0.54.0
++- matplotlib >= 3.0.0
+ 
+ ## License
+ 
+diff --git a/jsonldb/__init__.py b/jsonldb/__init__.py
+index e34c077..a181aea 100644
+--- a/jsonldb/__init__.py
++++ b/jsonldb/__init__.py
+@@ -7,10 +7,10 @@ unnecessary dependencies (e.g., git for vercontrol, bokeh/matplotlib for visual)
+ Example usage:
+     from jsonldb import FolderDB  # Core functionality only
+     from jsonldb.vercontrol import commit  # Only if you need version control
+-    from jsonldb.visual import plot  # Only if you need visualization
++    from jsonldb.visual import visualize_folderdb  # Only if you need visualization
+ """
+ 
+ from .folderdb import FolderDB
+ 
+-__version__ = "0.1.0"
++__version__ = "1.0.0"
+ __all__ = ["FolderDB", "visual", "vercontrol", "jsonlfile", "jsonldf"]
+diff --git a/jsonldb/folderdb.py b/jsonldb/folderdb.py
+index 665a7e1..a39f681 100644
+--- a/jsonldb/folderdb.py
++++ b/jsonldb/folderdb.py
+@@ -17,7 +17,8 @@ from jsonldb.jsonldf import (
+ )
+ import jsonldb.jsonlfile as jsonlfile
+ 
+-from .vercontrol import init_folder, commit as vercontrol_commit, revert as vercontrol_revert, list_version, is_versioned
++# Version control (gitpython) is imported lazily inside commit/revert/version
++# so that importing FolderDB does not load git.
+ 
+ class FolderDB:
+     """
+@@ -131,7 +132,7 @@ class FolderDB:
+         # Count delimiters
+         delimiter_count = name.count(self.delimiter)
+         
+-        # In hierarchy mode, name must contain exactly hierarchy_depth-1 delimiters
++        # In hierarchy mode, name must contain at least hierarchy_depth-1 delimiters
+         # e.g., for depth=3: "users.level1.level2" has 2 delimiters
+         return delimiter_count >= self.hierarchy_depth - 1
+ 
+@@ -184,7 +185,7 @@ class FolderDB:
+     def _get_file_path(self, name: str) -> str:
+         """Get the full path for a JSONL file (read-only, no folder creation)"""
+         if self.use_hierarchy and not self.validate_name(name):
+-            raise ValueError(f"Invalid hierarchical name '{name}'. Name must contain exactly {self.hierarchy_depth-1} '{self.delimiter}' delimiters")
++            raise ValueError(f"Invalid hierarchical name '{name}'. Name must contain at least {self.hierarchy_depth-1} '{self.delimiter}' delimiters")
+         folder_path = self._get_hierarchy_path(name)
+         if name.endswith('.jsonl'):
+             return os.path.join(folder_path, name)
+@@ -193,7 +194,7 @@ class FolderDB:
+     def _get_or_create_file_path(self, name: str) -> str:
+         """Get the full path for a JSONL file, creating folders as needed (for writes)"""
+         if self.use_hierarchy and not self.validate_name(name):
+-            raise ValueError(f"Invalid hierarchical name '{name}'. Name must contain exactly {self.hierarchy_depth-1} '{self.delimiter}' delimiters")
++            raise ValueError(f"Invalid hierarchical name '{name}'. Name must contain at least {self.hierarchy_depth-1} '{self.delimiter}' delimiters")
+ 
+         folder_path = self._get_hierarchy_path(name)
+         self.create_folder(folder_path) #create the folder if it doesn't exist
+@@ -498,6 +499,34 @@ class FolderDB:
+             self.delete_file_range(name, lower_key, upper_key)
+ 
+     # =============== Metadata Management ===============
++    def _make_meta_entry(self, name: str, file_path: str, linted: bool = False,
++                         lint_time: str = "") -> Dict[str, Any]:
++        """Build one db.meta entry for a JSONL file from its index file.
++
++        Example: {"name": "users", "path": ".../users.jsonl", "min_index": "a",
++                  "max_index": "z", "size": 123, "count": 3, "lint_time": "", "linted": False}
++        """
++        index_file = file_path + '.idx'
++        min_index = max_index = None
++        count = 0
++        if os.path.exists(index_file):
++            with open(index_file, 'rb') as f:
++                index = orjson.loads(f.read())
++            if index:
++                keys = list(index.keys())
++                min_index, max_index = keys[0], keys[-1]
++                count = len(keys)
++        return {
++            "name": name,
++            "path": file_path,
++            "min_index": min_index,
++            "max_index": max_index,
++            "size": os.path.getsize(file_path),
++            "count": count,
++            "lint_time": lint_time,
++            "linted": linted,
++        }
++
+     def build_dbmeta(self) -> None:
+         """
+         Build or update the db.meta file with information about all JSONL files.
+@@ -524,41 +553,13 @@ class FolderDB:
+         
+         # Process each JSONL file
+         for name in jsonl_files:
+-            # print(name)
+             file_path = self._get_file_path(name)
+-            index_file = file_path + '.idx'
+-            
++
+             # Build index if it doesn't exist
+-            if not os.path.exists(index_file):
++            if not os.path.exists(file_path + '.idx'):
+                 build_jsonl_index(file_path)
+-            
+-            # Get index range from index file
+-            min_index = None
+-            max_index = None
+-            count = 0
+-            
+-            if os.path.exists(index_file):
+-                with open(index_file, 'rb') as f:
+-                    index = orjson.loads(f.read())
+-                    if index:
+-                        keys = list(index.keys())
+-                        if keys:
+-                            min_index = keys[0]
+-                            max_index = keys[-1]
+-                            count = len(keys)
+ 
+-            file_path = self._get_file_path(name)
+-            # Create metadata entry using name without extension as key
+-            metadata[name] = {
+-                "name": name,
+-                "path": file_path,
+-                "min_index": min_index,
+-                "max_index": max_index,
+-                "size": os.path.getsize(file_path),
+-                "count": count,
+-                "lint_time": "",
+-                "linted": False,  # Default to False
+-            }
++            metadata[name] = self._make_meta_entry(name, file_path)
+         
+         # Save metadata using jsonlfile
+         save_jsonl(self.dbmeta_path, metadata)
+@@ -590,49 +591,16 @@ class FolderDB:
+             name: Name of the JSONL file (with or without .jsonl extension)
+             linted: Value to set for the linted field
+         """
+-        # Get name without extension for metadata key
+-        jsonl_file = name if name.endswith('.jsonl') else f"{name}.jsonl"
+-        meta_key = name.replace('.jsonl', '')
++        # Metadata key is the name without the .jsonl extension
++        meta_key = name[:-6] if name.endswith('.jsonl') else name
+ 
+-        # Load existing metadata
+-        metadata = {}
+-        if os.path.exists(self.dbmeta_path):
+-            metadata = select_line_jsonl(self.dbmeta_path, meta_key)
+-        
+-        # Get index range from index file (use hierarchical path)
++        # Use hierarchical path for the data file
+         file_path = self._get_file_path(name)
+-        index_file = file_path + ".idx"
+-        min_index = None
+-        max_index = None
+-        count = 0
+-
+-        if os.path.exists(index_file):
+-            with open(index_file, 'rb') as f:
+-                index = orjson.loads(f.read())
+-                if index:
+-                    keys = list(index.keys())
+-                    if keys:
+-                        min_index = keys[0]
+-                        max_index = keys[-1]
+-                        count = len(keys)
+-
+         lint_time = datetime.now().isoformat() if linted else ""
+-        # print(f"Updating metadata for {name} with path {file_path}")
++        entry = self._make_meta_entry(meta_key, file_path, linted, lint_time)
+ 
+-        # Update metadata for the specified file using name without extension as key
+-        metadata[meta_key] = {
+-            "name": meta_key,
+-            "path": file_path,
+-            "min_index": min_index,
+-            "max_index": max_index,
+-            "size": os.path.getsize(file_path),
+-            "count": count,
+-            "lint_time": lint_time,
+-            "linted": linted
+-        }
+-        
+         # Update metadata file using jsonlfile
+-        update_jsonl(self.dbmeta_path, {meta_key: metadata[meta_key]})
++        update_jsonl(self.dbmeta_path, {meta_key: entry})
+ 
+     def lint_db(self, force: bool = False) -> None:
+         """Lint all JSONL files in the database.
+@@ -641,7 +609,6 @@ class FolderDB:
+             force: If True, run full mmap line-count verification on every file.
+                    If False (default), skip the scan when the index is fresh.
+         """
+-        import orjson
+         meta_file = os.path.join(self.folder_path, "db.meta")
+         if not os.path.exists(meta_file):
+             self.build_dbmeta()
+@@ -660,28 +627,9 @@ class FolderDB:
+                 print(f"File {name} no longer exist, deleting metadata.")
+                 # Simply skip — don't add to all_meta
+             else:
+-                # Build metadata entry inline
+-                index_file = file_path + ".idx"
+-                min_index = max_index = None
+-                count = 0
+-                if os.path.exists(index_file):
+-                    with open(index_file, 'rb') as f:
+-                        index = orjson.loads(f.read())
+-                        if index:
+-                            keys = list(index.keys())
+-                            min_index, max_index = keys[0], keys[-1]
+-                            count = len(keys)
+-
+-                all_meta[name] = {
+-                    "name": name,
+-                    "path": file_path,
+-                    "min_index": min_index,
+-                    "max_index": max_index,
+-                    "size": os.path.getsize(file_path),
+-                    "count": count,
+-                    "lint_time": datetime.now().isoformat(),
+-                    "linted": True
+-                }
++                all_meta[name] = self._make_meta_entry(
++                    name, file_path, linted=True,
++                    lint_time=datetime.now().isoformat())
+ 
+         # Single write for all metadata
+         save_jsonl(self.dbmeta_path, all_meta)
+@@ -888,10 +836,12 @@ class FolderDB:
+         Raises:
+             git.exc.GitCommandError: If git commands fail
+         """
++        from .vercontrol import init_folder, commit as vercontrol_commit, is_versioned
++
+         # Check if folder is a git repo, if not initialize it
+         if not is_versioned(self.folder_path):
+             init_folder(self.folder_path)
+-            
++
+         # Commit changes
+         vercontrol_commit(self.folder_path, msg)
+         print("Commit successful.")
+@@ -907,6 +857,8 @@ class FolderDB:
+             git.exc.GitCommandError: If git commands fail
+             ValueError: If the specified commit is not found
+         """
++        from .vercontrol import revert as vercontrol_revert
++
+         vercontrol_revert(self.folder_path, version_hash)
+         print(f"Successfully reverted the folder: {self.folder_path} to version: {version_hash}")
+     
+@@ -920,4 +872,6 @@ class FolderDB:
+         Raises:
+             git.exc.GitCommandError: If git commands fail
+         """
++        from .vercontrol import list_version
++
+         return list_version(self.folder_path)
+diff --git a/jsonldb/jsonldf.py b/jsonldb/jsonldf.py
+index 7d84316..8140b4f 100644
+--- a/jsonldb/jsonldf.py
++++ b/jsonldb/jsonldf.py
+@@ -5,7 +5,6 @@ DataFrame-specific operations for JSONLDB.
+ 
+ import pandas as pd
+ from typing import Dict, List, Optional, Union, Any
+-from numba import jit
+ from jsonldb.jsonlfile import save_jsonl, load_jsonl, select_jsonl, update_jsonl, delete_jsonl, build_jsonl_index, lint_jsonl
+ 
+ def save_jsonldf(jsonl_file_path: str, df: pd.DataFrame, timespec: Optional[str] = None) -> None:
+diff --git a/jsonldb/jsonlfile.py b/jsonldb/jsonlfile.py
+index 668a092..4144a42 100644
+--- a/jsonldb/jsonlfile.py
++++ b/jsonldb/jsonlfile.py
+@@ -14,7 +14,7 @@ import mmap
+ # Configuration
+ # --------------------------------------------------------
+ 
+-# Buffer size for file operations (10MB)
++# Buffer size for file operations (50MB)
+ BUFFER_SIZE: int = 1024 * 1024 * 50
+ TIME_SPEC = 'seconds'  #or seconds/microseconds
+ 
+@@ -78,8 +78,7 @@ def build_jsonl_index(jsonl_file_path: str) -> None:
+ 
+                     current_pos = mm.tell()
+ 
+-        # Sort and save index
+-        index_dict = dict(sorted(index_dict.items()))
++        # Save index (OPT_SORT_KEYS sorts on dump)
+         with open(index_file_path, 'wb') as f:
+             f.write(orjson.dumps(index_dict, option=orjson.OPT_SORT_KEYS))
+             
+@@ -306,50 +305,6 @@ def _fast_dumps(obj: dict) -> str:
+     """
+     return orjson.dumps(obj, option=orjson.OPT_SERIALIZE_NUMPY).decode('utf-8') + '\n'
+ 
+-def check_dict_format(data_dict: Dict[Any, Any]) -> bool:
+-    """Check if a dictionary follows the required JSONL format.
+-    
+-    Required format:
+-    {
+-        "linekey1": {"value1": 10, "value2": 11},
+-        "linekey2": {"value1": 11, "value2": 12}
+-    }
+-    
+-    Args:
+-        data_dict (Dict[str, Any]): Dictionary to check
+-        
+-    Returns:
+-        bool: True if format is valid, False otherwise
+-        
+-    Raises:
+-        ValueError: If format is invalid, with specific error message
+-    """
+-    if not isinstance(data_dict, dict):
+-        raise ValueError("Input must be a dictionary")
+-        
+-    # if not data_dict:
+-    #     raise ValueError("Dictionary cannot be empty")
+-        
+-    # Check each key-value pair
+-    for linekey, value in data_dict.items():
+-        # Check if linekey is a string
+-        # No need to check if linekey is a string
+-            
+-        # Check if value is a dictionary
+-        if not isinstance(value, dict):
+-            raise ValueError(f"Value for linekey '{linekey}' must be a dictionary")
+-            
+-        # Check if value dictionary is not empty
+-        if not value:
+-            raise ValueError(f"Value dictionary for linekey '{linekey}' cannot be empty")
+-            
+-    # Check for duplicate linekeys
+-    linekeys = list(data_dict.keys())
+-    if len(linekeys) != len(set(linekeys)):
+-        raise ValueError("Duplicate linekeys found")
+-        
+-    return True
+-
+ # --------------------------------------------------------
+ # Core CRUD Functions
+ # --------------------------------------------------------
+@@ -379,26 +334,19 @@ def save_jsonl(jsonl_file_path: str, db_dict: DataDict, timespec: Optional[str]
+                 f.write(orjson.dumps({}, option=orjson.OPT_SORT_KEYS))
+             return
+ 
++        # Stream lines to the file while tracking byte offsets
+         byte_offset = 0
+-        lines = []
+-        
+-        # Pre-process all lines
+-        for linekey, data in db_dict.items():
+-            serialized_key = serialize_linekey(linekey, timespec)
+-            line_dict = {serialized_key: data}
+-            line = _fast_dumps(line_dict).encode('utf-8')
+-            lines.append(line)
+-            index[serialized_key] = byte_offset
+-            byte_offset += len(line)
+-
+-        # Write all lines at once
+         with open(jsonl_file_path, 'wb', buffering=BUFFER_SIZE) as f:
+-            for line in lines:
++            for linekey, data in db_dict.items():
++                serialized_key = serialize_linekey(linekey, timespec)
++                line = _fast_dumps({serialized_key: data}).encode('utf-8')
+                 f.write(line)
++                index[serialized_key] = byte_offset
++                byte_offset += len(line)
+ 
+-        # Write index atomically
++        # Write index (OPT_SORT_KEYS sorts on dump)
+         with open(f"{jsonl_file_path}.idx", 'wb') as f:
+-            f.write(orjson.dumps(dict(sorted(index.items())), option=orjson.OPT_SORT_KEYS))
++            f.write(orjson.dumps(index, option=orjson.OPT_SORT_KEYS))
+             
+     except OSError as e:
+         raise OSError(f"Failed to save JSONL file {jsonl_file_path}: {str(e)}")
+@@ -488,9 +436,9 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
+         
+         # Set default values if None
+         if lower_key is None:
+-            lower_key = min(all_keys)
++            lower_key = all_keys[0]   # index keys are stored sorted
+         if upper_key is None:
+-            upper_key = max(all_keys)
++            upper_key = all_keys[-1]
+             
+         # Serialize the keys
+         lower_key = serialize_linekey(lower_key, timespec)
+@@ -640,7 +588,7 @@ def update_jsonl(jsonl_file_path: str, update_dict: DataDict, timespec: Optional
+ 
+         # Update index
+         with open(f"{jsonl_file_path}.idx", 'wb') as f:
+-            f.write(orjson.dumps(dict(sorted(index.items())), option=orjson.OPT_SORT_KEYS))
++            f.write(orjson.dumps(index, option=orjson.OPT_SORT_KEYS))
+             
+     except OSError as e:
+         raise OSError(f"Failed to update JSONL file {jsonl_file_path}: {str(e)}")
+@@ -678,15 +626,13 @@ def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey], timespec: Option
+                     if not line.endswith(b'\n'):
+                         line += b'\n'
+                     
+-                    # Mark as deleted using _fast_dumps for consistency
+-                    deleted_line = _fast_dumps({linekey: {}}).encode('utf-8')
+                     f.seek(index[linekey])
+                     f.write(b' ' * (len(line) - 1) + b'\n')
+                     del index[linekey]
+ 
+         # Update index using orjson for faster JSON serialization
+         with open(f"{jsonl_file_path}.idx", 'wb') as f:
+-            f.write(orjson.dumps(dict(sorted(index.items())), option=orjson.OPT_SORT_KEYS))
++            f.write(orjson.dumps(index, option=orjson.OPT_SORT_KEYS))
+             
+     except OSError as e:
+         raise OSError(f"Failed to delete from JSONL file {jsonl_file_path}: {str(e)}")
+diff --git a/setup.py b/setup.py
+index b0c5775..7b138f2 100644
+--- a/setup.py
++++ b/setup.py
+@@ -9,6 +9,7 @@ setup(
+         "orjson>=3.6.0",
+         "gitpython>=3.1.0",
+         "bokeh>=2.0.0",
++        "matplotlib>=3.0.0",
+         "numpy>=1.20.0"
+     ],
+     author="Lei Wu",
+@@ -32,9 +33,4 @@ setup(
+     package_data={
+         "jsonldb": ["*.py"],
+     },
+-    entry_points={
+-        "console_scripts": [
+-            "jsonldb=jsonldb.cli:main",
+-        ],
+-    },
+-) 
+\ No newline at end of file
++)
+
+codex
+Specdev: reading the touched functions in context and checking whether the promised import-contract test exists.
+exec
+/usr/bin/zsh -lc "sed -n '1,260p' jsonldb/folderdb.py" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+"""
+A simple file-based database that stores data in JSONL format.
+Each table is stored in a separate JSONL file.
+"""
+
+import os
+import orjson
+import pandas as pd
+from typing import Dict, List, Union, Optional, Any
+from datetime import datetime
+from jsonldb.jsonlfile import (
+    save_jsonl, load_jsonl, select_jsonl, update_jsonl, delete_jsonl,
+    lint_jsonl, build_jsonl_index, select_line_jsonl, serialize_linekey
+)
+from jsonldb.jsonldf import (
+    save_jsonldf, load_jsonldf, update_jsonldf, select_jsonldf, delete_jsonldf
+)
+import jsonldb.jsonlfile as jsonlfile
+
+# Version control (gitpython) is imported lazily inside commit/revert/version
+# so that importing FolderDB does not load git.
+
+class FolderDB:
+    """
+    A simple file-based database that stores data in JSONL format.
+    Each table is stored in a separate JSONL file.
+    """
+    
+    # =============== Core/Initialization ===============
+    def __init__(self, folder_path: str,hierarchy_depth: int = None):
+        """
+        Initialize the database.
+        
+        Args:
+            folder_path: Path to the folder where the database files will be stored
+            
+        Raises:
+            FileNotFoundError: If the folder doesn't exist
+        """
+        self.folder_path = folder_path
+        if not os.path.exists(folder_path):
+            raise FileNotFoundError(f"Folder not found: {folder_path}")
+
+        self.use_hierarchy = False
+        self.delimiter = '.'
+
+        # Initialize all paths first
+        self.hmeta_path = os.path.join(folder_path, "h.meta")
+        self.dbmeta_path = os.path.join(folder_path, "db.meta")
+        self.configmeta_path = os.path.join(folder_path, "config.meta")
+        self.invalid_tickers_path = os.path.join(folder_path, ".invalid_tickers")
+
+        if os.path.exists(self.hmeta_path):
+            hmeta = select_jsonl(self.hmeta_path)
+            self.use_hierarchy = hmeta["use_hierarchy"]
+            self.delimiter = hmeta["delimiter"]
+            self.hierarchy_depth = hmeta["hierarchy_depth"]
+
+            if hierarchy_depth is not None and self.hierarchy_depth != hierarchy_depth: 
+                #current hierarchy depth is not the same as the one provided, so we need to lint the hierarchy
+                self.lint_hierarchy(hierarchy_depth)
+        else:
+            #no h.meta file found, so we need to build it
+            if hierarchy_depth is not None:
+                self.use_hierarchy = True 
+                self.hierarchy_depth = hierarchy_depth
+                self.lint_hierarchy(hierarchy_depth)
+
+        # Timespec is per-instance state; never mutate the module global.
+        # config.meta stores {"timespec": value} as a flat JSONL record.
+        self.timespec = jsonlfile.TIME_SPEC
+        if os.path.exists(self.configmeta_path):
+            config_meta = select_jsonl(self.configmeta_path)
+            if config_meta.get("timespec"):
+                self.timespec = config_meta["timespec"]
+            else:
+                self.build_configmeta()
+        else:
+            self.build_configmeta()
+
+        # Only rebuild db.meta if it doesn't exist or the folder has been
+        # modified externally.  Writes already call update_dbmeta()
+        # incrementally, so db.meta stays in sync during normal operation.
+        if os.path.exists(self.dbmeta_path):
+            dbmeta_mtime = os.path.getmtime(self.dbmeta_path)
+            folder_mtime = os.path.getmtime(self.folder_path)
+            if folder_mtime > dbmeta_mtime:
+                self.build_dbmeta()
+        else:
+            self.build_dbmeta()
+
+    def build_hmeta(self) -> None:
+        """
+        Save the folder information to a file.
+        """
+        if self.use_hierarchy:
+            hierachy_info= {
+                "use_hierarchy": self.use_hierarchy,
+                "delimiter": self.delimiter,
+                "hierarchy_depth": self.hierarchy_depth
+            }
+            save_jsonl(self.hmeta_path, hierachy_info)
+
+
+    def build_configmeta(self) -> None:
+        """
+        Save the folder information to a file.
+        """
+        config_info = {
+            "timespec": self.timespec
+        }
+        save_jsonl(self.configmeta_path, config_info)
+
+
+    def validate_name(self, name: str) -> bool:
+        """
+        Validate a file name according to the current mode.
+        
+        Args:
+            name: Name of the file to validate
+            
+        Returns:
+            bool: True if the name is valid, False otherwise
+        """
+        if not self.use_hierarchy:
+            return True
+            
+        # Remove .jsonl extension if present
+        if name.endswith('.jsonl'):
+            name = name[:-6]
+            
+        # Count delimiters
+        delimiter_count = name.count(self.delimiter)
+        
+        # In hierarchy mode, name must contain at least hierarchy_depth-1 delimiters
+        # e.g., for depth=3: "users.level1.level2" has 2 delimiters
+        return delimiter_count >= self.hierarchy_depth - 1
+
+
+    def __str__(self) -> str:
+        """Return a string representation of the database."""
+        result = f"FolderDB at {self.folder_path}\n"
+        result += "-" * 50 + "\n"
+        
+        # Get metadata
+        if os.path.exists(self.dbmeta_path):
+            metadata = select_jsonl(self.dbmeta_path)
+            result += f"Found {len(metadata)} JSONL files\n\n"
+            
+            for name, info in metadata.items():
+                result += f"{name}:\n"
+                result += f"  Size: {info['size']} bytes\n"
+                result += f"  Count: {info['count']}\n"
+                result += f"  Key range: {info['min_index']} to {info['max_index']}\n"
+                result += f"  Linted: {info['linted']}\n\n"
+        
+        return result
+    
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    # =============== File Path Management ===============
+
+    def _get_hierarchy_path(self, name: str) -> str:
+        """
+        Get the hierarchical path for a file.
+        
+        Args:
+            name: Name of the file (with or without .jsonl extension)
+            
+        Returns:
+            str: Full path to the directory where the file should be stored
+        """
+        if self.use_hierarchy:
+            # Take first hierarchy_depth parts for the path
+            parts = name.split(self.delimiter)[:self.hierarchy_depth]
+            return os.path.join(self.folder_path, *parts)
+        return self.folder_path
+
+
+    def create_folder(self, folder_path: str) -> None:
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path, exist_ok=True)
+
+    def _get_file_path(self, name: str) -> str:
+        """Get the full path for a JSONL file (read-only, no folder creation)"""
+        if self.use_hierarchy and not self.validate_name(name):
+            raise ValueError(f"Invalid hierarchical name '{name}'. Name must contain at least {self.hierarchy_depth-1} '{self.delimiter}' delimiters")
+        folder_path = self._get_hierarchy_path(name)
+        if name.endswith('.jsonl'):
+            return os.path.join(folder_path, name)
+        return os.path.join(folder_path, f"{name}.jsonl")
+
+    def _get_or_create_file_path(self, name: str) -> str:
+        """Get the full path for a JSONL file, creating folders as needed (for writes)"""
+        if self.use_hierarchy and not self.validate_name(name):
+            raise ValueError(f"Invalid hierarchical name '{name}'. Name must contain at least {self.hierarchy_depth-1} '{self.delimiter}' delimiters")
+
+        folder_path = self._get_hierarchy_path(name)
+        self.create_folder(folder_path) #create the folder if it doesn't exist
+
+        if name.endswith('.jsonl'):
+            return os.path.join(folder_path, name)
+        return os.path.join(folder_path, f"{name}.jsonl")
+    
+    def _get_file_name(self, name: str) -> str:
+        """Get the name of a JSONL file"""
+        if name.endswith('.jsonl'):
+            return name
+        return f"{name}.jsonl"
+    
+
+    
+    def get_file_list(self) -> List[str]:
+        """
+        Get a list of all JSONL file names in the database without the .jsonl extension.
+        If use_hierarchy is True, it will search through subfolders and return
+        paths relative to the root folder with the specified delimiter.
+        
+        Returns:
+            List of file names (without .jsonl extension). If use_hierarchy is True,
+            names will include the full hierarchical path using the specified delimiter.
+        """
+        if self.use_hierarchy:
+            result = []
+            
+            for root, dirs, files in os.walk(self.folder_path, topdown=True):
+                # Skip hidden/system directories (starting with '.')
+                dirs[:] = [d for d in dirs if not d.startswith('.')]
+                # Skip .invalid_tickers folder
+                if '.invalid_tickers' in root:  # this is important to skip the .invalid_tickers folder
+                    continue
+                # Add all JSONL files in this directory
+                for file in files:
+                    if file.endswith('.jsonl'):
+                        name = os.path.splitext(file)[0]
+                        result.append(name)
+                
+            return result
+        else:
+            # Original behavior for non-hierarchical mode - exclude .invalid_tickers
+            jsonl_files = []
+            for f in os.listdir(self.folder_path):
+                if f.endswith('.jsonl') and f != '.invalid_tickers':
+                    jsonl_files.append(f)
+            return [os.path.splitext(f)[0] for f in jsonl_files]
+        
+    def search_file_list(self, regex: str) -> List[str]:
+        """
+        Search for file names that match a regular expression pattern.
+        
+        Args:
+            regex: Regular expression pattern to match against file names
+            
+        Returns:
+            List of file names that match the regex pattern
+        """
+        import re
+        
+        # Get all file names
+
+exec
+/usr/bin/zsh -lc "sed -n '480,700p' jsonldb/folderdb.py" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+        upper_str = serialize_linekey(upper_key, self.timespec)
+        keys_to_delete = [
+            key for key in index.keys()
+            if lower_str <= key <= upper_str
+        ]
+        
+        if keys_to_delete:
+            delete_jsonl(file_path, keys_to_delete)
+
+    def delete_range(self, names: List[str], lower_key: Any, upper_key: Any) -> None:
+        """
+        Delete all keys within a range from multiple JSONL files.
+        
+        Args:
+            names: List of JSONL file names
+            lower_key: Lower bound of the key range
+            upper_key: Upper bound of the key range
+        """
+        for name in names:
+            self.delete_file_range(name, lower_key, upper_key)
+
+    # =============== Metadata Management ===============
+    def _make_meta_entry(self, name: str, file_path: str, linted: bool = False,
+                         lint_time: str = "") -> Dict[str, Any]:
+        """Build one db.meta entry for a JSONL file from its index file.
+
+        Example: {"name": "users", "path": ".../users.jsonl", "min_index": "a",
+                  "max_index": "z", "size": 123, "count": 3, "lint_time": "", "linted": False}
+        """
+        index_file = file_path + '.idx'
+        min_index = max_index = None
+        count = 0
+        if os.path.exists(index_file):
+            with open(index_file, 'rb') as f:
+                index = orjson.loads(f.read())
+            if index:
+                keys = list(index.keys())
+                min_index, max_index = keys[0], keys[-1]
+                count = len(keys)
+        return {
+            "name": name,
+            "path": file_path,
+            "min_index": min_index,
+            "max_index": max_index,
+            "size": os.path.getsize(file_path),
+            "count": count,
+            "lint_time": lint_time,
+            "linted": linted,
+        }
+
+    def build_dbmeta(self) -> None:
+        """
+        Build or update the db.meta file with information about all JSONL files.
+        
+        The db.meta file contains metadata for each JSONL file including:
+        - name: filename without .jsonl extension
+        - min_index: smallest index from the index file
+        - max_index: biggest index from the index file
+        - size: size of the file in bytes
+        - lint_time: ISO format timestamp of last lint
+        - linted: boolean indicating if file has been linted
+        """
+        # Get all JSONL files
+        jsonl_files = self.get_file_list()
+        
+        if not jsonl_files:
+            # If no JSONL files are found, create an empty db.meta file
+            with open(self.dbmeta_path, 'w', encoding='utf-8') as f:
+                f.write('\n')
+            return
+            
+        # Initialize metadata dictionary
+        metadata = {}
+        
+        # Process each JSONL file
+        for name in jsonl_files:
+            file_path = self._get_file_path(name)
+
+            # Build index if it doesn't exist
+            if not os.path.exists(file_path + '.idx'):
+                build_jsonl_index(file_path)
+
+            metadata[name] = self._make_meta_entry(name, file_path)
+        
+        # Save metadata using jsonlfile
+        save_jsonl(self.dbmeta_path, metadata)
+
+    def get_dbmeta(self) -> Dict[str, Any]:
+        """
+        Get the database metadata as a dictionary.
+        
+        Returns:
+            Dictionary containing metadata for all JSONL files in the database
+        """
+        if not os.path.exists(self.dbmeta_path):
+            self.build_dbmeta()
+        return load_jsonl(self.dbmeta_path)
+    
+    def delete_dbmeta(self,name: str) -> None:
+        """
+        Delete the metadata for a specific JSONL file in db.meta.
+        """
+        if not os.path.exists(self.dbmeta_path):
+            self.build_dbmeta()
+        delete_jsonl(self.dbmeta_path, [name])
+    
+    def update_dbmeta(self, name: str, linted: bool = False) -> None:
+        """
+        Update the metadata for a specific JSONL file in db.meta.
+        
+        Args:
+            name: Name of the JSONL file (with or without .jsonl extension)
+            linted: Value to set for the linted field
+        """
+        # Metadata key is the name without the .jsonl extension
+        meta_key = name[:-6] if name.endswith('.jsonl') else name
+
+        # Use hierarchical path for the data file
+        file_path = self._get_file_path(name)
+        lint_time = datetime.now().isoformat() if linted else ""
+        entry = self._make_meta_entry(meta_key, file_path, linted, lint_time)
+
+        # Update metadata file using jsonlfile
+        update_jsonl(self.dbmeta_path, {meta_key: entry})
+
+    def lint_db(self, force: bool = False) -> None:
+        """Lint all JSONL files in the database.
+
+        Args:
+            force: If True, run full mmap line-count verification on every file.
+                   If False (default), skip the scan when the index is fresh.
+        """
+        meta_file = os.path.join(self.folder_path, "db.meta")
+        if not os.path.exists(meta_file):
+            self.build_dbmeta()
+
+        metadata = select_jsonl(meta_file)
+        print(f"Found {len(metadata)} JSONL files to lint.")
+
+        all_meta = {}
+
+        for name in metadata:
+            print(f"Linting file: {name}")
+            file_path = self._get_file_path(name)
+            exist_flag = lint_jsonl(file_path, force=force)
+
+            if not exist_flag:
+                print(f"File {name} no longer exist, deleting metadata.")
+                # Simply skip — don't add to all_meta
+            else:
+                all_meta[name] = self._make_meta_entry(
+                    name, file_path, linted=True,
+                    lint_time=datetime.now().isoformat())
+
+        # Single write for all metadata
+        save_jsonl(self.dbmeta_path, all_meta)
+        lint_jsonl(self.dbmeta_path, force=force)
+
+        if self.use_hierarchy:
+            lint_jsonl(self.hmeta_path, force=force)
+            self.delete_empty_folders()
+
+    def lint_hierarchy(self, hierarchy_depth:int) -> None:
+        """
+        Reorganize JSONL files according to hierarchy levels and move invalid files to .invalid_tickers.
+        
+        Args:
+            hierarchy_level: Target hierarchy level. If None, uses value from h.meta or defaults to 1
+        """
+
+        if hierarchy_depth < 1:
+            raise ValueError("Hierarchy level must be positive")
+
+        import shutil
+            
+        print(f"Organizing files for hierarchy level {hierarchy_depth}")
+            
+        self.use_hierarchy = True
+        self.hierarchy_depth = hierarchy_depth
+
+
+        # Create .invalid_tickers folder if it doesn't exist
+        if not os.path.exists(self.invalid_tickers_path):
+            os.makedirs(self.invalid_tickers_path, exist_ok=True)
+        
+        # Get all JSONL files in the root folder and immediate subdirectories
+        all_files = []
+        for root, dirs, files in os.walk(self.folder_path, topdown=True):
+            # Skip hidden/system directories (starting with '.')
+            dirs[:] = [d for d in dirs if not d.startswith('.')]
+            # Skip .invalid_tickers folder
+            if '.invalid_tickers' in root:
+                continue
+            for file in files:
+                if file.endswith('.jsonl'):
+                    file_path = os.path.join(root, file)
+                    name = os.path.splitext(file)[0]
+                    all_files.append((name, file_path))
+        
+        valid_files = []
+        invalid_files = []
+        
+        # Categorize files as valid or invalid
+        for name, file_path in all_files:
+            if self.validate_name(name):
+                valid_files.append((name, file_path))
+            else:
+                invalid_files.append((name, file_path))
+        
+        print(f"Found {len(valid_files)} valid files and {len(invalid_files)} invalid files")
+        
+        # Move invalid files to .invalid_tickers folder
+        for name, file_path in invalid_files:
+            try:
+                dest_path = os.path.join(self.invalid_tickers_path, os.path.basename(file_path))
+                if file_path != dest_path:  # Avoid moving file to itself
+                    shutil.move(file_path, dest_path)
+                    print(f"Moved invalid file {name} to .invalid_tickers")
+                    
+                    # Also move .idx file if it exists
+                    idx_path = file_path + '.idx'
+
+exec
+/usr/bin/zsh -lc "sed -n '820,890p' jsonldb/folderdb.py" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+            try:
+                if not os.listdir(root):
+                    os.rmdir(root)
+            except OSError:
+                pass
+
+    # =============== Version Control ===============
+    def commit(self, msg: str = "") -> None:
+        """
+        Commit changes in the database folder.
+        
+        If the folder is not already a git repository, it will be initialized first.
+        
+        Args:
+            msg: Optional commit message. If empty, an auto-generated message will be used.
+            
+        Raises:
+            git.exc.GitCommandError: If git commands fail
+        """
+        from .vercontrol import init_folder, commit as vercontrol_commit, is_versioned
+
+        # Check if folder is a git repo, if not initialize it
+        if not is_versioned(self.folder_path):
+            init_folder(self.folder_path)
+
+        # Commit changes
+        vercontrol_commit(self.folder_path, msg)
+        print("Commit successful.")
+    
+    def revert(self, version_hash: str) -> None:
+        """
+        Revert the database to a previous version.
+        
+        Args:
+            version_hash: Hash of the commit to revert to
+            
+        Raises:
+            git.exc.GitCommandError: If git commands fail
+            ValueError: If the specified commit is not found
+        """
+        from .vercontrol import revert as vercontrol_revert
+
+        vercontrol_revert(self.folder_path, version_hash)
+        print(f"Successfully reverted the folder: {self.folder_path} to version: {version_hash}")
+    
+    def version(self) -> Dict[str, str]:
+        """
+        List all versions of the database.
+        
+        Returns:
+            Dictionary with commit hashes as keys and commit messages as values
+            
+        Raises:
+            git.exc.GitCommandError: If git commands fail
+        """
+        from .vercontrol import list_version
+
+        return list_version(self.folder_path)
+
+exec
+/usr/bin/zsh -lc 'rg -n "import_contract|numba|git" unit_tests/test_folderdb.py unit_tests -S' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+unit_tests/test_folderdb.py:511:def test_import_contract_no_heavy_modules():
+unit_tests/test_folderdb.py:512:    """Importing the core package must not load numba or gitpython"""
+unit_tests/test_folderdb.py:517:        "assert 'numba' not in sys.modules, 'numba loaded'; "
+unit_tests/test_folderdb.py:518:        "assert 'git' not in sys.modules, 'git loaded'"
+unit_tests/test_folderdb.py:511:def test_import_contract_no_heavy_modules():
+unit_tests/test_folderdb.py:512:    """Importing the core package must not load numba or gitpython"""
+unit_tests/test_folderdb.py:517:        "assert 'numba' not in sys.modules, 'numba loaded'; "
+unit_tests/test_folderdb.py:518:        "assert 'git' not in sys.modules, 'git loaded'"
+
+exec
+/usr/bin/zsh -lc "sed -n '1,180p' unit_tests/test_folderdb.py" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+import pytest
+import pandas as pd
+import os
+from datetime import datetime, timedelta
+from jsonldb import FolderDB
+import json
+from jsonldb.jsonlfile import select_jsonl
+
+@pytest.fixture
+def test_folder(tmp_path):
+    """Create a temporary test folder"""
+    return str(tmp_path)
+
+@pytest.fixture
+def sample_df():
+    """Create a sample DataFrame"""
+    return pd.DataFrame({
+        'value': [1, 2, 3]
+    }, index=['key1', 'key2', 'key3'])
+
+@pytest.fixture
+def datetime_df():
+    """Create a DataFrame with datetime keys"""
+    base_time = datetime(2024, 1, 1, 12, 0)
+    return pd.DataFrame({
+        'value': [1, 2, 3]
+    }, index=[
+        base_time,
+        base_time + timedelta(hours=1),
+        base_time + timedelta(hours=2)
+    ])
+
+@pytest.fixture
+def sample_dict():
+    """Create a sample dictionary"""
+    return {
+        'key1': {'value': 1},
+        'key2': {'value': 2},
+        'key3': {'value': 3}
+    }
+
+@pytest.fixture
+def sample_data():
+    """Create sample data for testing."""
+    # Create sample DataFrame
+    df = pd.DataFrame({
+        'name': ['Alice', 'Bob', 'Charlie'],
+        'age': [25, 30, 35],
+        'city': ['New York', 'London', 'Paris']
+    }, index=['user1', 'user2', 'user3'])
+    
+    # Create sample dictionary
+    data_dict = {
+        'prod1': {'name': 'Laptop', 'price': 1000},
+        'prod2': {'name': 'Phone', 'price': 500}
+    }
+    
+    return df, data_dict
+
+@pytest.fixture
+def db_folder(tmp_path):
+    """Create a temporary folder for testing."""
+    folder = tmp_path / "test_db"
+    folder.mkdir()
+    return str(folder)
+
+@pytest.fixture
+def db(db_folder):
+    """Create a FolderDB instance for testing."""
+    return FolderDB(db_folder)
+
+def test_init(test_folder):
+    """Test FolderDB initialization"""
+    # Test with existing folder
+    db = FolderDB(test_folder)
+    assert db.folder_path == test_folder
+    
+    # Test with non-existent folder
+    nonexistent_path = os.path.join(os.path.dirname(test_folder), "nonexistent_folder")
+    if os.path.exists(nonexistent_path):
+        os.rmdir(nonexistent_path)
+    with pytest.raises(FileNotFoundError):
+        FolderDB(nonexistent_path)
+
+def test_upsert_df(test_folder, sample_df):
+    """Test upserting DataFrame"""
+    db = FolderDB(test_folder)
+    
+    # Test creating new file
+    db.upsert_df("test1", sample_df)
+    assert os.path.exists(os.path.join(test_folder, "test1.jsonl"))
+    assert os.path.exists(os.path.join(test_folder, "test1.jsonl.idx"))
+    
+    # Test updating existing file
+    updated_df = pd.DataFrame({
+        'value': [10, 20]
+    }, index=['key1', 'key2'])
+    db.upsert_df("test1", updated_df)
+    
+    # Verify update
+    loaded_df = db.get_df(["test1"])["test1"]
+    assert loaded_df.loc['key1', 'value'] == 10
+    assert loaded_df.loc['key2', 'value'] == 20
+    assert loaded_df.loc['key3', 'value'] == 3
+
+def test_upsert_dfs(test_folder, sample_df, datetime_df):
+    """Test upserting multiple DataFrames"""
+    db = FolderDB(test_folder)
+    
+    # Test creating multiple files
+    dict_dfs = {
+        "test1": sample_df,
+        "test2": datetime_df
+    }
+    db.upsert_dfs(dict_dfs)
+    
+    # Verify files were created
+    assert os.path.exists(os.path.join(test_folder, "test1.jsonl"))
+    assert os.path.exists(os.path.join(test_folder, "test2.jsonl"))
+    
+    # Verify data
+    loaded_dfs = db.get_df(["test1", "test2"])
+    pd.testing.assert_frame_equal(loaded_dfs["test1"], sample_df)
+    pd.testing.assert_frame_equal(loaded_dfs["test2"], datetime_df)
+
+def test_upsert_dict(test_folder, sample_dict):
+    """Test upserting dictionary"""
+    db = FolderDB(test_folder)
+    
+    # Test creating new file
+    db.upsert_dict("test1", sample_dict)
+    assert os.path.exists(os.path.join(test_folder, "test1.jsonl"))
+    assert os.path.exists(os.path.join(test_folder, "test1.jsonl.idx"))
+    
+    # Test updating existing file
+    updated_dict = {
+        'key1': {'value': 10},
+        'key2': {'value': 20}
+    }
+    db.upsert_dict("test1", updated_dict)
+    
+    # Verify update
+    loaded_dict = db.get_dict(["test1"])["test1"]
+    assert loaded_dict['key1']['value'] == 10
+    assert loaded_dict['key2']['value'] == 20
+    assert loaded_dict['key3']['value'] == 3
+
+def test_upsert_dicts(test_folder, sample_dict):
+    """Test upserting multiple dictionaries"""
+    db = FolderDB(test_folder)
+    
+    # Test creating multiple files
+    dict_dicts = {
+        "test1": sample_dict,
+        "test2": {k: {'value': v['value'] * 2} for k, v in sample_dict.items()}
+    }
+    db.upsert_dicts(dict_dicts)
+    
+    # Verify files were created
+    assert os.path.exists(os.path.join(test_folder, "test1.jsonl"))
+    assert os.path.exists(os.path.join(test_folder, "test2.jsonl"))
+    
+    # Verify data
+    loaded_dicts = db.get_dict(["test1", "test2"])
+    assert loaded_dicts["test1"] == sample_dict
+    assert loaded_dicts["test2"] == {k: {'value': v['value'] * 2} for k, v in sample_dict.items()}
+
+def test_get_df(test_folder, sample_df, datetime_df):
+    """Test getting DataFrames"""
+    db = FolderDB(test_folder)
+    
+    # Setup test data
+    db.upsert_df("test1", sample_df)
+    db.upsert_df("test2", datetime_df)
+    
+    # Test getting all records
+    result = db.get_df(["test1", "test2"])
+    pd.testing.assert_frame_equal(result["test1"], sample_df)
+    pd.testing.assert_frame_equal(result["test2"], datetime_df)
+    
+
+codex
+Specdev: the planned test is present, but I need to verify whether it was committed with the implementation and whether the behavior still passes from a clean subprocess.
+exec
+/usr/bin/zsh -lc 'git blame -L 500,525 -- unit_tests/test_folderdb.py' in /mnt/h/oceanwave/lib/jsonldb
+ exited 128 in 0ms:
+fatal: no such path 'unit_tests/test_folderdb.py' in HEAD
+
+exec
+/usr/bin/zsh -lc 'git diff HEAD~3..HEAD -- unit_tests/test_folderdb.py' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+exec
+/usr/bin/zsh -lc 'git log --oneline -- unit_tests/test_folderdb.py | head -10' in /mnt/h/oceanwave/lib/jsonldb
+exec
+/usr/bin/zsh -lc 'python -m pytest unit_tests/test_folderdb.py -k import_contract -q' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 855ms:
+7d9c16c chore: untrack local tooling, agent configs, and generated artifacts
+49fec2d test: add diagnostic force tests that verify branch behavior
+f876ed3 perf: add force parameter to FolderDB.lint_db, pass through to lint_jsonl
+f0edab0 perf: batch db.meta writes in lint_db
+1213ba9 perf: skip config.meta rewrite in __init__ when unchanged
+fdfa2df perf: split _get_file_path to avoid folder creation on reads
+73cd563 routine update
+aabdf08 Fix hierarchy mode implementation and tests
+72372c3 adding clear_folder()
+fe9d00a changed the dbmeta to use filename without extension
+
+ succeeded in 1196ms:
+.                                                                        [100%]
+1 passed, 29 deselected in 0.84s
+
+codex
+Specdev: `unit_tests/test_folderdb.py` is not tracked at `HEAD`, so I’m checking the test layout and tracked paths to distinguish implementation issues from local-only test scaffolding.
+exec
+/usr/bin/zsh -lc "git ls-files unit_tests | sed -n '1,80p'" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+exec
+/usr/bin/zsh -lc "git ls-files | rg '("'^|/)test_folderdb'"\\.py"'$|unit_tests|tests'"'" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+.specdev/skills/core/test-driven-development/scripts/verify-tests.sh
+
+exec
+/usr/bin/zsh -lc 'git status --short -- unit_tests/test_folderdb.py unit_tests' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+exec
+/usr/bin/zsh -lc "ls -la unit_tests | sed -n '1,120p'" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+total 56
+drwxrwxrwx 1 pachao pachao   512 Jun 10 19:36 .
+drwxrwxrwx 1 pachao pachao   512 Jun 10 19:36 ..
+drwxrwxrwx 1 pachao pachao   512 Jun 10 19:36 __pycache__
+-rwxrwxrwx 1 pachao pachao 21375 Jun 10 19:36 test_folderdb.py
+-rwxrwxrwx 1 pachao pachao  7324 Mar 27  2025 test_jsonldf.py
+-rwxrwxrwx 1 pachao pachao 21593 Jun 10 19:22 test_jsonlfile.py
+
+codex
+Specdev: running the full local suite now, then I’ll make the review decision and write the required Round 1 section.
+exec
+/usr/bin/zsh -lc 'python -m pytest unit_tests/ -q' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 2576ms:
+........................................................................ [ 91%]
+.......                                                                  [100%]
+79 passed in 2.13s
+
+codex
+Specdev: verifying the packaging/import success criteria directly before writing feedback.
+exec
+/usr/bin/zsh -lc "rg -n \"numba|entry_points|jsonldb=jsonldb\\.cli|matplotlib|__version__\" README.md setup.py jsonldb" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+README.md:152:- matplotlib >= 3.0.0
+setup.py:12:        "matplotlib>=3.0.0",
+jsonldb/__init__.py:5:unnecessary dependencies (e.g., git for vercontrol, bokeh/matplotlib for visual).
+jsonldb/__init__.py:15:__version__ = "1.0.0"
+jsonldb/visual.py:14:import matplotlib.pyplot as plt
+jsonldb/visual.py:15:import matplotlib.dates as mdates
+jsonldb/visual.py:474:        height: Figure height (pixels for bokeh, inches for matplotlib)
+jsonldb/visual.py:485:        # Convert height from pixels to inches for matplotlib (assuming ~100 DPI)
+
+exec
+/usr/bin/zsh -lc "python - <<'PY'
+import sys
+import jsonldb
+print(jsonldb.__version__)
+print('numba' in sys.modules, 'git' in sys.modules)
+PY" in /mnt/h/oceanwave/lib/jsonldb
+exec
+/usr/bin/zsh -lc 'git show --check HEAD~3..HEAD' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 301ms:
+commit 30d16cea01775fea17001e77a30dfab803717af8
+Author: lei <leiwu0227@gmail.com>
+Date:   Wed Jun 10 19:37:13 2026 +0800
+
+    refactor: dedupe metadata entry builder, fix validate_name message
+    
+    Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+
+
+commit c87540e2e64feceb9a341c2b9b8bd558a64507ce
+Author: lei <leiwu0227@gmail.com>
+Date:   Wed Jun 10 19:35:35 2026 +0800
+
+    perf: single-sort index writes, O(1) range defaults, streaming save
+    
+    Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+
+
+commit c40e7738a819bb8401016a90fe294da0b638cb2c
+Author: lei <leiwu0227@gmail.com>
+Date:   Wed Jun 10 19:34:19 2026 +0800
+
+    fix: remove unused numba import, defer gitpython, repair setup.py metadata
+    
+    Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+
+
+ succeeded in 358ms:
+1.0.0
+False False
+
+codex
+Specdev: no review-blocking findings surfaced, so I’m appending the required Round 1 approval to the implementation feedback file.
+exec
+/usr/bin/zsh -lc "sed -n '1,220p' .specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-feedback.md" in /mnt/h/oceanwave/lib/jsonldb
+ exited 2 in 0ms:
+sed: can't read .specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-feedback.md: No such file or directory
+
+codex
+Specdev: creating the implementation feedback file with the required verdict block.
+apply patch
+patch: completed
+/mnt/h/oceanwave/lib/jsonldb/.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-feedback.md
+diff --git a/.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-feedback.md b/.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-feedback.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..1e69a0dd665e63b65413836dbf16f77a788a7943
+--- /dev/null
++++ b/.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-feedback.md
+@@ -0,0 +1,9 @@
++## Round 1
++
++**Verdict:** approved
++
++### Findings
++1. (none)
++
++### Addressed from changelog
++- (none -- first round)
+
+diff --git a/.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-feedback.md b/.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-feedback.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..1e69a0dd665e63b65413836dbf16f77a788a7943
+--- /dev/null
++++ b/.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-feedback.md
+@@ -0,0 +1,9 @@
++## Round 1
++
++**Verdict:** approved
++
++### Findings
++1. (none)
++
++### Addressed from changelog
++- (none -- first round)
+
+codex
+Specdev: confirming the feedback file has the exact Round 1 verdict format.
+exec
+/usr/bin/zsh -lc "sed -n '1,80p' .specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-feedback.md" in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+## Round 1
+
+**Verdict:** approved
+
+### Findings
+1. (none)
+
+### Addressed from changelog
+- (none -- first round)
+
+exec
+/usr/bin/zsh -lc 'git status --short .specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-feedback.md' in /mnt/h/oceanwave/lib/jsonldb
+ succeeded in 0ms:
+?? .specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-feedback.md
+
+diff --git a/.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-feedback.md b/.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-feedback.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..1e69a0dd665e63b65413836dbf16f77a788a7943
+--- /dev/null
++++ b/.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-feedback.md
+@@ -0,0 +1,9 @@
++## Round 1
++
++**Verdict:** approved
++
++### Findings
++1. (none)
++
++### Addressed from changelog
++- (none -- first round)
+
+codex
+Implementation review round 1 is complete.
+
+No findings. I approved the implementation and wrote the required verdict to [implementation-feedback.md](/mnt/h/oceanwave/lib/jsonldb/.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-feedback.md:1).
+
+Verification run:
+`python -m pytest unit_tests/ -q` → `79 passed in 2.13s`
+diff --git a/.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-feedback.md b/.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-feedback.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..1e69a0dd665e63b65413836dbf16f77a788a7943
+--- /dev/null
++++ b/.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-feedback.md
+@@ -0,0 +1,9 @@
++## Round 1
++
++**Verdict:** approved
++
++### Findings
++1. (none)
++
++### Addressed from changelog
++- (none -- first round)
+
+tokens used
+57,030
+Implementation review round 1 is complete.
+
+No findings. I approved the implementation and wrote the required verdict to [implementation-feedback.md](/mnt/h/oceanwave/lib/jsonldb/.specdev/assignments/00005_refactor_packaging-perf-cleanup/review/implementation-feedback.md:1).
+
+Verification run:
+`python -m pytest unit_tests/ -q` → `79 passed in 2.13s`
+
+----- end of reviewer output -----
+Ended:      2026-06-10T11:39:28.090Z
+Elapsed:    126s
+Exit code:  0
+Timed out:  false
+Verdict:    approved
