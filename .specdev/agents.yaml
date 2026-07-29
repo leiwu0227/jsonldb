@@ -1,6 +1,6 @@
 worker:
   provider: codex
-  model: gpt-5
+  model: gpt-5.6-sol
   effort: high
   network: false
   timeout: 60m
