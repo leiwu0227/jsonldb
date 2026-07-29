@@ -23,6 +23,46 @@ TIME_SPEC = 'seconds'  #or seconds/microseconds
 LineKey = Union[str, dt.datetime]
 DataDict = Dict[str, dict]
 IndexDict = Dict[str, int]
+INDEX_READ_RETRIES = 3
+
+
+class _IndexOwnerMismatch(Exception):
+    """Signal that an index snapshot does not belong to the opened owner."""
+
+
+def _file_identity(file_stat: os.stat_result) -> tuple:
+    """Return the fields needed to recognize an atomically replaced file."""
+    return (
+        file_stat.st_dev,
+        file_stat.st_ino,
+        file_stat.st_size,
+        file_stat.st_mtime_ns,
+    )
+
+
+def _sync_file(path: str) -> None:
+    """Flush a completely staged file to storage before publication."""
+    with open(path, "rb") as staged_file:
+        os.fsync(staged_file.fileno())
+
+
+def _write_index_atomic(index_file_path: str, index_dict: IndexDict,
+                        owner_mtime_ns: int) -> None:
+    """Publish an index atomically and tag it with its owner's modification time."""
+    index_dir = os.path.dirname(os.path.abspath(index_file_path))
+    prefix = f".{os.path.basename(index_file_path)}."
+    fd, tmp_path = tempfile.mkstemp(prefix=prefix, suffix=".tmp", dir=index_dir)
+    try:
+        with os.fdopen(fd, "wb") as index_file:
+            index_file.write(orjson.dumps(index_dict, option=orjson.OPT_SORT_KEYS))
+            index_file.flush()
+            os.fsync(index_file.fileno())
+        os.utime(tmp_path, ns=(owner_mtime_ns, owner_mtime_ns))
+        os.replace(tmp_path, index_file_path)
+    except BaseException:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        raise
 
 # --------------------------------------------------------
 # Opaque Companion Functions
@@ -113,49 +153,48 @@ def build_jsonl_index(jsonl_file_path: str) -> None:
         FileNotFoundError: If the JSONL file doesn't exist
         OSError: If there are permission issues
     """
-    index_file_path = f"{jsonl_file_path}.idx"
-    index_dict: IndexDict = {}
-
     if not os.path.exists(jsonl_file_path):
         raise FileNotFoundError(f"JSONL file not found: {jsonl_file_path}")
 
-    # Handle empty file case
-    if os.path.getsize(jsonl_file_path) == 0:
-        with open(index_file_path, 'wb') as f:
-            f.write(orjson.dumps(index_dict, option=orjson.OPT_SORT_KEYS))
-        return
-
-    try:
-        with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
-            with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
+    index_file_path = f"{jsonl_file_path}.idx"
+    for _ in range(INDEX_READ_RETRIES):
+        index_dict: IndexDict = {}
+        try:
+            with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as owner:
+                owner_stat = os.fstat(owner.fileno())
                 current_pos = 0
-                while True:
+                for line in owner:
+                    stripped_line = line.strip()
+                    if stripped_line:
+                        try:
+                            data = orjson.loads(stripped_line)
+                            linekey = next(iter(data))
+                            index_dict[linekey] = current_pos
+                        except (orjson.JSONDecodeError, ValueError, StopIteration):
+                            print(
+                                "WARNING: invalid JSON line "
+                                + stripped_line.decode('utf-8', errors='replace')
+                            )
+                    current_pos = owner.tell()
 
-                    line = mm.readline()
-                    if not line:
-                        break
+            if _file_identity(os.stat(jsonl_file_path)) != _file_identity(owner_stat):
+                continue
 
-                    line = line.strip()
-                    if not line:  # Skip empty lines
-                        current_pos = mm.tell()
-                        continue
+            _write_index_atomic(
+                index_file_path,
+                index_dict,
+                owner_stat.st_mtime_ns,
+            )
+            if _file_identity(os.stat(jsonl_file_path)) == _file_identity(owner_stat):
+                return
+        except OSError as error:
+            raise OSError(
+                f"Failed to build index for {jsonl_file_path}: {str(error)}"
+            ) from error
 
-                    try:
-                        data = orjson.loads(line)
-                        linekey = next(iter(data))
-                        index_dict[linekey] = current_pos
-                    except (orjson.JSONDecodeError, ValueError, StopIteration):
-                        print("WARNING: invalid JSON line " + line.decode('utf-8', errors='replace'))
-                        continue
-
-                    current_pos = mm.tell()
-
-        # Save index (OPT_SORT_KEYS sorts on dump)
-        with open(index_file_path, 'wb') as f:
-            f.write(orjson.dumps(index_dict, option=orjson.OPT_SORT_KEYS))
-            
-    except OSError as e:
-        raise OSError(f"Failed to build index for {jsonl_file_path}: {str(e)}")
+    raise OSError(
+        f"Failed to build index for {jsonl_file_path}: owner changed repeatedly"
+    )
 
 def ensure_index_exists(jsonl_file_path: str) -> None:
     """
@@ -213,6 +252,37 @@ def load_index(jsonl_file_path: str) -> dict:
         build_jsonl_index(jsonl_file_path)
         with open(index_file_path, 'rb') as f:
             return orjson.loads(f.read())
+
+
+def _read_with_index(jsonl_file_path: str, reader):
+    """Run an indexed read against one stable owner/index generation."""
+    last_error = None
+    for _ in range(INDEX_READ_RETRIES):
+        try:
+            owner_before = os.stat(jsonl_file_path)
+            index_dict = load_index(jsonl_file_path)
+            owner_after = os.stat(jsonl_file_path)
+            if _file_identity(owner_before) != _file_identity(owner_after):
+                continue
+
+            with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as owner:
+                if _file_identity(os.fstat(owner.fileno())) != _file_identity(owner_after):
+                    continue
+                return reader(index_dict, owner)
+        except (
+            _IndexOwnerMismatch,
+            orjson.JSONDecodeError,
+            KeyError,
+            TypeError,
+            ValueError,
+        ) as error:
+            last_error = error
+            build_jsonl_index(jsonl_file_path)
+
+    message = f"Could not obtain a stable index snapshot for {jsonl_file_path}"
+    if last_error is not None:
+        message += f": {last_error}"
+    raise OSError(message)
 
 def _verify_and_compact(jsonl_file_path: str, index_dict: dict) -> bool:
     """Spot-check, sort-verify, and compact a JSONL file using a pre-loaded index.
@@ -549,10 +619,18 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
     if lower_key == upper_key:
         return select_line_jsonl(jsonl_file_path, lower_key, auto_deserialize, timespec)
 
-    try:
-        # Load index (self-heals an empty/corrupt .idx)
-        index_dict = load_index(jsonl_file_path)
+    serialized_lower = (
+        serialize_linekey(lower_key, timespec)
+        if lower_key is not None
+        else None
+    )
+    serialized_upper = (
+        serialize_linekey(upper_key, timespec)
+        if upper_key is not None
+        else None
+    )
 
+    def read_range(index_dict, owner):
         # If no keys in index, return empty dict
         if not index_dict:
             return {}
@@ -561,18 +639,16 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
         all_keys = list(index_dict.keys())
         
         # Set default values if None
-        if lower_key is None:
-            lower_key = all_keys[0]   # index keys are stored sorted
-        if upper_key is None:
-            upper_key = all_keys[-1]
-            
-        # Serialize the keys
-        lower_key = serialize_linekey(lower_key, timespec)
-        upper_key = serialize_linekey(upper_key, timespec)
+        effective_lower = (
+            all_keys[0] if serialized_lower is None else serialized_lower
+        )
+        effective_upper = (
+            all_keys[-1] if serialized_upper is None else serialized_upper
+        )
         
         # Use bisect for O(log n) range selection
-        lo = bisect_left(all_keys, lower_key)
-        hi = bisect_right(all_keys, upper_key)
+        lo = bisect_left(all_keys, effective_lower)
+        hi = bisect_right(all_keys, effective_upper)
         selected_linekeys = all_keys[lo:hi]
 
         # Read in offset order for sequential I/O
@@ -580,19 +656,34 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
             [(index_dict[k], k) for k in selected_linekeys]
         )
         raw_results = {}
-        with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
-            for offset, linekey in offset_key_pairs:
-                f.seek(offset)
-                line = f.readline()
-                data = orjson.loads(line)
-                raw_results[linekey] = data[linekey]
+        for offset, selected_key in offset_key_pairs:
+            owner.seek(offset)
+            line = owner.readline()
+            data = orjson.loads(line)
+            if (
+                not isinstance(data, dict)
+                or len(data) != 1
+                or selected_key not in data
+            ):
+                raise _IndexOwnerMismatch(
+                    f"index key {selected_key!r} does not match owner"
+                )
+            raw_results[selected_key] = data[selected_key]
 
         # Rebuild in sorted key order with deserialization
         result_dict = {}
-        for linekey in selected_linekeys:
-            _store_with_key(result_dict, linekey, raw_results[linekey], auto_deserialize, timespec)
+        for selected_key in selected_linekeys:
+            _store_with_key(
+                result_dict,
+                selected_key,
+                raw_results[selected_key],
+                auto_deserialize,
+                timespec,
+            )
         return result_dict
-        
+
+    try:
+        return _read_with_index(jsonl_file_path, read_range)
     except OSError as e:
         raise OSError(f"Failed to select from JSONL file {jsonl_file_path}: {str(e)}")
 
@@ -616,27 +707,29 @@ def select_line_jsonl(jsonl_file_path: str, linekey: LineKey, auto_serialize: bo
     if auto_serialize:
         linekey = serialize_linekey(linekey, timespec)
     
-    # Read the index file (self-heals an empty/corrupt .idx)
-    index_dict = load_index(jsonl_file_path)
-
-    # Check if key exists in index
-    if linekey not in index_dict:
-        return {}
-    
-    result_dict: DataDict = {}
-        
-
-    # Load selected records
-    with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
-        try:
-            f.seek(index_dict[linekey])
-            line = f.readline().strip()
-            data = orjson.loads(line)
-            _store_with_key(result_dict, linekey, data[linekey], auto_serialize, timespec)
-        except (orjson.JSONDecodeError, ValueError, KeyError):
+    def read_line(index_dict, owner):
+        if linekey not in index_dict:
             return {}
 
-    return result_dict
+        owner.seek(index_dict[linekey])
+        line = owner.readline().strip()
+        data = orjson.loads(line)
+        if not isinstance(data, dict) or len(data) != 1 or linekey not in data:
+            raise _IndexOwnerMismatch(
+                f"index key {linekey!r} does not match owner"
+            )
+
+        result_dict: DataDict = {}
+        _store_with_key(
+            result_dict,
+            linekey,
+            data[linekey],
+            auto_serialize,
+            timespec,
+        )
+        return result_dict
+
+    return _read_with_index(jsonl_file_path, read_line)
 
 
 
@@ -756,3 +849,133 @@ def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey], timespec: Option
             
     except OSError as e:
         raise OSError(f"Failed to delete from JSONL file {jsonl_file_path}: {str(e)}")
+
+
+def _load_replacement_owner(jsonl_file_path: str) -> DataDict:
+    """Strictly load one owner so staging cannot silently discard stored rows."""
+    records: DataDict = {}
+    with open(jsonl_file_path, "rb", buffering=BUFFER_SIZE) as owner:
+        for raw_line in owner:
+            line = raw_line.strip()
+            if not line:
+                continue
+            data = orjson.loads(line)
+            if not isinstance(data, dict) or len(data) != 1:
+                raise ValueError("Existing JSONL owner contains an invalid record")
+            linekey = next(iter(data))
+            payload = data[linekey]
+            if linekey in records:
+                raise ValueError(
+                    f"Existing JSONL owner contains duplicate key {linekey!r}"
+                )
+            if not isinstance(payload, dict) or not payload:
+                raise ValueError(
+                    f"Existing JSONL owner contains invalid payload for {linekey!r}"
+                )
+            records[linekey] = payload
+    return records
+
+
+def _serialized_replacement(replacement_dict: DataDict, lower_key: str,
+                            upper_key: str, timespec: Optional[str]) -> DataDict:
+    """Validate and serialize all replacement rows before any publication."""
+    serialized: DataDict = {}
+    for linekey, payload in replacement_dict.items():
+        serialized_key = serialize_linekey(linekey, timespec)
+        if serialized_key in serialized:
+            raise ValueError(
+                f"Replacement keys collide after serialization: {serialized_key!r}"
+            )
+        if not lower_key <= serialized_key <= upper_key:
+            raise ValueError(
+                f"Replacement key {serialized_key!r} is outside "
+                f"[{lower_key!r}, {upper_key!r}]"
+            )
+        if not isinstance(payload, dict) or not payload:
+            raise ValueError(
+                f"Replacement payload for {serialized_key!r} must be a non-empty dict"
+            )
+        _fast_dumps({serialized_key: payload})
+        serialized[serialized_key] = payload
+    return serialized
+
+
+def replace_jsonl_range(jsonl_file_path: str, lower_key: LineKey,
+                        upper_key: LineKey, replacement_dict: DataDict,
+                        timespec: Optional[str] = None) -> None:
+    """Atomically replace an inclusive range in an existing JSONL owner.
+
+    The complete new owner and index are staged and synced before the optional
+    opaque companion is invalidated. The owner is the atomic publication point;
+    the derived index follows and remains recoverable if publication stops.
+    """
+    owner_path = os.fspath(jsonl_file_path)
+    if not os.path.isfile(owner_path):
+        raise FileNotFoundError(f"JSONL file not found: {owner_path}")
+    if not isinstance(replacement_dict, dict):
+        raise TypeError("Replacement records must be a dictionary")
+
+    serialized_lower = serialize_linekey(lower_key, timespec)
+    serialized_upper = serialize_linekey(upper_key, timespec)
+    if serialized_lower > serialized_upper:
+        raise ValueError("lower_key must be less than or equal to upper_key")
+
+    replacement = _serialized_replacement(
+        replacement_dict,
+        serialized_lower,
+        serialized_upper,
+        timespec,
+    )
+    existing = _load_replacement_owner(owner_path)
+    merged = {
+        key: existing[key]
+        for key in sorted(existing)
+        if key < serialized_lower
+    }
+    merged.update({key: replacement[key] for key in sorted(replacement)})
+    merged.update({
+        key: existing[key]
+        for key in sorted(existing)
+        if key > serialized_upper
+    })
+
+    owner_dir = os.path.dirname(os.path.abspath(owner_path))
+    prefix = f".{os.path.basename(owner_path)}."
+    fd, staged_owner = tempfile.mkstemp(
+        prefix=prefix,
+        suffix=".range.tmp",
+        dir=owner_dir,
+    )
+    os.close(fd)
+    staged_index = staged_owner + ".idx"
+    try:
+        save_jsonl(staged_owner, merged, timespec)
+        _sync_file(staged_owner)
+        _sync_file(staged_index)
+
+        old_owner_stat = os.stat(owner_path)
+        old_index_mtime = (
+            os.stat(owner_path + ".idx").st_mtime_ns
+            if os.path.exists(owner_path + ".idx")
+            else 0
+        )
+        publication_mtime = max(
+            old_owner_stat.st_mtime_ns,
+            old_index_mtime,
+        ) + 1_000_000_000
+        os.utime(
+            staged_owner,
+            ns=(publication_mtime, publication_mtime),
+        )
+        os.utime(
+            staged_index,
+            ns=(publication_mtime, publication_mtime),
+        )
+
+        remove_aux(owner_path)
+        os.replace(staged_owner, owner_path)
+        os.replace(staged_index, owner_path + ".idx")
+    finally:
+        for staged_path in (staged_owner, staged_index):
+            if os.path.exists(staged_path):
+                os.remove(staged_path)

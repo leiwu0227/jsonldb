@@ -412,6 +412,39 @@ class FolderDB:
         
         self.update_dbmeta(self._get_file_name(name))
 
+    def replace_df_range(self, name: str, lower_key: Any, upper_key: Any,
+                         df: pd.DataFrame) -> None:
+        """Atomically replace one inclusive key range in an existing ticker.
+
+        The complete resulting owner and index are validated and staged before
+        the ticker's opaque companion is invalidated. An empty DataFrame clears
+        the range. This operation never creates a missing owner.
+
+        Args:
+            name: Name of the existing JSONL ticker.
+            lower_key: Inclusive lower replacement bound.
+            upper_key: Inclusive upper replacement bound.
+            df: Authoritative replacement rows, keyed by DataFrame index.
+        """
+        if not isinstance(df, pd.DataFrame):
+            raise TypeError("df must be a pandas DataFrame")
+        if not df.index.is_unique:
+            raise ValueError("DataFrame index must be unique")
+
+        file_path = self._get_file_path(name)
+        if not os.path.isfile(file_path):
+            raise FileNotFoundError(f"JSONL file not found: {file_path}")
+
+        replacement = df.to_dict("index")
+        jsonlfile.replace_jsonl_range(
+            file_path,
+            lower_key,
+            upper_key,
+            replacement,
+            self.timespec,
+        )
+        self.update_dbmeta(self._get_file_name(name))
+
     def upsert_dfs(self, dict_dfs: Dict[Any, pd.DataFrame]) -> None:
         """
         Update or insert multiple DataFrames into JSONL files.
@@ -685,7 +718,29 @@ class FolderDB:
         """
         if not os.path.exists(self.dbmeta_path):
             self.build_dbmeta()
-        return load_jsonl(self.dbmeta_path)
+
+        metadata = load_jsonl(self.dbmeta_path)
+        current_names = set(self.get_file_list())
+        changed = set(metadata) != current_names
+
+        for name in current_names:
+            previous = metadata.get(name, {})
+            entry = self._make_meta_entry(
+                name,
+                self._get_file_path(name),
+                linted=previous.get("linted", False),
+                lint_time=previous.get("lint_time", ""),
+            )
+            if previous != entry:
+                metadata[name] = entry
+                changed = True
+
+        for stale_name in set(metadata) - current_names:
+            del metadata[stale_name]
+
+        if changed:
+            save_jsonl(self.dbmeta_path, metadata)
+        return metadata
     
     def delete_dbmeta(self,name: str) -> None:
         """

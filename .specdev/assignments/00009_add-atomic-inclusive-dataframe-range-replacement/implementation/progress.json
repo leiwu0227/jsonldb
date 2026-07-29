@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "T-1",
+      "status": "completed"
+    },
+    {
+      "id": "T-2",
+      "status": "completed"
+    },
+    {
+      "id": "T-3",
+      "status": "completed"
+    }
+  ],
+  "selected_guides": {
+    "implementation": [
+      "api-security"
+    ],
+    "review": []
+  },
+  "verification": [
+    {
+      "command": "/Users/leiwu/code/oceanwave/lib/oceanscript/venv-macos/bin/python -m pytest -q tests/test_atomic_replace_range.py",
+      "revision": "working-tree@5fff5db26946e594fe64093247ea5e8a740619e1",
+      "scope": "Tracked inclusive replacement, validation, failure injection, publication ordering, recovery, indexed-read race, hierarchy, lint, repair, and timespec tests (26 passed)",
+      "status": "passed",
+      "duration_ms": 3220
+    },
+    {
+      "command": "/Users/leiwu/code/oceanwave/lib/oceanscript/venv-macos/bin/python -m pytest -q unit_tests/test_jsonlfile.py::test_aux_api_preserves_opaque_bytes_and_uses_canonical_path unit_tests/test_jsonlfile.py::test_jsonl_content_mutations_invalidate_aux unit_tests/test_jsonlfile.py::test_update_with_new_records unit_tests/test_jsonlfile.py::test_select_with_both_bounds unit_tests/test_jsonlfile.py::test_select_single_record unit_tests/test_jsonlfile.py::test_select_with_datetime_keys unit_tests/test_jsonlfile.py::test_lint_bad_index_offsets_recovery unit_tests/test_jsonlfile.py::test_corrupt_idx_self_heals_via_load_index_and_lint_force unit_tests/test_jsonldf.py::test_save_and_load_jsonldf unit_tests/test_jsonldf.py::test_save_jsonldf_duplicate_index unit_tests/test_jsonldf.py::test_select_jsonldf_with_range unit_tests/test_jsonldf.py::test_select_jsonldf_single_record unit_tests/test_jsonldf.py::test_select_jsonldf_with_datetime_keys unit_tests/test_folderdb.py::test_upsert_df unit_tests/test_folderdb.py::test_folder_content_mutations_invalidate_aux unit_tests/test_folderdb.py::test_get_df unit_tests/test_folderdb.py::test_metadata_persistence unit_tests/test_folderdb.py::test_hierarchical_file_operations unit_tests/test_folderdb.py::test_timespec_no_global_contamination unit_tests/test_folderdb.py::test_corrupt_idx_self_heals_in_meta_and_delete_range",
+      "revision": "working-tree@5fff5db26946e594fe64093247ea5e8a740619e1",
+      "scope": "Selected existing storage, DataFrame, folder, companion, mutation, hierarchy, metadata, index repair, lint, and timespec regressions (25 passed)",
+      "status": "passed",
+      "duration_ms": 390
+    },
+    {
+      "command": "git diff --check && /Users/leiwu/code/oceanwave/lib/oceanscript/venv-macos/bin/python -m py_compile jsonldb/jsonlfile.py jsonldb/jsonldf.py jsonldb/folderdb.py jsonldb/__init__.py tests/test_atomic_replace_range.py",
+      "revision": "working-tree@5fff5db26946e594fe64093247ea5e8a740619e1",
+      "scope": "Whitespace and Python syntax validation for the bounded candidate",
+      "status": "passed",
+      "duration_ms": 40
+    }
+  ],
+  "deviations": [],
+  "follow_up": "none",
+  "selected_guide_versions": {
+    "implementation": [
+      {
+        "id": "api-security",
+        "version": "1"
+      }
+    ],
+    "review": []
+  }
+}
