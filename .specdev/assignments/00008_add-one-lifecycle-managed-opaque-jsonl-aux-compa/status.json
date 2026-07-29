@@ -9,7 +9,35 @@
     "brainstorm": "optional",
     "implementation": "required"
   },
-  "updated_at": "2026-07-29T07:16:02.686Z",
+  "updated_at": "2026-07-29T07:41:26.062Z",
   "review_policy_frozen_at": "2026-07-29T07:16:02.668Z",
-  "approved_at": "2026-07-29T07:16:02.668Z"
+  "approved_at": "2026-07-29T07:16:02.668Z",
+  "git_boundary": {
+    "version": 1,
+    "starting_git_commit_hash": "fc22cba363e18cf17ca613eee7632162852ce2de",
+    "starting_branch": "master",
+    "starting_worktree": "clean",
+    "adopted_path_count": 0,
+    "established_at": "2026-07-29T07:20:08.405Z"
+  },
+  "status": "completed",
+  "completed_at": "2026-07-29T07:41:26.053Z",
+  "activity": {
+    "attempt_count": 4,
+    "orchestration_attempt_count": 0,
+    "provider_attempt_count": 4,
+    "provider_attempts": {
+      "total": 4,
+      "completed": 3,
+      "failed": 1,
+      "blocked": 0,
+      "interrupted": 0,
+      "running": 0
+    },
+    "elapsed_ms": 1523385,
+    "agent_duration_ms": 1272213,
+    "provider_reported_tokens": 189221
+  },
+  "delivery_phase": "ready",
+  "delivery_prepared_at": "2026-07-29T07:41:26.062Z"
 }

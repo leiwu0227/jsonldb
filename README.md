@@ -141,6 +141,24 @@ metadata = db.get_metadata("table_name")
 db.update_metadata("table_name", {"new": "metadata"})
 ```
 
+## Opaque ticker companions
+
+Each ticker has one optional opaque companion at
+`<ticker>.jsonl.aux`. JSONLDB preserves payload bytes without parsing them,
+publishes replacements atomically, and invalidates the companion before ticker
+content changes.
+
+```python
+db.write_aux("table_name", b"consumer-owned bytes")
+payload = db.read_aux("table_name")
+path = db.get_aux_path("table_name")
+db.remove_aux("table_name")
+```
+
+The same operations are available in `jsonldb.jsonlfile` as `get_aux_path`,
+`read_aux`, `write_aux`, and `remove_aux` when working with a JSONL path
+directly.
+
 ## Requirements
 
 - Python >= 3.8
@@ -153,4 +171,4 @@ db.update_metadata("table_name", {"new": "metadata"})
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License - see the LICENSE file for details.

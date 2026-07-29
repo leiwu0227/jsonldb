@@ -9,6 +9,7 @@ import datetime as dt
 import orjson
 from bisect import bisect_left, bisect_right
 import mmap
+import tempfile
 
 # --------------------------------------------------------
 # Configuration
@@ -22,6 +23,77 @@ TIME_SPEC = 'seconds'  #or seconds/microseconds
 LineKey = Union[str, dt.datetime]
 DataDict = Dict[str, dict]
 IndexDict = Dict[str, int]
+
+# --------------------------------------------------------
+# Opaque Companion Functions
+# --------------------------------------------------------
+
+def get_aux_path(jsonl_file_path: str) -> str:
+    """Return the sole opaque companion path for a JSONL ticker.
+
+    The companion identity is fixed: ``<ticker>.jsonl.aux``.  This helper only
+    derives the canonical path; it does not require either file to exist.
+    """
+    path = os.fspath(jsonl_file_path)
+    if not isinstance(path, str) or not path.endswith(".jsonl"):
+        raise ValueError("Companions are only supported for .jsonl ticker paths")
+    return path + ".aux"
+
+
+def read_aux(jsonl_file_path: str) -> bytes:
+    """Read a ticker's opaque companion without interpreting its bytes."""
+    with open(get_aux_path(jsonl_file_path), "rb") as companion:
+        return companion.read()
+
+
+def write_aux(jsonl_file_path: str, payload: bytes) -> None:
+    """Atomically replace a ticker's opaque companion payload.
+
+    A temporary file is written and flushed in the owner's directory before
+    ``os.replace`` publishes it.  The JSONL owner must exist both before the
+    write and immediately before publication, preventing creation of a known
+    orphan through this API.
+    """
+    owner_path = os.fspath(jsonl_file_path)
+    companion_path = get_aux_path(owner_path)
+    if not isinstance(payload, (bytes, bytearray, memoryview)):
+        raise TypeError("Companion payload must be bytes-like")
+    if not os.path.isfile(owner_path):
+        raise FileNotFoundError(f"JSONL file not found: {owner_path}")
+
+    payload_bytes = bytes(payload)
+    owner_dir = os.path.dirname(os.path.abspath(owner_path))
+    prefix = f".{os.path.basename(companion_path)}."
+    fd, tmp_path = tempfile.mkstemp(prefix=prefix, suffix=".tmp", dir=owner_dir)
+    try:
+        with os.fdopen(fd, "wb") as tmp_file:
+            tmp_file.write(payload_bytes)
+            tmp_file.flush()
+            os.fsync(tmp_file.fileno())
+        if not os.path.isfile(owner_path):
+            raise FileNotFoundError(f"JSONL file not found: {owner_path}")
+        os.replace(tmp_path, companion_path)
+    except BaseException:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        raise
+
+
+def remove_aux(jsonl_file_path: str) -> bool:
+    """Remove a ticker's optional companion, returning whether one existed."""
+    companion_path = get_aux_path(jsonl_file_path)
+    if not os.path.lexists(companion_path):
+        return False
+    os.remove(companion_path)
+    return True
+
+
+def _invalidate_aux_if_jsonl(path: str) -> None:
+    """Remove a companion before mutating a JSONL ticker, if applicable."""
+    path = os.fspath(path)
+    if isinstance(path, str) and path.endswith(".jsonl"):
+        remove_aux(path)
+
 
 # --------------------------------------------------------
 # Indexing Functions
@@ -196,6 +268,7 @@ def _verify_and_compact(jsonl_file_path: str, index_dict: dict) -> bool:
                 line = src.readline()
                 dst.write(line)
 
+    _invalidate_aux_if_jsonl(jsonl_file_path)
     os.replace(tmp_path, jsonl_file_path)
     build_jsonl_index(jsonl_file_path)
     return True
@@ -216,7 +289,12 @@ def lint_jsonl(jsonl_file_path: str, force: bool = False) -> bool:
     Returns:
         bool: True if file exists (whether skipped or linted), False if not found
     """
+    jsonl_file_path = os.fspath(jsonl_file_path)
     if not os.path.exists(jsonl_file_path):
+        if (isinstance(jsonl_file_path, str)
+                and jsonl_file_path.endswith(".jsonl")
+                and os.path.lexists(jsonl_file_path + ".aux")):
+            print(f"WARNING: orphan companion {jsonl_file_path}.aux")
         return False
 
     if os.path.getsize(jsonl_file_path) == 0:
@@ -375,6 +453,7 @@ def save_jsonl(jsonl_file_path: str, db_dict: DataDict, timespec: Optional[str] 
         OSError: If file operations fail
     """
     index: IndexDict = {}
+    _invalidate_aux_if_jsonl(jsonl_file_path)
     
     try:
         # Handle empty dictionary case
@@ -580,6 +659,7 @@ def update_jsonl(jsonl_file_path: str, update_dict: DataDict, timespec: Optional
     try:
         # Load index (self-heals an empty/corrupt .idx)
         index = load_index(jsonl_file_path)
+        _invalidate_aux_if_jsonl(jsonl_file_path)
 
         updates = []
         appends = []
@@ -653,6 +733,9 @@ def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey], timespec: Option
 
         # Process deletions
         linekeys = [serialize_linekey(key, timespec) for key in linekeys]
+        if not any(linekey in index for linekey in linekeys):
+            return
+        _invalidate_aux_if_jsonl(jsonl_file_path)
         
         # Use regular file operations like update_jsonl
         with open(jsonl_file_path, 'rb+', buffering=BUFFER_SIZE) as f:
@@ -673,5 +756,3 @@ def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey], timespec: Option
             
     except OSError as e:
         raise OSError(f"Failed to delete from JSONL file {jsonl_file_path}: {str(e)}")
-
-

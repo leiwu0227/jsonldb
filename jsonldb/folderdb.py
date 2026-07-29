@@ -4,6 +4,7 @@ Each table is stored in a separate JSONL file.
 """
 
 import os
+import shutil
 import pandas as pd
 from typing import Dict, List, Union, Optional, Any
 from datetime import datetime
@@ -263,7 +264,61 @@ class FolderDB:
         if name.endswith('.jsonl'):
             return name
         return f"{name}.jsonl"
-    
+
+    def get_aux_path(self, name: str) -> str:
+        """Return the canonical opaque companion path for a ticker."""
+        return jsonlfile.get_aux_path(self._get_file_path(name))
+
+    def read_aux(self, name: str) -> bytes:
+        """Read a ticker's opaque companion bytes."""
+        return jsonlfile.read_aux(self._get_file_path(name))
+
+    def write_aux(self, name: str, payload: bytes) -> None:
+        """Atomically replace a ticker's opaque companion bytes."""
+        jsonlfile.write_aux(self._get_file_path(name), payload)
+
+    def remove_aux(self, name: str) -> bool:
+        """Remove a ticker's optional opaque companion."""
+        return jsonlfile.remove_aux(self._get_file_path(name))
+
+    def _move_jsonl_family(self, source_path: str, target_path: str) -> None:
+        """Move an owner first and its optional companion last.
+
+        Removing a pre-existing target companion first and publishing the
+        source companion only after the owner move makes every interruption
+        state prefer an absent companion over stale content.
+        """
+        jsonlfile.remove_aux(target_path)
+        shutil.move(source_path, target_path)
+
+        source_index = source_path + '.idx'
+        if os.path.exists(source_index):
+            shutil.move(source_index, target_path + '.idx')
+
+        source_aux = jsonlfile.get_aux_path(source_path)
+        if os.path.lexists(source_aux):
+            shutil.move(source_aux, jsonlfile.get_aux_path(target_path))
+
+    def _get_aux_files(self) -> List[str]:
+        """List managed and orphan companion paths, excluding foreign internals."""
+        companions = []
+        for root, dirs, files in os.walk(self.folder_path, topdown=True):
+            dirs[:] = [
+                directory for directory in dirs
+                if not directory.startswith('.') or directory == '.invalid_tickers'
+            ]
+            for file in files:
+                if file.endswith('.jsonl.aux'):
+                    companions.append(os.path.join(root, file))
+        return sorted(companions)
+
+    def _find_orphan_aux_files(self) -> List[str]:
+        """Find companions whose derived JSONL owners are absent."""
+        return [
+            companion_path
+            for companion_path in self._get_aux_files()
+            if not os.path.isfile(companion_path[:-4])
+        ]
 
     
     def get_file_list(self) -> List[str]:
@@ -325,6 +380,7 @@ class FolderDB:
     def overwrite_df(self, name: str, df: pd.DataFrame) -> None:
         file_path = self._get_or_create_file_path(name)
         if os.path.exists(file_path):
+           jsonlfile.remove_aux(file_path)
            os.remove(file_path)
       
         save_jsonldf(file_path, df, self.timespec)
@@ -395,6 +451,7 @@ class FolderDB:
     def overwrite_dict(self, name: str, data_dict: Dict[Any, Dict[str, Any]]) -> None:
         file_path = self._get_or_create_file_path(name)
         if os.path.exists(file_path):
+           jsonlfile.remove_aux(file_path)
            os.remove(file_path)
       
         save_jsonl(file_path, data_dict, self.timespec)
@@ -470,9 +527,15 @@ class FolderDB:
         if not force:
             print("WARNING: This will delete all data in the database folder. Call clear_folder with force=True to proceed.")
             return
+        # Invalidate every managed or orphan companion before deleting owners.
+        for companion_path in self._get_aux_files():
+            os.remove(companion_path)
         for root, dirs, files in os.walk(self.folder_path, topdown=True):
-            # Skip hidden/system directories (e.g. .git, .invalid_tickers)
-            dirs[:] = [d for d in dirs if not d.startswith('.')]
+            # Skip hidden/system directories except JSONLDB's managed quarantine.
+            dirs[:] = [
+                d for d in dirs
+                if not d.startswith('.') or d == '.invalid_tickers'
+            ]
             for file in files:
                 if file.endswith(('.idx', '.jsonl', '.meta')):
                     os.remove(os.path.join(root, file))
@@ -487,6 +550,7 @@ class FolderDB:
             name: Name of the JSONL file
         """
         file_path = self._get_file_path(name)
+        jsonlfile.remove_aux(file_path)
         if os.path.exists(file_path):
             os.remove(file_path)
             if os.path.exists(file_path + '.idx'):
@@ -663,13 +727,19 @@ class FolderDB:
 
         metadata = select_jsonl(meta_file)
         print(f"Found {len(metadata)} JSONL files to lint.")
+        for orphan_path in self._find_orphan_aux_files():
+            print(f"WARNING: orphan companion {orphan_path}")
 
         all_meta = {}
 
         for name in metadata:
             print(f"Linting file: {name}")
             file_path = self._get_file_path(name)
-            exist_flag = lint_jsonl(file_path, force=force)
+            exist_flag = (
+                lint_jsonl(file_path, force=force)
+                if os.path.exists(file_path)
+                else False
+            )
 
             if not exist_flag:
                 print(f"File {name} no longer exist, deleting metadata.")
@@ -698,8 +768,9 @@ class FolderDB:
         if hierarchy_depth < 1:
             raise ValueError("Hierarchy level must be positive")
 
-        import shutil
-            
+        for orphan_path in self._find_orphan_aux_files():
+            print(f"WARNING: orphan companion {orphan_path}")
+
         print(f"Organizing files for hierarchy level {hierarchy_depth}")
             
         self.use_hierarchy = True
@@ -741,14 +812,8 @@ class FolderDB:
             try:
                 dest_path = os.path.join(self.invalid_tickers_path, os.path.basename(file_path))
                 if file_path != dest_path:  # Avoid moving file to itself
-                    shutil.move(file_path, dest_path)
+                    self._move_jsonl_family(file_path, dest_path)
                     print(f"Moved invalid file {name} to .invalid_tickers")
-                    
-                    # Also move .idx file if it exists
-                    idx_path = file_path + '.idx'
-                    if os.path.exists(idx_path):
-                        idx_dest = dest_path + '.idx'
-                        shutil.move(idx_path, idx_dest)
             except Exception as e:
                 print(f"Warning: Could not move invalid file {name}: {str(e)}")
         
@@ -765,15 +830,9 @@ class FolderDB:
                 # Create target directory if needed
                 self.create_folder(target_dir)
                 
-                # Move JSONL file
-                shutil.move(file_path, target_file)
+                # Move owner first and optional companion last.
+                self._move_jsonl_family(file_path, target_file)
                 print(f"Moved {name} to {target_dir}")
-                
-                # Move .idx file if it exists
-                idx_path = file_path + '.idx'
-                if os.path.exists(idx_path):
-                    idx_target = target_file + '.idx'
-                    shutil.move(idx_path, idx_target)
                     
             except Exception as e:
                 print(f"Warning: Could not move valid file {name}: {str(e)}")
@@ -791,11 +850,12 @@ class FolderDB:
         """
         Reprocess files in .invalid_tickers folder and move any that now match naming convention.
         """
-        import shutil
-        
         if not os.path.exists(self.invalid_tickers_path):
             print("No .invalid_tickers folder found")
             return
+
+        for orphan_path in self._find_orphan_aux_files():
+            print(f"WARNING: orphan companion {orphan_path}")
             
         # Get all JSONL files in .invalid_tickers folder
         invalid_files = []
@@ -832,16 +892,12 @@ class FolderDB:
                 # Create target directory if needed
                 self.create_folder(target_dir)
                 
-                # Move JSONL file
-                shutil.move(file_path, target_file)
+                # Move owner first and optional companion last.
+                had_index = os.path.exists(file_path + '.idx')
+                self._move_jsonl_family(file_path, target_file)
                 print(f"Moved {name} from .invalid_tickers to {target_dir}")
                 
-                # Move .idx file if it exists (but don't build new one yet)
-                idx_path = file_path + '.idx'
-                if os.path.exists(idx_path):
-                    idx_target = target_file + '.idx'
-                    shutil.move(idx_path, idx_target)
-                else:
+                if not had_index:
                     # Build index for newly valid file
                     build_jsonl_index(target_file)
                 
@@ -907,6 +963,11 @@ class FolderDB:
         """
         from .vercontrol import revert as vercontrol_revert
 
+        # Git reset does not remove untracked files. Invalidate every companion
+        # before owner content can change; tracked target companions, if any,
+        # are restored by the reset itself.
+        for companion_path in self._get_aux_files():
+            os.remove(companion_path)
         vercontrol_revert(self.folder_path, version_hash)
         print(f"Successfully reverted the folder: {self.folder_path} to version: {version_hash}")
     

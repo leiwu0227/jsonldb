@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "T-1",
+      "status": "completed"
+    },
+    {
+      "id": "T-2",
+      "status": "completed"
+    },
+    {
+      "id": "T-3",
+      "status": "completed"
+    }
+  ],
+  "selected_guides": {
+    "implementation": [
+      "api-security"
+    ],
+    "review": [
+      "api-security"
+    ]
+  },
+  "verification": [
+    {
+      "command": "PYTHONPATH=.specdev/cache/test-shims /Library/Developer/CommandLineTools/usr/bin/python3 -m pytest -q unit_tests/test_jsonlfile.py unit_tests/test_folderdb.py -k 'aux or companion or content_mutations or move_interruption or reprocess_invalid_ticker or revert_invalidates'",
+      "revision": "working-tree@fc22cba363e18cf17ca613eee7632162852ce2de",
+      "scope": "Opaque companion API, exact bytes, atomic replacement failure, discovery, mutations, delete/clear, hierarchy and repair moves, interruption ordering, orphan reporting, and revert invalidation",
+      "status": "passed",
+      "duration_ms": 644
+    },
+    {
+      "command": "PYTHONPATH=.specdev/cache/test-shims /Library/Developer/CommandLineTools/usr/bin/python3 -m pytest -q unit_tests/test_jsonlfile.py -k 'not select_does_not_use_numpy'",
+      "revision": "working-tree@fc22cba363e18cf17ca613eee7632162852ce2de",
+      "scope": "Low-level JSONL/index/lint compatibility with real orjson; 48 passed and the unrelated NumPy import assertion was deselected",
+      "status": "passed",
+      "duration_ms": 647
+    },
+    {
+      "command": "PYTHONPATH=.specdev/cache/test-shims /Library/Developer/CommandLineTools/usr/bin/python3 -m pytest -q unit_tests/test_folderdb.py::test_upsert_dict unit_tests/test_folderdb.py::test_upsert_dicts unit_tests/test_folderdb.py::test_get_dict unit_tests/test_folderdb.py::test_delete_file unit_tests/test_folderdb.py::test_delete_file_tolerates_missing_index unit_tests/test_folderdb.py::test__range unit_tests/test_folderdb.py::test_delete_file_range_datetime_bounds unit_tests/test_folderdb.py::test_delete_range unit_tests/test_folderdb.py::test_str_representation unit_tests/test_folderdb.py::test_enable_hierarchy_mode unit_tests/test_folderdb.py::test_timespec_no_global_contamination unit_tests/test_folderdb.py::test_two_dbs_different_timespecs_round_trip unit_tests/test_folderdb.py::test_timespec_mismatch_auto_heal unit_tests/test_folderdb.py::test_timespec_mismatch_mixed_and_camouflage unit_tests/test_folderdb.py::test_init_does_not_rewrite_configmeta_if_unchanged unit_tests/test_folderdb.py::test_corrupt_idx_self_heals_in_meta_and_delete_range",
+      "revision": "working-tree@fc22cba363e18cf17ca613eee7632162852ce2de",
+      "scope": "Focused FolderDB dictionary CRUD, deletion/ranges, hierarchy initialization, metadata/timespec compatibility, and index self-healing; 16 passed",
+      "status": "passed",
+      "duration_ms": 644
+    },
+    {
+      "command": "python3 -m py_compile jsonldb/jsonlfile.py jsonldb/folderdb.py",
+      "revision": "working-tree@fc22cba363e18cf17ca613eee7632162852ce2de",
+      "scope": "Changed Python modules",
+      "status": "passed",
+      "duration_ms": 1
+    },
+    {
+      "command": "git diff --check",
+      "revision": "working-tree@fc22cba363e18cf17ca613eee7632162852ce2de",
+      "scope": "Tracked working-tree patch hygiene",
+      "status": "passed",
+      "duration_ms": 1
+    }
+  ],
+  "deviations": [
+    "No installed interpreter provided all declared test dependencies together. Focused tests used Python 3.9 with real orjson plus ignored import-only pandas/GitPython shims; the unrelated NumPy assertion and DataFrame-focused FolderDB tests were not run."
+  ],
+  "follow_up": "none",
+  "selected_guide_versions": {
+    "implementation": [
+      {
+        "id": "api-security",
+        "version": "1"
+      }
+    ],
+    "review": [
+      {
+        "id": "api-security",
+        "version": "1"
+      }
+    ]
+  }
+}
