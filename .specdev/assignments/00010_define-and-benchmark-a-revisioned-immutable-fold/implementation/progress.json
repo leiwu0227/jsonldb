@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "T-1",
+      "status": "completed"
+    },
+    {
+      "id": "T-2",
+      "status": "completed"
+    },
+    {
+      "id": "T-3",
+      "status": "completed"
+    },
+    {
+      "id": "T-4",
+      "status": "completed"
+    }
+  ],
+  "selected_guides": {
+    "implementation": [
+      "api-security"
+    ],
+    "review": []
+  },
+  "verification": [
+    {
+      "command": "pytest -q tests/test_catalog_snapshot_baseline.py",
+      "revision": "working-tree@ff7a3fc49a9e8cad140e6a76a902f4053e99c949",
+      "scope": "Initial focused invocation; failed because the pytest entry point omitted the repository root from sys.path",
+      "status": "failed",
+      "duration_ms": 224
+    },
+    {
+      "command": "python -m pytest -q tests/test_catalog_snapshot_baseline.py",
+      "revision": "working-tree@ff7a3fc49a9e8cad140e6a76a902f4053e99c949",
+      "scope": "Focused module invocation probe; the environment has no python alias",
+      "status": "failed",
+      "duration_ms": 2
+    },
+    {
+      "command": "python3 -m pytest -q tests/test_catalog_snapshot_baseline.py",
+      "revision": "working-tree@ff7a3fc49a9e8cad140e6a76a902f4053e99c949",
+      "scope": "Focused system-Python invocation; failed because the declared runtime dependency orjson is not installed in that interpreter",
+      "status": "failed",
+      "duration_ms": 653
+    },
+    {
+      "command": "PYTHONPATH=\"$PWD:/Users/leiwu/.cache/uv/archive-v0/S36yZp8tJKKqtlyH6rhLt:/Users/leiwu/.cache/uv/archive-v0/s8BLxt3aNf-5npKkjuOH4:/Users/leiwu/.cache/uv/archive-v0/mUSqh4g9xpWZZHdjasnD0:/opt/homebrew/lib/python3.14/site-packages\" /private/tmp/jsonldb-a10.TKZZCt/venv/bin/python -m pytest -q tests/test_catalog_snapshot_baseline.py",
+      "revision": "working-tree@ff7a3fc49a9e8cad140e6a76a902f4053e99c949",
+      "scope": "Focused benchmark structure, counts, immutable reuse, and instrumentation cleanup in an offline cached-dependency environment",
+      "status": "passed",
+      "duration_ms": 643
+    },
+    {
+      "command": "PYTHONPATH=\"$PWD:/Users/leiwu/.cache/uv/archive-v0/S36yZp8tJKKqtlyH6rhLt:/Users/leiwu/.cache/uv/archive-v0/s8BLxt3aNf-5npKkjuOH4:/Users/leiwu/.cache/uv/archive-v0/mUSqh4g9xpWZZHdjasnD0:/opt/homebrew/lib/python3.14/site-packages\" /private/tmp/jsonldb-a10.TKZZCt/venv/bin/python -m jsonldb.benchmarks.catalog_snapshot_baseline",
+      "revision": "working-tree@ff7a3fc49a9e8cad140e6a76a902f4053e99c949",
+      "scope": "Default synthetic baseline: 256 tickers, four records each, and 1000 unchanged reads",
+      "status": "passed",
+      "duration_ms": 618
+    },
+    {
+      "command": "PYTHONPATH=\"$PWD:/Users/leiwu/.cache/uv/archive-v0/S36yZp8tJKKqtlyH6rhLt:/Users/leiwu/.cache/uv/archive-v0/s8BLxt3aNf-5npKkjuOH4:/Users/leiwu/.cache/uv/archive-v0/mUSqh4g9xpWZZHdjasnD0:/opt/homebrew/lib/python3.14/site-packages\" /private/tmp/jsonldb-a10.TKZZCt/venv/bin/python -m pytest -q tests/test_atomic_replace_range.py::test_metadata_publication_failure_repairs_current_and_reopened_instances",
+      "revision": "working-tree@ff7a3fc49a9e8cad140e6a76a902f4053e99c949",
+      "scope": "Existing focused get_dbmeta publication, repair, and reopen compatibility regression",
+      "status": "passed",
+      "duration_ms": 614
+    }
+  ],
+  "deviations": [],
+  "follow_up": "required",
+  "selected_guide_versions": {
+    "implementation": [
+      {
+        "id": "api-security",
+        "version": "1"
+      }
+    ],
+    "review": []
+  }
+}

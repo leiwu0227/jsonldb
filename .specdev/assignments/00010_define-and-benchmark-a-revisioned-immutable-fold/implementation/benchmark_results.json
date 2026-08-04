@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "fixture": {
+    "records_per_ticker": 4,
+    "repeated_reads": 1000,
+    "tickers": 256
+  },
+  "operations": {
+    "compact_catalog_load": {
+      "cache_hits": 0,
+      "catalog_file_loads": 1,
+      "elapsed_seconds": 0.00023395894095301628,
+      "entries": 256,
+      "owner_tree_walks": 0,
+      "ticker_index_loads": 0
+    },
+    "full_reconciliation": {
+      "cache_hits": 0,
+      "catalog_file_loads": 0,
+      "elapsed_seconds": 0.006643375148996711,
+      "entries": 256,
+      "owner_tree_walks": 1,
+      "ticker_index_loads": 256
+    },
+    "one_entry_metadata_update": {
+      "cache_hits": 0,
+      "catalog_file_loads": 0,
+      "elapsed_seconds": 0.0071570840664207935,
+      "entries_updated": 1,
+      "owner_tree_walks": 0,
+      "ticker_index_loads": 1
+    },
+    "repeated_unchanged_catalog_reads": {
+      "cache_hits": 999,
+      "catalog_file_loads": 1,
+      "elapsed_seconds": 0.0024519998114556074,
+      "owner_tree_walks": 0,
+      "reads": 1000,
+      "snapshot_reused": true,
+      "ticker_index_loads": 0
+    }
+  },
+  "structural_target": {
+    "healthy_snapshot_owner_tree_walks": 0,
+    "healthy_snapshot_ticker_index_loads": 0
+  }
+}

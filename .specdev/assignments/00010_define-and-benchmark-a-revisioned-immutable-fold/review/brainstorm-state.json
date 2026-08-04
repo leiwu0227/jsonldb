@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "round": 1,
+  "status": "approved",
+  "profile": {
+    "provider": "claude",
+    "model": "fable",
+    "effort": "high",
+    "network": false,
+    "timeout_ms": 1200000
+  },
+  "guide_ids": [],
+  "baseline_hash": "3b842991bb8d7535a81c039be5afd4ebd9042ccdd77978d092cfbcc21869305a",
+  "contract_hash": "3b842991bb8d7535a81c039be5afd4ebd9042ccdd77978d092cfbcc21869305a",
+  "material_divergence": false,
+  "attempt": "Attempt-00008",
+  "updated_at": "2026-08-04T07:34:45.589Z"
+}
