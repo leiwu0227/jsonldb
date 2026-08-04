@@ -175,7 +175,7 @@ def build_fixture(root: Path, tickers: int, records_per_ticker: int) -> tuple[Fo
         for name, entry in sorted(current.items())
     }
     control = root / ".jsonldb"
-    control.mkdir()
+    control.mkdir(exist_ok=True)
     catalog_path = control / "catalog.json"
     catalog_path.write_bytes(orjson.dumps({
         "schema": "jsonldb.folder-catalog",

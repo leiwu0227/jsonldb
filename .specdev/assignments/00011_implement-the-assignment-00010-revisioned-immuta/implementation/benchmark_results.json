@@ -1,0 +1,304 @@
+{
+  "reference_256_gate": {
+    "measured_speedup": 16.38940594721304,
+    "minimum_speedup": 5.0,
+    "passed": true
+  },
+  "sizes": [
+    {
+      "cold_vs_reconciliation_speedup": 11.845576339681012,
+      "operations": {
+        "batch_mutation": {
+          "affected_ticker_index_loads": 4,
+          "cache_hits": 1,
+          "catalog_decodes": 1,
+          "catalog_file_loads": 1,
+          "catalog_publications": 1,
+          "median_seconds": 0.0012347078882157803,
+          "owner_tree_walks": 0,
+          "pending_publications": 1,
+          "projection_updates": 1,
+          "revision_delta": 1,
+          "revision_range": [
+            11,
+            16
+          ],
+          "trials": 5,
+          "unaffected_ticker_index_loads": 0
+        },
+        "full_reconciliation": {
+          "affected_ticker_index_loads": 0,
+          "cache_hits": 1,
+          "catalog_decodes": 1,
+          "catalog_file_loads": 1,
+          "catalog_publications": 1,
+          "median_seconds": 0.0012427910696715117,
+          "owner_tree_walks": 1,
+          "pending_publications": 1,
+          "projection_updates": 1,
+          "revision_delta": 1,
+          "revision_range": [
+            1,
+            6
+          ],
+          "trials": 5,
+          "unaffected_ticker_index_loads": 16
+        },
+        "one_ticker_mutation": {
+          "affected_ticker_index_loads": 2,
+          "cache_hits": 1,
+          "catalog_decodes": 1,
+          "catalog_file_loads": 1,
+          "catalog_publications": 1,
+          "median_seconds": 0.0009019169956445694,
+          "owner_tree_walks": 0,
+          "pending_publications": 1,
+          "projection_updates": 1,
+          "revision_delta": 1,
+          "revision_range": [
+            6,
+            11
+          ],
+          "trials": 5,
+          "unaffected_ticker_index_loads": 0
+        },
+        "production_cold_snapshot": {
+          "affected_ticker_index_loads": 0,
+          "cache_hits": 0,
+          "catalog_decodes": 1,
+          "catalog_file_loads": 1,
+          "catalog_publications": 0,
+          "median_seconds": 0.00010491604916751385,
+          "owner_tree_walks": 0,
+          "pending_publications": 0,
+          "projection_updates": 0,
+          "revision_delta": 0,
+          "revision_range": [
+            1,
+            1
+          ],
+          "trials": 5,
+          "unaffected_ticker_index_loads": 0
+        },
+        "unchanged_snapshot_reuse": {
+          "affected_ticker_index_loads": 0,
+          "cache_hits": 99,
+          "catalog_decodes": 1,
+          "catalog_file_loads": 1,
+          "catalog_publications": 0,
+          "median_seconds": 0.002059499965980649,
+          "owner_tree_walks": 0,
+          "pending_publications": 0,
+          "projection_updates": 0,
+          "reads_per_trial": 100,
+          "revision_delta": 0,
+          "revision_range": [
+            1,
+            1
+          ],
+          "trials": 5,
+          "unaffected_ticker_index_loads": 0
+        }
+      },
+      "records_per_ticker": 4,
+      "tickers": 16
+    },
+    {
+      "cold_vs_reconciliation_speedup": 14.497304050499737,
+      "operations": {
+        "batch_mutation": {
+          "affected_ticker_index_loads": 4,
+          "cache_hits": 1,
+          "catalog_decodes": 1,
+          "catalog_file_loads": 1,
+          "catalog_publications": 1,
+          "median_seconds": 0.0012920419685542583,
+          "owner_tree_walks": 0,
+          "pending_publications": 1,
+          "projection_updates": 1,
+          "revision_delta": 1,
+          "revision_range": [
+            11,
+            16
+          ],
+          "trials": 5,
+          "unaffected_ticker_index_loads": 0
+        },
+        "full_reconciliation": {
+          "affected_ticker_index_loads": 0,
+          "cache_hits": 1,
+          "catalog_decodes": 1,
+          "catalog_file_loads": 1,
+          "catalog_publications": 1,
+          "median_seconds": 0.002772000152617693,
+          "owner_tree_walks": 1,
+          "pending_publications": 1,
+          "projection_updates": 1,
+          "revision_delta": 1,
+          "revision_range": [
+            1,
+            6
+          ],
+          "trials": 5,
+          "unaffected_ticker_index_loads": 64
+        },
+        "one_ticker_mutation": {
+          "affected_ticker_index_loads": 2,
+          "cache_hits": 1,
+          "catalog_decodes": 1,
+          "catalog_file_loads": 1,
+          "catalog_publications": 1,
+          "median_seconds": 0.0010420000180602074,
+          "owner_tree_walks": 0,
+          "pending_publications": 1,
+          "projection_updates": 1,
+          "revision_delta": 1,
+          "revision_range": [
+            6,
+            11
+          ],
+          "trials": 5,
+          "unaffected_ticker_index_loads": 0
+        },
+        "production_cold_snapshot": {
+          "affected_ticker_index_loads": 0,
+          "cache_hits": 0,
+          "catalog_decodes": 1,
+          "catalog_file_loads": 1,
+          "catalog_publications": 0,
+          "median_seconds": 0.00019120797514915466,
+          "owner_tree_walks": 0,
+          "pending_publications": 0,
+          "projection_updates": 0,
+          "revision_delta": 0,
+          "revision_range": [
+            1,
+            1
+          ],
+          "trials": 5,
+          "unaffected_ticker_index_loads": 0
+        },
+        "unchanged_snapshot_reuse": {
+          "affected_ticker_index_loads": 0,
+          "cache_hits": 99,
+          "catalog_decodes": 1,
+          "catalog_file_loads": 1,
+          "catalog_publications": 0,
+          "median_seconds": 0.0021418749820441008,
+          "owner_tree_walks": 0,
+          "pending_publications": 0,
+          "projection_updates": 0,
+          "reads_per_trial": 100,
+          "revision_delta": 0,
+          "revision_range": [
+            1,
+            1
+          ],
+          "trials": 5,
+          "unaffected_ticker_index_loads": 0
+        }
+      },
+      "records_per_ticker": 4,
+      "tickers": 64
+    },
+    {
+      "cold_vs_reconciliation_speedup": 16.38940594721304,
+      "operations": {
+        "batch_mutation": {
+          "affected_ticker_index_loads": 4,
+          "cache_hits": 1,
+          "catalog_decodes": 1,
+          "catalog_file_loads": 1,
+          "catalog_publications": 1,
+          "median_seconds": 0.001918500056490302,
+          "owner_tree_walks": 0,
+          "pending_publications": 1,
+          "projection_updates": 1,
+          "revision_delta": 1,
+          "revision_range": [
+            11,
+            16
+          ],
+          "trials": 5,
+          "unaffected_ticker_index_loads": 0
+        },
+        "full_reconciliation": {
+          "affected_ticker_index_loads": 0,
+          "cache_hits": 1,
+          "catalog_decodes": 1,
+          "catalog_file_loads": 1,
+          "catalog_publications": 1,
+          "median_seconds": 0.008847541874274611,
+          "owner_tree_walks": 1,
+          "pending_publications": 1,
+          "projection_updates": 1,
+          "revision_delta": 1,
+          "revision_range": [
+            1,
+            6
+          ],
+          "trials": 5,
+          "unaffected_ticker_index_loads": 256
+        },
+        "one_ticker_mutation": {
+          "affected_ticker_index_loads": 2,
+          "cache_hits": 1,
+          "catalog_decodes": 1,
+          "catalog_file_loads": 1,
+          "catalog_publications": 1,
+          "median_seconds": 0.001821415964514017,
+          "owner_tree_walks": 0,
+          "pending_publications": 1,
+          "projection_updates": 1,
+          "revision_delta": 1,
+          "revision_range": [
+            6,
+            11
+          ],
+          "trials": 5,
+          "unaffected_ticker_index_loads": 0
+        },
+        "production_cold_snapshot": {
+          "affected_ticker_index_loads": 0,
+          "cache_hits": 0,
+          "catalog_decodes": 1,
+          "catalog_file_loads": 1,
+          "catalog_publications": 0,
+          "median_seconds": 0.0005398329813033342,
+          "owner_tree_walks": 0,
+          "pending_publications": 0,
+          "projection_updates": 0,
+          "revision_delta": 0,
+          "revision_range": [
+            1,
+            1
+          ],
+          "trials": 5,
+          "unaffected_ticker_index_loads": 0
+        },
+        "unchanged_snapshot_reuse": {
+          "affected_ticker_index_loads": 0,
+          "cache_hits": 99,
+          "catalog_decodes": 1,
+          "catalog_file_loads": 1,
+          "catalog_publications": 0,
+          "median_seconds": 0.002539499895647168,
+          "owner_tree_walks": 0,
+          "pending_publications": 0,
+          "projection_updates": 0,
+          "reads_per_trial": 100,
+          "revision_delta": 0,
+          "revision_range": [
+            1,
+            1
+          ],
+          "trials": 5,
+          "unaffected_ticker_index_loads": 0
+        }
+      },
+      "records_per_ticker": 4,
+      "tickers": 256
+    }
+  ],
+  "version": 1
+}

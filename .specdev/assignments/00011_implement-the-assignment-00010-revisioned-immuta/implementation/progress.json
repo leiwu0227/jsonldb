@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "T-1",
+      "status": "completed"
+    },
+    {
+      "id": "T-2",
+      "status": "completed"
+    },
+    {
+      "id": "T-3",
+      "status": "completed"
+    },
+    {
+      "id": "T-4",
+      "status": "completed"
+    },
+    {
+      "id": "T-5",
+      "status": "completed"
+    }
+  ],
+  "selected_guides": {
+    "implementation": [
+      "api-security"
+    ],
+    "review": []
+  },
+  "verification": [
+    {
+      "command": "PYTHONPYCACHEPREFIX=/tmp/jsonldb-pycache PYTHONPATH=/Users/leiwu/code/oceanwave/lib/jsondb-rs/.venv/lib/python3.14/site-packages /opt/homebrew/bin/python3 -m pytest -q tests/test_catalog_snapshot.py tests/test_catalog_snapshot_production_benchmark.py tests/test_catalog_snapshot_baseline.py tests/test_atomic_replace_range.py unit_tests/test_folderdb.py -k 'not test_revert_invalidates_companions_before_version_change and not test_visual_index_reads_route_through_load_index'",
+      "revision": "working-tree@a7fa0ffa62405637e81556ece2320f5094e65664",
+      "scope": "AC-1 through AC-4: catalog, recovery, cross-process contention, interruption, managed Git boundary, raw reconciliation, existing FolderDB/range compatibility; 88 passed and 2 optional-dependency cases deselected",
+      "status": "passed",
+      "duration_ms": 1114
+    },
+    {
+      "command": "PYTHONPYCACHEPREFIX=/tmp/jsonldb-pycache PYTHONPATH=/Users/leiwu/code/oceanwave/lib/jsondb-rs/.venv/lib/python3.14/site-packages /opt/homebrew/bin/python3 -m jsonldb.benchmarks.catalog_snapshot_production --sizes 16 64 256 --records-per-ticker 4 --repeats 100 --trials 5",
+      "revision": "working-tree@a7fa0ffa62405637e81556ece2320f5094e65664",
+      "scope": "AC-5 multi-size production benchmark; 256-ticker cold snapshot was 16.389x faster than reconciliation with zero owner walks/unaffected index loads and one batch publication",
+      "status": "passed",
+      "duration_ms": 364
+    },
+    {
+      "command": "git diff --check && PYTHONPYCACHEPREFIX=/tmp/jsonldb-pycache PYTHONPATH=/Users/leiwu/code/oceanwave/lib/jsondb-rs/.venv/lib/python3.14/site-packages /opt/homebrew/bin/python3 -m py_compile jsonldb/catalog.py jsonldb/folderdb.py jsonldb/benchmarks/catalog_snapshot_baseline.py jsonldb/benchmarks/catalog_snapshot_production.py tests/test_catalog_snapshot.py tests/test_catalog_snapshot_production_benchmark.py",
+      "revision": "working-tree@a7fa0ffa62405637e81556ece2320f5094e65664",
+      "scope": "changed-source syntax and whitespace/error audit",
+      "status": "passed",
+      "duration_ms": 100
+    }
+  ],
+  "deviations": [],
+  "follow_up": "none",
+  "selected_guide_versions": {
+    "implementation": [
+      {
+        "id": "api-security",
+        "version": "1"
+      }
+    ],
+    "review": []
+  }
+}

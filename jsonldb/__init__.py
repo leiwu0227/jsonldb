@@ -11,6 +11,19 @@ Example usage:
 """
 
 from .folderdb import FolderDB
+from .catalog import (
+    CatalogBusyError,
+    CatalogFilesystemError,
+    CatalogRecoveryError,
+    FolderCatalogEntry,
+    FolderCatalogSnapshot,
+    UnsupportedCatalogVersionError,
+)
 
 __version__ = "1.0.0"
-__all__ = ["FolderDB", "visual", "vercontrol", "jsonlfile", "jsonldf"]
+__all__ = [
+    "FolderDB", "FolderCatalogEntry", "FolderCatalogSnapshot",
+    "CatalogBusyError", "CatalogFilesystemError", "CatalogRecoveryError",
+    "UnsupportedCatalogVersionError", "visual", "vercontrol", "jsonlfile",
+    "jsonldf",
+]

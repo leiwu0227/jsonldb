@@ -5,7 +5,10 @@ Each table is stored in a separate JSONL file.
 
 import os
 import shutil
+import time
+import uuid
 import pandas as pd
+from contextlib import contextmanager
 from typing import Dict, List, Union, Optional, Any
 from datetime import datetime
 from jsonldb.jsonlfile import (
@@ -17,6 +20,15 @@ from jsonldb.jsonldf import (
     save_jsonldf, load_jsonldf, update_jsonldf, select_jsonldf, delete_jsonldf
 )
 import jsonldb.jsonlfile as jsonlfile
+from jsonldb.catalog import (
+    CatalogBusyError, CatalogFilesystemError, CatalogRecoveryError,
+    FolderCatalogEntry, FolderCatalogSnapshot, PendingState,
+    UnsupportedCatalogVersionError, WriterLock, atomic_write,
+    atomic_write_bytes, cached_snapshot, canonical_root, catalog_envelope,
+    clear_pending, file_identity, install_snapshot, invalidate_snapshot,
+    pending_envelope, read_object, sync_directory, validate_catalog_envelope,
+    validate_pending_envelope,
+)
 
 # Version control (gitpython) is imported lazily inside commit/revert/version
 # so that importing FolderDB does not load git.
@@ -50,6 +62,25 @@ class FolderDB:
         self.dbmeta_path = os.path.join(folder_path, "db.meta")
         self.configmeta_path = os.path.join(folder_path, "config.meta")
         self.invalid_tickers_path = os.path.join(folder_path, ".invalid_tickers")
+        self._catalog_root = canonical_root(folder_path)
+        self.control_path = os.path.join(folder_path, ".jsonldb")
+        self.catalog_path = os.path.join(self.control_path, "catalog.json")
+        self.pending_path = os.path.join(self.control_path, "pending.json")
+        self.writer_lock_path = os.path.join(self.control_path, "writer.lock")
+        self.control_ignore_path = os.path.join(self.control_path, ".gitignore")
+        self._active_catalog_transaction = None
+        self._catalog_lint_overrides = {}
+        self._catalog_entry_deletions = set()
+        self.timespec = jsonlfile.TIME_SPEC
+
+        if os.path.exists(self.configmeta_path):
+            config_meta = select_jsonl(self.configmeta_path)
+            if config_meta.get("timespec"):
+                self.timespec = config_meta["timespec"]
+            else:
+                self._write_configmeta()
+        else:
+            self._write_configmeta()
 
         if os.path.exists(self.hmeta_path):
             hmeta = select_jsonl(self.hmeta_path)
@@ -67,50 +98,22 @@ class FolderDB:
                 self.hierarchy_depth = hierarchy_depth
                 self.lint_hierarchy(hierarchy_depth)
 
-        # Timespec is per-instance state; never mutate the module global.
-        # config.meta stores {"timespec": value} as a flat JSONL record.
-        self.timespec = jsonlfile.TIME_SPEC
-        if os.path.exists(self.configmeta_path):
-            config_meta = select_jsonl(self.configmeta_path)
-            if config_meta.get("timespec"):
-                self.timespec = config_meta["timespec"]
-            else:
-                self.build_configmeta()
-        else:
-            self.build_configmeta()
-
-        # Only rebuild db.meta if it doesn't exist or the folder has been
-        # modified externally.  Writes already call update_dbmeta()
-        # incrementally, so db.meta stays in sync during normal operation.
-        if os.path.exists(self.dbmeta_path):
-            dbmeta_mtime = os.path.getmtime(self.dbmeta_path)
-            folder_mtime = os.path.getmtime(self.folder_path)
-            if folder_mtime > dbmeta_mtime:
-                self.build_dbmeta()
-        else:
-            self.build_dbmeta()
-
-        # Guard against config.meta disagreeing with the data's actual datetime
-        # precision (possible from the pre-instance-scoping contamination bug).
-        # Stage 1 checks db.meta boundary keys (no extra I/O); stage 2 confirms
-        # with a full index scan before healing. Mixed precision keeps the
-        # configured value. See _detect_data_timespec/_scan_index_timespecs.
-        candidate = self._detect_data_timespec()
-        if candidate is not None:
-            found = self._scan_index_timespecs()
-            if found == {candidate}:
-                print(f"WARNING: config.meta timespec '{self.timespec}' does not match "
-                      f"data ('{candidate}'); auto-correcting config.meta")
-                self.timespec = candidate
-                self.build_configmeta()
-            elif len(found) > 1:
-                print(f"WARNING: mixed datetime key precisions {sorted(found)} found in "
-                      f"{self.folder_path}; keeping timespec '{self.timespec}'")
+        # Catalog migration, projection healing, and precision reconciliation
+        # are deliberately deferred to load_catalog_snapshot() or get_dbmeta().
+        # Construction therefore never discovers owners or loads ticker indexes.
+        # A pre-catalog database retains the supported precision-healing behavior
+        # from earlier releases; managed databases never pay for this scan.
+        if not os.path.exists(self.catalog_path):
+            self._heal_legacy_timespec_on_open()
 
     def build_hmeta(self) -> None:
         """
         Save the folder information to a file.
         """
+        with self._catalog_transaction("full"):
+            self._write_hmeta()
+
+    def _write_hmeta(self) -> None:
         if self.use_hierarchy:
             hierachy_info= {
                 "use_hierarchy": self.use_hierarchy,
@@ -124,6 +127,10 @@ class FolderDB:
         """
         Save the folder information to a file.
         """
+        with self._catalog_transaction("full"):
+            self._write_configmeta()
+
+    def _write_configmeta(self) -> None:
         config_info = {
             "timespec": self.timespec
         }
@@ -166,6 +173,387 @@ class FolderDB:
                 if spec:
                     found.add(spec)
         return found
+
+    def _heal_legacy_timespec_on_open(self) -> None:
+        found = set()
+        boundary_mismatch = False
+        for name in self.get_file_list():
+            owner = self._get_file_path(name)
+            if not os.path.isfile(owner):
+                continue
+            index = jsonlfile.load_index(owner)
+            keys = list(index)
+            for boundary in (keys[0], keys[-1]) if keys else ():
+                detected = detect_timespec(boundary)
+                if detected and detected != self.timespec:
+                    boundary_mismatch = True
+            if boundary_mismatch:
+                for key in keys:
+                    detected = detect_timespec(key)
+                    if detected:
+                        found.add(detected)
+        if not boundary_mismatch:
+            return
+        # Complete the scan after a late trigger so earlier owners are included.
+        found = self._scan_index_timespecs()
+        if len(found) == 1:
+            detected = next(iter(found))
+            if detected != self.timespec:
+                print(f"WARNING: config.meta timespec '{self.timespec}' does not match "
+                      f"data ('{detected}'); auto-correcting config.meta")
+                self.timespec = detected
+                self._write_configmeta()
+        elif len(found) > 1:
+            print(f"WARNING: mixed datetime key precisions {sorted(found)} found in "
+                  f"{self.folder_path}; keeping timespec '{self.timespec}'")
+
+    # =============== Revisioned catalog ===============
+
+    def _catalog_name_valid(self, name: str) -> bool:
+        if not name or "\0" in name or os.path.isabs(name):
+            return False
+        if name == ".jsonldb":
+            return False
+        separators = [separator for separator in (os.sep, os.altsep, "/", "\\") if separator]
+        if any(separator in name for separator in separators):
+            return False
+        return self.validate_name(name)
+
+    def _ensure_control_namespace(self) -> None:
+        created = not os.path.exists(self.control_path)
+        try:
+            os.makedirs(self.control_path, exist_ok=True)
+            if created:
+                sync_directory(self.folder_path)
+        except OSError as exc:
+            raise CatalogFilesystemError(
+                f"catalog control directory unavailable at {self.control_path}"
+            ) from exc
+        expected = b"pending.json\nwriter.lock\n*.tmp\n"
+        try:
+            current = None
+            if os.path.exists(self.control_ignore_path):
+                with open(self.control_ignore_path, "rb") as stream:
+                    current = stream.read()
+            if current != expected:
+                atomic_write_bytes(self.control_ignore_path, expected)
+        except CatalogFilesystemError:
+            raise
+        except OSError as exc:
+            raise CatalogFilesystemError(
+                f"catalog ignore file unavailable at {self.control_ignore_path}"
+            ) from exc
+
+    def _read_valid_catalog(self) -> FolderCatalogSnapshot:
+        before = os.stat(self.catalog_path)
+        identity = file_identity(self.catalog_path, before)
+        cached = cached_snapshot(self._catalog_root, identity)
+        if cached is not None:
+            return cached
+        raw = read_object(self.catalog_path)
+        after = os.stat(self.catalog_path)
+        after_identity = file_identity(self.catalog_path, after)
+        if identity != after_identity:
+            raise CatalogBusyError(f"catalog changed while reading {self.catalog_path}")
+        snapshot = validate_catalog_envelope(raw, identity, self._catalog_name_valid)
+        return install_snapshot(self._catalog_root, snapshot)
+
+    def load_catalog_snapshot(
+        self, timeout_seconds: float = 5.0
+    ) -> FolderCatalogSnapshot:
+        """Return one fully validated immutable managed metadata generation."""
+        if isinstance(timeout_seconds, bool) or not isinstance(timeout_seconds, (int, float)):
+            raise TypeError("timeout_seconds must be a number")
+        if timeout_seconds < 0:
+            raise ValueError("timeout_seconds must be non-negative")
+        deadline = time.monotonic() + float(timeout_seconds)
+        last_error = None
+        while True:
+            if os.path.exists(self.pending_path) or not os.path.exists(self.catalog_path):
+                return self._recover_catalog(max(0.0, deadline - time.monotonic()))
+            try:
+                before = os.stat(self.catalog_path)
+                identity = file_identity(self.catalog_path, before)
+                cached = cached_snapshot(self._catalog_root, identity)
+                if cached is not None:
+                    if not os.path.exists(self.pending_path):
+                        self.timespec = cached.timespec
+                        return cached
+                    continue
+                raw = read_object(self.catalog_path)
+                after = os.stat(self.catalog_path)
+                if identity != file_identity(self.catalog_path, after):
+                    raise CatalogBusyError("catalog changed during read")
+                snapshot = validate_catalog_envelope(raw, identity, self._catalog_name_valid)
+                if os.path.exists(self.pending_path):
+                    continue
+                snapshot = install_snapshot(self._catalog_root, snapshot)
+                self.timespec = snapshot.timespec
+                return snapshot
+            except UnsupportedCatalogVersionError:
+                raise
+            except (OSError, ValueError) as exc:
+                last_error = exc
+                return self._recover_catalog(max(0.0, deadline - time.monotonic()))
+            except CatalogBusyError as exc:
+                last_error = exc
+            if time.monotonic() >= deadline:
+                raise CatalogBusyError(
+                    f"catalog did not become stable at {self.catalog_path}"
+                ) from last_error
+            time.sleep(min(0.01, max(0.0, deadline - time.monotonic())))
+
+    def _recover_catalog(self, timeout_seconds: float) -> FolderCatalogSnapshot:
+        self._ensure_control_namespace()
+        with WriterLock(self.writer_lock_path, timeout_seconds):
+            try:
+                return self._recover_locked()
+            except (UnsupportedCatalogVersionError, CatalogFilesystemError):
+                raise
+            except Exception as exc:
+                raise CatalogRecoveryError(
+                    f"catalog recovery failed at {self.control_path}"
+                ) from exc
+
+    def _try_catalog_locked(self) -> Optional[FolderCatalogSnapshot]:
+        if not os.path.exists(self.catalog_path):
+            return None
+        return self._read_valid_catalog()
+
+    def _try_pending_locked(self) -> Optional[PendingState]:
+        if not os.path.exists(self.pending_path):
+            return None
+        return validate_pending_envelope(
+            read_object(self.pending_path), self._catalog_name_valid
+        )
+
+    def _projection_lint_state(self) -> Dict[str, Dict[str, Any]]:
+        if not os.path.exists(self.dbmeta_path):
+            return {}
+        try:
+            value = load_jsonl(self.dbmeta_path, auto_deserialize=False)
+            return value if isinstance(value, dict) else {}
+        except (OSError, ValueError, TypeError):
+            return {}
+
+    def _catalog_entry(
+        self, name: str, previous: Optional[FolderCatalogEntry] = None,
+        projection: Optional[Dict[str, Any]] = None,
+        timespecs: Optional[set] = None,
+    ) -> FolderCatalogEntry:
+        state = (projection or {}).get(name, {})
+        linted = state.get("linted", previous.linted if previous else False)
+        lint_time = state.get("lint_time", previous.lint_time if previous else "")
+        if name in self._catalog_lint_overrides:
+            linted, lint_time = self._catalog_lint_overrides[name]
+        raw = self._make_meta_entry(
+            name, self._get_file_path(name), bool(linted),
+            lint_time if isinstance(lint_time, str) else "",
+            timespecs,
+        )
+        return FolderCatalogEntry(
+            raw["min_index"], raw["max_index"], raw["count"], raw["size"],
+            raw["linted"], raw["lint_time"],
+        )
+
+    def _reconcile_entries(
+        self, base: Optional[FolderCatalogSnapshot] = None,
+        tickers: Optional[List[str]] = None,
+    ) -> Dict[str, FolderCatalogEntry]:
+        projection = self._projection_lint_state()
+        previous = dict(base.entries) if base is not None else {}
+        if tickers is None:
+            entries = {}
+            found_timespecs = set()
+            for name in sorted(self.get_file_list()):
+                if not self._catalog_name_valid(name):
+                    raise CatalogRecoveryError(
+                        f"invalid managed ticker name discovered under {self.folder_path}"
+                    )
+                owner = self._get_file_path(name)
+                if not os.path.exists(owner + ".idx"):
+                    build_jsonl_index(owner)
+                entries[name] = self._catalog_entry(
+                    name, previous.get(name), projection, found_timespecs
+                )
+            if len(found_timespecs) == 1:
+                detected = next(iter(found_timespecs))
+                if detected != self.timespec:
+                    print(f"WARNING: config.meta timespec '{self.timespec}' does not match "
+                          f"data ('{detected}'); auto-correcting config.meta")
+                    self.timespec = detected
+                    self._write_configmeta()
+            elif len(found_timespecs) > 1:
+                print(f"WARNING: mixed datetime key precisions {sorted(found_timespecs)} found in "
+                      f"{self.folder_path}; keeping timespec '{self.timespec}'")
+            return entries
+
+        entries = previous
+        for name in sorted(set(tickers)):
+            if name in self._catalog_entry_deletions:
+                entries.pop(name, None)
+                continue
+            owner = self._get_file_path(name)
+            if os.path.isfile(owner):
+                if not os.path.exists(owner + ".idx"):
+                    build_jsonl_index(owner)
+                entries[name] = self._catalog_entry(name, previous.get(name), projection)
+            else:
+                entries.pop(name, None)
+        return entries
+
+    def _write_projection(self, entries: Dict[str, FolderCatalogEntry]) -> None:
+        if not entries:
+            with open(self.dbmeta_path, "wb") as stream:
+                stream.write(b"\n")
+            try:
+                os.unlink(self.dbmeta_path + ".idx")
+            except FileNotFoundError:
+                pass
+            return
+        projection = {
+            name: {
+                "name": name,
+                "path": self._get_file_path(name),
+                "min_index": entry.min_index,
+                "max_index": entry.max_index,
+                "size": entry.size,
+                "count": entry.count,
+                "lint_time": entry.lint_time,
+                "linted": entry.linted,
+            }
+            for name, entry in sorted(entries.items())
+        }
+        save_jsonl(self.dbmeta_path, projection, self.timespec)
+
+    def _publish_catalog(
+        self, catalog_id: str, revision: int, transaction_id: str,
+        entries: Dict[str, FolderCatalogEntry],
+    ) -> FolderCatalogSnapshot:
+        envelope = catalog_envelope(
+            catalog_id, revision, transaction_id, self.timespec, entries
+        )
+        atomic_write(self.catalog_path, envelope)
+        invalidate_snapshot(self._catalog_root)
+        return self._read_valid_catalog()
+
+    def _new_lineage(self, entries: Dict[str, FolderCatalogEntry]) -> FolderCatalogSnapshot:
+        return self._publish_catalog(
+            str(uuid.uuid4()), 1, str(uuid.uuid4()), entries
+        )
+
+    def _recover_locked(self) -> FolderCatalogSnapshot:
+        pending = None
+        pending_malformed = False
+        try:
+            pending = self._try_pending_locked()
+        except UnsupportedCatalogVersionError:
+            raise
+        except (OSError, ValueError, TypeError):
+            pending_malformed = True
+
+        catalog = None
+        catalog_invalid = False
+        try:
+            catalog = self._try_catalog_locked()
+        except UnsupportedCatalogVersionError:
+            raise
+        except (OSError, ValueError, TypeError, CatalogBusyError):
+            catalog_invalid = True
+
+        if pending is None and not pending_malformed and catalog is not None:
+            self.timespec = catalog.timespec
+            return catalog
+
+        if pending is not None and catalog is not None:
+            if (
+                catalog.catalog_id == pending.base_catalog_id
+                and catalog.revision == pending.target_revision
+                and catalog.last_transaction_id == pending.transaction_id
+            ):
+                clear_pending(self.pending_path)
+                invalidate_snapshot(self._catalog_root)
+                self.timespec = catalog.timespec
+                return self._read_valid_catalog()
+            if (
+                catalog.catalog_id == pending.base_catalog_id
+                and catalog.revision == pending.base_revision
+            ):
+                self.timespec = catalog.timespec
+                names = list(pending.tickers) if pending.scope == "tickers" else None
+                entries = self._reconcile_entries(catalog, names)
+                self._write_projection(entries)
+                recovered = self._publish_catalog(
+                    catalog.catalog_id, pending.target_revision,
+                    pending.transaction_id, entries,
+                )
+                clear_pending(self.pending_path)
+                return recovered
+
+        entries = self._reconcile_entries(None, None)
+        self._write_projection(entries)
+        recovered = self._new_lineage(entries)
+        if os.path.exists(self.pending_path):
+            clear_pending(self.pending_path)
+        return recovered
+
+    @contextmanager
+    def _catalog_transaction(
+        self, scope: str, tickers: Optional[List[str]] = None,
+        timeout_seconds: float = 5.0,
+    ):
+        requested = tuple(sorted(set(tickers or [])))
+        if scope not in ("tickers", "full"):
+            raise ValueError("catalog transaction scope is invalid")
+        if scope == "tickers" and (
+            not requested or any(not self._catalog_name_valid(name) for name in requested)
+        ):
+            for name in requested:
+                if not self.validate_name(name):
+                    self._get_file_path(name)
+            raise ValueError("ticker transaction requires valid affected names")
+        active = self._active_catalog_transaction
+        if active is not None:
+            active_scope, active_tickers = active
+            if active_scope != "full" and (
+                scope == "full" or not set(requested).issubset(active_tickers)
+            ):
+                raise CatalogRecoveryError("nested mutation exceeds its pending scope")
+            yield
+            return
+
+        self._ensure_control_namespace()
+        with WriterLock(self.writer_lock_path, timeout_seconds):
+            base = self._recover_locked()
+            transaction_id = str(uuid.uuid4())
+            pending = PendingState(
+                transaction_id, base.catalog_id, base.revision, base.revision + 1,
+                scope, requested if scope == "tickers" else (),
+            )
+            atomic_write(self.pending_path, pending_envelope(pending))
+            self._active_catalog_transaction = (scope, set(requested))
+            self._catalog_lint_overrides = {}
+            self._catalog_entry_deletions = set()
+            try:
+                yield
+                names = list(requested) if scope == "tickers" else None
+                entries = self._reconcile_entries(base, names)
+                self._write_projection(entries)
+                self._publish_catalog(
+                    base.catalog_id, pending.target_revision,
+                    transaction_id, entries,
+                )
+                clear_pending(self.pending_path)
+            finally:
+                self._active_catalog_transaction = None
+                self._catalog_lint_overrides = {}
+                self._catalog_entry_deletions = set()
+
+    @contextmanager
+    def _catalog_writer(self, timeout_seconds: float = 5.0):
+        self._ensure_control_namespace()
+        with WriterLock(self.writer_lock_path, timeout_seconds):
+            yield self._recover_locked()
 
 
     def validate_name(self, name: str) -> bool:
@@ -275,11 +663,15 @@ class FolderDB:
 
     def write_aux(self, name: str, payload: bytes) -> None:
         """Atomically replace a ticker's opaque companion bytes."""
-        jsonlfile.write_aux(self._get_file_path(name), payload)
+        logical_name = name[:-6] if name.endswith('.jsonl') else name
+        with self._catalog_transaction("tickers", [logical_name]):
+            jsonlfile.write_aux(self._get_file_path(name), payload)
 
     def remove_aux(self, name: str) -> bool:
         """Remove a ticker's optional opaque companion."""
-        return jsonlfile.remove_aux(self._get_file_path(name))
+        logical_name = name[:-6] if name.endswith('.jsonl') else name
+        with self._catalog_transaction("tickers", [logical_name]):
+            return jsonlfile.remove_aux(self._get_file_path(name))
 
     def _move_jsonl_family(self, source_path: str, target_path: str) -> None:
         """Move an owner first and its optional companion last.
@@ -305,7 +697,9 @@ class FolderDB:
         for root, dirs, files in os.walk(self.folder_path, topdown=True):
             dirs[:] = [
                 directory for directory in dirs
-                if not directory.startswith('.') or directory == '.invalid_tickers'
+                if directory != '.jsonldb' and (
+                    not directory.startswith('.') or directory == '.invalid_tickers'
+                )
             ]
             for file in files:
                 if file.endswith('.jsonl.aux'):
@@ -336,7 +730,7 @@ class FolderDB:
             
             for root, dirs, files in os.walk(self.folder_path, topdown=True):
                 # Skip hidden/system directories (starting with '.')
-                dirs[:] = [d for d in dirs if not d.startswith('.')]
+                dirs[:] = [d for d in dirs if d != '.jsonldb' and not d.startswith('.')]
                 # Skip .invalid_tickers folder
                 if '.invalid_tickers' in root:  # this is important to skip the .invalid_tickers folder
                     continue
@@ -378,13 +772,15 @@ class FolderDB:
 
     # =============== DataFrame Operations ===============
     def overwrite_df(self, name: str, df: pd.DataFrame) -> None:
-        file_path = self._get_or_create_file_path(name)
-        if os.path.exists(file_path):
-           jsonlfile.remove_aux(file_path)
-           os.remove(file_path)
-      
-        save_jsonldf(file_path, df, self.timespec)
-        self.update_dbmeta(self._get_file_name(name))
+        logical_name = name[:-6] if name.endswith('.jsonl') else name
+        with self._catalog_transaction("tickers", [logical_name]):
+            file_path = self._get_or_create_file_path(name)
+            if os.path.exists(file_path):
+               jsonlfile.remove_aux(file_path)
+               os.remove(file_path)
+
+            save_jsonldf(file_path, df, self.timespec)
+            self.update_dbmeta(self._get_file_name(name))
 
     def overwrite_dfs(self, dict_dfs: Dict[Any, pd.DataFrame]) -> None:
         """
@@ -393,8 +789,12 @@ class FolderDB:
         Args:
             dict_dfs: Dictionary mapping file names to DataFrames
         """
-        for name, df in dict_dfs.items():
-            self.overwrite_df(name, df)
+        names = [name[:-6] if str(name).endswith('.jsonl') else name for name in dict_dfs]
+        if not names:
+            return
+        with self._catalog_transaction("tickers", names):
+            for name, df in dict_dfs.items():
+                self.overwrite_df(name, df)
 
     def upsert_df(self, name: str, df: pd.DataFrame) -> None:
         """
@@ -404,13 +804,15 @@ class FolderDB:
             name: Name of the JSONL file
             df: DataFrame to save/update
         """
-        file_path = self._get_or_create_file_path(name)
-        if os.path.exists(file_path):
-            update_jsonldf(file_path, df, self.timespec)
-        else:
-            save_jsonldf(file_path, df, self.timespec)
-        
-        self.update_dbmeta(self._get_file_name(name))
+        logical_name = name[:-6] if name.endswith('.jsonl') else name
+        with self._catalog_transaction("tickers", [logical_name]):
+            file_path = self._get_or_create_file_path(name)
+            if os.path.exists(file_path):
+                update_jsonldf(file_path, df, self.timespec)
+            else:
+                save_jsonldf(file_path, df, self.timespec)
+
+            self.update_dbmeta(self._get_file_name(name))
 
     def replace_df_range(self, name: str, lower_key: Any, upper_key: Any,
                          df: pd.DataFrame) -> None:
@@ -436,14 +838,16 @@ class FolderDB:
             raise FileNotFoundError(f"JSONL file not found: {file_path}")
 
         replacement = df.to_dict("index")
-        jsonlfile.replace_jsonl_range(
-            file_path,
-            lower_key,
-            upper_key,
-            replacement,
-            self.timespec,
-        )
-        self.update_dbmeta(self._get_file_name(name))
+        logical_name = name[:-6] if name.endswith('.jsonl') else name
+        with self._catalog_transaction("tickers", [logical_name]):
+            jsonlfile.replace_jsonl_range(
+                file_path,
+                lower_key,
+                upper_key,
+                replacement,
+                self.timespec,
+            )
+            self.update_dbmeta(self._get_file_name(name))
 
     def upsert_dfs(self, dict_dfs: Dict[Any, pd.DataFrame]) -> None:
         """
@@ -452,8 +856,12 @@ class FolderDB:
         Args:
             dict_dfs: Dictionary mapping file names to DataFrames
         """
-        for name, df in dict_dfs.items():
-            self.upsert_df(name, df)
+        names = [name[:-6] if str(name).endswith('.jsonl') else name for name in dict_dfs]
+        if not names:
+            return
+        with self._catalog_transaction("tickers", names):
+            for name, df in dict_dfs.items():
+                self.upsert_df(name, df)
 
     def get_df(self, names: List[str]=None, lower_key: Optional[Any] = None, upper_key: Optional[Any] = None,auto_deserialize: bool = True) -> Dict[str, pd.DataFrame]:
         """
@@ -482,13 +890,15 @@ class FolderDB:
 
     # =============== Dictionary Operations ===============
     def overwrite_dict(self, name: str, data_dict: Dict[Any, Dict[str, Any]]) -> None:
-        file_path = self._get_or_create_file_path(name)
-        if os.path.exists(file_path):
-           jsonlfile.remove_aux(file_path)
-           os.remove(file_path)
-      
-        save_jsonl(file_path, data_dict, self.timespec)
-        self.update_dbmeta(self._get_file_name(name))
+        logical_name = name[:-6] if name.endswith('.jsonl') else name
+        with self._catalog_transaction("tickers", [logical_name]):
+            file_path = self._get_or_create_file_path(name)
+            if os.path.exists(file_path):
+               jsonlfile.remove_aux(file_path)
+               os.remove(file_path)
+
+            save_jsonl(file_path, data_dict, self.timespec)
+            self.update_dbmeta(self._get_file_name(name))
 
     def overwrite_dicts(self, dict_dicts: Dict[Any, Dict[str, Dict[str, Any]]]) -> None:
         """
@@ -497,8 +907,12 @@ class FolderDB:
         Args:
             dict_dfs: Dictionary mapping file names to DataFrames
         """
-        for name, data_dict in dict_dicts.items():
-            self.overwrite_dict(name, data_dict)
+        names = [name[:-6] if str(name).endswith('.jsonl') else name for name in dict_dicts]
+        if not names:
+            return
+        with self._catalog_transaction("tickers", names):
+            for name, data_dict in dict_dicts.items():
+                self.overwrite_dict(name, data_dict)
 
     def upsert_dict(self, name: str, data_dict: Dict[Any, Dict[str, Any]]) -> None:
         """
@@ -508,13 +922,15 @@ class FolderDB:
             name: Name of the JSONL file
             data_dict: Dictionary to save/update
         """
-        file_path = self._get_or_create_file_path(name)
-        if os.path.exists(file_path):
-            update_jsonl(file_path, data_dict, self.timespec)
-        else:
-            save_jsonl(file_path, data_dict, self.timespec)
+        logical_name = name[:-6] if name.endswith('.jsonl') else name
+        with self._catalog_transaction("tickers", [logical_name]):
+            file_path = self._get_or_create_file_path(name)
+            if os.path.exists(file_path):
+                update_jsonl(file_path, data_dict, self.timespec)
+            else:
+                save_jsonl(file_path, data_dict, self.timespec)
 
-        self.update_dbmeta(self._get_file_name(name))
+            self.update_dbmeta(self._get_file_name(name))
 
     def upsert_dicts(self, dict_dicts: Dict[Any, Dict[str, Dict[str, Any]]]) -> None:
         """
@@ -523,8 +939,12 @@ class FolderDB:
         Args:
             dict_dicts: Dictionary mapping file names to data dictionaries
         """
-        for name, data_dict in dict_dicts.items():
-            self.upsert_dict(name, data_dict)
+        names = [name[:-6] if str(name).endswith('.jsonl') else name for name in dict_dicts]
+        if not names:
+            return
+        with self._catalog_transaction("tickers", names):
+            for name, data_dict in dict_dicts.items():
+                self.upsert_dict(name, data_dict)
 
     def get_dict(self, names: List[str]=None, lower_key: Optional[Any] = None, upper_key: Optional[Any] = None,auto_deserialize: bool = True) -> Dict[str, Dict[str, Dict[str, Any]]]:
         """
@@ -560,20 +980,22 @@ class FolderDB:
         if not force:
             print("WARNING: This will delete all data in the database folder. Call clear_folder with force=True to proceed.")
             return
-        # Invalidate every managed or orphan companion before deleting owners.
-        for companion_path in self._get_aux_files():
-            os.remove(companion_path)
-        for root, dirs, files in os.walk(self.folder_path, topdown=True):
-            # Skip hidden/system directories except JSONLDB's managed quarantine.
-            dirs[:] = [
-                d for d in dirs
-                if not d.startswith('.') or d == '.invalid_tickers'
-            ]
-            for file in files:
-                if file.endswith(('.idx', '.jsonl', '.meta')):
-                    os.remove(os.path.join(root, file))
-        self.delete_empty_folders()
-        self.build_dbmeta()
+        with self._catalog_transaction("full"):
+            # Invalidate every managed or orphan companion before deleting owners.
+            for companion_path in self._get_aux_files():
+                os.remove(companion_path)
+            for root, dirs, files in os.walk(self.folder_path, topdown=True):
+                # Preserve the root catalog namespace while clearing managed data.
+                dirs[:] = [
+                    d for d in dirs
+                    if d != '.jsonldb' and (
+                        not d.startswith('.') or d == '.invalid_tickers'
+                    )
+                ]
+                for file in files:
+                    if file.endswith(('.idx', '.jsonl', '.meta')):
+                        os.remove(os.path.join(root, file))
+            self.delete_empty_folders()
 
     def delete_file(self, name: str) -> None:
         """
@@ -582,14 +1004,16 @@ class FolderDB:
         Args:
             name: Name of the JSONL file
         """
-        file_path = self._get_file_path(name)
-        jsonlfile.remove_aux(file_path)
-        if os.path.exists(file_path):
-            os.remove(file_path)
-            if os.path.exists(file_path + '.idx'):
-                os.remove(file_path + '.idx')
-            if self.use_hierarchy:
-                self.delete_empty_folders()
+        logical_name = name[:-6] if name.endswith('.jsonl') else name
+        with self._catalog_transaction("tickers", [logical_name]):
+            file_path = self._get_file_path(name)
+            jsonlfile.remove_aux(file_path)
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                if os.path.exists(file_path + '.idx'):
+                    os.remove(file_path + '.idx')
+                if self.use_hierarchy:
+                    self.delete_empty_folders()
 
     def delete_file_keys(self, name: str, keys: List[str]) -> None:
         """
@@ -599,10 +1023,12 @@ class FolderDB:
             name: Name of the JSONL file
             keys: List of keys to delete
         """
-        file_path = self._get_file_path(name)
-        if os.path.exists(file_path):
-            delete_jsonl(file_path, keys, self.timespec)
-            self.update_dbmeta(self._get_file_name(name))
+        logical_name = name[:-6] if name.endswith('.jsonl') else name
+        with self._catalog_transaction("tickers", [logical_name]):
+            file_path = self._get_file_path(name)
+            if os.path.exists(file_path):
+                delete_jsonl(file_path, keys, self.timespec)
+                self.update_dbmeta(self._get_file_name(name))
 
     def delete_file_range(self, name: str, lower_key: Any, upper_key: Any) -> None:
         """
@@ -613,24 +1039,26 @@ class FolderDB:
             lower_key: Lower bound of the key range
             upper_key: Upper bound of the key range
         """
-        file_path = self._get_file_path(name)
-        if not os.path.exists(file_path):
-            return
+        logical_name = name[:-6] if name.endswith('.jsonl') else name
+        with self._catalog_transaction("tickers", [logical_name]):
+            file_path = self._get_file_path(name)
+            if not os.path.exists(file_path):
+                return
+
+            # Read the index file (self-heals missing/empty/corrupt)
+            index = jsonlfile.load_index(file_path)
+
+            # Filter keys within range (bounds must use the same serialization as
+            # stored keys — str(datetime) uses a space, isoformat uses 'T')
+            lower_str = serialize_linekey(lower_key, self.timespec)
+            upper_str = serialize_linekey(upper_key, self.timespec)
+            keys_to_delete = [
+                key for key in index.keys()
+                if lower_str <= key <= upper_str
+            ]
             
-        # Read the index file (self-heals missing/empty/corrupt)
-        index = jsonlfile.load_index(file_path)
-            
-        # Filter keys within range (bounds must use the same serialization as
-        # stored keys — str(datetime) uses a space, isoformat uses 'T')
-        lower_str = serialize_linekey(lower_key, self.timespec)
-        upper_str = serialize_linekey(upper_key, self.timespec)
-        keys_to_delete = [
-            key for key in index.keys()
-            if lower_str <= key <= upper_str
-        ]
-        
-        if keys_to_delete:
-            delete_jsonl(file_path, keys_to_delete)
+            if keys_to_delete:
+                delete_jsonl(file_path, keys_to_delete)
 
     def delete_range(self, names: List[str], lower_key: Any, upper_key: Any) -> None:
         """
@@ -641,12 +1069,16 @@ class FolderDB:
             lower_key: Lower bound of the key range
             upper_key: Upper bound of the key range
         """
-        for name in names:
-            self.delete_file_range(name, lower_key, upper_key)
+        logical_names = [name[:-6] if name.endswith('.jsonl') else name for name in names]
+        if not logical_names:
+            return
+        with self._catalog_transaction("tickers", logical_names):
+            for name in names:
+                self.delete_file_range(name, lower_key, upper_key)
 
     # =============== Metadata Management ===============
     def _make_meta_entry(self, name: str, file_path: str, linted: bool = False,
-                         lint_time: str = "") -> Dict[str, Any]:
+                         lint_time: str = "", timespecs: Optional[set] = None) -> Dict[str, Any]:
         """Build one db.meta entry for a JSONL file from its index file.
 
         Example: {"name": "users", "path": ".../users.jsonl", "min_index": "a",
@@ -661,6 +1093,11 @@ class FolderDB:
                 keys = list(index.keys())
                 min_index, max_index = keys[0], keys[-1]
                 count = len(keys)
+                if timespecs is not None:
+                    for key in keys:
+                        detected = detect_timespec(key)
+                        if detected:
+                            timespecs.add(detected)
         return {
             "name": name,
             "path": file_path,
@@ -684,30 +1121,8 @@ class FolderDB:
         - lint_time: ISO format timestamp of last lint
         - linted: boolean indicating if file has been linted
         """
-        # Get all JSONL files
-        jsonl_files = self.get_file_list()
-        
-        if not jsonl_files:
-            # If no JSONL files are found, create an empty db.meta file
-            with open(self.dbmeta_path, 'w', encoding='utf-8') as f:
-                f.write('\n')
-            return
-            
-        # Initialize metadata dictionary
-        metadata = {}
-        
-        # Process each JSONL file
-        for name in jsonl_files:
-            file_path = self._get_file_path(name)
-
-            # Build index if it doesn't exist
-            if not os.path.exists(file_path + '.idx'):
-                build_jsonl_index(file_path)
-
-            metadata[name] = self._make_meta_entry(name, file_path)
-        
-        # Save metadata using jsonlfile
-        save_jsonl(self.dbmeta_path, metadata)
+        with self._catalog_transaction("full"):
+            pass
 
     def get_dbmeta(self) -> Dict[str, Any]:
         """
@@ -716,39 +1131,19 @@ class FolderDB:
         Returns:
             Dictionary containing metadata for all JSONL files in the database
         """
-        if not os.path.exists(self.dbmeta_path):
-            self.build_dbmeta()
-
-        metadata = load_jsonl(self.dbmeta_path)
-        current_names = set(self.get_file_list())
-        changed = set(metadata) != current_names
-
-        for name in current_names:
-            previous = metadata.get(name, {})
-            entry = self._make_meta_entry(
-                name,
-                self._get_file_path(name),
-                linted=previous.get("linted", False),
-                lint_time=previous.get("lint_time", ""),
-            )
-            if previous != entry:
-                metadata[name] = entry
-                changed = True
-
-        for stale_name in set(metadata) - current_names:
-            del metadata[stale_name]
-
-        if changed:
-            save_jsonl(self.dbmeta_path, metadata)
-        return metadata
+        with self._catalog_transaction("full"):
+            pass
+        return load_jsonl(self.dbmeta_path)
     
     def delete_dbmeta(self,name: str) -> None:
         """
         Delete the metadata for a specific JSONL file in db.meta.
         """
-        if not os.path.exists(self.dbmeta_path):
-            self.build_dbmeta()
-        delete_jsonl(self.dbmeta_path, [name])
+        meta_key = name[:-6] if name.endswith('.jsonl') else name
+        with self._catalog_transaction("tickers", [meta_key]):
+            self._catalog_entry_deletions.add(meta_key)
+            if os.path.exists(self.dbmeta_path):
+                delete_jsonl(self.dbmeta_path, [meta_key])
     
     def update_dbmeta(self, name: str, linted: bool = False) -> None:
         """
@@ -760,16 +1155,15 @@ class FolderDB:
         """
         # Metadata key is the name without the .jsonl extension
         meta_key = name[:-6] if name.endswith('.jsonl') else name
-
-        # Use hierarchical path for the data file
-        file_path = self._get_file_path(name)
-        lint_time = datetime.now().isoformat() if linted else ""
-        entry = self._make_meta_entry(meta_key, file_path, linted, lint_time)
-
-        # Update metadata file using jsonlfile
-        update_jsonl(self.dbmeta_path, {meta_key: entry})
+        with self._catalog_transaction("tickers", [meta_key]):
+            lint_time = datetime.now().isoformat() if linted else ""
+            self._catalog_lint_overrides[meta_key] = (linted, lint_time)
 
     def lint_db(self, force: bool = False) -> None:
+        with self._catalog_transaction("full"):
+            self._lint_db_unlocked(force)
+
+    def _lint_db_unlocked(self, force: bool = False) -> None:
         """Lint all JSONL files in the database.
 
         Args:
@@ -813,6 +1207,12 @@ class FolderDB:
             self.delete_empty_folders()
 
     def lint_hierarchy(self, hierarchy_depth:int) -> None:
+        if hierarchy_depth < 1:
+            raise ValueError("Hierarchy level must be positive")
+        with self._catalog_transaction("full"):
+            self._lint_hierarchy_unlocked(hierarchy_depth)
+
+    def _lint_hierarchy_unlocked(self, hierarchy_depth:int) -> None:
         """
         Reorganize JSONL files according to hierarchy levels and move invalid files to .invalid_tickers.
         
@@ -840,7 +1240,7 @@ class FolderDB:
         all_files = []
         for root, dirs, files in os.walk(self.folder_path, topdown=True):
             # Skip hidden/system directories (starting with '.')
-            dirs[:] = [d for d in dirs if not d.startswith('.')]
+            dirs[:] = [d for d in dirs if d != '.jsonldb' and not d.startswith('.')]
             # Skip .invalid_tickers folder
             if '.invalid_tickers' in root:
                 continue
@@ -902,6 +1302,10 @@ class FolderDB:
         print("Hierarchy organization completed")
 
     def reprocess_invalid_tickers(self) -> None:
+        with self._catalog_transaction("full"):
+            self._reprocess_invalid_tickers_unlocked()
+
+    def _reprocess_invalid_tickers_unlocked(self) -> None:
         """
         Reprocess files in .invalid_tickers folder and move any that now match naming convention.
         """
@@ -976,6 +1380,10 @@ class FolderDB:
         for root, dirs, files in os.walk(self.folder_path, topdown=False):
             if root == self.folder_path:
                 continue
+            real_root = os.path.realpath(root)
+            real_control = os.path.realpath(self.control_path)
+            if real_root == real_control or real_root.startswith(real_control + os.sep):
+                continue
             try:
                 if not os.listdir(root):
                     os.rmdir(root)
@@ -997,13 +1405,14 @@ class FolderDB:
         """
         from .vercontrol import init_folder, commit as vercontrol_commit, is_versioned
 
-        # Check if folder is a git repo, if not initialize it
-        if not is_versioned(self.folder_path):
-            init_folder(self.folder_path)
+        with self._catalog_writer():
+            # Check if folder is a git repo, if not initialize it
+            if not is_versioned(self.folder_path):
+                init_folder(self.folder_path)
 
-        # Commit changes
-        vercontrol_commit(self.folder_path, msg)
-        print("Commit successful.")
+            # Commit stable version content; pending/lock/temp are ignored.
+            vercontrol_commit(self.folder_path, msg)
+            print("Commit successful.")
     
     def revert(self, version_hash: str) -> None:
         """
@@ -1018,13 +1427,60 @@ class FolderDB:
         """
         from .vercontrol import revert as vercontrol_revert
 
-        # Git reset does not remove untracked files. Invalidate every companion
-        # before owner content can change; tracked target companions, if any,
-        # are restored by the reset itself.
-        for companion_path in self._get_aux_files():
-            os.remove(companion_path)
-        vercontrol_revert(self.folder_path, version_hash)
-        print(f"Successfully reverted the folder: {self.folder_path} to version: {version_hash}")
+        self._ensure_control_namespace()
+        with WriterLock(self.writer_lock_path, 5.0):
+            base = self._recover_locked()
+            transaction_id = str(uuid.uuid4())
+            state = PendingState(
+                transaction_id, base.catalog_id, base.revision,
+                base.revision + 1, "full", (),
+            )
+            atomic_write(self.pending_path, pending_envelope(state))
+
+            # Git reset does not remove untracked files. Invalidate every
+            # companion before owner content can change; tracked target
+            # companions, if any, are restored by the reset itself.
+            for companion_path in self._get_aux_files():
+                os.remove(companion_path)
+            vercontrol_revert(self.folder_path, version_hash)
+            self._ensure_control_namespace()
+            invalidate_snapshot(self._catalog_root)
+
+            # Refresh layout/config state restored by Git before proving facts.
+            if os.path.exists(self.hmeta_path):
+                hmeta = select_jsonl(self.hmeta_path)
+                self.use_hierarchy = hmeta["use_hierarchy"]
+                self.delimiter = hmeta["delimiter"]
+                self.hierarchy_depth = hmeta["hierarchy_depth"]
+            else:
+                self.use_hierarchy = False
+            if os.path.exists(self.configmeta_path):
+                config = select_jsonl(self.configmeta_path)
+                self.timespec = config.get("timespec", jsonlfile.TIME_SPEC)
+            else:
+                self.timespec = jsonlfile.TIME_SPEC
+
+            restored = None
+            try:
+                restored = self._try_catalog_locked()
+            except UnsupportedCatalogVersionError:
+                raise
+            except (OSError, ValueError, TypeError, CatalogBusyError):
+                restored = None
+            entries = self._reconcile_entries(restored, None)
+            if (
+                restored is not None
+                and restored.timespec == self.timespec
+                and dict(restored.entries) == entries
+            ):
+                self._write_projection(entries)
+                invalidate_snapshot(self._catalog_root)
+                self._read_valid_catalog()
+            else:
+                self._write_projection(entries)
+                self._new_lineage(entries)
+            clear_pending(self.pending_path)
+            print(f"Successfully reverted the folder: {self.folder_path} to version: {version_hash}")
     
     def version(self) -> Dict[str, str]:
         """
