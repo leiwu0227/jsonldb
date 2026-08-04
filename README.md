@@ -159,6 +159,14 @@ The same operations are available in `jsonldb.jsonlfile` as `get_aux_path`,
 `read_aux`, `write_aux`, and `remove_aux` when working with a JSONL path
 directly.
 
+Managed catalog version 2 records each companion's exact presence, byte size,
+and SHA-256 identity. Use `db.read_family("table_name")` to read selected
+dictionary rows and optional companion bytes from one catalog generation; a
+concurrent generation change raises the retryable `CatalogChangedError`.
+Existing version-1 catalogs migrate automatically on first managed load. After
+that migration, pre-catalog-v2 JSONLDB binaries cannot open the control catalog;
+alternating old and new binaries is not supported.
+
 ## Requirements
 
 - Python >= 3.8

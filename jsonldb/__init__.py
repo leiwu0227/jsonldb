@@ -13,17 +13,19 @@ Example usage:
 from .folderdb import FolderDB
 from .catalog import (
     CatalogBusyError,
+    CatalogChangedError,
     CatalogFilesystemError,
     CatalogRecoveryError,
     FolderCatalogEntry,
     FolderCatalogSnapshot,
+    TickerFamilyRead,
     UnsupportedCatalogVersionError,
 )
 
 __version__ = "1.0.0"
 __all__ = [
-    "FolderDB", "FolderCatalogEntry", "FolderCatalogSnapshot",
-    "CatalogBusyError", "CatalogFilesystemError", "CatalogRecoveryError",
+    "FolderDB", "FolderCatalogEntry", "FolderCatalogSnapshot", "TickerFamilyRead",
+    "CatalogBusyError", "CatalogChangedError", "CatalogFilesystemError", "CatalogRecoveryError",
     "UnsupportedCatalogVersionError", "visual", "vercontrol", "jsonlfile",
     "jsonldf",
 ]

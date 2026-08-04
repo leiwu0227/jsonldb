@@ -4,6 +4,7 @@ Each table is stored in a separate JSONL file.
 """
 
 import os
+import hashlib
 import shutil
 import time
 import uuid
@@ -21,10 +22,11 @@ from jsonldb.jsonldf import (
 )
 import jsonldb.jsonlfile as jsonlfile
 from jsonldb.catalog import (
-    CatalogBusyError, CatalogFilesystemError, CatalogRecoveryError,
-    FolderCatalogEntry, FolderCatalogSnapshot, PendingState,
+    CATALOG_VERSION, CatalogBusyError, CatalogChangedError,
+    CatalogFilesystemError, CatalogRecoveryError, FolderCatalogEntry,
+    FolderCatalogSnapshot, PendingState, TickerFamilyRead,
     UnsupportedCatalogVersionError, WriterLock, atomic_write,
-    atomic_write_bytes, cached_snapshot, canonical_root, catalog_envelope,
+    atomic_write_bytes, aux_identity, cached_snapshot, canonical_root, catalog_envelope,
     clear_pending, file_identity, install_snapshot, invalidate_snapshot,
     pending_envelope, read_object, sync_directory, validate_catalog_envelope,
     validate_pending_envelope,
@@ -277,6 +279,10 @@ class FolderDB:
                 cached = cached_snapshot(self._catalog_root, identity)
                 if cached is not None:
                     if not os.path.exists(self.pending_path):
+                        if cached.version < CATALOG_VERSION:
+                            return self._recover_catalog(
+                                max(0.0, deadline - time.monotonic())
+                            )
                         self.timespec = cached.timespec
                         return cached
                     continue
@@ -287,6 +293,10 @@ class FolderDB:
                 snapshot = validate_catalog_envelope(raw, identity, self._catalog_name_valid)
                 if os.path.exists(self.pending_path):
                     continue
+                if snapshot.version < CATALOG_VERSION:
+                    return self._recover_catalog(
+                        max(0.0, deadline - time.monotonic())
+                    )
                 snapshot = install_snapshot(self._catalog_root, snapshot)
                 self.timespec = snapshot.timespec
                 return snapshot
@@ -351,10 +361,28 @@ class FolderDB:
             lint_time if isinstance(lint_time, str) else "",
             timespecs,
         )
+        aux_present, aux_size, aux_sha256 = aux_identity(
+            jsonlfile.get_aux_path(self._get_file_path(name))
+        )
         return FolderCatalogEntry(
             raw["min_index"], raw["max_index"], raw["count"], raw["size"],
-            raw["linted"], raw["lint_time"],
+            raw["linted"], raw["lint_time"], aux_present, aux_size, aux_sha256,
         )
+
+    def _with_aux_identities(
+        self, entries: Dict[str, FolderCatalogEntry]
+    ) -> Dict[str, FolderCatalogEntry]:
+        """Add current companion identity without touching owners or indexes."""
+        identified = {}
+        for name, entry in entries.items():
+            present, size, digest = aux_identity(
+                jsonlfile.get_aux_path(self._get_file_path(name))
+            )
+            identified[name] = FolderCatalogEntry(
+                entry.min_index, entry.max_index, entry.count, entry.size,
+                entry.linted, entry.lint_time, present, size, digest,
+            )
+        return identified
 
     def _reconcile_entries(
         self, base: Optional[FolderCatalogSnapshot] = None,
@@ -442,6 +470,25 @@ class FolderDB:
             str(uuid.uuid4()), 1, str(uuid.uuid4()), entries
         )
 
+    def _migrate_catalog_locked(
+        self, catalog: FolderCatalogSnapshot
+    ) -> FolderCatalogSnapshot:
+        """Publish v2 in the existing lineage using only cataloged AUX paths."""
+        if catalog.version == CATALOG_VERSION:
+            return catalog
+        transaction_id = str(uuid.uuid4())
+        pending = PendingState(
+            transaction_id, catalog.catalog_id, catalog.revision,
+            catalog.revision + 1, "full", (),
+        )
+        atomic_write(self.pending_path, pending_envelope(pending))
+        entries = self._with_aux_identities(dict(catalog.entries))
+        migrated = self._publish_catalog(
+            catalog.catalog_id, pending.target_revision, transaction_id, entries,
+        )
+        clear_pending(self.pending_path)
+        return migrated
+
     def _recover_locked(self) -> FolderCatalogSnapshot:
         pending = None
         pending_malformed = False
@@ -463,6 +510,8 @@ class FolderDB:
 
         if pending is None and not pending_malformed and catalog is not None:
             self.timespec = catalog.timespec
+            if catalog.version < CATALOG_VERSION:
+                return self._migrate_catalog_locked(catalog)
             return catalog
 
         if pending is not None and catalog is not None:
@@ -482,6 +531,8 @@ class FolderDB:
                 self.timespec = catalog.timespec
                 names = list(pending.tickers) if pending.scope == "tickers" else None
                 entries = self._reconcile_entries(catalog, names)
+                if catalog.version < CATALOG_VERSION:
+                    entries = self._with_aux_identities(entries)
                 self._write_projection(entries)
                 recovered = self._publish_catalog(
                     catalog.catalog_id, pending.target_revision,
@@ -672,6 +723,114 @@ class FolderDB:
         logical_name = name[:-6] if name.endswith('.jsonl') else name
         with self._catalog_transaction("tickers", [logical_name]):
             return jsonlfile.remove_aux(self._get_file_path(name))
+
+    def _family_generation_matches(self, snapshot: FolderCatalogSnapshot) -> bool:
+        if snapshot.version != CATALOG_VERSION or os.path.exists(self.pending_path):
+            return False
+        try:
+            current = file_identity(self.catalog_path, os.stat(self.catalog_path))
+        except OSError:
+            return False
+        return current == snapshot.file_identity
+
+    def _read_family_generation(
+        self,
+        name: str,
+        snapshot: FolderCatalogSnapshot,
+        lower_key: Optional[Any],
+        upper_key: Optional[Any],
+        auto_deserialize: bool,
+    ) -> TickerFamilyRead:
+        if not self._family_generation_matches(snapshot):
+            raise CatalogChangedError("catalog generation changed before family read")
+        entry = snapshot.entries.get(name)
+        owner_path = self._get_file_path(name)
+        if entry is None or not os.path.isfile(owner_path):
+            if not self._family_generation_matches(snapshot):
+                raise CatalogChangedError("catalog generation changed before owner read")
+            raise FileNotFoundError(f"JSONL file not found: {owner_path}")
+
+        try:
+            data = select_jsonl(
+                owner_path, lower_key, upper_key, auto_deserialize,
+                timespec=snapshot.timespec,
+            )
+        except FileNotFoundError:
+            if not self._family_generation_matches(snapshot):
+                raise CatalogChangedError("catalog generation changed during owner read")
+            raise
+
+        aux_path = jsonlfile.get_aux_path(owner_path)
+        aux = None
+        if entry.aux_present:
+            try:
+                with open(aux_path, "rb") as stream:
+                    aux = stream.read()
+            except OSError as exc:
+                raise CatalogChangedError("recorded companion was unavailable") from exc
+            digest = "sha256:" + hashlib.sha256(aux).hexdigest()
+            if len(aux) != entry.aux_size or digest != entry.aux_sha256:
+                raise CatalogChangedError("companion identity did not match the catalog")
+        elif os.path.lexists(aux_path):
+            raise CatalogChangedError("unexpected companion was present")
+
+        if not self._family_generation_matches(snapshot):
+            raise CatalogChangedError("catalog generation changed during family read")
+        return TickerFamilyRead(
+            name, data, aux, snapshot.catalog_id, snapshot.revision,
+            entry.aux_sha256,
+        )
+
+    def read_family(
+        self,
+        name: str,
+        snapshot: Optional[FolderCatalogSnapshot] = None,
+        lower_key: Optional[Any] = None,
+        upper_key: Optional[Any] = None,
+        auto_deserialize: bool = True,
+        timeout_seconds: float = 5.0,
+    ) -> TickerFamilyRead:
+        """Read one owner selection and opaque companion from one generation."""
+        if isinstance(timeout_seconds, bool) or not isinstance(timeout_seconds, (int, float)):
+            raise TypeError("timeout_seconds must be a number")
+        if timeout_seconds < 0:
+            raise ValueError("timeout_seconds must be non-negative")
+        logical_name = name[:-6] if isinstance(name, str) and name.endswith('.jsonl') else name
+        if not isinstance(logical_name, str) or not self._catalog_name_valid(logical_name):
+            raise ValueError("family read requires a valid ticker name")
+
+        if snapshot is not None:
+            if not isinstance(snapshot, FolderCatalogSnapshot):
+                raise TypeError("snapshot must be a FolderCatalogSnapshot")
+            if not snapshot.file_identity:
+                raise CatalogChangedError("snapshot belongs to another FolderDB root")
+            snapshot_root = canonical_root(
+                os.path.dirname(os.path.dirname(snapshot.file_identity[0]))
+            )
+            if snapshot_root != self._catalog_root:
+                raise CatalogChangedError("snapshot belongs to another FolderDB root")
+            return self._read_family_generation(
+                logical_name, snapshot, lower_key, upper_key, auto_deserialize,
+            )
+
+        deadline = time.monotonic() + float(timeout_seconds)
+        last_error = None
+        while True:
+            remaining = max(0.0, deadline - time.monotonic())
+            try:
+                current = self.load_catalog_snapshot(remaining)
+                return self._read_family_generation(
+                    logical_name, current, lower_key, upper_key, auto_deserialize,
+                )
+            except CatalogChangedError as exc:
+                last_error = exc
+            except CatalogBusyError as exc:
+                last_error = exc
+            if time.monotonic() >= deadline:
+                raise CatalogChangedError(
+                    "family read could not obtain one stable catalog generation"
+                ) from last_error
+            time.sleep(min(0.01, max(0.0, deadline - time.monotonic())))
 
     def _move_jsonl_family(self, source_path: str, target_path: str) -> None:
         """Move an owner first and its optional companion last.
@@ -1470,12 +1629,23 @@ class FolderDB:
             entries = self._reconcile_entries(restored, None)
             if (
                 restored is not None
+                and restored.version == CATALOG_VERSION
                 and restored.timespec == self.timespec
                 and dict(restored.entries) == entries
             ):
                 self._write_projection(entries)
                 invalidate_snapshot(self._catalog_root)
                 self._read_valid_catalog()
+            elif (
+                restored is not None
+                and restored.timespec == self.timespec
+                and dict(restored.entries) == entries
+            ):
+                self._write_projection(entries)
+                self._publish_catalog(
+                    restored.catalog_id, restored.revision + 1,
+                    str(uuid.uuid4()), entries,
+                )
             else:
                 self._write_projection(entries)
                 self._new_lineage(entries)

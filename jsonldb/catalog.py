@@ -7,6 +7,7 @@ validated completely before immutable public values are constructed or cached.
 from __future__ import annotations
 
 import errno
+import hashlib
 import os
 import threading
 import time
@@ -20,7 +21,9 @@ import orjson
 
 CATALOG_SCHEMA = "jsonldb.folder-catalog"
 PENDING_SCHEMA = "jsonldb.folder-catalog-pending"
-CATALOG_VERSION = 1
+CATALOG_VERSION = 2
+LEGACY_CATALOG_VERSION = 1
+PENDING_VERSION = 1
 IGNORE_CONTENT = b"pending.json\nwriter.lock\n*.tmp\n"
 
 
@@ -40,9 +43,16 @@ class CatalogRecoveryError(RuntimeError):
     """Locked recovery could not establish a trustworthy catalog."""
 
 
-@dataclass(frozen=True)
+class CatalogChangedError(RuntimeError):
+    """A family read could not remain bound to one managed generation."""
+
+
+@dataclass(frozen=True, init=False)
 class FolderCatalogEntry:
-    __slots__ = ("min_index", "max_index", "count", "size", "linted", "lint_time")
+    __slots__ = (
+        "min_index", "max_index", "count", "size", "linted", "lint_time",
+        "aux_present", "aux_size", "aux_sha256",
+    )
 
     min_index: Optional[str]
     max_index: Optional[str]
@@ -50,6 +60,43 @@ class FolderCatalogEntry:
     size: int
     linted: bool
     lint_time: str
+    aux_present: bool
+    aux_size: Optional[int]
+    aux_sha256: Optional[str]
+
+    def __init__(
+        self,
+        min_index: Optional[str],
+        max_index: Optional[str],
+        count: int,
+        size: int,
+        linted: bool,
+        lint_time: str,
+        aux_present: bool = False,
+        aux_size: Optional[int] = None,
+        aux_sha256: Optional[str] = None,
+    ):
+        object.__setattr__(self, "min_index", min_index)
+        object.__setattr__(self, "max_index", max_index)
+        object.__setattr__(self, "count", count)
+        object.__setattr__(self, "size", size)
+        object.__setattr__(self, "linted", linted)
+        object.__setattr__(self, "lint_time", lint_time)
+        object.__setattr__(self, "aux_present", aux_present)
+        object.__setattr__(self, "aux_size", aux_size)
+        object.__setattr__(self, "aux_sha256", aux_sha256)
+
+
+@dataclass(frozen=True)
+class TickerFamilyRead:
+    __slots__ = ("name", "data", "aux", "catalog_id", "revision", "aux_sha256")
+
+    name: str
+    data: Mapping[Any, Dict[str, Any]]
+    aux: Optional[bytes]
+    catalog_id: str
+    revision: int
+    aux_sha256: Optional[str]
 
 
 @dataclass(frozen=True)
@@ -138,6 +185,22 @@ def _exact_keys(value: Any, keys: set) -> bool:
     return isinstance(value, dict) and set(value) == keys
 
 
+def aux_identity(path: str) -> Tuple[bool, Optional[int], Optional[str]]:
+    """Return exact structural identity for one optional opaque companion."""
+    if not os.path.lexists(path):
+        return False, None, None
+    digest = hashlib.sha256()
+    size = 0
+    with open(path, "rb") as stream:
+        while True:
+            chunk = stream.read(1024 * 1024)
+            if not chunk:
+                break
+            size += len(chunk)
+            digest.update(chunk)
+    return True, size, "sha256:" + digest.hexdigest()
+
+
 def validate_catalog_envelope(
     value: Any,
     identity: Tuple[Any, ...],
@@ -155,7 +218,10 @@ def validate_catalog_envelope(
     }
     if not _exact_keys(value, keys):
         raise ValueError("catalog envelope has an invalid top-level shape")
-    if value["schema"] != CATALOG_SCHEMA or value["version"] != CATALOG_VERSION:
+    version = value["version"]
+    if value["schema"] != CATALOG_SCHEMA or not _is_int(version) or version not in (
+        LEGACY_CATALOG_VERSION, CATALOG_VERSION,
+    ):
         raise ValueError("catalog envelope has an unsupported schema or version")
     if not _canonical_uuid(value["catalog_id"]):
         raise ValueError("catalog_id is not a canonical UUID")
@@ -169,6 +235,8 @@ def validate_catalog_envelope(
         raise ValueError("entries must be an object")
 
     entry_keys = {"min_index", "max_index", "count", "size", "linted", "lint_time"}
+    if version == CATALOG_VERSION:
+        entry_keys |= {"aux_present", "aux_size", "aux_sha256"}
     entries: Dict[str, FolderCatalogEntry] = {}
     previous_name = None
     for name, raw in value["entries"].items():
@@ -187,6 +255,23 @@ def validate_catalog_envelope(
             raise ValueError("catalog entry count or size is invalid")
         if not isinstance(raw["linted"], bool) or not isinstance(raw["lint_time"], str):
             raise ValueError("catalog entry lint state is invalid")
+        aux_present = raw.get("aux_present", False)
+        aux_size = raw.get("aux_size")
+        aux_sha256 = raw.get("aux_sha256")
+        if version == CATALOG_VERSION:
+            valid_digest = (
+                isinstance(aux_sha256, str)
+                and len(aux_sha256) == 71
+                and aux_sha256.startswith("sha256:")
+                and all(character in "0123456789abcdef" for character in aux_sha256[7:])
+            )
+            if not isinstance(aux_present, bool):
+                raise ValueError("catalog entry AUX presence is invalid")
+            if aux_present:
+                if not _is_int(aux_size) or aux_size < 0 or not valid_digest:
+                    raise ValueError("catalog entry AUX identity is invalid")
+            elif aux_size is not None or aux_sha256 is not None:
+                raise ValueError("absent catalog AUX identity must be null")
         if count == 0:
             if lower is not None or upper is not None:
                 raise ValueError("empty catalog entry must have null boundaries")
@@ -195,7 +280,8 @@ def validate_catalog_envelope(
         ):
             raise ValueError("non-empty catalog entry has invalid boundaries")
         entries[name] = FolderCatalogEntry(
-            lower, upper, count, size, raw["linted"], raw["lint_time"]
+            lower, upper, count, size, raw["linted"], raw["lint_time"],
+            aux_present, aux_size, aux_sha256,
         )
     return FolderCatalogSnapshot(
         value["schema"], value["version"], value["catalog_id"],
@@ -209,7 +295,7 @@ def validate_pending_envelope(
 ) -> PendingState:
     if isinstance(value, dict) and value.get("schema") == PENDING_SCHEMA:
         version = value.get("version")
-        if _is_int(version) and version > CATALOG_VERSION:
+        if _is_int(version) and version > PENDING_VERSION:
             raise UnsupportedCatalogVersionError(
                 "pending state uses unsupported newer version {}".format(version)
             )
@@ -219,7 +305,11 @@ def validate_pending_envelope(
     }
     if not _exact_keys(value, keys):
         raise ValueError("pending envelope has an invalid top-level shape")
-    if value["schema"] != PENDING_SCHEMA or value["version"] != CATALOG_VERSION:
+    if (
+        value["schema"] != PENDING_SCHEMA
+        or not _is_int(value["version"])
+        or value["version"] != PENDING_VERSION
+    ):
         raise ValueError("pending envelope has an unsupported schema or version")
     if not _canonical_uuid(value["transaction_id"]) or not _canonical_uuid(value["base_catalog_id"]):
         raise ValueError("pending IDs are not canonical UUIDs")
@@ -248,7 +338,7 @@ def validate_pending_envelope(
 def snapshot_envelope(snapshot: FolderCatalogSnapshot) -> Dict[str, Any]:
     return catalog_envelope(
         snapshot.catalog_id, snapshot.revision, snapshot.last_transaction_id,
-        snapshot.timespec, snapshot.entries,
+        snapshot.timespec, snapshot.entries, version=snapshot.version,
     )
 
 
@@ -258,32 +348,42 @@ def catalog_envelope(
     transaction_id: str,
     timespec: str,
     entries: Mapping[str, FolderCatalogEntry],
+    version: int = CATALOG_VERSION,
 ) -> Dict[str, Any]:
+    if version not in (LEGACY_CATALOG_VERSION, CATALOG_VERSION):
+        raise ValueError("catalog envelope version is invalid")
+    serialized_entries = {}
+    for name, entry in sorted(entries.items()):
+        raw = {
+            "min_index": entry.min_index,
+            "max_index": entry.max_index,
+            "count": entry.count,
+            "size": entry.size,
+            "linted": entry.linted,
+            "lint_time": entry.lint_time,
+        }
+        if version == CATALOG_VERSION:
+            raw.update({
+                "aux_present": entry.aux_present,
+                "aux_size": entry.aux_size,
+                "aux_sha256": entry.aux_sha256,
+            })
+        serialized_entries[name] = raw
     return {
         "schema": CATALOG_SCHEMA,
-        "version": CATALOG_VERSION,
+        "version": version,
         "catalog_id": catalog_id,
         "revision": revision,
         "last_transaction_id": transaction_id,
         "timespec": timespec,
-        "entries": {
-            name: {
-                "min_index": entry.min_index,
-                "max_index": entry.max_index,
-                "count": entry.count,
-                "size": entry.size,
-                "linted": entry.linted,
-                "lint_time": entry.lint_time,
-            }
-            for name, entry in sorted(entries.items())
-        },
+        "entries": serialized_entries,
     }
 
 
 def pending_envelope(state: PendingState) -> Dict[str, Any]:
     return {
         "schema": PENDING_SCHEMA,
-        "version": CATALOG_VERSION,
+        "version": PENDING_VERSION,
         "transaction_id": state.transaction_id,
         "base_catalog_id": state.base_catalog_id,
         "base_revision": state.base_revision,

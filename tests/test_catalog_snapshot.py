@@ -222,7 +222,7 @@ def test_newer_catalog_is_preserved_fail_closed(tmp_path):
     db.load_catalog_snapshot()
     path = tmp_path / ".jsonldb" / "catalog.json"
     raw = orjson.loads(path.read_bytes())
-    raw["version"] = 2
+    raw["version"] = 3
     path.write_bytes(orjson.dumps(raw, option=orjson.OPT_SORT_KEYS))
     before = path.read_bytes()
 

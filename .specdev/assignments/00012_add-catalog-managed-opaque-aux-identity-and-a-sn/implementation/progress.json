@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "T-1",
+      "status": "completed"
+    },
+    {
+      "id": "T-2",
+      "status": "completed"
+    },
+    {
+      "id": "T-3",
+      "status": "completed"
+    },
+    {
+      "id": "T-4",
+      "status": "completed"
+    }
+  ],
+  "selected_guides": {
+    "implementation": [
+      "api-security"
+    ],
+    "review": []
+  },
+  "verification": [
+    {
+      "command": "/Users/leiwu/code/walie/walie/.venv/bin/python -m pytest -q tests/test_catalog_aux_family.py tests/test_catalog_snapshot.py tests/test_atomic_replace_range.py tests/test_catalog_snapshot_production_benchmark.py",
+      "revision": "working-tree@6a93a283ab46e59f22e9d7b76eab05286147ba47",
+      "scope": "focused catalog v2, family read, compatibility, recovery, hierarchy, Git lifecycle, and benchmark-structure tests; 56 passed",
+      "status": "passed",
+      "duration_ms": 910
+    },
+    {
+      "command": "/Users/leiwu/code/walie/walie/.venv/bin/python -c 'from jsonldb.benchmarks.catalog_snapshot_production import run_scaling_benchmark; r=run_scaling_benchmark((16,64,256),4,10,3); assert r[\"reference_256_gate\"][\"passed\"]; assert set(r[\"aux_hash_costs\"])=={\"absent\",\"empty\",\"small\",\"larger\"}; assert all(x[\"operations\"][\"production_cold_snapshot\"][\"catalog_decodes\"]==1 and x[\"operations\"][\"production_cold_snapshot\"][\"owner_tree_walks\"]==0 and x[\"operations\"][\"production_cold_snapshot\"][\"unaffected_companion_identity_loads\"]==0 for x in r[\"sizes\"]); a=r[\"sizes\"][-1][\"operations\"][\"one_ticker_aux_publication\"]; assert a[\"affected_companion_identity_loads\"]==1 and a[\"unaffected_companion_identity_loads\"]==0'",
+      "revision": "working-tree@6a93a283ab46e59f22e9d7b76eab05286147ba47",
+      "scope": "16/64/256-ticker v2 cold-load, cache/locality, representative AUX hash-cost, and 256-ticker speed gate; measured 18.28x",
+      "status": "passed",
+      "duration_ms": 350
+    },
+    {
+      "command": "env PYTHONPYCACHEPREFIX=/private/tmp/jsonldb-py39-cache /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9 -m py_compile jsonldb/catalog.py jsonldb/folderdb.py jsonldb/benchmarks/catalog_snapshot_production.py",
+      "revision": "working-tree@6a93a283ab46e59f22e9d7b76eab05286147ba47",
+      "scope": "Python 3.9 syntax compatibility; six-argument slotted catalog entry construction is covered by the focused tests",
+      "status": "passed",
+      "duration_ms": 30
+    },
+    {
+      "command": "git diff --check",
+      "revision": "working-tree@6a93a283ab46e59f22e9d7b76eab05286147ba47",
+      "scope": "working-tree whitespace and patch integrity",
+      "status": "passed",
+      "duration_ms": 100
+    },
+    {
+      "command": "python -m pytest",
+      "revision": "working-tree@6a93a283ab46e59f22e9d7b76eab05286147ba47",
+      "scope": "full suite was explicitly not authorized by the approved contract",
+      "status": "skipped",
+      "duration_ms": 0
+    }
+  ],
+  "deviations": [],
+  "follow_up": "none",
+  "selected_guide_versions": {
+    "implementation": [
+      {
+        "id": "api-security",
+        "version": "1"
+      }
+    ],
+    "review": []
+  }
+}

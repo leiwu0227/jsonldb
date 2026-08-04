@@ -18,7 +18,7 @@ from unittest import mock
 import orjson
 
 from jsonldb import FolderDB, jsonlfile
-from jsonldb.catalog import invalidate_snapshot
+from jsonldb.catalog import aux_identity, invalidate_snapshot
 
 
 DEFAULT_SIZES = (16, 64, 256)
@@ -53,6 +53,8 @@ def _empty_counts() -> Dict[str, int]:
         "owner_tree_walks": 0,
         "affected_ticker_index_loads": 0,
         "unaffected_ticker_index_loads": 0,
+        "affected_companion_identity_loads": 0,
+        "unaffected_companion_identity_loads": 0,
         "catalog_publications": 0,
         "pending_publications": 0,
         "projection_updates": 0,
@@ -68,6 +70,7 @@ def instrument(counts: Dict[str, int], affected: Set[str]) -> Iterator[None]:
     original_cached = folderdb_module.cached_snapshot
     original_atomic = folderdb_module.atomic_write
     original_projection = FolderDB._write_projection
+    original_aux_identity = folderdb_module.aux_identity
 
     def counted_walk(self):
         counts["owner_tree_walks"] += 1
@@ -108,11 +111,21 @@ def instrument(counts: Dict[str, int], affected: Set[str]) -> Iterator[None]:
         counts["projection_updates"] += 1
         return original_projection(self, entries)
 
+    def counted_aux_identity(path):
+        name = os.path.basename(os.fspath(path))[:-10]
+        key = (
+            "affected_companion_identity_loads"
+            if name in affected else "unaffected_companion_identity_loads"
+        )
+        counts[key] += 1
+        return original_aux_identity(path)
+
     with mock.patch.object(FolderDB, "get_file_list", counted_walk), \
             mock.patch.object(jsonlfile, "load_index", counted_index), \
             mock.patch.object(folderdb_module, "read_object", counted_read), \
             mock.patch.object(folderdb_module, "cached_snapshot", counted_cached), \
             mock.patch.object(folderdb_module, "atomic_write", counted_atomic), \
+            mock.patch.object(folderdb_module, "aux_identity", counted_aux_identity), \
             mock.patch.object(FolderDB, "_write_projection", counted_projection):
         yield
 
@@ -209,12 +222,22 @@ def benchmark_size(
                 {"ticker_000000", "ticker_000001"},
             ))
 
+        aux_publication = []
+        for trial_number in range(trials):
+            payload = b"opaque-" + str(trial_number).encode("ascii")
+            aux_publication.append(_trial(
+                db,
+                lambda payload=payload: db.write_aux("ticker_000000", payload),
+                {"ticker_000000"},
+            ))
+
         operations = {
             "production_cold_snapshot": _summarize(cold),
             "unchanged_snapshot_reuse": _summarize(reuse),
             "full_reconciliation": _summarize(reconciliation),
             "one_ticker_mutation": _summarize(one_ticker),
             "batch_mutation": _summarize(batch),
+            "one_ticker_aux_publication": _summarize(aux_publication),
         }
         operations["unchanged_snapshot_reuse"]["reads_per_trial"] = repeats
         speedup = (
@@ -229,6 +252,42 @@ def benchmark_size(
         }
 
 
+def benchmark_aux_hash_costs(repeats: int = DEFAULT_REPEATS) -> Dict[str, Any]:
+    """Report median structural identity cost for representative payload sizes."""
+    if repeats < 2:
+        raise ValueError("AUX hash repeats must be at least 2")
+    payloads = {
+        "absent": None,
+        "empty": b"",
+        "small": b"x" * 4096,
+        "larger": b"x" * (1024 * 1024),
+    }
+    with tempfile.TemporaryDirectory(prefix="jsonldb-aux-hash-") as tmp:
+        path = os.path.join(tmp, "ticker.jsonl.aux")
+        result = {}
+        for label, payload in payloads.items():
+            if payload is None:
+                try:
+                    os.remove(path)
+                except FileNotFoundError:
+                    pass
+            else:
+                with open(path, "wb") as stream:
+                    stream.write(payload)
+            elapsed = []
+            for _ in range(repeats):
+                started = time.perf_counter()
+                identity = aux_identity(path)
+                elapsed.append(time.perf_counter() - started)
+            result[label] = {
+                "payload_bytes": 0 if payload is None else len(payload),
+                "present": payload is not None,
+                "median_seconds": median(elapsed),
+                "identity_size": identity[1],
+            }
+        return result
+
+
 def run_scaling_benchmark(
     sizes: Iterable[int] = DEFAULT_SIZES,
     records_per_ticker: int = DEFAULT_RECORDS_PER_TICKER,
@@ -241,8 +300,9 @@ def run_scaling_benchmark(
     ]
     reference = next((item for item in results if item["tickers"] == 256), None)
     return {
-        "version": 1,
+        "version": 2,
         "sizes": results,
+        "aux_hash_costs": benchmark_aux_hash_costs(repeats),
         "reference_256_gate": None if reference is None else {
             "minimum_speedup": 5.0,
             "measured_speedup": reference["cold_vs_reconciliation_speedup"],
