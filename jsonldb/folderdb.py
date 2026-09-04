@@ -23,6 +23,15 @@ from jsonldb.reports import capture_report
 logger = logging.getLogger(__name__)
 
 
+def _load_control(file_path: str, record_key: str):
+    """Read one canonical control record, migrating legacy scalar rows."""
+    rows = load_jsonl(file_path, auto_deserialize=False)
+    record = rows.get(record_key)
+    if len(rows) == 1 and isinstance(record, dict):
+        return record, True
+    return jsonlfile._load_legacy_rows(file_path), False
+
+
 class TableWithMeta(NamedTuple):
     """A metadata record paired with rows read after that record."""
 
@@ -70,10 +79,12 @@ class FolderDB:
             self.folder_path, ".invalid_tickers")
 
         if os.path.exists(self.hmeta_path):
-            hmeta = select_jsonl(self.hmeta_path)
+            hmeta, canonical = _load_control(self.hmeta_path, "hierarchy")
             self.use_hierarchy = hmeta["use_hierarchy"]
             self.delimiter = hmeta["delimiter"]
             self.hierarchy_depth = hmeta["hierarchy_depth"]
+            if not canonical:
+                self.build_hmeta()
 
             if hierarchy_depth is not None and self.hierarchy_depth != hierarchy_depth: 
                 #current hierarchy depth is not the same as the one provided, so we need to lint the hierarchy
@@ -95,12 +106,13 @@ class FolderDB:
         self.meta_slot_bytes = None
         self._config_meta = {}
         if os.path.exists(self.configmeta_path):
-            config_meta = select_jsonl(self.configmeta_path)
+            config_meta, canonical = _load_control(
+                self.configmeta_path, "config")
             self._config_meta = dict(config_meta)
             self.meta_slot_bytes = config_meta.get("meta_slot_bytes")
             if config_meta.get("timespec"):
                 self.timespec = config_meta["timespec"]
-            else:
+            if not canonical or not config_meta.get("timespec"):
                 self.build_configmeta()
         else:
             logger.warning("regenerated missing control file %s",
@@ -164,7 +176,7 @@ class FolderDB:
                 "delimiter": self.delimiter,
                 "hierarchy_depth": self.hierarchy_depth
             }
-            save_jsonl_atomic(self.hmeta_path, hierarchy_info)
+            save_jsonl_atomic(self.hmeta_path, {"hierarchy": hierarchy_info})
 
 
     def build_configmeta(self) -> None:
@@ -177,7 +189,7 @@ class FolderDB:
             config_info.pop("meta_slot_bytes", None)
         else:
             config_info["meta_slot_bytes"] = self.meta_slot_bytes
-        save_jsonl_atomic(self.configmeta_path, config_info)
+        save_jsonl_atomic(self.configmeta_path, {"config": config_info})
         self._config_meta = config_info
 
     def _detect_data_timespec(self) -> Optional[str]:
@@ -701,7 +713,7 @@ class FolderDB:
         try:
             self.build_configmeta()
         except BaseException:
-            config_meta = load_jsonl(self.configmeta_path)
+            config_meta, _ = _load_control(self.configmeta_path, "config")
             self._config_meta = dict(config_meta)
             self.meta_slot_bytes = config_meta.get("meta_slot_bytes")
             raise

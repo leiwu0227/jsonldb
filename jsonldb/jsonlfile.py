@@ -15,10 +15,6 @@ from . import metaslot
 
 
 logger = logging.getLogger(__name__)
-# --------------------------------------------------------
-# Configuration
-# --------------------------------------------------------
-
 # Buffer size for file operations (50MB)
 BUFFER_SIZE: int = 1024 * 1024 * 50
 TIME_SPEC = 'seconds'  #or seconds/microseconds
@@ -31,8 +27,10 @@ IndexDict = Dict[str, int]
 
 def _validate_row_keys(db_dict: DataDict,
                        timespec: Optional[str] = None) -> None:
-    """Reject the reserved metadata key before any file mutation."""
-    for linekey in db_dict:
+    """Reject invalid records and the reserved key before file mutation."""
+    for linekey, record in db_dict.items():
+        if not isinstance(record, dict):
+            raise TypeError("JSONL record values must be dictionaries")
         if serialize_linekey(linekey, timespec) == metaslot.META_KEY:
             raise ValueError("'_meta' is reserved for table metadata")
 
@@ -42,8 +40,10 @@ def _parse_row(line: bytes):
     data = orjson.loads(line)
     if not isinstance(data, dict) or len(data) != 1:
         raise ValueError("JSONL rows must contain exactly one key")
-    linekey = next(iter(data))
-    return linekey, data[linekey]
+    linekey, value = next(iter(data.items()))
+    if not isinstance(value, dict):
+        raise ValueError("JSONL record values must be dictionaries")
+    return linekey, value
 
 
 def _warn_invalid_row(jsonl_file_path: str, offset: int, line: bytes) -> None:
@@ -79,10 +79,6 @@ def _serialize_index(index: IndexDict) -> bytes:
 
 def _write_index(jsonl_file_path: str, index: IndexDict) -> None:
     _atomic_write_bytes(f"{jsonl_file_path}.idx", _serialize_index(index))
-
-# --------------------------------------------------------
-# Indexing Functions
-# --------------------------------------------------------
 
 def build_jsonl_index(jsonl_file_path: str, warn_invalid: bool = True) -> None:
     """Build a sorted absolute-offset index, optionally warning on bad rows."""
@@ -305,8 +301,15 @@ def _lint_file(jsonl_file_path: str, index: dict, force: bool,
         record = info.record if info is not None and info.is_slot else None
         desired_slot = metaslot.encode_slot(record, slot_bytes)
     elif info is not None and info.is_slot:
-        desired_slot = (info.raw_line + b'\n' if info.version == metaslot.CURRENT_VERSION
-                        and not info.raw_line.endswith(b'\n') else info.raw_line)
+        if info.version != metaslot.CURRENT_VERSION:
+            try:
+                desired_slot = metaslot.encode_slot(None, info.width)
+            except ValueError:
+                pass
+        else:
+            desired_slot = (info.raw_line + b'\n'
+                            if not info.raw_line.endswith(b'\n')
+                            else info.raw_line)
     if not _lint_index_valid(jsonl_file_path, index, force):
         build_jsonl_index(jsonl_file_path, warn_invalid=False)
         index = load_index(jsonl_file_path)
@@ -328,8 +331,9 @@ def _lint_file(jsonl_file_path: str, index: dict, force: bool,
         offsets = [index[key] for key in keys]
     valid_offsets = all(a < b for a, b in zip(offsets, offsets[1:]))
     start = len(info.raw_line) if info is not None and info.is_slot else 0
-    slot_ok = (slot_bytes is None or (info is not None and info.is_slot
-               and info.raw_line == desired_slot))
+    slot_ok = ((desired_slot is None and
+                (info is None or not info.is_slot)) or
+               (info is not None and info.raw_line == desired_slot))
     end_ok = size == start if not offsets else False
     if offsets and valid_offsets:
         with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
@@ -354,21 +358,8 @@ def lint_jsonl(jsonl_file_path: str, force: bool = False,
         return True
     index, fresh = _lint_load_index(jsonl_file_path)
     return _lint_file(jsonl_file_path, index, force or not fresh, slot_bytes)
-# --------------------------------------------------------
-# Utility Functions
-# --------------------------------------------------------
-
 def _is_datetime_string(linekey: str, timespec: Optional[str] = None) -> bool:
-    """Check if a string represents a datetime in ISO format.
-
-    Args:
-        linekey: String to check
-        timespec: Datetime precision ('seconds' or 'microseconds').
-            Defaults to the module-level TIME_SPEC.
-
-    Returns:
-        bool: True if the string appears to be a datetime in ISO format
-    """
+    """Return whether text resembles an ISO datetime at this precision."""
     if (timespec or TIME_SPEC) == 'seconds':
         return len(linekey) == 19 and 'T' in linekey and '-' in linekey and ':' in linekey
     else:  # microseconds
@@ -456,10 +447,6 @@ def _fast_dumps(obj: dict) -> str:
         JSON string with newline
     """
     return orjson.dumps(obj, option=orjson.OPT_SERIALIZE_NUMPY).decode('utf-8') + '\n'
-
-# --------------------------------------------------------
-# Core CRUD Functions
-# --------------------------------------------------------
 
 def save_jsonl(jsonl_file_path: str, db_dict: DataDict,
                timespec: Optional[str] = None, meta: Optional[dict] = None,
@@ -659,6 +646,21 @@ def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True, timespec: Op
     except OSError as e:
         raise OSError(f"Failed to load JSONL file {jsonl_file_path}: {str(e)}")
 
+
+def _load_legacy_rows(jsonl_file_path: str) -> dict:
+    """Read pre-validation scalar control rows for one-time migration."""
+    result = {}
+    with open(jsonl_file_path, 'rb') as source:
+        for raw_line in source:
+            try:
+                value = orjson.loads(raw_line)
+                if isinstance(value, dict) and len(value) == 1:
+                    result.update(value)
+            except (orjson.JSONDecodeError, TypeError):
+                continue
+    return result
+
+
 def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, upper_key: Optional[LineKey] = None, auto_deserialize: bool = True, timespec: Optional[str] = None) -> DataDict:
     """
     Select records from a JSONL file within a key range.
@@ -760,9 +762,7 @@ def select_line_jsonl(
         Single-record dict {linekey: value} if found, {} otherwise.
         Example: {"key1": {"v": 1}}
     """
-    # Serialize the key if needed
-    if auto_deserialize:
-        linekey = serialize_linekey(linekey, timespec)
+    linekey = serialize_linekey(linekey, timespec)
     
     # Read the index file (self-heals an empty/corrupt .idx)
     index_dict = load_index(jsonl_file_path)

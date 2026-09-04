@@ -32,7 +32,8 @@ def save_jsonldf(jsonl_file_path: str, df: pd.DataFrame,
         slot_bytes=slot_bytes,
     )
 
-def load_jsonldf(jsonl_file_path: str, timespec: Optional[str] = None) -> pd.DataFrame:
+def load_jsonldf(jsonl_file_path: str, timespec: Optional[str] = None,
+                 auto_deserialize: bool = True) -> pd.DataFrame:
     """Load JSONL file into a DataFrame using line keys as index.
     
     Args:
@@ -42,7 +43,8 @@ def load_jsonldf(jsonl_file_path: str, timespec: Optional[str] = None) -> pd.Dat
         pd.DataFrame: DataFrame containing the JSONL data with line keys as index
     """
     # Load JSONL data
-    records_dict = load_jsonl(jsonl_file_path, timespec=timespec)
+    records_dict = load_jsonl(
+        jsonl_file_path, auto_deserialize=auto_deserialize, timespec=timespec)
     
     if not records_dict:
         # Return empty DataFrame
@@ -115,10 +117,11 @@ def delete_jsonldf(jsonl_file_path: str, keys: List[Union[str, int]], timespec: 
     """
     delete_jsonl(jsonl_file_path, keys, timespec)
 
-def lint_jsonldf(jsonl_file_path: str) -> None:
+def lint_jsonldf(jsonl_file_path: str, force: bool = False,
+                 slot_bytes: Optional[int] = None) -> bool:
     """Sort and clean the JSONL file.
     
     Args:
         jsonl_file_path (str): Path to the JSONL file
     """
-    lint_jsonl(jsonl_file_path)
+    return lint_jsonl(jsonl_file_path, force=force, slot_bytes=slot_bytes)

@@ -1,0 +1,102 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "T-1",
+      "status": "completed"
+    },
+    {
+      "id": "T-2",
+      "status": "completed"
+    },
+    {
+      "id": "T-3",
+      "status": "completed"
+    },
+    {
+      "id": "T-4",
+      "status": "completed"
+    },
+    {
+      "id": "T-5",
+      "status": "completed"
+    }
+  ],
+  "selected_guides": {
+    "implementation": [
+      "api-security"
+    ],
+    "review": []
+  },
+  "verification": [
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest -q unit_tests/test_roadmap_compliance.py",
+      "revision": "working-tree@548a174b959b45b9395d87d5502568834dfc7b64",
+      "scope": "Initial AC-1 through AC-3 focused regressions",
+      "status": "passed",
+      "duration_ms": 786,
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest -q unit_tests/test_roadmap_compliance.py unit_tests/test_jsonlfile.py unit_tests/test_jsonldf.py unit_tests/test_lint_integrity.py unit_tests/test_metaslot.py",
+      "revision": "working-tree@548a174b959b45b9395d87d5502568834dfc7b64",
+      "scope": "First affected-suite run exposed scalar protected-control incompatibility",
+      "status": "failed",
+      "duration_ms": 664,
+      "role": "qualification"
+    },
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest -q unit_tests/test_roadmap_compliance.py unit_tests/test_jsonlfile.py unit_tests/test_jsonldf.py unit_tests/test_lint_integrity.py unit_tests/test_metaslot.py unit_tests/test_metadata_slot_migration.py unit_tests/test_metadata_upkeep.py unit_tests/test_folderdb.py unit_tests/test_durability_atomicity.py unit_tests/test_warning_channels.py unit_tests/test_reports.py",
+      "revision": "working-tree@548a174b959b45b9395d87d5502568834dfc7b64",
+      "scope": "Affected JSONL, DataFrame, control migration, FolderDB, report, and logging coverage after repair",
+      "status": "passed",
+      "duration_ms": 1306,
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": "python3 -m pytest -q unit_tests && test ! -e tests && test -z \"$(git diff --name-only 548a174b959b45b9395d87d5502568834dfc7b64 -- .specdev/project_notes/roadmap/designs)\" && test -z \"$(git status --porcelain --untracked-files=all -- .specdev/project_notes/roadmap/designs)\" && python3 -c 'from pathlib import Path; import subprocess; rev=\"548a174b959b45b9395d87d5502568834dfc7b64\"; names=[\"test_folderdb.py\",\"test_jsonldf.py\",\"test_jsonlfile.py\"]; assert all(Path(\"unit_tests\",name).read_bytes()==subprocess.check_output([\"git\",\"show\",f\"{rev}:tests/legacy/{name}\"]) for name in names)' && python3 -c 'from pathlib import Path; caps={\"jsonldb/metaslot.py\":250,\"jsonldb/jsonlfile.py\":950,\"jsonldb/reports.py\":150,\"jsonldb/folderdb.py\":1250,\"jsonldb/jsonldf.py\":150,\"jsonldb/vercontrol.py\":160,\"jsonldb/visual.py\":500}; counts={p:len(Path(p).read_text(encoding=\"utf-8\").splitlines()) for p in caps}; excess={p:(counts[p],caps[p]) for p in caps if counts[p]>caps[p]}; assert not excess,excess' && python3 -c 'import ast,pathlib; trees={str(p):ast.parse(p.read_text(encoding=\"utf-8\"),feature_version=(3,8)) for p in pathlib.Path(\"jsonldb\").rglob(\"*.py\")}; calls=[(p,n) for p,t in trees.items() for n in ast.walk(t) if isinstance(n,ast.Call)]; bad=[p for p,n in calls if (isinstance(n.func,ast.Name) and n.func.id==\"print\") or (isinstance(n.func,ast.Attribute) and isinstance(n.func.value,ast.Name) and n.func.value.id==\"builtins\" and n.func.attr==\"print\") or (isinstance(n.func,ast.Attribute) and n.func.attr in {\"write\",\"writelines\"} and isinstance(n.func.value,ast.Attribute) and isinstance(n.func.value.value,ast.Name) and n.func.value.value.id==\"sys\" and n.func.value.attr in {\"stdout\",\"stderr\"})]; assert not bad,bad' && python3 -c 'from pathlib import Path; files=list(Path(\".specdev/project_notes/roadmap/designs\").rglob(\"*.md\")); excess={str(p):len(p.read_text(encoding=\"utf-8\").split()) for p in files if len(p.read_text(encoding=\"utf-8\").split())>799}; assert not excess,excess'",
+      "revision": "working-tree@548a174b959b45b9395d87d5502568834dfc7b64",
+      "scope": "Literal host-shell integrated command; collection lacked declared orjson dependency",
+      "status": "failed",
+      "duration_ms": 1351,
+      "role": "qualification"
+    },
+    {
+      "command": ".specdev/cache/bin/python-runtime-env /bin/sh -l; then enter the exact integrated command recorded in the preceding receipt unchanged",
+      "revision": "working-tree@548a174b959b45b9395d87d5502568834dfc7b64",
+      "scope": "AC-1 through AC-4 full suite, sole test layout, immutable designs and baseline tests, seven source caps, Python 3.8 AST, and logging transport",
+      "status": "passed",
+      "duration_ms": 2000,
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest --collect-only -q",
+      "revision": "working-tree@548a174b959b45b9395d87d5502568834dfc7b64",
+      "scope": "Bare pytest configuration discovers the canonical unit_tests suite",
+      "status": "passed",
+      "duration_ms": 579,
+      "role": "qualification"
+    },
+    {
+      "command": "python3 assertions for pyproject testpaths and Forecast/Todo section caps; git diff --check",
+      "revision": "working-tree@548a174b959b45b9395d87d5502568834dfc7b64",
+      "scope": "Canonical pytest path, 199-word Roadmap section limits, and whitespace hygiene",
+      "status": "passed",
+      "duration_ms": 200,
+      "role": "qualification"
+    }
+  ],
+  "deviations": [
+    "The host's default Python 3.14 lacks declared core dependency orjson, so the literal integrated command failed during collection. After the required symptom search found Assignment 00043's verified handoff, the exact command was rerun unchanged inside the repository-local dependency-complete Python 3.12.12 login-shell environment and passed; no dependency or runtime files changed."
+  ],
+  "follow_up": "none",
+  "selected_guide_versions": {
+    "implementation": [
+      {
+        "id": "api-security",
+        "version": "1"
+      }
+    ],
+    "review": []
+  }
+}

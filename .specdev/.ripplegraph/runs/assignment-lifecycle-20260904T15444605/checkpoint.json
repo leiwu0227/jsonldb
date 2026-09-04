@@ -1,0 +1,86 @@
+{
+  "runId": "assignment-lifecycle-20260904T15444605",
+  "status": "completed",
+  "rootGraph": "assignment-lifecycle",
+  "workflow": {
+    "id": "specdev-workspace",
+    "version": "1.0.0"
+  },
+  "position": {
+    "graph": "assignment-lifecycle",
+    "node": "done"
+  },
+  "createdAt": "2026-09-04T15:44:46.058Z",
+  "updatedAt": "2026-09-04T23:55:02.705Z",
+  "outputs": {
+    "create-assignment": {
+      "id": "00044",
+      "name": "00044_fix-the-non-git-non-graph-roadmap-design-complia",
+      "path": ".specdev/assignments/00044_fix-the-non-git-non-graph-roadmap-design-complia",
+      "description": "Fix the non-Git, non-graph roadmap-design compliance gaps in JSONL validation and linting, datetime lookup, DataFrame parity, package exports, canonical tests, and completed-roadmap state",
+      "review_policy": {
+        "brainstorm": "optional",
+        "implementation": "required"
+      }
+    },
+    "brainstorm": {
+      "contract": ".specdev/assignments/00044_fix-the-non-git-non-graph-roadmap-design-complia/brainstorm/contract.md",
+      "contract_hash": "b01d991318488d9327fff08daebc021e77930a79876bbb73354df24cda2ee856"
+    },
+    "approve-contract": {
+      "approved": true,
+      "contract_hash": "b01d991318488d9327fff08daebc021e77930a79876bbb73354df24cda2ee856",
+      "actor": "user",
+      "approved_at": "2026-09-04T23:35:10.654Z",
+      "review_override": false,
+      "review_policy": {
+        "brainstorm": "optional",
+        "implementation": "required"
+      },
+      "revision": "548a174b959b45b9395d87d5502568834dfc7b64"
+    },
+    "design": {
+      "plan": ".specdev/assignments/00044_fix-the-non-git-non-graph-roadmap-design-complia/design/plan.md",
+      "attempt": "inline-foreground"
+    },
+    "implementation": {
+      "progress": ".specdev/assignments/00044_fix-the-non-git-non-graph-roadmap-design-complia/implementation/progress.json",
+      "outcome": ".specdev/assignments/00044_fix-the-non-git-non-graph-roadmap-design-complia/outcome.md",
+      "attempt": "inline-foreground"
+    },
+    "implementation-review": {
+      "approved": true,
+      "verdict": ".specdev/assignments/00044_fix-the-non-git-non-graph-roadmap-design-complia/review/implementation-verdict.md",
+      "attempt": "Attempt-00068",
+      "disposition": "approved"
+    }
+  },
+  "gateDecisions": {
+    "approve-contract": {
+      "approved": true,
+      "contract_hash": "b01d991318488d9327fff08daebc021e77930a79876bbb73354df24cda2ee856",
+      "actor": "user",
+      "approved_at": "2026-09-04T23:35:10.654Z",
+      "review_override": false,
+      "review_policy": {
+        "brainstorm": "optional",
+        "implementation": "required"
+      },
+      "revision": "548a174b959b45b9395d87d5502568834dfc7b64"
+    }
+  },
+  "graphSource": {
+    "kind": "package",
+    "graphId": "assignment-lifecycle",
+    "graphVersion": "2.4.0",
+    "packagePath": "workflows/assignment-lifecycle@2.4.0"
+  },
+  "stack": [],
+  "frameCounter": 0,
+  "finalOutput": {
+    "approved": true,
+    "verdict": ".specdev/assignments/00044_fix-the-non-git-non-graph-roadmap-design-complia/review/implementation-verdict.md",
+    "attempt": "Attempt-00068",
+    "disposition": "approved"
+  }
+}

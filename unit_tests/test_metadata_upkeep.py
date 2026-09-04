@@ -26,9 +26,11 @@ def test_file_and_range_deletion_refresh_metadata(tmp_path):
 
 def test_hierarchical_reopen_detects_child_directory_change(tmp_path):
     save_jsonl(str(tmp_path / "h.meta"), {
-        "use_hierarchy": True,
-        "delimiter": ".",
-        "hierarchy_depth": 1,
+        "hierarchy": {
+            "use_hierarchy": True,
+            "delimiter": ".",
+            "hierarchy_depth": 1,
+        },
     })
     db = FolderDB(str(tmp_path))
     db.upsert_dict("region.first", {"a": {"value": 1}})

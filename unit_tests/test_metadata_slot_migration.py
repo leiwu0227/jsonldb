@@ -22,7 +22,7 @@ def _file_bytes(root):
 def test_enable_resize_and_configured_table_creation(tmp_path, monkeypatch):
     jsonlfile.save_jsonl_atomic(
         str(tmp_path / "config.meta"),
-        {"timespec": "seconds", "consumer_setting": "kept"},
+        {"config": {"timespec": "seconds", "consumer_setting": "kept"}},
     )
     legacy = tmp_path / "legacy.jsonl"
     slotted = tmp_path / "slotted.jsonl"
@@ -45,7 +45,7 @@ def test_enable_resize_and_configured_table_creation(tmp_path, monkeypatch):
     monkeypatch.setattr(jsonlfile.os, "replace", recording_replace)
     db.set_meta_slot_bytes()
 
-    config = jsonlfile.select_jsonl(str(tmp_path / "config.meta"))
+    config = jsonlfile.select_jsonl(str(tmp_path / "config.meta"))["config"]
     assert config == {
         "timespec": "seconds",
         "consumer_setting": "kept",
@@ -161,7 +161,7 @@ def test_table_replace_failure_leaves_whole_files_and_retry_skips_completed(
     assert metaslot.read_slot(str(alpha)) == {"table": "alpha"}
     assert jsonlfile.load_jsonl(str(alpha)) == {"row": {"value": "alpha"}}
     assert list(tmp_path.glob(".beta.jsonl.*.tmp")) == []
-    assert jsonlfile.select_jsonl(str(tmp_path / "config.meta"))[
+    assert jsonlfile.select_jsonl(str(tmp_path / "config.meta"))["config"][
         "meta_slot_bytes"
     ] == 192
 
@@ -205,7 +205,7 @@ def test_config_index_failure_leaves_new_config_and_retry_migrates_tables(
 
     assert table.read_bytes() == old_table
     assert (tmp_path / "config.meta.idx").read_bytes() == old_index
-    assert jsonlfile.load_jsonl(str(tmp_path / "config.meta"))[
+    assert jsonlfile.load_jsonl(str(tmp_path / "config.meta"))["config"][
         "meta_slot_bytes"
     ] == 208
     assert db.meta_slot_bytes == 208

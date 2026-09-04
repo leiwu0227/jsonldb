@@ -1,0 +1,10 @@
+{
+  "id": "00044",
+  "name": "00044_fix-the-non-git-non-graph-roadmap-design-complia",
+  "path": ".specdev/assignments/00044_fix-the-non-git-non-graph-roadmap-design-complia",
+  "description": "Fix the non-Git, non-graph roadmap-design compliance gaps in JSONL validation and linting, datetime lookup, DataFrame parity, package exports, canonical tests, and completed-roadmap state",
+  "review_policy": {
+    "brainstorm": "optional",
+    "implementation": "required"
+  }
+}

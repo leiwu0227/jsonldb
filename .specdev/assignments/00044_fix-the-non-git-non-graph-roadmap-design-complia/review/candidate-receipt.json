@@ -1,0 +1,345 @@
+{
+  "version": 1,
+  "kind": "standalone_assignment_candidate",
+  "completeness": "complete",
+  "identity": "63d85e1459d39944639b9162f2d62023ccacb1f4b40e8ff014d068af58f10dbf",
+  "assignment": {
+    "id": "00044",
+    "folder": "00044_fix-the-non-git-non-graph-roadmap-design-complia"
+  },
+  "implementation_execution": {
+    "version": 1,
+    "configured_mode": "auto",
+    "effective_mode": "inline",
+    "source": "auto-default",
+    "reason": null,
+    "owner": "foreground-agent",
+    "frozen_at": "2026-09-04T23:35:15.840Z"
+  },
+  "contract": {
+    "path": ".specdev/assignments/00044_fix-the-non-git-non-graph-roadmap-design-complia/brainstorm/contract.md",
+    "hash": "b01d991318488d9327fff08daebc021e77930a79876bbb73354df24cda2ee856"
+  },
+  "acceptance": {
+    "total": 4,
+    "items": [
+      {
+        "id": "AC-1",
+        "evidence": "Focused validation/damage regressions and the full 142-test suite prove all three writers reject scalar, list, null, and text records before mutation; load, index, range, and single reads exclude them; forced lint removes them with path-...",
+        "result": "passed"
+      },
+      {
+        "id": "AC-2",
+        "evidence": "Focused regressions prove datetime single/equal-bound lookup under both output modes and standalone repair/removal of representable and too-short malformed slots; the full lint and absolute-offset regressions pass.",
+        "result": "passed"
+      },
+      {
+        "id": "AC-3",
+        "evidence": "Focused and full-suite evidence proves DataFrame trailing positional forwarding and lint results, `metaslot` inventory, optional-import behavior, the sole tracked `unit_tests/` layout, immutable top-level baseline files, and removal of d...",
+        "result": "passed"
+      },
+      {
+        "id": "AC-4",
+        "evidence": "The exact integrated command passed all 142 tests, seven line caps, Python 3.8 parsing, logging transport, design immutability and word caps, and baseline byte checks. Supplemental checks prove bare pytest collection uses `unit_tests/`,...",
+        "result": "passed"
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 4,
+      "failed": 0,
+      "blocked": 0,
+      "missing": 0
+    }
+  },
+  "verification": {
+    "total": 7,
+    "items": [
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest -q unit_tests/test_roadmap_compliance.py",
+        "revision": "working-tree@548a174b959b45b9395d87d5502568834dfc7b64",
+        "scope": "Initial AC-1 through AC-3 focused regressions",
+        "status": "passed",
+        "duration_ms": 786,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest -q unit_tests/test_roadmap_compliance.py unit_tests/test_jsonlfile.py unit_tests/test_jsonldf.py unit_tests/test_lint_integrity.py unit_tests/test_metaslot.py unit_tests/test_metada...",
+        "revision": "working-tree@548a174b959b45b9395d87d5502568834dfc7b64",
+        "scope": "Affected JSONL, DataFrame, control migration, FolderDB, report, and logging coverage after repair",
+        "status": "passed",
+        "duration_ms": 1306,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env /bin/sh -l; then enter the exact integrated command recorded in the preceding receipt unchanged",
+        "revision": "working-tree@548a174b959b45b9395d87d5502568834dfc7b64",
+        "scope": "AC-1 through AC-4 full suite, sole test layout, immutable designs and baseline tests, seven source caps, Python 3.8 AST, and logging transport",
+        "status": "passed",
+        "duration_ms": 2000,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest -q unit_tests/test_roadmap_compliance.py unit_tests/test_jsonlfile.py unit_tests/test_jsonldf.py unit_tests/test_lint_integrity.py unit_tests/test_metaslot.py",
+        "revision": "working-tree@548a174b959b45b9395d87d5502568834dfc7b64",
+        "scope": "First affected-suite run exposed scalar protected-control incompatibility",
+        "status": "failed",
+        "duration_ms": 664,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 0,
+          "failed": 1,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "python3 -m pytest -q unit_tests && test ! -e tests && test -z \"$(git diff --name-only 548a174b959b45b9395d87d5502568834dfc7b64 -- .specdev/project_notes/roadmap/designs)\" && test -z \"$(git status --porcelain --untracked-files=all -- .spe...",
+        "revision": "working-tree@548a174b959b45b9395d87d5502568834dfc7b64",
+        "scope": "Literal host-shell integrated command; collection lacked declared orjson dependency",
+        "status": "failed",
+        "duration_ms": 1351,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 0,
+          "failed": 1,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest --collect-only -q",
+        "revision": "working-tree@548a174b959b45b9395d87d5502568834dfc7b64",
+        "scope": "Bare pytest configuration discovers the canonical unit_tests suite",
+        "status": "passed",
+        "duration_ms": 579,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "python3 assertions for pyproject testpaths and Forecast/Todo section caps; git diff --check",
+        "revision": "working-tree@548a174b959b45b9395d87d5502568834dfc7b64",
+        "scope": "Canonical pytest path, 199-word Roadmap section limits, and whitespace hygiene",
+        "status": "passed",
+        "duration_ms": 200,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 5,
+      "failed": 2,
+      "skipped": 0,
+      "missing": 0
+    },
+    "by_role": {
+      "qualification": {
+        "passed": 2,
+        "failed": 2,
+        "skipped": 0,
+        "missing": 0
+      },
+      "authoritative_acceptance": {
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      }
+    },
+    "raw": {
+      "total": 7,
+      "counts": {
+        "passed": 5,
+        "failed": 2,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 2,
+          "failed": 2,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 3,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "effective": {
+      "total": 7,
+      "counts": {
+        "passed": 5,
+        "failed": 2,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 2,
+          "failed": 2,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 3,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "superseded": 0,
+    "authoritative_evidence": [
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest -q unit_tests/test_roadmap_compliance.py",
+        "revision": "working-tree@548a174b959b45b9395d87d5502568834dfc7b64",
+        "status": "passed"
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest -q unit_tests/test_roadmap_compliance.py unit_tests/test_jsonlfile.py unit_tests/test_jsonldf.py unit_tests/test_lint_integrity.py unit_tests/test_metaslot.py unit_tests/test_metada...",
+        "revision": "working-tree@548a174b959b45b9395d87d5502568834dfc7b64",
+        "status": "passed"
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env /bin/sh -l; then enter the exact integrated command recorded in the preceding receipt unchanged",
+        "revision": "working-tree@548a174b959b45b9395d87d5502568834dfc7b64",
+        "status": "passed"
+      }
+    ],
+    "authoritative_evidence_omitted": 0
+  },
+  "changed_project_paths": {
+    "count": 33,
+    "groups": [
+      {
+        "name": "(root)",
+        "count": 2,
+        "paths": [
+          ".gitignore",
+          "pyproject.toml"
+        ],
+        "omitted": 0
+      },
+      {
+        "name": "jsonldb",
+        "count": 4,
+        "paths": [
+          "jsonldb/__init__.py",
+          "jsonldb/folderdb.py",
+          "jsonldb/jsonldf.py",
+          "jsonldb/jsonlfile.py"
+        ],
+        "omitted": 0
+      },
+      {
+        "name": "tests",
+        "count": 13,
+        "paths": [
+          "tests/legacy/test_folderdb.py",
+          "tests/legacy/test_jsonldf.py",
+          "tests/legacy/test_jsonlfile.py",
+          "tests/test_dependency_runtime_logging.py",
+          "tests/test_durability_atomicity.py"
+        ],
+        "omitted": 8
+      },
+      {
+        "name": "unit_tests",
+        "count": 14,
+        "paths": [
+          "unit_tests/test_dependency_runtime_logging.py"
+        ],
+        "omitted": 13
+      }
+    ],
+    "omitted_groups": 0
+  },
+  "unresolved_risks": {
+    "status": "present",
+    "items": [
+      "The excluded Git snapshot/revert gaps and matching version-control test module",
+      "remain recorded in Forecast. `jsonlfile.py` is exactly at its published",
+      "950-line cap, so future changes there still require line-neutral edits or",
+      "simplification."
+    ],
+    "source": "canonical_section"
+  },
+  "artifacts": {
+    "contract": {
+      "path": ".specdev/assignments/00044_fix-the-non-git-non-graph-roadmap-design-complia/brainstorm/contract.md",
+      "exists": true,
+      "digest": "b01d991318488d9327fff08daebc021e77930a79876bbb73354df24cda2ee856"
+    },
+    "plan": {
+      "path": ".specdev/assignments/00044_fix-the-non-git-non-graph-roadmap-design-complia/design/plan.md",
+      "exists": true,
+      "digest": "38c5ca5539dbb79bb9b632a5309836d56724ebbd2b342f58d4850747ae51e581"
+    },
+    "progress": {
+      "path": ".specdev/assignments/00044_fix-the-non-git-non-graph-roadmap-design-complia/implementation/progress.json",
+      "exists": true,
+      "digest": "736601546fb7fb6a9d3eb6cf407b4bfbdf329a8406c311d5aca907ee33cb1ec9"
+    },
+    "outcome": {
+      "path": ".specdev/assignments/00044_fix-the-non-git-non-graph-roadmap-design-complia/outcome.md",
+      "exists": true,
+      "digest": "34d9c4e04695029614699d8d16111d178c8c670646f32c9fc999ff37be1d932d"
+    }
+  },
+  "issues": [],
+  "issues_omitted": 0
+}

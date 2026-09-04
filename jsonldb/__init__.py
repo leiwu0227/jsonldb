@@ -13,4 +13,4 @@ Example usage:
 from .folderdb import FolderDB
 
 __version__ = "1.0.0"
-__all__ = ["FolderDB", "visual", "vercontrol", "jsonlfile", "jsonldf", "reports"]
+__all__ = ["FolderDB", "visual", "vercontrol", "jsonlfile", "jsonldf", "metaslot", "reports"]
