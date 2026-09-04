@@ -1,0 +1,231 @@
+{
+  "version": 1,
+  "kind": "standalone_assignment_candidate",
+  "completeness": "complete",
+  "identity": "59c4dd9774620c31f462ca9a23c2c49cdad04a4d83523111f1915f4100dbc1a1",
+  "assignment": {
+    "id": "00037",
+    "folder": "00037_make-lint-slot-aware-and-damage-aware-while-pres"
+  },
+  "implementation_execution": {
+    "version": 1,
+    "configured_mode": "spawned",
+    "effective_mode": "spawned",
+    "source": "mission",
+    "reason": "Mission-controlled Assignment execution",
+    "owner": "mission-controller",
+    "frozen_at": "2026-09-04T12:49:41.645Z"
+  },
+  "contract": {
+    "path": ".specdev/assignments/00037_make-lint-slot-aware-and-damage-aware-while-pres/brainstorm/contract.md",
+    "hash": "d926c42dae1b3762af619004c9e878e6a0e68e02351bc3d9d7cd7b48cd837b0a"
+  },
+  "acceptance": {
+    "total": 2,
+    "items": [
+      {
+        "id": "AC-1",
+        "evidence": "Focused legacy/slotted default/forced, slot repair/preservation, damage/newline/dead-space, absolute-index, and data/index publication-failure tests pass within 107 related regressions.",
+        "result": "passed"
+      },
+      {
+        "id": "AC-2",
+        "evidence": "Fast/forced path instrumentation and payload-free removal diagnostics pass; Python 3.8/API, immutable-legacy, diff-hygiene, and seven-file cap audits pass.",
+        "result": "passed"
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 2,
+      "failed": 0,
+      "blocked": 0,
+      "missing": 0
+    }
+  },
+  "verification": {
+    "total": 3,
+    "items": [
+      {
+        "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -m pytest -q tests/test_lint_integrity.py tests/test_lint_compaction.py te...",
+        "revision": "working-tree@78dd06188614bca335e02b12948c9ab057e73197",
+        "scope": "Focused lint acceptance, compaction, metadata-slot/migration, durability, metadata-upkeep, and immutable legacy regressions; 107 passed",
+        "status": "passed",
+        "duration_ms": 1290,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "python3 -m pytest -q tests/test_lint_integrity.py",
+        "revision": "working-tree@78dd06188614bca335e02b12948c9ab057e73197",
+        "scope": "Ambient Python 3.14 environment probe; collection failed because that interpreter lacked the repository dependency orjson, superseded by the existing pinned Python 3.12 runtime",
+        "status": "failed",
+        "duration_ms": 400,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 0,
+          "failed": 1,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -c 'import ast,inspect,os,pathlib,tempfile; files=list(pathlib.Path(\"jsonl...",
+        "revision": "working-tree@78dd06188614bca335e02b12948c9ab057e73197",
+        "scope": "Python 3.8 grammar/API audit, seven-file logical-line inventory (101/950/0/1077/124/128/454), immutable legacy diff, and diff hygiene",
+        "status": "passed",
+        "duration_ms": 170,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 2,
+      "failed": 1,
+      "skipped": 0,
+      "missing": 0
+    },
+    "by_role": {
+      "qualification": {
+        "passed": 1,
+        "failed": 1,
+        "skipped": 0,
+        "missing": 0
+      },
+      "authoritative_acceptance": {
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      }
+    },
+    "raw": {
+      "total": 3,
+      "counts": {
+        "passed": 2,
+        "failed": 1,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 1,
+          "failed": 1,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "effective": {
+      "total": 3,
+      "counts": {
+        "passed": 2,
+        "failed": 1,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 1,
+          "failed": 1,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "superseded": 0,
+    "authoritative_evidence": [
+      {
+        "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -m pytest -q tests/test_lint_integrity.py tests/test_lint_compaction.py te...",
+        "revision": "working-tree@78dd06188614bca335e02b12948c9ab057e73197",
+        "status": "passed"
+      }
+    ],
+    "authoritative_evidence_omitted": 0
+  },
+  "changed_project_paths": {
+    "count": 3,
+    "groups": [
+      {
+        "name": "jsonldb",
+        "count": 2,
+        "paths": [
+          "jsonldb/folderdb.py",
+          "jsonldb/jsonlfile.py"
+        ],
+        "omitted": 0
+      },
+      {
+        "name": "tests",
+        "count": 1,
+        "paths": [
+          "tests/test_lint_integrity.py"
+        ],
+        "omitted": 0
+      }
+    ],
+    "omitted_groups": 0
+  },
+  "unresolved_risks": {
+    "status": "present",
+    "items": [
+      "None within the approved process-crash and fast-path model."
+    ],
+    "source": "canonical_section"
+  },
+  "artifacts": {
+    "contract": {
+      "path": ".specdev/assignments/00037_make-lint-slot-aware-and-damage-aware-while-pres/brainstorm/contract.md",
+      "exists": true,
+      "digest": "d926c42dae1b3762af619004c9e878e6a0e68e02351bc3d9d7cd7b48cd837b0a"
+    },
+    "plan": {
+      "path": ".specdev/assignments/00037_make-lint-slot-aware-and-damage-aware-while-pres/design/plan.md",
+      "exists": true,
+      "digest": "b68c93e2a0b6ef1acb1e0fb1582f46053ffd6b7c89e532cd884545d1bfaa7979"
+    },
+    "progress": {
+      "path": ".specdev/assignments/00037_make-lint-slot-aware-and-damage-aware-while-pres/implementation/progress.json",
+      "exists": true,
+      "digest": "2f64d7b04b25efccb347a73f0df8050945a7d7964ab63969d88952d03d8e90e6"
+    },
+    "outcome": {
+      "path": ".specdev/assignments/00037_make-lint-slot-aware-and-damage-aware-while-pres/outcome.md",
+      "exists": true,
+      "digest": "98c1230e24f7cdf0d1c8dfe6fd0bae38795ac1f208db4d87203f93df17e096e7"
+    }
+  },
+  "issues": [],
+  "issues_omitted": 0
+}

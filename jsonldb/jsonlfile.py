@@ -85,20 +85,8 @@ def _write_index(jsonl_file_path: str, index: IndexDict) -> None:
 # Indexing Functions
 # --------------------------------------------------------
 
-def build_jsonl_index(jsonl_file_path: str) -> None:
-    """
-    Build an index file mapping linekeys to byte locations.
-    
-    Creates a .idx file containing a JSON object mapping each linekey
-    to its byte offset in the JSONL file. The index is sorted by linekey.
-    
-    Args:
-        jsonl_file_path: Path to the JSONL file to index
-        
-    Raises:
-        FileNotFoundError: If the JSONL file doesn't exist
-        OSError: If there are permission issues
-    """
+def build_jsonl_index(jsonl_file_path: str, warn_invalid: bool = True) -> None:
+    """Build a sorted absolute-offset index, optionally warning on bad rows."""
     index_dict: IndexDict = {}
 
     if not os.path.exists(jsonl_file_path):
@@ -132,7 +120,8 @@ def build_jsonl_index(jsonl_file_path: str) -> None:
                         linekey, _ = _parse_row(line)
                         index_dict[linekey] = current_pos
                     except (orjson.JSONDecodeError, ValueError, TypeError):
-                        _warn_invalid_row(jsonl_file_path, current_pos, raw_line)
+                        if warn_invalid:
+                            _warn_invalid_row(jsonl_file_path, current_pos, raw_line)
 
                     current_pos = next_pos
 
@@ -200,131 +189,171 @@ def load_index(jsonl_file_path: str) -> dict:
             return orjson.loads(f.read())
 
 
-def _count_newlines(jsonl_file_path: str) -> int:
-    """Count record and tombstone terminators without parsing JSON lines."""
-    count = 0
-    with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
-        while True:
-            chunk = f.read(BUFFER_SIZE)
-            if not chunk:
-                return count
-            count += chunk.count(b'\n')
+def _lint_counts(jsonl_file_path: str, full: bool):
+    newlines = non_blank = 0
+    if os.path.getsize(jsonl_file_path) == 0:
+        return newlines, non_blank
+    with open(jsonl_file_path, 'rb') as f:
+        if full:
+            with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
+                for line in iter(mm.readline, b''):
+                    newlines += line.count(b'\n')
+                    non_blank += bool(line.strip())
+        else:
+            while True:
+                chunk = f.read(BUFFER_SIZE)
+                if not chunk:
+                    break
+                newlines += chunk.count(b'\n')
+    return newlines, non_blank
+
+
+def _lint_load_index(jsonl_file_path: str):
+    index_path = jsonl_file_path + '.idx'
+    fresh = (os.path.exists(index_path) and os.path.getsize(index_path) > 0
+             and os.path.getmtime(index_path) >= os.path.getmtime(jsonl_file_path))
+    if fresh:
+        try:
+            with open(index_path, 'rb') as f:
+                index = orjson.loads(f.read())
+            if not isinstance(index, dict):
+                raise TypeError("index is not an object")
+            return index, True
+        except (orjson.JSONDecodeError, OSError, TypeError):
+            logger.warning("rebuilt corrupt index %s", index_path)
+    build_jsonl_index(jsonl_file_path, warn_invalid=False)
+    with open(index_path, 'rb') as f:
+        return orjson.loads(f.read()), False
+
+
+def _lint_index_valid(jsonl_file_path: str, index: dict, force: bool) -> bool:
+    keys = sorted(index, key=str)
+    checks = keys if force else (keys[:1] + keys[-1:])
+    try:
+        with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
+            for key in checks:
+                offset = index[key]
+                if type(offset) is not int or offset < 0:
+                    return False
+                f.seek(offset)
+                parsed_key, _ = _parse_row(f.readline().strip())
+                if parsed_key != key:
+                    return False
+    except (orjson.JSONDecodeError, ValueError, TypeError, OSError):
+        return False
+    return True
+
+
+def _lint_removed(jsonl_file_path: str, intervals, size: int) -> None:
+    end = 0
+    for start, stop in sorted(intervals):
+        if start > end:
+            logger.warning("lint removed %d bytes from %s at byte %d",
+                           start - end, jsonl_file_path, end)
+        end = max(end, stop)
+    if end < size:
+        logger.warning("lint removed %d bytes from %s at byte %d",
+                       size - end, jsonl_file_path, end)
+
+
+def _lint_rewrite(jsonl_file_path: str, index: dict, slot: Optional[bytes]) -> None:
+    directory = os.path.dirname(os.path.abspath(jsonl_file_path))
+    fd, tmp_path = tempfile.mkstemp(
+        dir=directory, prefix='.' + os.path.basename(jsonl_file_path) + '.',
+        suffix='.tmp')
+    new_index, kept, offset = {}, [], 0
+    try:
+        with os.fdopen(fd, 'wb', buffering=BUFFER_SIZE) as dst:
+            if slot is not None:
+                dst.write(slot)
+                offset = len(slot)
+            with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as src:
+                for key in sorted(index, key=str):
+                    start = index[key]
+                    src.seek(start)
+                    raw = src.readline()
+                    kept.append((start, start + len(raw)))
+                    line = raw.rstrip(b'\r\n') + b'\n'
+                    new_index[key] = offset
+                    dst.write(line)
+                    offset += len(line)
+        old_size = os.path.getsize(jsonl_file_path)
+        info = metaslot.inspect_file(jsonl_file_path) if old_size else None
+        if info is not None and info.is_slot and slot == info.raw_line:
+            kept.append((0, len(info.raw_line)))
+        os.replace(tmp_path, jsonl_file_path)
+        _lint_removed(jsonl_file_path, kept, old_size)
+        _write_index(jsonl_file_path, new_index)
+    except BaseException:
+        try:
+            os.unlink(tmp_path)
+        except FileNotFoundError:
+            pass
+        raise
 
 
 def _verify_and_compact(jsonl_file_path: str, index_dict: dict) -> bool:
-    """Spot-check, sort-verify, and compact a JSONL file using a pre-loaded index.
+    return _lint_file(jsonl_file_path, index_dict, False, None)
 
-    Args:
-        jsonl_file_path: Path to the JSONL file
-        index_dict: Pre-loaded index dictionary (key -> byte offset)
 
-    Returns:
-        True if file exists and was processed, False if index is empty
-    """
-    if index_dict:
-        keys = list(index_dict.keys())
-        try:
-            with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
-                for check_key in [keys[0], keys[-1]]:
-                    f.seek(index_dict[check_key])
-                    line = f.readline()
-                    data = orjson.loads(line)
-                    parsed_key = next(iter(data))
-                    if parsed_key != check_key:
-                        raise ValueError("key mismatch")
-        except (orjson.JSONDecodeError, ValueError, TypeError, OSError):
-            # Spot-check failed on a parseable-but-wrong index (bad offsets/keys):
-            # load_index only heals empty/unparseable indexes, so force a rebuild
-            # first, then re-read through the single loader.
-            build_jsonl_index(jsonl_file_path)
-            index_dict = load_index(jsonl_file_path)
+def _lint_file(jsonl_file_path: str, index: dict, force: bool,
+               slot_bytes: Optional[int]) -> bool:
+    size = os.path.getsize(jsonl_file_path)
+    info = metaslot.inspect_file(jsonl_file_path) if size else None
+    desired_slot = None
+    if slot_bytes is not None:
+        record = info.record if info is not None and info.is_slot else None
+        desired_slot = metaslot.encode_slot(record, slot_bytes)
+    elif info is not None and info.is_slot:
+        desired_slot = info.raw_line
 
-    if not index_dict:
-        return True
+    if not _lint_index_valid(jsonl_file_path, index, force):
+        build_jsonl_index(jsonl_file_path, warn_invalid=False)
+        index = load_index(jsonl_file_path)
 
-    sorted_keys = sorted(index_dict, key=str)
-    offsets = [index_dict[key] for key in sorted_keys]
-    offsets_strictly_increase = all(
-        offsets[i] < offsets[i + 1] for i in range(len(offsets) - 1)
-    )
-    newline_count = _count_newlines(jsonl_file_path)
+    newlines, non_blank = _lint_counts(jsonl_file_path, force)
+    slot_count = int(info is not None and info.is_slot)
+    if force and non_blank - slot_count != len(index):
+        build_jsonl_index(jsonl_file_path, warn_invalid=False)
+        index = load_index(jsonl_file_path)
 
-    if offsets_strictly_increase and newline_count == len(index_dict):
-        if offsets[0] == 0:
-            with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
-                f.seek(offsets[-1])
-                last_line = f.readline()
-                expected_end = offsets[-1] + len(last_line)
-                actual_size = os.path.getsize(jsonl_file_path)
-                if expected_end == actual_size:
-                    return True
-
-    tmp_path = jsonl_file_path + '.tmp'
-
-    with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as src:
-        with open(tmp_path, 'wb', buffering=BUFFER_SIZE) as dst:
-            for key in sorted_keys:
-                src.seek(index_dict[key])
-                line = src.readline()
-                dst.write(line)
-
-    os.replace(tmp_path, jsonl_file_path)
-    build_jsonl_index(jsonl_file_path)
+    keys = sorted(index, key=str)
+    offsets = [index[key] for key in keys]
+    valid_offsets = all(
+        type(value) is int and 0 <= value < size for value in offsets)
+    if not valid_offsets:
+        build_jsonl_index(jsonl_file_path, warn_invalid=False)
+        index = load_index(jsonl_file_path)
+        keys = sorted(index, key=str)
+        offsets = [index[key] for key in keys]
+    valid_offsets = all(a < b for a, b in zip(offsets, offsets[1:]))
+    start = len(info.raw_line) if info is not None and info.is_slot else 0
+    slot_ok = (slot_bytes is None or (info is not None and info.is_slot
+               and info.raw_line == desired_slot))
+    end_ok = size == start if not offsets else False
+    if offsets and valid_offsets:
+        with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
+            f.seek(offsets[-1])
+            last = f.readline()
+        end_ok = offsets[0] == start and offsets[-1] + len(last) == size \
+            and last.endswith(b'\n')
+    canonical = (slot_ok and valid_offsets and end_ok
+                 and newlines == len(index) + int(desired_slot is not None))
+    if not canonical:
+        _lint_rewrite(jsonl_file_path, index, desired_slot)
     return True
 
-def lint_jsonl(jsonl_file_path: str, force: bool = False) -> bool:
-    """Clean and optimize a JSONL file.
 
-    Uses stream-based approach to avoid loading entire file into memory.
-    Skips rewrite if file is already sorted and compact.
-
-    When force=False (default), skips the expensive mmap line-count scan
-    if the index file is at least as recent as the data file.
-
-    Args:
-        jsonl_file_path: Path to the JSONL file to optimize
-        force: If True, always run full mmap line-count verification
-
-    Returns:
-        bool: True if file exists (whether skipped or linted), False if not found
-    """
+def lint_jsonl(jsonl_file_path: str, force: bool = False,
+               slot_bytes: Optional[int] = None) -> bool:
+    """Restore fidelity and canonical layout with a fresh-index fast path."""
     if not os.path.exists(jsonl_file_path):
         return False
-
-    if os.path.getsize(jsonl_file_path) == 0:
+    if os.path.getsize(jsonl_file_path) == 0 and slot_bytes is None:
         ensure_index_exists(jsonl_file_path)
         return True
-
-    ensure_index_exists(jsonl_file_path)
-
-    index_path = jsonl_file_path + ".idx"
-
-    # Fast path: skip mmap scan when index is fresh
-    if not force:
-        idx_mtime = os.path.getmtime(index_path)
-        data_mtime = os.path.getmtime(jsonl_file_path)
-        if idx_mtime >= data_mtime:
-            index_dict = load_index(jsonl_file_path)
-            return _verify_and_compact(jsonl_file_path, index_dict)
-
-    # Full path: mmap line-count scan
-    with open(jsonl_file_path, 'rb') as f:
-        with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
-            non_blank_count = sum(
-                1 for line in iter(mm.readline, b'')
-                if line.strip()
-            )
-
-    index_dict = load_index(jsonl_file_path)
-
-    if non_blank_count != len(index_dict):
-        # Index cardinality disagrees with the data (orphan/missing lines):
-        # rebuild, then re-read through the single loader.
-        build_jsonl_index(jsonl_file_path)
-        index_dict = load_index(jsonl_file_path)
-
-    return _verify_and_compact(jsonl_file_path, index_dict)
-
+    index, fresh = _lint_load_index(jsonl_file_path)
+    return _lint_file(jsonl_file_path, index, force or not fresh, slot_bytes)
 # --------------------------------------------------------
 # Utility Functions
 # --------------------------------------------------------

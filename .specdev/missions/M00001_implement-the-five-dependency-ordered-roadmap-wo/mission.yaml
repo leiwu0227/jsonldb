@@ -77,11 +77,26 @@ execution_policy:
     bypassed: []
     decisions: []
 last_checkpoint:
-  base_revision: 7b42146e98515d79ede582623b94239d4abda9ea
+  base_revision: 78dd06188614bca335e02b12948c9ab057e73197
   push_requested: false
-  created_at: 2026-09-04T12:44:39.980Z
+  created_at: 2026-09-04T13:04:26.065Z
 updated_at: 2026-09-04T11:39:09.035Z
 gaps:
   version: 1
-  items: []
-  processed_signals: []
+  items:
+    - id: gap-f4323203e2f7d1e0
+      source:
+        kind: child
+        id: "00037"
+        key: child:00037
+      status: open
+      stage: resolution
+      disposition: unresolved
+      assignments: []
+      signals:
+        - child:00037:follow-up
+      created_at: 2026-09-04T13:04:25.973Z
+      updated_at: 2026-09-04T13:04:25.973Z
+      artifact: .specdev/assignments/00037_make-lint-slot-aware-and-damage-aware-while-pres/outcome.md
+  processed_signals:
+    - child:00037:follow-up

@@ -820,7 +820,8 @@ class FolderDB:
         for name in names:
             print(f"Linting file: {name}")
             file_path = self._get_file_path(name)
-            exist_flag = lint_jsonl(file_path, force=force)
+            exist_flag = lint_jsonl(
+                file_path, force=force, slot_bytes=self.meta_slot_bytes)
 
             if not exist_flag:
                 print(f"File {name} no longer exist, deleting metadata.")

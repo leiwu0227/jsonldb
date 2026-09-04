@@ -52,7 +52,13 @@ assignments:
     title: Make lint slot-aware and damage-aware while preserving its fast path
     kind: change
     wave: 4
-    status: pending
+    status: integrated
+    started_at: 2026-09-04T12:44:40.149Z
+    folder: 00037_make-lint-slot-aware-and-damage-aware-while-pres
+    outcome: .specdev/assignments/00037_make-lint-slot-aware-and-damage-aware-while-pres/outcome.md
+    completed_at: 2026-09-04T13:04:25.970Z
+    follow_up: required
+    disposition: completed
   - id: "00038"
     title: Replace runtime prints with logging and add bounded integrity and lint reports
     kind: feature

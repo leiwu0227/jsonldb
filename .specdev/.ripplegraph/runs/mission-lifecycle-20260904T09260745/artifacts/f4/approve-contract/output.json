@@ -1,0 +1,12 @@
+{
+  "approved": true,
+  "contract_hash": "d926c42dae1b3762af619004c9e878e6a0e68e02351bc3d9d7cd7b48cd837b0a",
+  "actor": "mission:M00001",
+  "approved_at": "2026-09-04T12:49:41.580Z",
+  "revision": "78dd06188614bca335e02b12948c9ab057e73197",
+  "review_override": false,
+  "review_policy": {
+    "brainstorm": "required",
+    "implementation": "required"
+  }
+}

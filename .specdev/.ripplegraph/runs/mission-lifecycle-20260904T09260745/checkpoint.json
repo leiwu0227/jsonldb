@@ -11,7 +11,7 @@
     "node": "advance-queue"
   },
   "createdAt": "2026-09-04T09:26:07.455Z",
-  "updatedAt": "2026-09-04T12:44:39.829Z",
+  "updatedAt": "2026-09-04T13:04:25.910Z",
   "outputs": {
     "create-mission": {
       "id": "M00001",
@@ -79,13 +79,13 @@
     },
     "child-assignment": {
       "approved": true,
-      "verdict": ".specdev/assignments/00036_implement-atomic-folder-wide-metadata-slot-width/review/implementation-verdict.md",
-      "attempt": "Attempt-00023",
+      "verdict": ".specdev/assignments/00037_make-lint-slot-aware-and-damage-aware-while-pres/review/implementation-verdict.md",
+      "attempt": "Attempt-00027",
       "disposition": "approved"
     },
     "advance-queue": {
       "remaining": true,
-      "completed": "00035",
+      "completed": "00036",
       "follow_up_required": false,
       "gap_open": false,
       "parallel": false
@@ -171,6 +171,47 @@
       "verdict": ".specdev/assignments/00036_implement-atomic-folder-wide-metadata-slot-width/review/implementation-verdict.md",
       "attempt": "Attempt-00023",
       "disposition": "approved"
+    },
+    "f4/create-assignment": {
+      "id": "00037",
+      "name": "00037_make-lint-slot-aware-and-damage-aware-while-pres",
+      "path": ".specdev/assignments/00037_make-lint-slot-aware-and-damage-aware-while-pres",
+      "description": "Make lint slot-aware and damage-aware while preserving its fast path",
+      "review_policy": {
+        "brainstorm": "required",
+        "implementation": "required"
+      }
+    },
+    "f4/brainstorm": {
+      "contract": ".specdev/assignments/00037_make-lint-slot-aware-and-damage-aware-while-pres/brainstorm/contract.md",
+      "contract_hash": "d926c42dae1b3762af619004c9e878e6a0e68e02351bc3d9d7cd7b48cd837b0a"
+    },
+    "f4/approve-contract": {
+      "approved": true,
+      "contract_hash": "d926c42dae1b3762af619004c9e878e6a0e68e02351bc3d9d7cd7b48cd837b0a",
+      "actor": "mission:M00001",
+      "approved_at": "2026-09-04T12:49:41.580Z",
+      "revision": "78dd06188614bca335e02b12948c9ab057e73197",
+      "review_override": false,
+      "review_policy": {
+        "brainstorm": "required",
+        "implementation": "required"
+      }
+    },
+    "f4/design": {
+      "plan": ".specdev/assignments/00037_make-lint-slot-aware-and-damage-aware-while-pres/design/plan.md",
+      "attempt": "Attempt-00026"
+    },
+    "f4/implementation": {
+      "progress": ".specdev/assignments/00037_make-lint-slot-aware-and-damage-aware-while-pres/implementation/progress.json",
+      "outcome": ".specdev/assignments/00037_make-lint-slot-aware-and-damage-aware-while-pres/outcome.md",
+      "attempt": "Attempt-00026"
+    },
+    "f4/implementation-review": {
+      "approved": true,
+      "verdict": ".specdev/assignments/00037_make-lint-slot-aware-and-damage-aware-while-pres/review/implementation-verdict.md",
+      "attempt": "Attempt-00027",
+      "disposition": "approved"
     }
   },
   "gateDecisions": {
@@ -218,6 +259,18 @@
         "brainstorm": "required",
         "implementation": "required"
       }
+    },
+    "f4/approve-contract": {
+      "approved": true,
+      "contract_hash": "d926c42dae1b3762af619004c9e878e6a0e68e02351bc3d9d7cd7b48cd837b0a",
+      "actor": "mission:M00001",
+      "approved_at": "2026-09-04T12:49:41.580Z",
+      "revision": "78dd06188614bca335e02b12948c9ab057e73197",
+      "review_override": false,
+      "review_policy": {
+        "brainstorm": "required",
+        "implementation": "required"
+      }
     }
   },
   "graphSource": {
@@ -227,5 +280,5 @@
     "packagePath": "workflows/mission-lifecycle@1.5.0"
   },
   "stack": [],
-  "frameCounter": 3
+  "frameCounter": 4
 }
