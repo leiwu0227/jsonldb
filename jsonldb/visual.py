@@ -39,6 +39,28 @@ def _is_datetime_key(key: str) -> bool:
     except ValueError:
         return False
 
+def _filter_by_linekey(items, linekey_getter, start_index=None, end_index=None):
+    """Return items whose linekeys are inside [start_index, end_index)."""
+    filtered = []
+    for item in items:
+        linekey = linekey_getter(item)
+        start = (
+            _parse_linekey(start_index)
+            if isinstance(linekey, datetime) and isinstance(start_index, str)
+            else start_index
+        )
+        end = (
+            _parse_linekey(end_index)
+            if isinstance(linekey, datetime) and isinstance(end_index, str)
+            else end_index
+        )
+        if start is not None and linekey < start:
+            continue
+        if end is not None and linekey >= end:
+            continue
+        filtered.append(item)
+    return filtered
+
 def visualize_jsonl_bokeh(jsonl_path: str) -> figure:
     """
     Create a scatter plot visualization of a JSONL file's linekeys using Bokeh.
@@ -54,17 +76,19 @@ def visualize_jsonl_bokeh(jsonl_path: str) -> figure:
 
     # Convert linekeys to numbers or datetimes
     linekeys = [_parse_linekey(k) for k in index_data.keys()]
-    line_numbers = list(index_data.values())
+    byte_offsets = list(index_data.values())
 
 
     # Determine if linekeys are datetime
-    x_axis_type = "datetime" if isinstance(linekeys[0], datetime) else "linear"
+    x_axis_type = (
+        "datetime" if linekeys and isinstance(linekeys[0], datetime) else "linear"
+    )
 
     # Create the figure
     p = figure(
         title="JSONL Line Keys Distribution",
         x_axis_label="Line Key",
-        y_axis_label="Line Number",
+        y_axis_label="Byte Offset",
         tools="pan,wheel_zoom,box_zoom,reset,save",
         x_axis_type=x_axis_type
     )
@@ -73,7 +97,7 @@ def visualize_jsonl_bokeh(jsonl_path: str) -> figure:
     hover = HoverTool(
         tooltips=[
             ("Line Key", "@x{%F %T}" if x_axis_type == "datetime" else "@x"),
-            ("Line Number", "@y")
+            ("Byte Offset", "@y")
         ],
         formatters={
             '@x': 'datetime' if x_axis_type == "datetime" else 'numeral'
@@ -84,7 +108,7 @@ def visualize_jsonl_bokeh(jsonl_path: str) -> figure:
     # Create the scatter plot
     source = ColumnDataSource(data={
         'x': linekeys,
-        'y': line_numbers
+        'y': byte_offsets
     })
 
     p.scatter('x', 'y', source=source, size=1, alpha=0.6)
@@ -112,37 +136,16 @@ def visualize_jsonl_matplot(jsonl_path: str, start_index=None, end_index=None):
 
     # Convert linekeys to numbers or datetimes
     all_linekeys = [_parse_linekey(k) for k in index_data.keys()]
-    all_line_numbers = list(index_data.values())
+    all_byte_offsets = list(index_data.values())
 
-    # Apply start_index and end_index filtering based on linekey values
-    if start_index is not None or end_index is not None:
-        filtered_data = []
-        for linekey, line_num in zip(all_linekeys, all_line_numbers):
-            include = True
-            if start_index is not None:
-                if isinstance(linekey, datetime) and isinstance(start_index, str):
-                    start_parsed = _parse_linekey(start_index)
-                    include = include and linekey >= start_parsed
-                else:
-                    include = include and linekey >= start_index
-            if end_index is not None:
-                if isinstance(linekey, datetime) and isinstance(end_index, str):
-                    end_parsed = _parse_linekey(end_index)
-                    include = include and linekey < end_parsed
-                else:
-                    include = include and linekey < end_index
-            if include:
-                filtered_data.append((linekey, line_num))
-
-        if filtered_data:
-            linekeys, line_numbers = zip(*filtered_data)
-            linekeys = list(linekeys)
-            line_numbers = list(line_numbers)
-        else:
-            linekeys, line_numbers = [], []
-    else:
-        linekeys = all_linekeys
-        line_numbers = all_line_numbers
+    filtered_data = _filter_by_linekey(
+        zip(all_linekeys, all_byte_offsets),
+        lambda item: item[0],
+        start_index,
+        end_index,
+    )
+    linekeys = [linekey for linekey, _ in filtered_data]
+    byte_offsets = [offset for _, offset in filtered_data]
 
     # Create the figure and axis
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -151,11 +154,11 @@ def visualize_jsonl_matplot(jsonl_path: str, start_index=None, end_index=None):
     is_datetime = len(linekeys) > 0 and isinstance(linekeys[0], datetime)
 
     # Create the scatter plot
-    ax.scatter(linekeys, line_numbers, s=1, alpha=0.6, color='blue')
+    ax.scatter(linekeys, byte_offsets, s=1, alpha=0.6, color='blue')
 
     # Set labels and title
     ax.set_xlabel("Line Key")
-    ax.set_ylabel("Line Number")
+    ax.set_ylabel("Byte Offset")
     ax.set_title("JSONL Line Keys Distribution")
 
     # Format x-axis for datetime if needed
@@ -343,28 +346,12 @@ def visualize_folderdb_matplot(
         # Convert linekeys to numbers or datetimes
         all_linekeys = [_parse_linekey(k) for k in index_data.keys()]
 
-        # Apply start_index and end_index filtering based on linekey values
-        if start_index is not None or end_index is not None:
-            filtered_linekeys = []
-            for linekey in all_linekeys:
-                include = True
-                if start_index is not None:
-                    if isinstance(linekey, datetime) and isinstance(start_index, str):
-                        start_parsed = _parse_linekey(start_index)
-                        include = include and linekey >= start_parsed
-                    else:
-                        include = include and linekey >= start_index
-                if end_index is not None:
-                    if isinstance(linekey, datetime) and isinstance(end_index, str):
-                        end_parsed = _parse_linekey(end_index)
-                        include = include and linekey < end_parsed
-                    else:
-                        include = include and linekey < end_index
-                if include:
-                    filtered_linekeys.append(linekey)
-            linekeys = filtered_linekeys
-        else:
-            linekeys = all_linekeys
+        linekeys = _filter_by_linekey(
+            all_linekeys,
+            lambda linekey: linekey,
+            start_index,
+            end_index,
+        )
 
         # Only plot if we have data after filtering
         if linekeys:
