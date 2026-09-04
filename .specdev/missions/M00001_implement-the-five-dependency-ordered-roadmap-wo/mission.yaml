@@ -1,14 +1,14 @@
 version: 1
 id: M00001
 objective: Implement the five dependency-ordered roadmap work packages in todo.md on master to close all ten forecast gaps, excluding discarded Assignment 00008 and post-fc22cba code
-status: running
+status: completed
 run_id: mission-lifecycle-20260904T09260745
 base_branch: master
 created_revision: d5cd7b1ff3c462897667e5d19d17dfc092a6ecb5
 base_revision: c54d13455e4ee324a67a33a9fd0a1f119bf09a68
 branch: specdev/M00001-implement-the-five-dependency-or
 created_at: 2026-09-04T09:26:07.475Z
-next_action: Mission M00001 is running in the foreground.
+next_action: null
 approved_contract_hash: 7e0824300f897190603ccb138e56aaf5254389c0b40f69967908352465ceac4f
 approved_at: 2026-09-04T11:37:43.027Z
 approval_dirty_paths:
@@ -77,79 +77,30 @@ execution_policy:
     bypassed: []
     decisions: []
 last_checkpoint:
-  base_revision: fc8120da5a9284f230292c2b47318b39c15578e2
+  base_revision: ad02bb2d41365f7acc6af2ee1a64e1b6fbc10020
   push_requested: false
-  created_at: 2026-09-04T15:17:36.249Z
-updated_at: 2026-09-04T11:39:09.035Z
-gaps:
-  version: 1
-  items:
-    - id: gap-f4323203e2f7d1e0
-      source:
-        kind: child
-        id: "00037"
-        key: child:00037
-      status: superseded
-      stage: resolution
-      disposition: evidence-superseded
-      assignments:
-        - id: "00039"
-          stage: resolution
-      signals:
-        - child:00037:follow-up
-      created_at: 2026-09-04T13:04:25.973Z
-      updated_at: 2026-09-04T13:49:27.266Z
-      artifact: .specdev/assignments/00037_make-lint-slot-aware-and-damage-aware-while-pres/outcome.md
-      superseded_by: child:00039:complete
-      superseded_at: 2026-09-04T13:49:27.266Z
-      evidence: .specdev/assignments/00039_make-standalone-lint-converge-when-a-metadata-on/outcome.md
-      closure_authority: "00039"
-    - id: gap-a0276bb3f8ae5eca
-      source:
-        kind: child
-        id: "00038"
-        key: child:00038
-      status: closed
-      stage: arbiter
-      disposition: evidence-closed
-      assignments:
-        - id: "00040"
-          stage: resolution
-        - id: "00041"
-          stage: resolver
-      signals:
-        - child:00038:follow-up
-        - child:00040:follow-up
-        - child:00041:follow-up
-      created_at: 2026-09-04T13:34:17.823Z
-      updated_at: 2026-09-04T14:26:07.308Z
-      artifact: .specdev/assignments/00041_make-dependency-backed-logging-regressions-colle/outcome.md
-      closed_at: 2026-09-04T14:26:07.308Z
-      evidence: .specdev/missions/M00001_implement-the-five-dependency-ordered-roadmap-wo/review/gap-a0276bb3f8ae5eca-arbiter-result.md
-    - id: gap-cdf3d8d11b0a6762
-      source:
-        kind: final-verification
-        id: authorized-command
-        key: final-verification:authorized-command
-      status: validating
-      stage: resolver
-      disposition: unresolved
-      assignments:
-        - id: "00042"
-          stage: resolution
-        - id: "00043"
-          stage: resolver
-      signals:
-        - final-verification:2026-09-04T14:29:33.864Z
-        - final-verification:2026-09-04T14:57:42.193Z
-      created_at: 2026-09-04T14:29:33.865Z
-      updated_at: 2026-09-04T15:17:36.151Z
-      artifact: .specdev/assignments/00043_make-repository-local-python-selection-survive-t/outcome.md
-  processed_signals:
-    - child:00037:follow-up
-    - child:00038:follow-up
-    - child:00040:follow-up
-    - child:00041:follow-up
-    - final-verification:2026-09-04T14:29:33.864Z
-    - final-verification:2026-09-04T14:57:42.193Z
-convergence_disposition: needs_product_change
+  created_at: 2026-09-04T15:22:43.966Z
+updated_at: 2026-09-04T15:18:37.666Z
+convergence_disposition: needs_evidence
+completed_at: 2026-09-04T15:22:26.909Z
+activity:
+  attempt_count: 63
+  orchestration_attempt_count: 3
+  provider_attempt_count: 60
+  provider_attempts:
+    total: 60
+    completed: 58
+    failed: 1
+    blocked: 0
+    interrupted: 0
+    running: 1
+  elapsed_ms: 13483882
+  agent_duration_ms: 14105343
+  provider_reported_tokens: 2007133
+gap_summary:
+  opened: 3
+  closed: 3
+  failed: 0
+  dispositions:
+    evidence-superseded: 1
+    evidence-closed: 2

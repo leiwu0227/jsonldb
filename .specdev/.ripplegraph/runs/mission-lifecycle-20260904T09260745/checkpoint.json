@@ -1,6 +1,6 @@
 {
   "runId": "mission-lifecycle-20260904T09260745",
-  "status": "active",
+  "status": "completed",
   "rootGraph": "mission-lifecycle",
   "workflow": {
     "id": "specdev-workspace",
@@ -8,10 +8,10 @@
   },
   "position": {
     "graph": "mission-lifecycle",
-    "node": "advance-queue"
+    "node": "done"
   },
   "createdAt": "2026-09-04T09:26:07.455Z",
-  "updatedAt": "2026-09-04T15:17:36.077Z",
+  "updatedAt": "2026-09-04T15:22:26.905Z",
   "outputs": {
     "create-mission": {
       "id": "M00001",
@@ -85,7 +85,7 @@
     },
     "advance-queue": {
       "remaining": false,
-      "completed": "00042",
+      "completed": "00043",
       "follow_up_required": false,
       "gap_open": false,
       "parallel": false
@@ -395,14 +395,14 @@
     "mission-review": {
       "approved": true,
       "verdict": ".specdev/missions/M00001_implement-the-five-dependency-ordered-roadmap-wo/review/mission-verdict.md",
-      "attempt": "Attempt-00056",
+      "attempt": "Attempt-00064",
       "disposition": "approved"
     },
     "final-verification": {
-      "passed": false,
+      "passed": true,
       "receipt": ".specdev/missions/M00001_implement-the-five-dependency-ordered-roadmap-wo/review/final-verification.json",
-      "recoverable": true,
-      "disposition": "gap-open"
+      "recoverable": false,
+      "disposition": "evidence-closed"
     },
     "f9/create-assignment": {
       "id": "00042",
@@ -625,5 +625,11 @@
     "packagePath": "workflows/mission-lifecycle@1.5.0"
   },
   "stack": [],
-  "frameCounter": 10
+  "frameCounter": 10,
+  "finalOutput": {
+    "passed": true,
+    "receipt": ".specdev/missions/M00001_implement-the-five-dependency-ordered-roadmap-wo/review/final-verification.json",
+    "recoverable": false,
+    "disposition": "evidence-closed"
+  }
 }

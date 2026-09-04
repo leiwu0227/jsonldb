@@ -1,0 +1,15 @@
+id: Attempt-00063
+kind: mission-controller
+status: completed
+workspace: .
+base_revision: ad02bb2d41365f7acc6af2ee1a64e1b6fbc10020
+started_at: 2026-09-04T15:18:37.665Z
+profile: null
+provider: null
+model: null
+effort: null
+network: false
+result_path: null
+mission: M00001
+ended_at: 2026-09-04T15:22:26.960Z
+duration_ms: 229295
