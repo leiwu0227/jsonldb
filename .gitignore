@@ -28,7 +28,8 @@ env/
 # Local dev / tooling
 .prodinclude
 .journal/
-profile_test/
+profile_test/*
+!profile_test/benchmark.py
 unit_tests/
 
 # Agent / assistant config
