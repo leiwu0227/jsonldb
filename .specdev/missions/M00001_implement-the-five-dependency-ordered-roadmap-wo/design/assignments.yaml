@@ -41,7 +41,13 @@ assignments:
     title: Implement atomic folder-wide metadata-slot width migration
     kind: feature
     wave: 3
-    status: pending
+    status: integrated
+    started_at: 2026-09-04T12:27:39.659Z
+    folder: 00036_implement-atomic-folder-wide-metadata-slot-width
+    outcome: .specdev/assignments/00036_implement-atomic-folder-wide-metadata-slot-width/outcome.md
+    completed_at: 2026-09-04T12:44:39.888Z
+    follow_up: none
+    disposition: completed
   - id: "00037"
     title: Make lint slot-aware and damage-aware while preserving its fast path
     kind: change

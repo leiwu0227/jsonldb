@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "id": "00036",
+  "kind": "feature",
+  "description": "Implement atomic folder-wide metadata-slot width migration",
+  "run_id": "mission-lifecycle-20260904T09260745",
+  "created_at": "2026-09-04T12:27:39.662Z",
+  "review_policy": {
+    "brainstorm": "required",
+    "implementation": "required"
+  },
+  "mission": "M00001",
+  "updated_at": "2026-09-04T12:44:39.830Z",
+  "review_policy_frozen_at": "2026-09-04T12:32:44.009Z",
+  "implementation_execution": {
+    "version": 1,
+    "configured_mode": "spawned",
+    "effective_mode": "spawned",
+    "source": "mission",
+    "reason": "Mission-controlled Assignment execution",
+    "owner": "mission-controller",
+    "frozen_at": "2026-09-04T12:32:44.067Z"
+  },
+  "status": "completed",
+  "completed_at": "2026-09-04T12:44:39.830Z"
+}

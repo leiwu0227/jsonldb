@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "T-1",
+      "status": "completed"
+    },
+    {
+      "id": "T-2",
+      "status": "completed"
+    },
+    {
+      "id": "T-3",
+      "status": "completed"
+    },
+    {
+      "id": "T-4",
+      "status": "completed"
+    }
+  ],
+  "selected_guides": {
+    "implementation": [
+      "api-security"
+    ],
+    "review": []
+  },
+  "verification": [
+    {
+      "command": "/usr/bin/time -p python3 -m pytest -q tests/test_metadata_slot_migration.py",
+      "revision": "working-tree@7b42146e98515d79ede582623b94239d4abda9ea",
+      "scope": "Ambient Python 3.14 environment probe; collection skipped because repository dependency orjson was not installed for that interpreter",
+      "status": "skipped",
+      "duration_ms": 170,
+      "role": "qualification"
+    },
+    {
+      "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -m pytest -q tests/test_metadata_slot_migration.py tests/test_metadata_slots.py tests/test_durability_atomicity.py tests/test_metadata_upkeep.py tests/legacy/test_jsonlfile.py tests/legacy/test_jsonldf.py tests/legacy/test_folderdb.py",
+      "revision": "working-tree@7b42146e98515d79ede582623b94239d4abda9ea",
+      "scope": "Focused migration, metadata-slot, durability, metadata-upkeep, and immutable legacy regressions; 93 passed",
+      "status": "passed",
+      "duration_ms": 1230,
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -c 'import ast,inspect,os,pathlib,tempfile; files=list(pathlib.Path(\"jsonldb\").rglob(\"*.py\")); [ast.parse(p.read_text(encoding=\"utf-8\"),filename=str(p),feature_version=(3,8)) for p in files]; caps={\"jsonldb/metaslot.py\":250,\"jsonldb/jsonlfile.py\":950,\"jsonldb/reports.py\":150,\"jsonldb/folderdb.py\":1250,\"jsonldb/jsonldf.py\":150,\"jsonldb/vercontrol.py\":160,\"jsonldb/visual.py\":500}; counts={p:(len(pathlib.Path(p).read_text(encoding=\"utf-8\").splitlines()) if pathlib.Path(p).exists() else 0) for p in caps}; excess={p:(counts[p],caps[p]) for p in caps if counts[p]>caps[p]}; assert not excess,excess; assert hasattr(os,\"replace\") and hasattr(os,\"fdopen\") and hasattr(tempfile,\"mkstemp\"); from jsonldb.folderdb import FolderDB; from jsonldb.jsonldf import save_jsonldf; assert inspect.signature(FolderDB.set_meta_slot_bytes).parameters[\"width\"].default == 4096; assert \"slot_bytes\" in inspect.signature(save_jsonldf).parameters; print(\"python3.8-compatible\",len(files),counts)' && git diff --exit-code HEAD -- tests/legacy",
+      "revision": "working-tree@7b42146e98515d79ede582623b94239d4abda9ea",
+      "scope": "Python 3.8 grammar and added API-floor audit, seven-file logical-line caps (101/921/0/1076/124/128/454), public default/signature check, and immutable legacy diff",
+      "status": "passed",
+      "duration_ms": 170,
+      "role": "qualification"
+    }
+  ],
+  "deviations": [],
+  "follow_up": "none",
+  "selected_guide_versions": {
+    "implementation": [
+      {
+        "id": "api-security",
+        "version": "1"
+      }
+    ],
+    "review": []
+  }
+}

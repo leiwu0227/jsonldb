@@ -77,11 +77,15 @@ class FolderDB:
                 self.hierarchy_depth = hierarchy_depth
                 self.lint_hierarchy(hierarchy_depth)
 
-        # Timespec is per-instance state; never mutate the module global.
-        # config.meta stores {"timespec": value} as a flat JSONL record.
+        # Configuration is per-instance state; never mutate module globals.
+        # Retain unknown settings when rewriting the protected control file.
         self.timespec = jsonlfile.TIME_SPEC
+        self.meta_slot_bytes = None
+        self._config_meta = {}
         if os.path.exists(self.configmeta_path):
             config_meta = select_jsonl(self.configmeta_path)
+            self._config_meta = dict(config_meta)
+            self.meta_slot_bytes = config_meta.get("meta_slot_bytes")
             if config_meta.get("timespec"):
                 self.timespec = config_meta["timespec"]
             else:
@@ -142,10 +146,14 @@ class FolderDB:
         """
         Save the folder information to a file.
         """
-        config_info = {
-            "timespec": self.timespec
-        }
+        config_info = dict(self._config_meta)
+        config_info["timespec"] = self.timespec
+        if self.meta_slot_bytes is None:
+            config_info.pop("meta_slot_bytes", None)
+        else:
+            config_info["meta_slot_bytes"] = self.meta_slot_bytes
         save_jsonl_atomic(self.configmeta_path, config_info)
+        self._config_meta = config_info
 
     def _detect_data_timespec(self) -> Optional[str]:
         """Stage 1 trigger: candidate precision from db.meta boundary keys.
@@ -355,7 +363,10 @@ class FolderDB:
     def overwrite_df(self, name: str, df: pd.DataFrame,
                      meta: Optional[dict] = None) -> None:
         file_path = self._get_or_create_file_path(name)
-        save_jsonldf(file_path, df, self.timespec, meta=meta)
+        save_jsonldf(
+            file_path, df, self.timespec, meta=meta,
+            slot_bytes=self.meta_slot_bytes,
+        )
         self.update_dbmeta(self._get_file_name(name))
 
     def overwrite_dfs(self, dict_dfs: Dict[Any, pd.DataFrame]) -> None:
@@ -381,7 +392,10 @@ class FolderDB:
         if os.path.exists(file_path):
             update_jsonldf(file_path, df, self.timespec, meta=meta)
         else:
-            save_jsonldf(file_path, df, self.timespec, meta=meta)
+            save_jsonldf(
+                file_path, df, self.timespec, meta=meta,
+                slot_bytes=self.meta_slot_bytes,
+            )
         
         self.update_dbmeta(self._get_file_name(name))
 
@@ -449,7 +463,10 @@ class FolderDB:
                        data_dict: Dict[Any, Dict[str, Any]],
                        meta: Optional[dict] = None) -> None:
         file_path = self._get_or_create_file_path(name)
-        save_jsonl(file_path, data_dict, self.timespec, meta=meta)
+        save_jsonl(
+            file_path, data_dict, self.timespec, meta=meta,
+            slot_bytes=self.meta_slot_bytes,
+        )
         self.update_dbmeta(self._get_file_name(name))
 
     def overwrite_dicts(self, dict_dicts: Dict[Any, Dict[str, Dict[str, Any]]]) -> None:
@@ -476,7 +493,10 @@ class FolderDB:
         if os.path.exists(file_path):
             update_jsonl(file_path, data_dict, self.timespec, meta=meta)
         else:
-            save_jsonl(file_path, data_dict, self.timespec, meta=meta)
+            save_jsonl(
+                file_path, data_dict, self.timespec, meta=meta,
+                slot_bytes=self.meta_slot_bytes,
+            )
 
         self.update_dbmeta(self._get_file_name(name))
 
@@ -631,6 +651,38 @@ class FolderDB:
             self.delete_file_range(name, lower_key, upper_key)
 
     # =============== Metadata Management ===============
+    def set_meta_slot_bytes(self, width: int = 4096) -> None:
+        """Enable or resize metadata slots across every table in the folder."""
+        jsonlfile.metaslot.encode_slot(None, width)
+        tables = []
+        blockers = []
+        for name in sorted(self.get_file_list()):
+            file_path = self._get_file_path(name)
+            info = jsonlfile.metaslot.inspect_file(file_path)
+            tables.append((name, file_path, info))
+            if info.is_slot:
+                try:
+                    jsonlfile.metaslot.encode_slot(info.record, width)
+                except (TypeError, ValueError):
+                    blockers.append(name)
+
+        if blockers:
+            raise ValueError(
+                "metadata records do not fit in %d bytes: %s"
+                % (width, ", ".join(blockers))
+            )
+
+        self.meta_slot_bytes = width
+        try:
+            self.build_configmeta()
+        except BaseException:
+            config_meta = load_jsonl(self.configmeta_path)
+            self._config_meta = dict(config_meta)
+            self.meta_slot_bytes = config_meta.get("meta_slot_bytes")
+            raise
+        for _, file_path, _ in tables:
+            jsonlfile.migrate_jsonl_slot(file_path, width)
+
     def read_meta(self, name: str):
         """Return one table's metadata record, or ``None`` when unavailable."""
         file_path = self._get_file_path(name)

@@ -11,7 +11,7 @@
     "node": "advance-queue"
   },
   "createdAt": "2026-09-04T09:26:07.455Z",
-  "updatedAt": "2026-09-04T12:27:39.372Z",
+  "updatedAt": "2026-09-04T12:44:39.829Z",
   "outputs": {
     "create-mission": {
       "id": "M00001",
@@ -79,13 +79,13 @@
     },
     "child-assignment": {
       "approved": true,
-      "verdict": ".specdev/assignments/00035_implement-metadata-slots-and-the-folderdb-metada/review/implementation-verdict.md",
-      "attempt": "Attempt-00019",
+      "verdict": ".specdev/assignments/00036_implement-atomic-folder-wide-metadata-slot-width/review/implementation-verdict.md",
+      "attempt": "Attempt-00023",
       "disposition": "approved"
     },
     "advance-queue": {
       "remaining": true,
-      "completed": "00034",
+      "completed": "00035",
       "follow_up_required": false,
       "gap_open": false,
       "parallel": false
@@ -130,6 +130,47 @@
       "verdict": ".specdev/assignments/00035_implement-metadata-slots-and-the-folderdb-metada/review/implementation-verdict.md",
       "attempt": "Attempt-00019",
       "disposition": "approved"
+    },
+    "f3/create-assignment": {
+      "id": "00036",
+      "name": "00036_implement-atomic-folder-wide-metadata-slot-width",
+      "path": ".specdev/assignments/00036_implement-atomic-folder-wide-metadata-slot-width",
+      "description": "Implement atomic folder-wide metadata-slot width migration",
+      "review_policy": {
+        "brainstorm": "required",
+        "implementation": "required"
+      }
+    },
+    "f3/brainstorm": {
+      "contract": ".specdev/assignments/00036_implement-atomic-folder-wide-metadata-slot-width/brainstorm/contract.md",
+      "contract_hash": "76ff9053f9ba63e32aec509a386a9ca097f3707433fc4f45a850925c381a4866"
+    },
+    "f3/approve-contract": {
+      "approved": true,
+      "contract_hash": "76ff9053f9ba63e32aec509a386a9ca097f3707433fc4f45a850925c381a4866",
+      "actor": "mission:M00001",
+      "approved_at": "2026-09-04T12:32:44.009Z",
+      "revision": "7b42146e98515d79ede582623b94239d4abda9ea",
+      "review_override": false,
+      "review_policy": {
+        "brainstorm": "required",
+        "implementation": "required"
+      }
+    },
+    "f3/design": {
+      "plan": ".specdev/assignments/00036_implement-atomic-folder-wide-metadata-slot-width/design/plan.md",
+      "attempt": "Attempt-00022"
+    },
+    "f3/implementation": {
+      "progress": ".specdev/assignments/00036_implement-atomic-folder-wide-metadata-slot-width/implementation/progress.json",
+      "outcome": ".specdev/assignments/00036_implement-atomic-folder-wide-metadata-slot-width/outcome.md",
+      "attempt": "Attempt-00022"
+    },
+    "f3/implementation-review": {
+      "approved": true,
+      "verdict": ".specdev/assignments/00036_implement-atomic-folder-wide-metadata-slot-width/review/implementation-verdict.md",
+      "attempt": "Attempt-00023",
+      "disposition": "approved"
     }
   },
   "gateDecisions": {
@@ -165,6 +206,18 @@
         "brainstorm": "required",
         "implementation": "required"
       }
+    },
+    "f3/approve-contract": {
+      "approved": true,
+      "contract_hash": "76ff9053f9ba63e32aec509a386a9ca097f3707433fc4f45a850925c381a4866",
+      "actor": "mission:M00001",
+      "approved_at": "2026-09-04T12:32:44.009Z",
+      "revision": "7b42146e98515d79ede582623b94239d4abda9ea",
+      "review_override": false,
+      "review_policy": {
+        "brainstorm": "required",
+        "implementation": "required"
+      }
     }
   },
   "graphSource": {
@@ -174,5 +227,5 @@
     "packagePath": "workflows/mission-lifecycle@1.5.0"
   },
   "stack": [],
-  "frameCounter": 2
+  "frameCounter": 3
 }

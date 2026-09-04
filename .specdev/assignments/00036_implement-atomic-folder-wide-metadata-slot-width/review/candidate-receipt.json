@@ -1,0 +1,238 @@
+{
+  "version": 1,
+  "kind": "standalone_assignment_candidate",
+  "completeness": "complete",
+  "identity": "40d8cbd691ae1906e411653c69d9deda56c45f9e880cc6d70fe68f2bfc22be64",
+  "assignment": {
+    "id": "00036",
+    "folder": "00036_implement-atomic-folder-wide-metadata-slot-width"
+  },
+  "implementation_execution": {
+    "version": 1,
+    "configured_mode": "spawned",
+    "effective_mode": "spawned",
+    "source": "mission",
+    "reason": "Mission-controlled Assignment execution",
+    "owner": "mission-controller",
+    "frozen_at": "2026-09-04T12:32:44.067Z"
+  },
+  "contract": {
+    "path": ".specdev/assignments/00036_implement-atomic-folder-wide-metadata-slot-width/brainstorm/contract.md",
+    "hash": "76ff9053f9ba63e32aec509a386a9ca097f3707433fc4f45a850925c381a4866"
+  },
+  "acceptance": {
+    "total": 3,
+    "items": [
+      {
+        "id": "AC-1",
+        "evidence": "Focused enablement, safe-resize, byte-preservation, absolute-index, configured-creation, reopen, and no-op tests pass; the default/signature and line-cap audits pass.",
+        "result": "passed"
+      },
+      {
+        "id": "AC-2",
+        "evidence": "Focused shrink preflight names all blockers in deterministic order and proves the complete folder remains byte-for-byte unchanged.",
+        "result": "passed"
+      },
+      {
+        "id": "AC-3",
+        "evidence": "Injected configuration/table data and index publication failures leave complete old/new files; focused retries preserve rows and metadata, repair indexes, and skip conforming table replacement.",
+        "result": "passed"
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 3,
+      "failed": 0,
+      "blocked": 0,
+      "missing": 0
+    }
+  },
+  "verification": {
+    "total": 3,
+    "items": [
+      {
+        "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -m pytest -q tests/test_metadata_slot_migration.py tests/test_metadata_slo...",
+        "revision": "working-tree@7b42146e98515d79ede582623b94239d4abda9ea",
+        "scope": "Focused migration, metadata-slot, durability, metadata-upkeep, and immutable legacy regressions; 93 passed",
+        "status": "passed",
+        "duration_ms": 1230,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "/usr/bin/time -p python3 -m pytest -q tests/test_metadata_slot_migration.py",
+        "revision": "working-tree@7b42146e98515d79ede582623b94239d4abda9ea",
+        "scope": "Ambient Python 3.14 environment probe; collection skipped because repository dependency orjson was not installed for that interpreter",
+        "status": "skipped",
+        "duration_ms": 170,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 0,
+          "failed": 0,
+          "skipped": 1,
+          "missing": 0
+        }
+      },
+      {
+        "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -c 'import ast,inspect,os,pathlib,tempfile; files=list(pathlib.Path(\"jsonl...",
+        "revision": "working-tree@7b42146e98515d79ede582623b94239d4abda9ea",
+        "scope": "Python 3.8 grammar and added API-floor audit, seven-file logical-line caps (101/921/0/1076/124/128/454), public default/signature check, and immutable legacy diff",
+        "status": "passed",
+        "duration_ms": 170,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 2,
+      "failed": 0,
+      "skipped": 1,
+      "missing": 0
+    },
+    "by_role": {
+      "qualification": {
+        "passed": 1,
+        "failed": 0,
+        "skipped": 1,
+        "missing": 0
+      },
+      "authoritative_acceptance": {
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      }
+    },
+    "raw": {
+      "total": 3,
+      "counts": {
+        "passed": 2,
+        "failed": 0,
+        "skipped": 1,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 1,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "effective": {
+      "total": 3,
+      "counts": {
+        "passed": 2,
+        "failed": 0,
+        "skipped": 1,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 1,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "superseded": 0,
+    "authoritative_evidence": [
+      {
+        "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -m pytest -q tests/test_metadata_slot_migration.py tests/test_metadata_slo...",
+        "revision": "working-tree@7b42146e98515d79ede582623b94239d4abda9ea",
+        "status": "passed"
+      }
+    ],
+    "authoritative_evidence_omitted": 0
+  },
+  "changed_project_paths": {
+    "count": 4,
+    "groups": [
+      {
+        "name": "jsonldb",
+        "count": 3,
+        "paths": [
+          "jsonldb/folderdb.py",
+          "jsonldb/jsonldf.py",
+          "jsonldb/jsonlfile.py"
+        ],
+        "omitted": 0
+      },
+      {
+        "name": "tests",
+        "count": 1,
+        "paths": [
+          "tests/test_metadata_slot_migration.py"
+        ],
+        "omitted": 0
+      }
+    ],
+    "omitted_groups": 0
+  },
+  "unresolved_risks": {
+    "status": "present",
+    "items": [
+      "None within the approved process-crash model; locking, fsync, and stronger",
+      "power-loss guarantees remain out of scope."
+    ],
+    "source": "canonical_section"
+  },
+  "artifacts": {
+    "contract": {
+      "path": ".specdev/assignments/00036_implement-atomic-folder-wide-metadata-slot-width/brainstorm/contract.md",
+      "exists": true,
+      "digest": "76ff9053f9ba63e32aec509a386a9ca097f3707433fc4f45a850925c381a4866"
+    },
+    "plan": {
+      "path": ".specdev/assignments/00036_implement-atomic-folder-wide-metadata-slot-width/design/plan.md",
+      "exists": true,
+      "digest": "ae5d433a6597a2a00a6101d1c721ab65b6e3f635efaf4431db2520e76dbdce44"
+    },
+    "progress": {
+      "path": ".specdev/assignments/00036_implement-atomic-folder-wide-metadata-slot-width/implementation/progress.json",
+      "exists": true,
+      "digest": "009faa5c0defd4e208d3d18db2a4e5c92ba3d8e96691fad51e3f26e2cab1126c"
+    },
+    "outcome": {
+      "path": ".specdev/assignments/00036_implement-atomic-folder-wide-metadata-slot-width/outcome.md",
+      "exists": true,
+      "digest": "e1238bae147951e06b8288128b6d9d657ebb57a45d6f97e5438352cf0343858e"
+    }
+  },
+  "issues": [],
+  "issues_omitted": 0
+}

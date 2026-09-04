@@ -542,6 +542,45 @@ def save_jsonl_atomic(jsonl_file_path: str, db_dict: DataDict,
             ) from e
         raise
 
+
+def migrate_jsonl_slot(jsonl_file_path: str, slot_bytes: int) -> bool:
+    """Atomically give one table ``slot_bytes`` while preserving its contents.
+
+    The table is replaced before its derived index. A retry rebuilds the index
+    even when the table already has the target width, which repairs an
+    interruption between those two publication boundaries without rewriting
+    the conforming table.
+    """
+    info = metaslot.inspect_file(jsonl_file_path)
+    slot = metaslot.encode_slot(info.record if info.is_slot else None, slot_bytes)
+    if info.is_slot and info.width == slot_bytes:
+        build_jsonl_index(jsonl_file_path)
+        return False
+
+    directory = os.path.dirname(os.path.abspath(jsonl_file_path))
+    prefix = "." + os.path.basename(jsonl_file_path) + "."
+    fd, tmp_path = tempfile.mkstemp(dir=directory, prefix=prefix, suffix=".tmp")
+    try:
+        with os.fdopen(fd, 'wb', buffering=BUFFER_SIZE) as dst:
+            dst.write(slot)
+            with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as src:
+                if info.is_slot:
+                    src.readline()
+                while True:
+                    chunk = src.read(BUFFER_SIZE)
+                    if not chunk:
+                        break
+                    dst.write(chunk)
+        os.replace(tmp_path, jsonl_file_path)
+        build_jsonl_index(jsonl_file_path)
+        return True
+    except BaseException:
+        try:
+            os.unlink(tmp_path)
+        except FileNotFoundError:
+            pass
+        raise
+
 def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True, timespec: Optional[str] = None) -> DataDict:
     """
     Load a JSONL file into a dictionary.

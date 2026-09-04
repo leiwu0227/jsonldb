@@ -9,7 +9,8 @@ from jsonldb.jsonlfile import save_jsonl, load_jsonl, select_jsonl, update_jsonl
 
 def save_jsonldf(jsonl_file_path: str, df: pd.DataFrame,
                  timespec: Optional[str] = None,
-                 meta: Optional[dict] = None) -> None:
+                 meta: Optional[dict] = None,
+                 slot_bytes: Optional[int] = None) -> None:
     """Convert DataFrame to JSONL format and save it using index as keys.
     
     Args:
@@ -26,7 +27,10 @@ def save_jsonldf(jsonl_file_path: str, df: pd.DataFrame,
     records_dict = df.to_dict('index')
     
     # Save to JSONL
-    save_jsonl(jsonl_file_path, records_dict, timespec, meta=meta)
+    save_jsonl(
+        jsonl_file_path, records_dict, timespec, meta=meta,
+        slot_bytes=slot_bytes,
+    )
 
 def load_jsonldf(jsonl_file_path: str, timespec: Optional[str] = None) -> pd.DataFrame:
     """Load JSONL file into a DataFrame using line keys as index.
