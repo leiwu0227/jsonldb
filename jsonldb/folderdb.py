@@ -6,15 +6,15 @@ Each table is stored in a separate JSONL file.
 import os
 import logging
 import pandas as pd
-from typing import Dict, List, Union, Optional, Any
+from typing import Dict, List, Optional, Any
 from datetime import datetime
 from jsonldb.jsonlfile import (
     save_jsonl, load_jsonl, select_jsonl, update_jsonl, delete_jsonl,
-    lint_jsonl, build_jsonl_index, select_line_jsonl, serialize_linekey,
+    lint_jsonl, build_jsonl_index, serialize_linekey,
     detect_timespec
 )
 from jsonldb.jsonldf import (
-    save_jsonldf, load_jsonldf, update_jsonldf, select_jsonldf, delete_jsonldf
+    save_jsonldf, update_jsonldf, select_jsonldf
 )
 import jsonldb.jsonlfile as jsonlfile
 
@@ -31,7 +31,7 @@ class FolderDB:
     """
     
     # =============== Core/Initialization ===============
-    def __init__(self, folder_path: str,hierarchy_depth: int = None):
+    def __init__(self, folder_path: str, hierarchy_depth: int = None):
         """
         Initialize the database.
         
@@ -123,12 +123,12 @@ class FolderDB:
         Save the folder information to a file.
         """
         if self.use_hierarchy:
-            hierachy_info= {
+            hierarchy_info = {
                 "use_hierarchy": self.use_hierarchy,
                 "delimiter": self.delimiter,
                 "hierarchy_depth": self.hierarchy_depth
             }
-            save_jsonl(self.hmeta_path, hierachy_info)
+            save_jsonl(self.hmeta_path, hierarchy_info)
 
 
     def build_configmeta(self) -> None:
@@ -389,7 +389,13 @@ class FolderDB:
         for name, df in dict_dfs.items():
             self.upsert_df(name, df)
 
-    def get_df(self, names: List[str]=None, lower_key: Optional[Any] = None, upper_key: Optional[Any] = None,auto_deserialize: bool = True) -> Dict[str, pd.DataFrame]:
+    def get_df(
+        self,
+        names: List[str] = None,
+        lower_key: Optional[Any] = None,
+        upper_key: Optional[Any] = None,
+        auto_deserialize: bool = True,
+    ) -> Dict[str, pd.DataFrame]:
         """
         Get DataFrames from multiple JSONL files within a key range.
         
@@ -459,7 +465,13 @@ class FolderDB:
         for name, data_dict in dict_dicts.items():
             self.upsert_dict(name, data_dict)
 
-    def get_dict(self, names: List[str]=None, lower_key: Optional[Any] = None, upper_key: Optional[Any] = None,auto_deserialize: bool = True) -> Dict[str, Dict[str, Dict[str, Any]]]:
+    def get_dict(
+        self,
+        names: List[str] = None,
+        lower_key: Optional[Any] = None,
+        upper_key: Optional[Any] = None,
+        auto_deserialize: bool = True,
+    ) -> Dict[str, Dict[str, Dict[str, Any]]]:
         """
         Get dictionaries from multiple JSONL files within a key range.
         
@@ -486,7 +498,7 @@ class FolderDB:
         return result
 
     # =============== Delete Operations ===============
-    def clear_folder(self,force=False) -> None:
+    def clear_folder(self, force: bool = False) -> None:
         """
         Clear all JSONL files in the database folder.
         """
@@ -651,7 +663,7 @@ class FolderDB:
             self.build_dbmeta()
         return load_jsonl(self.dbmeta_path)
     
-    def delete_dbmeta(self,name: str) -> None:
+    def delete_dbmeta(self, name: str) -> None:
         """
         Delete the metadata for a specific JSONL file in db.meta.
         """
@@ -717,12 +729,12 @@ class FolderDB:
             lint_jsonl(self.hmeta_path, force=force)
             self.delete_empty_folders()
 
-    def lint_hierarchy(self, hierarchy_depth:int) -> None:
+    def lint_hierarchy(self, hierarchy_depth: int) -> None:
         """
         Reorganize JSONL files according to hierarchy levels and move invalid files to .invalid_tickers.
         
         Args:
-            hierarchy_level: Target hierarchy level. If None, uses value from h.meta or defaults to 1
+            hierarchy_depth: Target hierarchy depth
         """
 
         if hierarchy_depth < 1:

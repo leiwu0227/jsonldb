@@ -5,7 +5,6 @@ Version control functions for JSONLDB using Git.
 import os
 from typing import Dict
 import git
-from jsonldb.jsonlfile import lint_jsonl
 from datetime import datetime
 import warnings
 
@@ -126,4 +125,4 @@ def revert(folder_path: str, version_hash: str) -> None:
         print(f"Reverted to commit {full_hash}")
         
     except git.exc.GitCommandError as e:
-        raise git.exc.GitCommandError(f"Failed to revert to version {version_hash}: {str(e)}") 
+        raise git.exc.GitCommandError(f"Failed to revert to version {version_hash}: {str(e)}")

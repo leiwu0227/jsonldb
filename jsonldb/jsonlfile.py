@@ -4,8 +4,7 @@ Core JSONL file operations for JSONLDB.
 
 import os
 import logging
-import pandas as pd
-from typing import Dict, List, Optional, Union, Any
+from typing import Dict, List, Optional, Union
 import datetime as dt
 import orjson
 from bisect import bisect_left, bisect_right
@@ -542,14 +541,19 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
     except OSError as e:
         raise OSError(f"Failed to select from JSONL file {jsonl_file_path}: {str(e)}")
 
-def select_line_jsonl(jsonl_file_path: str, linekey: LineKey, auto_serialize: bool = True, timespec: Optional[str] = None) -> DataDict:
+def select_line_jsonl(
+    jsonl_file_path: str,
+    linekey: LineKey,
+    auto_deserialize: bool = True,
+    timespec: Optional[str] = None,
+) -> DataDict:
     """
     Get a single record from a JSONL file based on the linekey.
 
     Args:
         jsonl_file_path: Path to the JSONL file
         linekey: The key to look for
-        auto_serialize: Whether to serialize the lookup key and deserialize
+        auto_deserialize: Whether to serialize the lookup key and deserialize
             datetime-looking keys in the result
         timespec: Datetime precision ('seconds' or 'microseconds').
             Defaults to the module-level TIME_SPEC.
@@ -559,7 +563,7 @@ def select_line_jsonl(jsonl_file_path: str, linekey: LineKey, auto_serialize: bo
         Example: {"key1": {"v": 1}}
     """
     # Serialize the key if needed
-    if auto_serialize:
+    if auto_deserialize:
         linekey = serialize_linekey(linekey, timespec)
     
     # Read the index file (self-heals an empty/corrupt .idx)
@@ -578,7 +582,9 @@ def select_line_jsonl(jsonl_file_path: str, linekey: LineKey, auto_serialize: bo
             f.seek(index_dict[linekey])
             line = f.readline().strip()
             data = orjson.loads(line)
-            _store_with_key(result_dict, linekey, data[linekey], auto_serialize, timespec)
+            _store_with_key(
+                result_dict, linekey, data[linekey], auto_deserialize, timespec
+            )
         except (orjson.JSONDecodeError, ValueError, KeyError):
             return {}
 
