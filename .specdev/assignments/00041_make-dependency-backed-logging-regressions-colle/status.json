@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "id": "00041",
+  "kind": "bugfix",
+  "description": "Make dependency-backed logging regressions collect safely when declared runtimes are unavailable",
+  "run_id": "mission-lifecycle-20260904T09260745",
+  "created_at": "2026-09-04T14:11:13.203Z",
+  "review_policy": {
+    "brainstorm": "required",
+    "implementation": "required"
+  },
+  "mission": "M00001",
+  "updated_at": "2026-09-04T14:24:23.244Z",
+  "review_policy_frozen_at": "2026-09-04T14:15:22.893Z",
+  "implementation_execution": {
+    "version": 1,
+    "configured_mode": "spawned",
+    "effective_mode": "spawned",
+    "source": "mission",
+    "reason": "Mission-controlled Assignment execution",
+    "owner": "mission-controller",
+    "frozen_at": "2026-09-04T14:15:22.967Z"
+  },
+  "status": "completed",
+  "completed_at": "2026-09-04T14:24:23.244Z"
+}

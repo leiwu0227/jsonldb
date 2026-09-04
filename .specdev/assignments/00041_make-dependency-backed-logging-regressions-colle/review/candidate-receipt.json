@@ -1,0 +1,339 @@
+{
+  "version": 1,
+  "kind": "standalone_assignment_candidate",
+  "completeness": "complete",
+  "identity": "f9f91baa1f369c679beae5e92643e9c209c26a1eed37ad5d14b28ea71d372612",
+  "assignment": {
+    "id": "00041",
+    "folder": "00041_make-dependency-backed-logging-regressions-colle"
+  },
+  "implementation_execution": {
+    "version": 1,
+    "configured_mode": "spawned",
+    "effective_mode": "spawned",
+    "source": "mission",
+    "reason": "Mission-controlled Assignment execution",
+    "owner": "mission-controller",
+    "frozen_at": "2026-09-04T14:15:22.967Z"
+  },
+  "contract": {
+    "path": ".specdev/assignments/00041_make-dependency-backed-logging-regressions-colle/brainstorm/contract.md",
+    "hash": "4d3dc42ceb086a24ab9d27968175795e9d3b90a4e03396719245941d58798eed"
+  },
+  "acceptance": {
+    "total": 2,
+    "items": [
+      {
+        "id": "AC-1",
+        "evidence": "Three isolated focused runs each collected successfully with GitPython, Bokeh, or Matplotlib absent; each produced its explicit dependency skip while the independent regression passed (1 passed, 1 skipped per run).",
+        "result": "passed"
+      },
+      {
+        "id": "AC-2",
+        "evidence": "The real GitPython 3.1.57, Bokeh 3.9.2, and Matplotlib 3.11.1 focused run passed both unchanged logging, stdio, return/state, and concrete visualization assertions; Python 3.8 parsing and all seven source caps also passed.",
+        "result": "passed"
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 2,
+      "failed": 0,
+      "blocked": 0,
+      "missing": 0
+    }
+  },
+  "verification": {
+    "total": 9,
+    "items": [
+      {
+        "command": "dependency_path='/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages:/Users/leiwu/.cache/uv/wheels-v5/pypi/bokeh/3.9.2-py3-none-any:/Users/leiwu/.cache/uv/wheels-v5/pypi/contourpy/1.3.3-c...",
+        "revision": "working-tree@753072c62ef1f474423ad9d13536ccb2fb6bb5df",
+        "scope": "GitPython-absent focused collection and execution; visualization passed and Git regression explicitly skipped; 1 passed, 1 skipped",
+        "status": "passed",
+        "duration_ms": 8726,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "dependency_path='/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages:/Users/leiwu/.cache/uv/wheels-v5/pypi/gitpython/3.1.57-py3-none-any:/Users/leiwu/.cache/uv/wheels-v5/pypi/gitdb/4.0.12...",
+        "revision": "working-tree@753072c62ef1f474423ad9d13536ccb2fb6bb5df",
+        "scope": "Bokeh-absent focused collection and execution; GitPython passed and visualization explicitly skipped; 1 passed, 1 skipped",
+        "status": "passed",
+        "duration_ms": 508,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "dependency_path='/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages:/Users/leiwu/.cache/uv/wheels-v5/pypi/gitpython/3.1.57-py3-none-any:/Users/leiwu/.cache/uv/wheels-v5/pypi/gitdb/4.0.12...",
+        "revision": "working-tree@753072c62ef1f474423ad9d13536ccb2fb6bb5df",
+        "scope": "Matplotlib-absent focused collection and execution; GitPython passed and visualization explicitly skipped; 1 passed, 1 skipped",
+        "status": "passed",
+        "duration_ms": 490,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "dependency_path='/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages:/Users/leiwu/.cache/uv/wheels-v5/pypi/gitpython/3.1.57-py3-none-any:/Users/leiwu/.cache/uv/wheels-v5/pypi/gitdb/4.0.12...",
+        "revision": "working-tree@753072c62ef1f474423ad9d13536ccb2fb6bb5df",
+        "scope": "real GitPython 3.1.57, Bokeh 3.9.2, and Matplotlib 3.11.1 focused runtime acceptance; 2 passed",
+        "status": "passed",
+        "duration_ms": 8871,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "python3 -m pytest -q tests/test_dependency_runtime_logging.py",
+        "revision": "working-tree@753072c62ef1f474423ad9d13536ccb2fb6bb5df",
+        "scope": "initial default-interpreter dependency-incomplete probe; collection stopped on missing core runtime orjson",
+        "status": "failed",
+        "duration_ms": 464,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 0,
+          "failed": 1,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "dependency_path='/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages:/Users/leiwu/.cache/uv/wheels-v5/pypi/bokeh/3.9.2-py3-none-any:/Users/leiwu/.cache/uv/wheels-v5/pypi/contourpy/1.3.3-c...",
+        "revision": "working-tree@753072c62ef1f474423ad9d13536ccb2fb6bb5df",
+        "scope": "isolated Python 3.12 environment starts core, Bokeh 3.9.2, and Matplotlib 3.11.1 entry points while GitPython is genuinely absent",
+        "status": "passed",
+        "duration_ms": 360,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "/opt/homebrew/bin/python3.12 -c 'import ast,pathlib; files=list(pathlib.Path(\"jsonldb\").rglob(\"*.py\"))+[pathlib.Path(\"tests/test_dependency_runtime_logging.py\")]; [ast.parse(p.read_text(encoding=\"utf-8\"),filename=str(p),feature_version=(...",
+        "revision": "working-tree@753072c62ef1f474423ad9d13536ccb2fb6bb5df",
+        "scope": "all package modules and the focused regression module parse at the Python 3.8 syntax floor; the fix adds no stdlib API dependency",
+        "status": "passed",
+        "duration_ms": 138,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "/opt/homebrew/bin/python3.12 -c 'from pathlib import Path; caps={\"jsonldb/metaslot.py\":250,\"jsonldb/jsonlfile.py\":950,\"jsonldb/reports.py\":150,\"jsonldb/folderdb.py\":1250,\"jsonldb/jsonldf.py\":150,\"jsonldb/vercontrol.py\":160,\"jsonldb/visua...",
+        "revision": "working-tree@753072c62ef1f474423ad9d13536ccb2fb6bb5df",
+        "scope": "seven governed source files pass logical-line caps: 101, 950, 106, 1121, 124, 133, and 466 lines respectively",
+        "status": "passed",
+        "duration_ms": 130,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "git diff --check -- tests/test_dependency_runtime_logging.py .specdev/assignments/00041_make-dependency-backed-logging-regressions-colle/design/plan.md",
+        "revision": "working-tree@753072c62ef1f474423ad9d13536ccb2fb6bb5df",
+        "scope": "product-test and plan patch whitespace integrity",
+        "status": "passed",
+        "duration_ms": 117,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 8,
+      "failed": 1,
+      "skipped": 0,
+      "missing": 0
+    },
+    "by_role": {
+      "qualification": {
+        "passed": 4,
+        "failed": 1,
+        "skipped": 0,
+        "missing": 0
+      },
+      "authoritative_acceptance": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      }
+    },
+    "raw": {
+      "total": 9,
+      "counts": {
+        "passed": 8,
+        "failed": 1,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 4,
+          "failed": 1,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 4,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "effective": {
+      "total": 9,
+      "counts": {
+        "passed": 8,
+        "failed": 1,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 4,
+          "failed": 1,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 4,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "superseded": 0,
+    "authoritative_evidence": [
+      {
+        "command": "dependency_path='/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages:/Users/leiwu/.cache/uv/wheels-v5/pypi/bokeh/3.9.2-py3-none-any:/Users/leiwu/.cache/uv/wheels-v5/pypi/contourpy/1.3.3-c...",
+        "revision": "working-tree@753072c62ef1f474423ad9d13536ccb2fb6bb5df",
+        "status": "passed"
+      },
+      {
+        "command": "dependency_path='/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages:/Users/leiwu/.cache/uv/wheels-v5/pypi/gitpython/3.1.57-py3-none-any:/Users/leiwu/.cache/uv/wheels-v5/pypi/gitdb/4.0.12...",
+        "revision": "working-tree@753072c62ef1f474423ad9d13536ccb2fb6bb5df",
+        "status": "passed"
+      },
+      {
+        "command": "dependency_path='/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages:/Users/leiwu/.cache/uv/wheels-v5/pypi/gitpython/3.1.57-py3-none-any:/Users/leiwu/.cache/uv/wheels-v5/pypi/gitdb/4.0.12...",
+        "revision": "working-tree@753072c62ef1f474423ad9d13536ccb2fb6bb5df",
+        "status": "passed"
+      },
+      {
+        "command": "dependency_path='/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages:/Users/leiwu/.cache/uv/wheels-v5/pypi/gitpython/3.1.57-py3-none-any:/Users/leiwu/.cache/uv/wheels-v5/pypi/gitdb/4.0.12...",
+        "revision": "working-tree@753072c62ef1f474423ad9d13536ccb2fb6bb5df",
+        "status": "passed"
+      }
+    ],
+    "authoritative_evidence_omitted": 0
+  },
+  "changed_project_paths": {
+    "count": 1,
+    "groups": [
+      {
+        "name": "tests",
+        "count": 1,
+        "paths": [
+          "tests/test_dependency_runtime_logging.py"
+        ],
+        "omitted": 0
+      }
+    ],
+    "omitted_groups": 0
+  },
+  "unresolved_risks": {
+    "status": "present",
+    "items": [
+      "None. The Mission-reserved full suite was intentionally not run."
+    ],
+    "source": "canonical_section"
+  },
+  "artifacts": {
+    "contract": {
+      "path": ".specdev/assignments/00041_make-dependency-backed-logging-regressions-colle/brainstorm/contract.md",
+      "exists": true,
+      "digest": "4d3dc42ceb086a24ab9d27968175795e9d3b90a4e03396719245941d58798eed"
+    },
+    "plan": {
+      "path": ".specdev/assignments/00041_make-dependency-backed-logging-regressions-colle/design/plan.md",
+      "exists": true,
+      "digest": "31f2a721d73f4bbdbaf4883687f39ee0e1970031c0c95888b024351424a86bae"
+    },
+    "progress": {
+      "path": ".specdev/assignments/00041_make-dependency-backed-logging-regressions-colle/implementation/progress.json",
+      "exists": true,
+      "digest": "94a607697191deab17d2c8f0d29e30e9dd3972d8d736d0ab007a7710609c07b3"
+    },
+    "outcome": {
+      "path": ".specdev/assignments/00041_make-dependency-backed-logging-regressions-colle/outcome.md",
+      "exists": true,
+      "digest": "f275597fca173d37d5f32429dd1b15a29e7abba358544507aad34627245ff0bc"
+    }
+  },
+  "issues": [],
+  "issues_omitted": 0
+}

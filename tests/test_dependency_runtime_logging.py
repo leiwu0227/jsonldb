@@ -1,20 +1,15 @@
 import logging
 
-import git
-import matplotlib
+import pytest
 
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-
-from jsonldb import FolderDB, vercontrol
+from jsonldb import FolderDB
 from jsonldb.jsonlfile import save_jsonl
-from jsonldb.visual import (
-    visualize_folderdb_bokeh,
-    visualize_folderdb_matplot,
-)
 
 
 def test_gitpython_init_logs_repository_path_without_stdio(tmp_path, caplog, capsys):
+    git = pytest.importorskip("git", reason="requires the declared GitPython runtime")
+    from jsonldb import vercontrol
+
     repository = tmp_path / "repository"
     caplog.set_level(logging.INFO, logger="jsonldb.vercontrol")
 
@@ -36,6 +31,18 @@ def test_gitpython_init_logs_repository_path_without_stdio(tmp_path, caplog, cap
 def test_real_visualizers_log_discovery_and_empty_data_without_stdio(
     tmp_path, caplog, capsys
 ):
+    pytest.importorskip("bokeh", reason="requires the declared Bokeh runtime")
+    matplotlib = pytest.importorskip(
+        "matplotlib", reason="requires the declared Matplotlib runtime"
+    )
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    from jsonldb.visual import (
+        visualize_folderdb_bokeh,
+        visualize_folderdb_matplot,
+    )
+
     db = FolderDB(str(tmp_path))
     db.overwrite_dict("records", {"1": {"value": 1}})
     table = tmp_path / "empty.jsonl"

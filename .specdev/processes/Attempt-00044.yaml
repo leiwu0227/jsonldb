@@ -1,0 +1,21 @@
+id: Attempt-00044
+kind: worker
+status: completed
+workspace: .
+base_revision: 753072c62ef1f474423ad9d13536ccb2fb6bb5df
+started_at: 2026-09-04T14:09:06.769Z
+profile: worker
+provider: codex
+model: gpt-5.6-sol
+effort: high
+filesystem: workspace-write
+network: false
+result_path: null
+mission: M00001
+duration_ms: 126297
+usage:
+  provider_reported_tokens: 36995
+result_revision: working-tree@753072c62ef1f474423ad9d13536ccb2fb6bb5df
+ended_at: 2026-09-04T14:11:13.090Z
+result_status: completed
+result_retention: local-cache-only
