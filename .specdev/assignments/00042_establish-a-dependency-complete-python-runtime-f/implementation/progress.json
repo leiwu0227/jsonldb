@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "T-1",
+      "status": "completed"
+    },
+    {
+      "id": "T-2",
+      "status": "completed"
+    },
+    {
+      "id": "T-3",
+      "status": "completed"
+    },
+    {
+      "id": "T-4",
+      "status": "completed"
+    }
+  ],
+  "selected_guides": {
+    "implementation": [],
+    "review": []
+  },
+  "verification": [
+    {
+      "command": "/bin/sh -n .specdev/cache/bin/specdev && /bin/sh -n .specdev/cache/python-runtime-handoff.sh && /bin/sh -c '. .specdev/cache/python-runtime-handoff.sh && resolved=$(command -v python3) && test \"$resolved\" = \"$PWD/.specdev/cache/python-runtime/bin/python3\" && python3 -c \"import sys; assert sys.prefix == '$PWD/.specdev/cache/python-runtime'; print(sys.version.split()[0])\"' && test -x .specdev/cache/bin/specdev",
+      "revision": "working-tree@40c8dee552dadae6a3fade7b98ecdd7fcac6df77",
+      "scope": "sourceable handoff and repository launcher wrapper are valid and select repository-local Python 3.12.12",
+      "status": "passed",
+      "duration_ms": 5,
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": "PATH=\"$PWD/.specdev/cache/python-runtime/bin:$PATH\" MPLCONFIGDIR=\"$PWD/.specdev/cache/python-runtime/matplotlib\" python3 .specdev/cache/python-runtime-probe.py && /opt/homebrew/bin/uv pip check --cache-dir .specdev/cache/runtime-package-cache --python .specdev/cache/python-runtime/bin/python3 && for ignored_path in .specdev/cache/python-runtime/bin/python3 .specdev/cache/bin/specdev .specdev/cache/python-runtime-handoff.sh .specdev/cache/python-runtime-probe.py; do git check-ignore -q \"$ignored_path\" || exit 1; done && test -z \"$(git diff --name-only -- setup.py requirements-dev.lock requirements-dev.in jsonldb tests)\"",
+      "revision": "working-tree@40c8dee552dadae6a3fade7b98ecdd7fcac6df77",
+      "scope": "Python 3.12.12 and all six setup.py-compatible dependencies import from copied repository site-packages without external symlinks; all 27 packages are compatible, cache artifacts are ignored, and reserved product/dependency paths are unchanged",
+      "status": "passed",
+      "duration_ms": 293,
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": "RUNTIME_BIN=\"$PWD/.specdev/cache/python-runtime/bin\" && PATH=\"$RUNTIME_BIN:$PATH\" MPLCONFIGDIR=\"$PWD/.specdev/cache/python-runtime/matplotlib\" PYTHONDONTWRITEBYTECODE=1 python3 -m pytest --collect-only -q tests > .specdev/cache/python-runtime/collection.txt && rg -F 'tests/test_dependency_runtime_logging.py::test_gitpython_init_logs_repository_path_without_stdio' .specdev/cache/python-runtime/collection.txt && rg -F 'tests/test_dependency_runtime_logging.py::test_real_visualizers_log_discovery_and_empty_data_without_stdio' .specdev/cache/python-runtime/collection.txt && tail -n 2 .specdev/cache/python-runtime/collection.txt",
+      "revision": "working-tree@40c8dee552dadae6a3fade7b98ecdd7fcac6df77",
+      "scope": "dependency-complete collection succeeded with 123 tests and included the real GitPython and combined Bokeh/Matplotlib regression nodes",
+      "status": "passed",
+      "duration_ms": 10078,
+      "role": "authoritative_acceptance"
+    }
+  ],
+  "deviations": [
+    "The user-level uv cache could not be used directly because the sandbox denied uv access to its sdists-v9/.git sentinel. After the required symptom-focused knowledge search found no applicable guidance, installation used a repository-local cache view that omitted the sentinel and uv copy mode; the installed runtime has no site-packages symlinks to that cache.",
+    "The offline cache lacked current lock pins including Bokeh 3.10.0, GitPython 3.1.61, and pytest 8.4.2. The runtime therefore uses locally cached setup.py-compatible Bokeh 3.9.2 and GitPython 3.1.57 plus pytest 9.1.1 solely as collection tooling; no dependency declaration or lockfile changed."
+  ],
+  "follow_up": "none",
+  "selected_guide_versions": {
+    "implementation": [],
+    "review": []
+  }
+}

@@ -11,7 +11,7 @@
     "node": "advance-queue"
   },
   "createdAt": "2026-09-04T09:26:07.455Z",
-  "updatedAt": "2026-09-04T14:24:23.243Z",
+  "updatedAt": "2026-09-04T14:54:41.566Z",
   "outputs": {
     "create-mission": {
       "id": "M00001",
@@ -79,13 +79,13 @@
     },
     "child-assignment": {
       "approved": true,
-      "verdict": ".specdev/assignments/00041_make-dependency-backed-logging-regressions-colle/review/implementation-verdict.md",
-      "attempt": "Attempt-00048",
+      "verdict": ".specdev/assignments/00042_establish-a-dependency-complete-python-runtime-f/review/implementation-verdict.md",
+      "attempt": "Attempt-00055",
       "disposition": "approved"
     },
     "advance-queue": {
       "remaining": false,
-      "completed": "00040",
+      "completed": "00041",
       "follow_up_required": true,
       "gap_open": true,
       "gap_id": "gap-a0276bb3f8ae5eca",
@@ -216,10 +216,10 @@
     },
     "resolve-gap": {
       "queue": ".specdev/missions/M00001_implement-the-five-dependency-ordered-roadmap-wo/design/assignments.yaml",
-      "reason": "child:00038",
-      "gap_id": "gap-a0276bb3f8ae5eca",
-      "stage": "resolver",
-      "attempt": "Attempt-00044",
+      "reason": "final-verification:authorized-command",
+      "gap_id": "gap-cdf3d8d11b0a6762",
+      "stage": "resolution",
+      "attempt": "Attempt-00051",
       "disposition": "resolution-added",
       "gap_open": false,
       "remaining": true,
@@ -392,6 +392,59 @@
       "verdict": ".specdev/assignments/00041_make-dependency-backed-logging-regressions-colle/review/implementation-verdict.md",
       "attempt": "Attempt-00048",
       "disposition": "approved"
+    },
+    "mission-review": {
+      "approved": true,
+      "verdict": ".specdev/missions/M00001_implement-the-five-dependency-ordered-roadmap-wo/review/mission-verdict.md",
+      "attempt": "Attempt-00050",
+      "disposition": "approved"
+    },
+    "final-verification": {
+      "passed": false,
+      "receipt": ".specdev/missions/M00001_implement-the-five-dependency-ordered-roadmap-wo/review/final-verification.json",
+      "recoverable": true,
+      "disposition": "gap-open"
+    },
+    "f9/create-assignment": {
+      "id": "00042",
+      "name": "00042_establish-a-dependency-complete-python-runtime-f",
+      "path": ".specdev/assignments/00042_establish-a-dependency-complete-python-runtime-f",
+      "description": "Establish a dependency-complete Python runtime for frozen final verification",
+      "review_policy": {
+        "brainstorm": "required",
+        "implementation": "required"
+      }
+    },
+    "f9/brainstorm": {
+      "contract": ".specdev/assignments/00042_establish-a-dependency-complete-python-runtime-f/brainstorm/contract.md",
+      "contract_hash": "9fb881d6ca682dfea4ca5c508f1cb575c99cf4d9afd5aa2ed11a9acc1bb0a99f"
+    },
+    "f9/approve-contract": {
+      "approved": true,
+      "contract_hash": "9fb881d6ca682dfea4ca5c508f1cb575c99cf4d9afd5aa2ed11a9acc1bb0a99f",
+      "actor": "mission:M00001",
+      "approved_at": "2026-09-04T14:37:54.246Z",
+      "revision": "40c8dee552dadae6a3fade7b98ecdd7fcac6df77",
+      "review_override": false,
+      "review_policy": {
+        "brainstorm": "required",
+        "implementation": "required"
+      }
+    },
+    "f9/design": {
+      "plan": ".specdev/assignments/00042_establish-a-dependency-complete-python-runtime-f/design/plan.md",
+      "attempt": "Attempt-00054"
+    },
+    "f9/implementation": {
+      "progress": ".specdev/assignments/00042_establish-a-dependency-complete-python-runtime-f/implementation/progress.json",
+      "outcome": ".specdev/assignments/00042_establish-a-dependency-complete-python-runtime-f/outcome.md",
+      "attempt": "Attempt-00054"
+    },
+    "f9/implementation-review": {
+      "approved": true,
+      "verdict": ".specdev/assignments/00042_establish-a-dependency-complete-python-runtime-f/review/implementation-verdict.md",
+      "attempt": "Attempt-00055",
+      "disposition": "approved"
     }
   },
   "gateDecisions": {
@@ -499,6 +552,18 @@
         "brainstorm": "required",
         "implementation": "required"
       }
+    },
+    "f9/approve-contract": {
+      "approved": true,
+      "contract_hash": "9fb881d6ca682dfea4ca5c508f1cb575c99cf4d9afd5aa2ed11a9acc1bb0a99f",
+      "actor": "mission:M00001",
+      "approved_at": "2026-09-04T14:37:54.246Z",
+      "revision": "40c8dee552dadae6a3fade7b98ecdd7fcac6df77",
+      "review_override": false,
+      "review_policy": {
+        "brainstorm": "required",
+        "implementation": "required"
+      }
     }
   },
   "graphSource": {
@@ -508,5 +573,5 @@
     "packagePath": "workflows/mission-lifecycle@1.5.0"
   },
   "stack": [],
-  "frameCounter": 8
+  "frameCounter": 9
 }

@@ -1,0 +1,10 @@
+{
+  "id": "00042",
+  "name": "00042_establish-a-dependency-complete-python-runtime-f",
+  "path": ".specdev/assignments/00042_establish-a-dependency-complete-python-runtime-f",
+  "description": "Establish a dependency-complete Python runtime for frozen final verification",
+  "review_policy": {
+    "brainstorm": "required",
+    "implementation": "required"
+  }
+}

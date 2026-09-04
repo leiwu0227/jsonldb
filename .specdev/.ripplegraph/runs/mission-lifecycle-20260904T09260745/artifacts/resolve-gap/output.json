@@ -1,9 +1,9 @@
 {
   "queue": ".specdev/missions/M00001_implement-the-five-dependency-ordered-roadmap-wo/design/assignments.yaml",
-  "reason": "child:00038",
-  "gap_id": "gap-a0276bb3f8ae5eca",
-  "stage": "resolver",
-  "attempt": "Attempt-00044",
+  "reason": "final-verification:authorized-command",
+  "gap_id": "gap-cdf3d8d11b0a6762",
+  "stage": "resolution",
+  "attempt": "Attempt-00051",
   "disposition": "resolution-added",
   "gap_open": false,
   "remaining": true,

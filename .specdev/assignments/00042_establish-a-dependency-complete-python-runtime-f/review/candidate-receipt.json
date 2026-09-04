@@ -1,0 +1,226 @@
+{
+  "version": 1,
+  "kind": "standalone_assignment_candidate",
+  "completeness": "complete",
+  "identity": "db398197db6a501dccb35cddaa4ab5aece469fd44668daf718351030bf47ff9a",
+  "assignment": {
+    "id": "00042",
+    "folder": "00042_establish-a-dependency-complete-python-runtime-f"
+  },
+  "implementation_execution": {
+    "version": 1,
+    "configured_mode": "spawned",
+    "effective_mode": "spawned",
+    "source": "mission",
+    "reason": "Mission-controlled Assignment execution",
+    "owner": "mission-controller",
+    "frozen_at": "2026-09-04T14:37:54.330Z"
+  },
+  "contract": {
+    "path": ".specdev/assignments/00042_establish-a-dependency-complete-python-runtime-f/brainstorm/contract.md",
+    "hash": "9fb881d6ca682dfea4ca5c508f1cb575c99cf4d9afd5aa2ed11a9acc1bb0a99f"
+  },
+  "acceptance": {
+    "total": 2,
+    "items": [
+      {
+        "id": "AC-1",
+        "evidence": "The handoff resolved unqualified `python3` to repository-local Python 3.12.12; all six declared dependencies imported from its copied site-packages, satisfied `setup.py`, and `uv pip check` found all 27 packages compatible.",
+        "result": "passed"
+      },
+      {
+        "id": "AC-2",
+        "evidence": "Under the same handoff, `python3 -m pytest --collect-only -q tests` collected 123 tests and included the real GitPython and combined Bokeh/Matplotlib regression nodes.",
+        "result": "passed"
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 2,
+      "failed": 0,
+      "blocked": 0,
+      "missing": 0
+    }
+  },
+  "verification": {
+    "total": 3,
+    "items": [
+      {
+        "command": "/bin/sh -n .specdev/cache/bin/specdev && /bin/sh -n .specdev/cache/python-runtime-handoff.sh && /bin/sh -c '. .specdev/cache/python-runtime-handoff.sh && resolved=$(command -v python3) && test \"$resolved\" = \"$PWD/.specdev/cache/python-ru...",
+        "revision": "working-tree@40c8dee552dadae6a3fade7b98ecdd7fcac6df77",
+        "scope": "sourceable handoff and repository launcher wrapper are valid and select repository-local Python 3.12.12",
+        "status": "passed",
+        "duration_ms": 5,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "PATH=\"$PWD/.specdev/cache/python-runtime/bin:$PATH\" MPLCONFIGDIR=\"$PWD/.specdev/cache/python-runtime/matplotlib\" python3 .specdev/cache/python-runtime-probe.py && /opt/homebrew/bin/uv pip check --cache-dir .specdev/cache/runtime-package-...",
+        "revision": "working-tree@40c8dee552dadae6a3fade7b98ecdd7fcac6df77",
+        "scope": "Python 3.12.12 and all six setup.py-compatible dependencies import from copied repository site-packages without external symlinks; all 27 packages are compatible, cache artifacts are ignored, and reserved product/dependency paths are unc...",
+        "status": "passed",
+        "duration_ms": 293,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "RUNTIME_BIN=\"$PWD/.specdev/cache/python-runtime/bin\" && PATH=\"$RUNTIME_BIN:$PATH\" MPLCONFIGDIR=\"$PWD/.specdev/cache/python-runtime/matplotlib\" PYTHONDONTWRITEBYTECODE=1 python3 -m pytest --collect-only -q tests > .specdev/cache/python-ru...",
+        "revision": "working-tree@40c8dee552dadae6a3fade7b98ecdd7fcac6df77",
+        "scope": "dependency-complete collection succeeded with 123 tests and included the real GitPython and combined Bokeh/Matplotlib regression nodes",
+        "status": "passed",
+        "duration_ms": 10078,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "missing": 0
+    },
+    "by_role": {
+      "qualification": {
+        "passed": 0,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      },
+      "authoritative_acceptance": {
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      }
+    },
+    "raw": {
+      "total": 3,
+      "counts": {
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 3,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "effective": {
+      "total": 3,
+      "counts": {
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 3,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "superseded": 0,
+    "authoritative_evidence": [
+      {
+        "command": "/bin/sh -n .specdev/cache/bin/specdev && /bin/sh -n .specdev/cache/python-runtime-handoff.sh && /bin/sh -c '. .specdev/cache/python-runtime-handoff.sh && resolved=$(command -v python3) && test \"$resolved\" = \"$PWD/.specdev/cache/python-ru...",
+        "revision": "working-tree@40c8dee552dadae6a3fade7b98ecdd7fcac6df77",
+        "status": "passed"
+      },
+      {
+        "command": "PATH=\"$PWD/.specdev/cache/python-runtime/bin:$PATH\" MPLCONFIGDIR=\"$PWD/.specdev/cache/python-runtime/matplotlib\" python3 .specdev/cache/python-runtime-probe.py && /opt/homebrew/bin/uv pip check --cache-dir .specdev/cache/runtime-package-...",
+        "revision": "working-tree@40c8dee552dadae6a3fade7b98ecdd7fcac6df77",
+        "status": "passed"
+      },
+      {
+        "command": "RUNTIME_BIN=\"$PWD/.specdev/cache/python-runtime/bin\" && PATH=\"$RUNTIME_BIN:$PATH\" MPLCONFIGDIR=\"$PWD/.specdev/cache/python-runtime/matplotlib\" PYTHONDONTWRITEBYTECODE=1 python3 -m pytest --collect-only -q tests > .specdev/cache/python-ru...",
+        "revision": "working-tree@40c8dee552dadae6a3fade7b98ecdd7fcac6df77",
+        "status": "passed"
+      }
+    ],
+    "authoritative_evidence_omitted": 0
+  },
+  "changed_project_paths": {
+    "count": 0,
+    "groups": [],
+    "omitted_groups": 0
+  },
+  "unresolved_risks": {
+    "status": "present",
+    "items": [
+      "The ignored runtime is intentionally machine-local and must be reprovisioned if",
+      "`.specdev/cache` is purged. The parent must use the repository launcher or",
+      "source the recorded handoff before final verification; no additional bounded",
+      "Assignment is required."
+    ],
+    "source": "canonical_section"
+  },
+  "artifacts": {
+    "contract": {
+      "path": ".specdev/assignments/00042_establish-a-dependency-complete-python-runtime-f/brainstorm/contract.md",
+      "exists": true,
+      "digest": "9fb881d6ca682dfea4ca5c508f1cb575c99cf4d9afd5aa2ed11a9acc1bb0a99f"
+    },
+    "plan": {
+      "path": ".specdev/assignments/00042_establish-a-dependency-complete-python-runtime-f/design/plan.md",
+      "exists": true,
+      "digest": "624f8a6d973bd4e81850b5f9f8de76167c41d2e694da4a880fd37a2708c6989e"
+    },
+    "progress": {
+      "path": ".specdev/assignments/00042_establish-a-dependency-complete-python-runtime-f/implementation/progress.json",
+      "exists": true,
+      "digest": "3cccc6ad0d699397c428762437ead502261dcef14ed91c0e61882298ee94c99c"
+    },
+    "outcome": {
+      "path": ".specdev/assignments/00042_establish-a-dependency-complete-python-runtime-f/outcome.md",
+      "exists": true,
+      "digest": "8ee4ca488bf3aa63c909c3c2cd390a7b865de3e6c831533dc4a857627e9137bc"
+    }
+  },
+  "issues": [],
+  "issues_omitted": 0
+}
