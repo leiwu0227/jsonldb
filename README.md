@@ -20,6 +20,28 @@ Install the package directly from GitHub:
 pip install git+https://github.com/leiwu0227/jsonldb.git
 ```
 
+For development from a clone, create an environment from the generated lock
+and run the tracked test suite:
+
+```bash
+python -m venv .venv
+. .venv/bin/activate
+python -m pip install -r requirements-dev.lock
+python -m pip install --no-deps -e .
+python -m pytest
+```
+
+Regenerate `requirements-dev.lock` after changing `setup.py` or
+`requirements-dev.in`:
+
+```bash
+uv pip compile setup.py requirements-dev.in \
+    --python-version 3.8 \
+    --universal \
+    --generate-hashes \
+    --output-file requirements-dev.lock
+```
+
 ## Quick Start
 
 ```python
