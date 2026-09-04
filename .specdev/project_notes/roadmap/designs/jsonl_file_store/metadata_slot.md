@@ -1,6 +1,6 @@
 # Metadata Slot
 
-A table may carry one opaque metadata record on line one of its own file, in a fixed-width slot. The record belongs to the consumer; jsonldb stores and returns it without reading inside. Same-file storage keeps it coherent with the rows without a second file or a catalog.
+A table may carry one opaque metadata record on line one of its own file, in a fixed-width slot. The record belongs to the consumer; jsonldb stores and returns it without reading inside. Same-file storage keeps it coherent with the rows without a second file.
 
 ## Contract
 
@@ -27,16 +27,16 @@ jsonldb alone defines envelope versions. Version 1: key `_meta`; `data` optional
 Line one is classified on every read:
 
 - a valid envelope of a known version: a slot, record present or absent;
-- a `_meta` object that is not a valid envelope, or an unknown version: a slot with no record, and not a row;
+- a `_meta` object that is not a valid envelope, or an unknown version: a slot with no record, not a row;
 - anything else: a legacy file, line one a row or garbage.
 
 `_meta` is therefore a reserved linekey that writers reject; a pre-existing legacy row with that key is misread, which is accepted.
 
 ## Width and enablement
 
-Every slotted file in a folder has the same width, recorded in `config.meta`. One explicit operation on `FolderDB` records it and immediately rewrites every table whose line one is not a slot of that width; this enables a legacy folder or changes a width, and is the only full-folder rewrite in the design. Shrinking first verifies that every record fits and refuses, naming the tables, if any does not. Afterwards new tables get a slot at creation, and lint repairs any file whose line one is missing or of another width, which only an interrupted width operation or outside tampering produces. Readers still measure line one, since legacy files and torn slots exist; writers and lint use the recorded width.
+Every slotted file in a folder has the same width, recorded in `config.meta`. One explicit operation on `FolderDB` records it and immediately rewrites every table whose line one is not a slot of that width; this enables a legacy folder or changes a width, the only full-folder rewrite in the design. Shrinking first verifies every record fits and refuses, naming the tables, if any does not. Afterwards new tables get a slot at creation, and lint repairs any file whose line one is missing or of another width, which only an interrupted width operation or tampering produces. Readers still measure line one, since legacy files and torn slots exist; writers and lint use the recorded width.
 
-Default 4096 bytes including the newline: one filesystem block, roughly 3.6 KB of payload. A record that does not fit is refused with an error naming both sizes; the remedy is the width operation and a re-publish.
+Default 4096 bytes including the newline: one filesystem block, roughly 3.6 KB of payload. A record that does not fit is refused, naming both sizes; the remedy is the width operation and a re-publish.
 
 ## Write path
 
@@ -48,11 +48,11 @@ Publishing rows with a record:
 4. blanking of the old copies of grown records;
 5. the index.
 
-A slot-only write performs step 3 and touches the index's modification time; offsets are unchanged. The buffer is flushed before step 3; no fsync is issued. Slots are inserted or resized only by the width operation or lint, never on the publish path.
+A slot-only write performs step 3 and touches the index's modification time; offsets are unchanged. The buffer is flushed before step 3; no fsync is issued. Slots are inserted or resized only by the width operation or lint.
 
 ## Failure model
 
-A process crash before step 3 leaves the old record above old rows plus possibly extra rows and a torn last line that lint truncates, the same state as a legacy file; one between steps 3 and 4 leaves a duplicate key that lint removes. Power loss is not protected beyond the promise that the database opens and every table is repairable by an ordinary publish; a line one that no longer parses reads as a slot without a record until lint blanks it in place, recording its bytes.
+A process crash before step 3 leaves the old record above old rows plus possibly extra rows and a torn last line that lint truncates, the same state as a legacy file; one between steps 3 and 4 leaves a duplicate key lint removes. Power loss is not protected beyond the promise that the database opens and every table is repairable by an ordinary publish; a line one that no longer parses reads as a slot without a record until lint blanks it in place, recording its bytes.
 
 ## Legacy
 
@@ -66,5 +66,6 @@ On `FolderDB`: `read_meta(name)`; `meta=` on the four write calls, `None` keepin
 
 ## Source targets
 
-- `jsonldb/jsonlfile.py`: at most 900 lines in total, shared with the other file-store notes.
-- `jsonldb/folderdb.py`: at most 1200 lines in total, shared with the other folder-database notes.
+- `jsonldb/metaslot.py`: at most 250 lines; envelope registry, classification, padding, slot read and write; imports nothing from the package.
+- `jsonldb/jsonlfile.py`: at most 950 lines in total, shared with the other file-store notes.
+- `jsonldb/folderdb.py`: at most 1250 lines in total, shared with the other folder-database notes.

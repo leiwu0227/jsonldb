@@ -39,5 +39,6 @@ The open report covers control files and whatever open rebuilt; it is a record o
 
 ## Source targets
 
-- `jsonldb/folderdb.py`: at most 1200 lines in total, shared with the other folder-database notes.
-- `jsonldb/jsonlfile.py`: at most 900 lines in total, shared with the file-store notes.
+- `jsonldb/reports.py`: at most 150 lines; the logger capture handler and the two report writers, importing nothing from the package.
+- `jsonldb/folderdb.py`: at most 1250 lines in total, shared with the other folder-database notes; the two hook points at open and lint.
+- `jsonldb/jsonlfile.py`: at most 950 lines in total, shared with the file-store notes; anomaly reporting through `logging`.

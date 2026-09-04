@@ -60,4 +60,4 @@ Printing a database renders `db.meta`: sizes, row counts, key ranges, lint statu
 
 ## Source target
 
-- `jsonldb/folderdb.py`: at most 1200 lines in total, shared with the hierarchical-layout, metadata, metadata-slot, and integrity-logs notes.
+- `jsonldb/folderdb.py`: at most 1250 lines in total, shared with the hierarchical-layout, metadata, metadata-slot, and integrity-logs notes.

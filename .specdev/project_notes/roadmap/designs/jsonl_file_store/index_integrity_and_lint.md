@@ -57,4 +57,4 @@ The cardinality scan parses every line and dominated production save time on lar
 
 ## Source target
 
-- `jsonldb/jsonlfile.py`: at most 900 lines in total, shared with the file-store and metadata-slot notes.
+- `jsonldb/jsonlfile.py`: at most 950 lines in total, shared with the file-store and metadata-slot notes.

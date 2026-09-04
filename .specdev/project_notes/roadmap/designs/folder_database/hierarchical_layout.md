@@ -47,4 +47,4 @@ Listing tables walks the whole tree and reports filenames without their extensio
 
 ## Source target
 
-- `jsonldb/folderdb.py`: at most 1200 lines in total, shared with the folder-database, metadata, metadata-slot, and integrity-logs notes.
+- `jsonldb/folderdb.py`: at most 1250 lines in total, shared with the folder-database, metadata, metadata-slot, and integrity-logs notes.

@@ -56,4 +56,4 @@ Two module constants: a large read and write buffer for sequential throughput on
 
 ## Source target
 
-- `jsonldb/jsonlfile.py`: at most 900 lines in total, shared with the index-integrity and metadata-slot notes.
+- `jsonldb/jsonlfile.py`: at most 950 lines in total, shared with the index-integrity and metadata-slot notes.

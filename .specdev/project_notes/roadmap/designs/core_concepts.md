@@ -39,7 +39,8 @@ Blank lines are tombstones, invisible to index-driven readers, but they accumula
 ```
 folderdb    FolderDB: tables in a folder, metadata, hierarchy, git facade
 jsonldf     DataFrame <-> record dict adapter
-jsonlfile   one JSONL file: format, index, CRUD, lint, slot
+jsonlfile   one JSONL file: format, index, CRUD, lint
+metaslot    line one: envelope, classification, slot read and write
 ```
 
 `jsonlfile` knows nothing about folders. `jsonldf` only translates a DataFrame's index to linekeys. `FolderDB` resolves names to paths, keeps per-database configuration, and forwards every table operation downward with the database's settings.
