@@ -8,7 +8,7 @@ created_revision: d5cd7b1ff3c462897667e5d19d17dfc092a6ecb5
 base_revision: c54d13455e4ee324a67a33a9fd0a1f119bf09a68
 branch: specdev/M00001-implement-the-five-dependency-or
 created_at: 2026-09-04T09:26:07.475Z
-next_action: Continue the foreground controller with specdev mission run M00001.
+next_action: Mission M00001 is running in the foreground.
 approved_contract_hash: 7e0824300f897190603ccb138e56aaf5254389c0b40f69967908352465ceac4f
 approved_at: 2026-09-04T11:37:43.027Z
 approval_dirty_paths:
@@ -77,6 +77,11 @@ execution_policy:
     bypassed: []
     decisions: []
 last_checkpoint:
-  base_revision: c54d13455e4ee324a67a33a9fd0a1f119bf09a68
+  base_revision: 77d24f7e414a4e1828964c50f9411432111cbcc0
   push_requested: false
-  created_at: 2026-09-04T11:37:43.134Z
+  created_at: 2026-09-04T12:07:27.577Z
+updated_at: 2026-09-04T11:39:09.035Z
+gaps:
+  version: 1
+  items: []
+  processed_signals: []

@@ -1,0 +1,91 @@
+id: Attempt-00012
+kind: worker
+status: completed
+workspace: .
+base_revision: 77d24f7e414a4e1828964c50f9411432111cbcc0
+started_at: 2026-09-04T11:46:00.215Z
+profile: worker
+provider: codex
+model: gpt-5.6-sol
+effort: high
+filesystem: workspace-write
+network: false
+result_path: .specdev/assignments/00034_harden-jsonl-durability-and-atomic-index-and-con/review/brainstorm-repair-result.md
+context_catalog:
+  version: 1
+  phase: contract-repair
+  role: repair-owner
+  entries:
+    - identity: authority:repository-instructions:AGENTS.md
+      group: authority
+      kind: repository-instructions
+      path: AGENTS.md
+      purpose: Repository execution constraints
+    - identity: authority:workflow-authority:.specdev/_main.md
+      group: authority
+      kind: workflow-authority
+      path: .specdev/_main.md
+      purpose: Installed SpecDev workflow authority
+    - identity: authority:parent-contract:.specdev/missions/M00001_implement-the-five-dependency-ordered-roadmap-wo/brainstorm/contract.md
+      group: authority
+      kind: parent-contract
+      path: .specdev/missions/M00001_implement-the-five-dependency-ordered-roadmap-wo/brainstorm/contract.md
+      purpose: Approved parent Mission authority
+    - identity: authority:parent-delegation:.specdev/missions/M00001_implement-the-five-dependency-ordered-roadmap-wo/design/assignments.yaml
+      group: authority
+      kind: parent-delegation
+      path: .specdev/missions/M00001_implement-the-five-dependency-ordered-roadmap-wo/design/assignments.yaml
+      purpose: Parent Mission queue and child delegation
+    - identity: task:workflow-state:.specdev/assignments/00034_harden-jsonl-durability-and-atomic-index-and-con/status.json
+      group: task
+      kind: workflow-state
+      path: .specdev/assignments/00034_harden-jsonl-durability-and-atomic-index-and-con/status.json
+      purpose: Current Assignment workflow state
+    - identity: task:candidate-contract:.specdev/assignments/00034_harden-jsonl-durability-and-atomic-index-and-con/brainstorm/contract.md
+      group: task
+      kind: candidate-contract
+      path: .specdev/assignments/00034_harden-jsonl-durability-and-atomic-index-and-con/brainstorm/contract.md
+      purpose: Assignment contract to repair
+    - identity: task:review-findings:.specdev/assignments/00034_harden-jsonl-durability-and-atomic-index-and-con/review/brainstorm-verdict.md
+      group: task
+      kind: review-findings
+      path: .specdev/assignments/00034_harden-jsonl-durability-and-atomic-index-and-con/review/brainstorm-verdict.md
+      purpose: Blocking contract-review findings
+    - identity: supporting:project-context:.specdev/project_notes/big_picture.md
+      group: supporting
+      kind: project-context
+      path: .specdev/project_notes/big_picture.md
+      purpose: Durable project context
+    - identity: supporting:workflow-guide:.specdev/guides/library/api-security.md
+      group: supporting
+      kind: workflow-guide
+      path: .specdev/guides/library/api-security.md
+      purpose: Relevant guide api-security@1
+    - identity: supporting:living-knowledge:.specdev/knowledge/_index.md
+      group: supporting
+      kind: living-knowledge
+      path: .specdev/knowledge/_index.md
+      purpose: Fresh living-knowledge result
+    - identity: supporting:living-knowledge:.specdev/knowledge/workflow/adhoc-history.md
+      group: supporting
+      kind: living-knowledge
+      path: .specdev/knowledge/workflow/adhoc-history.md
+      purpose: Fresh living-knowledge result
+    - identity: supporting:living-knowledge:.specdev/knowledge/workflow/wsl2-filesystem.md
+      group: supporting
+      kind: living-knowledge
+      path: .specdev/knowledge/workflow/wsl2-filesystem.md
+      purpose: Fresh living-knowledge result
+    - identity: supporting:roadmap-design:.specdev/project_notes/roadmap/designs/jsonl_file_store/index_integrity_and_lint.md
+      group: supporting
+      kind: roadmap-design
+      path: .specdev/project_notes/roadmap/designs/jsonl_file_store/index_integrity_and_lint.md
+      purpose: Relevant approved Roadmap design
+assignment: 00034_harden-jsonl-durability-and-atomic-index-and-con
+mission: M00001
+duration_ms: 60934
+usage:
+  provider_reported_tokens: 21236
+result_revision: working-tree@77d24f7e414a4e1828964c50f9411432111cbcc0
+ended_at: 2026-09-04T11:47:01.171Z
+result_status: completed

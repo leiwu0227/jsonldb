@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "T-1",
+      "status": "completed"
+    },
+    {
+      "id": "T-2",
+      "status": "completed"
+    },
+    {
+      "id": "T-3",
+      "status": "completed"
+    },
+    {
+      "id": "T-4",
+      "status": "completed"
+    }
+  ],
+  "selected_guides": {
+    "implementation": [],
+    "review": []
+  },
+  "verification": [
+    {
+      "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -m pytest -q tests/test_durability_atomicity.py tests/test_warning_channels.py tests/test_metadata_upkeep.py tests/test_lint_compaction.py tests/legacy/test_jsonlfile.py",
+      "revision": "working-tree@77d24f7e414a4e1828964c50f9411432111cbcc0",
+      "scope": "Focused durability, atomic-publication, warning, metadata, lint-compaction, and immutable legacy JSONL behavior (pytest 8.4.2; 53 passed)",
+      "status": "passed",
+      "duration_ms": 860,
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": "/usr/bin/time -p /opt/homebrew/bin/python3.12 -c 'import ast,pathlib; files=list(pathlib.Path(\"jsonldb\").rglob(\"*.py\")); [ast.parse(p.read_text(encoding=\"utf-8\"), filename=str(p), feature_version=(3,8)) for p in files]; added={\"tempfile.mkstemp\",\"os.fdopen\",\"os.replace\",\"os.unlink\"}; assert all(hasattr(__import__(name.split(\".\")[0]), name.split(\".\")[1]) for name in added); print(\"python3.8-syntax-compatible\", len(files), \"files; added stdlib APIs available since <=3.8\")' && git diff --exit-code HEAD -- tests/legacy && /opt/homebrew/bin/python3.12 -c 'from pathlib import Path; caps={\"jsonldb/metaslot.py\":250,\"jsonldb/jsonlfile.py\":950,\"jsonldb/reports.py\":150,\"jsonldb/folderdb.py\":1250,\"jsonldb/jsonldf.py\":150,\"jsonldb/vercontrol.py\":160,\"jsonldb/visual.py\":500}; counts={p:(len(Path(p).read_text(encoding=\"utf-8\").splitlines()) if Path(p).exists() else None) for p in caps}; excess={p:(counts[p],cap) for p,cap in caps.items() if counts[p] is not None and counts[p]>cap}; assert not excess,excess; print(counts)'",
+      "revision": "working-tree@77d24f7e414a4e1828964c50f9411432111cbcc0",
+      "scope": "Python 3.8 syntax and added-stdlib API floor, immutable legacy tests, and all seven governed source caps (absent future modules inventoried as null)",
+      "status": "passed",
+      "duration_ms": 200,
+      "role": "qualification"
+    }
+  ],
+  "deviations": [],
+  "follow_up": "none",
+  "selected_guide_versions": {
+    "implementation": [],
+    "review": []
+  }
+}

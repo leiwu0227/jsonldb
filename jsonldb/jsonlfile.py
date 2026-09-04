@@ -4,6 +4,7 @@ Core JSONL file operations for JSONLDB.
 
 import os
 import logging
+import tempfile
 from typing import Dict, List, Optional, Union
 import datetime as dt
 import orjson
@@ -26,6 +27,50 @@ LineKey = Union[str, dt.datetime]
 DataDict = Dict[str, dict]
 IndexDict = Dict[str, int]
 
+
+def _parse_row(line: bytes):
+    """Parse one physical JSONL row and enforce the one-key record shape."""
+    data = orjson.loads(line)
+    if not isinstance(data, dict) or len(data) != 1:
+        raise ValueError("JSONL rows must contain exactly one key")
+    linekey = next(iter(data))
+    return linekey, data[linekey]
+
+
+def _warn_invalid_row(jsonl_file_path: str, offset: int, line: bytes) -> None:
+    """Report one skipped row with enough location detail to diagnose it."""
+    logger.warning(
+        "invalid JSON line in %s at byte %d: %s",
+        jsonl_file_path,
+        offset,
+        line.decode('utf-8', errors='replace').strip(),
+    )
+
+
+def _atomic_write_bytes(file_path: str, content: bytes) -> None:
+    """Write complete bytes to a same-directory temporary, then replace."""
+    directory = os.path.dirname(os.path.abspath(file_path))
+    prefix = "." + os.path.basename(file_path) + "."
+    fd, tmp_path = tempfile.mkstemp(dir=directory, prefix=prefix, suffix=".tmp")
+    try:
+        with os.fdopen(fd, 'wb') as f:
+            f.write(content)
+        os.replace(tmp_path, file_path)
+    except BaseException:
+        try:
+            os.unlink(tmp_path)
+        except FileNotFoundError:
+            pass
+        raise
+
+
+def _serialize_index(index: IndexDict) -> bytes:
+    return orjson.dumps(index, option=orjson.OPT_SORT_KEYS)
+
+
+def _write_index(jsonl_file_path: str, index: IndexDict) -> None:
+    _atomic_write_bytes(f"{jsonl_file_path}.idx", _serialize_index(index))
+
 # --------------------------------------------------------
 # Indexing Functions
 # --------------------------------------------------------
@@ -44,7 +89,6 @@ def build_jsonl_index(jsonl_file_path: str) -> None:
         FileNotFoundError: If the JSONL file doesn't exist
         OSError: If there are permission issues
     """
-    index_file_path = f"{jsonl_file_path}.idx"
     index_dict: IndexDict = {}
 
     if not os.path.exists(jsonl_file_path):
@@ -52,8 +96,7 @@ def build_jsonl_index(jsonl_file_path: str) -> None:
 
     # Handle empty file case
     if os.path.getsize(jsonl_file_path) == 0:
-        with open(index_file_path, 'wb') as f:
-            f.write(orjson.dumps(index_dict, option=orjson.OPT_SORT_KEYS))
+        _write_index(jsonl_file_path, index_dict)
         return
 
     try:
@@ -61,32 +104,26 @@ def build_jsonl_index(jsonl_file_path: str) -> None:
             with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
                 current_pos = 0
                 while True:
-
-                    line = mm.readline()
-                    if not line:
+                    raw_line = mm.readline()
+                    if not raw_line:
                         break
+                    next_pos = mm.tell()
 
-                    line = line.strip()
+                    line = raw_line.strip()
                     if not line:  # Skip empty lines
-                        current_pos = mm.tell()
+                        current_pos = next_pos
                         continue
 
                     try:
-                        data = orjson.loads(line)
-                        linekey = next(iter(data))
+                        linekey, _ = _parse_row(line)
                         index_dict[linekey] = current_pos
-                    except (orjson.JSONDecodeError, ValueError, StopIteration):
-                        logger.warning(
-                            "invalid JSON line %s",
-                            line.decode('utf-8', errors='replace'),
-                        )
-                        continue
+                    except (orjson.JSONDecodeError, ValueError, TypeError):
+                        _warn_invalid_row(jsonl_file_path, current_pos, raw_line)
 
-                    current_pos = mm.tell()
+                    current_pos = next_pos
 
         # Save index (OPT_SORT_KEYS sorts on dump)
-        with open(index_file_path, 'wb') as f:
-            f.write(orjson.dumps(index_dict, option=orjson.OPT_SORT_KEYS))
+        _write_index(jsonl_file_path, index_dict)
             
     except OSError as e:
         raise OSError(f"Failed to build index for {jsonl_file_path}: {str(e)}")
@@ -402,8 +439,7 @@ def save_jsonl(jsonl_file_path: str, db_dict: DataDict, timespec: Optional[str] 
         if not db_dict:
             with open(jsonl_file_path, 'wb') as f:
                 pass  # create empty file
-            with open(f"{jsonl_file_path}.idx", 'wb') as f:
-                f.write(orjson.dumps({}, option=orjson.OPT_SORT_KEYS))
+            _write_index(jsonl_file_path, {})
             return
 
         # Stream lines to the file while tracking byte offsets
@@ -417,11 +453,44 @@ def save_jsonl(jsonl_file_path: str, db_dict: DataDict, timespec: Optional[str] 
                 byte_offset += len(line)
 
         # Write index (OPT_SORT_KEYS sorts on dump)
-        with open(f"{jsonl_file_path}.idx", 'wb') as f:
-            f.write(orjson.dumps(index, option=orjson.OPT_SORT_KEYS))
+        _write_index(jsonl_file_path, index)
             
     except OSError as e:
         raise OSError(f"Failed to save JSONL file {jsonl_file_path}: {str(e)}")
+
+
+def save_jsonl_atomic(jsonl_file_path: str, db_dict: DataDict,
+                      timespec: Optional[str] = None) -> None:
+    """Atomically replace a complete JSONL file, then publish its index last.
+
+    This narrow path is intended for small protected control files. Ordinary
+    table and db.meta saves retain their existing in-place publication policy.
+    """
+    directory = os.path.dirname(os.path.abspath(jsonl_file_path))
+    prefix = "." + os.path.basename(jsonl_file_path) + "."
+    fd, tmp_path = tempfile.mkstemp(dir=directory, prefix=prefix, suffix=".tmp")
+    index: IndexDict = {}
+    try:
+        byte_offset = 0
+        with os.fdopen(fd, 'wb', buffering=BUFFER_SIZE) as f:
+            for linekey, data in db_dict.items():
+                serialized_key = serialize_linekey(linekey, timespec)
+                line = _fast_dumps({serialized_key: data}).encode('utf-8')
+                f.write(line)
+                index[serialized_key] = byte_offset
+                byte_offset += len(line)
+        os.replace(tmp_path, jsonl_file_path)
+        _write_index(jsonl_file_path, index)
+    except BaseException as e:
+        try:
+            os.unlink(tmp_path)
+        except FileNotFoundError:
+            pass
+        if isinstance(e, OSError):
+            raise OSError(
+                f"Failed to save JSONL file {jsonl_file_path}: {str(e)}"
+            ) from e
+        raise
 
 def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True, timespec: Optional[str] = None) -> DataDict:
     """
@@ -448,22 +517,21 @@ def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True, timespec: Op
     
     try:
         with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
-            for line in f:
-                line = line.strip()
+            offset = 0
+            for raw_line in f:
+                line = raw_line.strip()
                 if not line:
+                    offset += len(raw_line)
                     continue
 
                 try:
-                    data = orjson.loads(line)
-                    if isinstance(data, dict) and len(data) == 1:
-                        linekey = next(iter(data))
-                        _store_with_key(result_dict, linekey, data[linekey], auto_deserialize, timespec)
-                except (orjson.JSONDecodeError, ValueError):
-                    logger.warning(
-                        "invalid JSON line %s",
-                        line.decode('utf-8', errors='replace'),
+                    linekey, value = _parse_row(line)
+                    _store_with_key(
+                        result_dict, linekey, value, auto_deserialize, timespec
                     )
-                    continue  # Skip invalid JSON lines
+                except (orjson.JSONDecodeError, ValueError, TypeError):
+                    _warn_invalid_row(jsonl_file_path, offset, raw_line)
+                offset += len(raw_line)
 
         return result_dict
 
@@ -529,13 +597,22 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
             for offset, linekey in offset_key_pairs:
                 f.seek(offset)
                 line = f.readline()
-                data = orjson.loads(line)
-                raw_results[linekey] = data[linekey]
+                try:
+                    parsed_key, value = _parse_row(line.strip())
+                    if parsed_key != linekey:
+                        raise ValueError("key mismatch")
+                    raw_results[linekey] = value
+                except (orjson.JSONDecodeError, ValueError, KeyError, TypeError):
+                    _warn_invalid_row(jsonl_file_path, offset, line)
 
         # Rebuild in sorted key order with deserialization
         result_dict = {}
         for linekey in selected_linekeys:
-            _store_with_key(result_dict, linekey, raw_results[linekey], auto_deserialize, timespec)
+            if linekey in raw_results:
+                _store_with_key(
+                    result_dict, linekey, raw_results[linekey],
+                    auto_deserialize, timespec
+                )
         return result_dict
         
     except OSError as e:
@@ -578,18 +655,30 @@ def select_line_jsonl(
 
     # Load selected records
     with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
+        offset = index_dict[linekey]
+        line = b''
         try:
-            f.seek(index_dict[linekey])
-            line = f.readline().strip()
-            data = orjson.loads(line)
+            f.seek(offset)
+            line = f.readline()
+            parsed_key, value = _parse_row(line.strip())
+            if parsed_key != linekey:
+                raise ValueError("key mismatch")
             _store_with_key(
-                result_dict, linekey, data[linekey], auto_deserialize, timespec
+                result_dict, linekey, value, auto_deserialize, timespec
             )
-        except (orjson.JSONDecodeError, ValueError, KeyError):
+        except (orjson.JSONDecodeError, ValueError, KeyError, TypeError):
+            _warn_invalid_row(jsonl_file_path, offset, line)
             return {}
 
     return result_dict
 
+
+
+def _blank_old_lines(f, old_lines) -> None:
+    """Blank grown records only after their replacement rows are flushed."""
+    for pos, old_len in old_lines:
+        f.seek(pos)
+        f.write(b' ' * (old_len - 1) + b'\n')
 
 
 def update_jsonl(jsonl_file_path: str, update_dict: DataDict, timespec: Optional[str] = None) -> None:
@@ -614,6 +703,7 @@ def update_jsonl(jsonl_file_path: str, update_dict: DataDict, timespec: Optional
 
         updates = []
         appends = []
+        old_lines = []
         
         # Process records
         with open(jsonl_file_path, 'rb+', buffering=BUFFER_SIZE) as f:
@@ -636,8 +726,8 @@ def update_jsonl(jsonl_file_path: str, update_dict: DataDict, timespec: Optional
                     if len(new_line) <= len(old_line):
                         updates.append((index[linekey], new_line, len(old_line)))
                     else:
-                        updates.append((index[linekey], b' ' * (len(old_line) - 1) + b'\n', len(old_line)))
                         appends.append((linekey, new_line))
+                        old_lines.append((index[linekey], len(old_line)))
                 else:
                     appends.append((linekey, new_line))
 
@@ -656,10 +746,14 @@ def update_jsonl(jsonl_file_path: str, update_dict: DataDict, timespec: Optional
                 for linekey, line in appends:
                     index[linekey] = f.tell()
                     f.write(line)
+                # A process interruption after this boundary leaves the old
+                # row plus a complete replacement, never a missing key.
+                f.flush()
+
+            _blank_old_lines(f, old_lines)
 
         # Update index
-        with open(f"{jsonl_file_path}.idx", 'wb') as f:
-            f.write(orjson.dumps(index, option=orjson.OPT_SORT_KEYS))
+        _write_index(jsonl_file_path, index)
             
     except OSError as e:
         raise OSError(f"Failed to update JSONL file {jsonl_file_path}: {str(e)}")
@@ -699,8 +793,7 @@ def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey], timespec: Option
                     del index[linekey]
 
         # Update index using orjson for faster JSON serialization
-        with open(f"{jsonl_file_path}.idx", 'wb') as f:
-            f.write(orjson.dumps(index, option=orjson.OPT_SORT_KEYS))
+        _write_index(jsonl_file_path, index)
             
     except OSError as e:
         raise OSError(f"Failed to delete from JSONL file {jsonl_file_path}: {str(e)}")

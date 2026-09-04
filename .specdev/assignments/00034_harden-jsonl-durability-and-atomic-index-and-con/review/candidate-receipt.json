@@ -1,0 +1,219 @@
+{
+  "version": 1,
+  "kind": "standalone_assignment_candidate",
+  "completeness": "complete",
+  "identity": "44ab14537904eb67d137dda15b14a698e0c16ec3492ccf3c0535e36ae851c0ba",
+  "assignment": {
+    "id": "00034",
+    "folder": "00034_harden-jsonl-durability-and-atomic-index-and-con"
+  },
+  "implementation_execution": {
+    "version": 1,
+    "configured_mode": "spawned",
+    "effective_mode": "spawned",
+    "source": "mission",
+    "reason": "Mission-controlled Assignment execution",
+    "owner": "mission-controller",
+    "frozen_at": "2026-09-04T11:49:30.501Z"
+  },
+  "contract": {
+    "path": ".specdev/assignments/00034_harden-jsonl-durability-and-atomic-index-and-con/brainstorm/contract.md",
+    "hash": "7916d8b78fc2112d7ac5d6d1ba076907fce303a3e7122deace4f6948f72a06db"
+  },
+  "acceptance": {
+    "total": 3,
+    "items": [
+      {
+        "id": "AC-1",
+        "evidence": "Focused tests cover all four torn-row paths with path-bearing logs, correct rebuild offsets, and terminal-newline healing.",
+        "result": "passed"
+      },
+      {
+        "id": "AC-2",
+        "evidence": "Injected append-to-blank, pre-index, serialization, and replacement failures retain an old/new row and complete old/new index; normal writers produce compact sorted indexes last.",
+        "result": "passed"
+      },
+      {
+        "id": "AC-3",
+        "evidence": "Destination tracing and injected replacement failures prove atomic `config.meta`/`h.meta` publication and unchanged non-atomic `db.meta` data publication.",
+        "result": "passed"
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 3,
+      "failed": 0,
+      "blocked": 0,
+      "missing": 0
+    }
+  },
+  "verification": {
+    "total": 2,
+    "items": [
+      {
+        "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -m pytest -q tests/test_durability_atomicity.py tests/test_warning_channel...",
+        "revision": "working-tree@77d24f7e414a4e1828964c50f9411432111cbcc0",
+        "scope": "Focused durability, atomic-publication, warning, metadata, lint-compaction, and immutable legacy JSONL behavior (pytest 8.4.2; 53 passed)",
+        "status": "passed",
+        "duration_ms": 860,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "/usr/bin/time -p /opt/homebrew/bin/python3.12 -c 'import ast,pathlib; files=list(pathlib.Path(\"jsonldb\").rglob(\"*.py\")); [ast.parse(p.read_text(encoding=\"utf-8\"), filename=str(p), feature_version=(3,8)) for p in files]; added={\"tempfile....",
+        "revision": "working-tree@77d24f7e414a4e1828964c50f9411432111cbcc0",
+        "scope": "Python 3.8 syntax and added-stdlib API floor, immutable legacy tests, and all seven governed source caps (absent future modules inventoried as null)",
+        "status": "passed",
+        "duration_ms": 200,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "missing": 0
+    },
+    "by_role": {
+      "qualification": {
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      },
+      "authoritative_acceptance": {
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      }
+    },
+    "raw": {
+      "total": 2,
+      "counts": {
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "effective": {
+      "total": 2,
+      "counts": {
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "superseded": 0,
+    "authoritative_evidence": [
+      {
+        "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -m pytest -q tests/test_durability_atomicity.py tests/test_warning_channel...",
+        "revision": "working-tree@77d24f7e414a4e1828964c50f9411432111cbcc0",
+        "status": "passed"
+      }
+    ],
+    "authoritative_evidence_omitted": 0
+  },
+  "changed_project_paths": {
+    "count": 3,
+    "groups": [
+      {
+        "name": "jsonldb",
+        "count": 2,
+        "paths": [
+          "jsonldb/folderdb.py",
+          "jsonldb/jsonlfile.py"
+        ],
+        "omitted": 0
+      },
+      {
+        "name": "tests",
+        "count": 1,
+        "paths": [
+          "tests/test_durability_atomicity.py"
+        ],
+        "omitted": 0
+      }
+    ],
+    "omitted_groups": 0
+  },
+  "unresolved_risks": {
+    "status": "present",
+    "items": [
+      "None within the approved process-crash model; locking, fsync, concurrent writers, and power-loss durability remain explicitly out of scope."
+    ],
+    "source": "canonical_section"
+  },
+  "artifacts": {
+    "contract": {
+      "path": ".specdev/assignments/00034_harden-jsonl-durability-and-atomic-index-and-con/brainstorm/contract.md",
+      "exists": true,
+      "digest": "7916d8b78fc2112d7ac5d6d1ba076907fce303a3e7122deace4f6948f72a06db"
+    },
+    "plan": {
+      "path": ".specdev/assignments/00034_harden-jsonl-durability-and-atomic-index-and-con/design/plan.md",
+      "exists": true,
+      "digest": "6c9733c940c566d68afab27d2d5abce67170bd4d0fb5c5a5d55f7b168d5f402f"
+    },
+    "progress": {
+      "path": ".specdev/assignments/00034_harden-jsonl-durability-and-atomic-index-and-con/implementation/progress.json",
+      "exists": true,
+      "digest": "aa3c720ecca6461a1744d06a4e0ae959953442f1626e28e34fe71e473dad6a84"
+    },
+    "outcome": {
+      "path": ".specdev/assignments/00034_harden-jsonl-durability-and-atomic-index-and-con/outcome.md",
+      "exists": true,
+      "digest": "93a7b25f74302f288e40cf7c96161c56f0592e01ad11cc2ac5995669d7c294c4"
+    }
+  },
+  "issues": [],
+  "issues_omitted": 0
+}

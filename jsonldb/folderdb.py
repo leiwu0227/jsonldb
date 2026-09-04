@@ -10,7 +10,7 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime
 from jsonldb.jsonlfile import (
     save_jsonl, load_jsonl, select_jsonl, update_jsonl, delete_jsonl,
-    lint_jsonl, build_jsonl_index, serialize_linekey,
+    lint_jsonl, build_jsonl_index, save_jsonl_atomic, serialize_linekey,
     detect_timespec
 )
 from jsonldb.jsonldf import (
@@ -128,7 +128,7 @@ class FolderDB:
                 "delimiter": self.delimiter,
                 "hierarchy_depth": self.hierarchy_depth
             }
-            save_jsonl(self.hmeta_path, hierarchy_info)
+            save_jsonl_atomic(self.hmeta_path, hierarchy_info)
 
 
     def build_configmeta(self) -> None:
@@ -138,7 +138,7 @@ class FolderDB:
         config_info = {
             "timespec": self.timespec
         }
-        save_jsonl(self.configmeta_path, config_info)
+        save_jsonl_atomic(self.configmeta_path, config_info)
 
     def _detect_data_timespec(self) -> Optional[str]:
         """Stage 1 trigger: candidate precision from db.meta boundary keys.
