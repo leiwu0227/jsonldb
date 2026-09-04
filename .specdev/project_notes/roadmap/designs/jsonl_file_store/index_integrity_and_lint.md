@@ -44,12 +44,11 @@ The check must be exact: a missed tombstone is never reclaimed. A file is canoni
 - offsets strictly increase when the index keys are walked in sorted order;
 - the first offset equals the length of line one if it is a slot, else zero, and the last indexed line ends exactly at end of file;
 - the number of newline bytes equals the index size, plus one for a slot;
-- in a slot-enabled folder, line one is a slot of exactly the folder width;
-- no orphan companion file sits beside the table.
+- in a slot-enabled folder, line one is a slot of exactly the folder width.
 
 The first two come from the index. The third cannot: every line the library writes ends in exactly one newline, so a count above the expected proves dead space, at the cost of a parse-free byte scan. Foreign bytes without a newline, which only external edits create, are outside the guarantee. Writer-side dead-space accounting was rejected: it would live in the index and still be wrong after external edits.
 
-On any failure lint rewrites the file into a temporary file and atomically replaces it: the slot first, re-padded to the folder width or freshly created when missing, its record preserved, then each indexed line in sorted key order; then it rebuilds the index and deletes orphan companions. A torn tail is truncated and torn unindexed lines are dropped by the rebuild; each is recorded in `lint.log`. A torn line the index points at, which only power loss produces, is found and blanked only under `force`, since only the forced path parses every indexed line and the rewrite copies lines by offset.
+On any failure lint rewrites the file into a temporary file and atomically replaces it: the slot first, re-padded to the folder width or freshly created when missing, its record preserved, then each indexed line in sorted key order; then it rebuilds the index. A torn tail is truncated and torn unindexed lines are dropped by the rebuild; each is recorded in `lint.log`. A torn line the index points at, which only power loss produces, is found and blanked only under `force`, since only the forced path parses every indexed line and the rewrite copies lines by offset.
 
 ## Fast path and `force`
 

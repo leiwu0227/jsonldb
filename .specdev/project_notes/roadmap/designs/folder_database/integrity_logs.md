@@ -23,7 +23,7 @@ The read path never repairs. A reader that rebuilt an index while another proces
 
 ## What counts as an anomaly
 
-Anything repaired, removed, or skipped instead of raised: a torn line removed or blanked, an index rebuilt and why, a control file regenerated, a timespec corrected, a slot blanked or inserted or resized, an orphan companion removed, dead lines compacted.
+Anything repaired, removed, or skipped instead of raised: a torn line removed or blanked, an index rebuilt and why, a control file regenerated, a timespec corrected, a slot blanked or inserted or resized, dead lines compacted.
 
 ## Bounds and cost
 

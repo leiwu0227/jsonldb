@@ -42,7 +42,7 @@ Key and range deletes leave tombstones; table deletion and clearing remove files
 
 ## Maintenance
 
-Database-level lint iterates the tables recorded in `db.meta`, lints each, drops entries for vanished tables, rewrites `db.meta` in one pass with lint timestamps, then lints `db.meta` and, in hierarchy mode, `h.meta`. In a slot-enabled folder it also repairs any table whose line one is not a slot of the folder width and removes orphan companions. `force` passes through to every table; findings go to `.jsonldb/lint.log`. Tables absent from `db.meta` are picked up by the next metadata rebuild, not by lint.
+Database-level lint iterates the tables recorded in `db.meta`, lints each, drops entries for vanished tables, rewrites `db.meta` in one pass with lint timestamps, then lints `db.meta` and, in hierarchy mode, `h.meta`. In a slot-enabled folder it also repairs any table whose line one is not a slot of the folder width. `force` passes through to every table; findings go to `.jsonldb/lint.log`. Tables absent from `db.meta` are picked up by the next metadata rebuild, not by lint.
 
 ## Version-control facade
 
