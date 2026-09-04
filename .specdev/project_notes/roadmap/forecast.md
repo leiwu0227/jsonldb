@@ -2,7 +2,7 @@
 
 <!-- Treat designs as the target. Record absent or incomplete code requirements in dependency order. Ignore code-only features. Use numbered sections, one per gap, below 200 words. Each section should cite the Roadmap design note or notes it is based on. -->
 
-Checked on 2026-09-04 against `master` (design notes at d5b411c, package code at 79cf618). Every section of the twelve published notes was compared read-only with the implementation. Gaps are listed in the order they should be built; later items assume earlier ones.
+Checked on 2026-09-04 against `master` (design notes at 5560d2a, package code at 79cf618). Every section of the twelve published notes was compared read-only with the implementation. Gaps are listed in the order they should be built; later items assume earlier ones.
 
 ## 1. Retire print in favour of logging
 
@@ -36,15 +36,15 @@ Upsert currently blanks the old line of a grown record before appending the new 
 
 ## 6. Line-one classification and the reserved key
 
-Based on `designs/jsonl_file_store/metadata_slot.md` (Detection, On-disk form) and `designs/jsonl_file_store.md` (Index-driven and sequential paths).
+Based on `designs/jsonl_file_store/metadata_slot.md` (Detection, On-disk form), `designs/jsonl_file_store.md` (Index-driven and sequential paths), and `designs/source_code_folder_structure.md`.
 
-Nothing in the code knows about line one. Add the three-way classification: a valid envelope of a known version is a slot with or without a record; a `_meta` object that is not a valid envelope, or an unknown version, is a slot without a record and not a row; anything else is a legacy file. The index build and the full load skip a slot, index offsets stay absolute, and every writer rejects `_meta` as a linekey. Version 1 of the envelope registry is the only version. This item makes slotted files readable before anything writes them.
+Nothing in the code knows about line one. Create `jsonldb/metaslot.py`, a leaf that imports nothing from the package, holding the envelope registry, the three-way classification, padding, and the in-place slot read and write. Classification: a valid envelope of a known version is a slot with or without a record; a `_meta` object that is not a valid envelope, or an unknown version, is a slot without a record and not a row; anything else is a legacy file. The index build and the full load skip a slot, index offsets stay absolute, and every writer rejects `_meta` as a linekey. Version 1 of the envelope registry is the only version. This item makes slotted files readable before anything writes them.
 
 ## 7. Slot read and write with the publish order
 
 Based on `designs/jsonl_file_store/metadata_slot.md` (Contract, Write path, Failure model, Legacy, API) and `designs/folder_database.md` (Data operations).
 
-File store: write a padded envelope in place on line one, flush the buffer before it, and touch the index modification time after a slot-only write. `FolderDB`: `read_meta`; `meta=` on the four write calls, `None` keeping and a dict replacing after the rows in the order in-place, append, slot, blank, index; `clear_meta`; `get_dict_with_meta` and `get_df_with_meta` returning a named tuple of `meta` and `rows`, record read first, `None` and an empty container for a missing table. A record-carrying write into a folder without a recorded width is refused, and a record that does not fit is refused with an error naming both sizes. Existing calls and the constructor are unchanged.
+File store, using `metaslot`: write a padded envelope in place on line one, flush the buffer before it, and touch the index modification time after a slot-only write. `FolderDB`: `read_meta`; `meta=` on the four write calls, `None` keeping and a dict replacing after the rows in the order in-place, append, slot, blank, index; `clear_meta`; `get_dict_with_meta` and `get_df_with_meta` returning a named tuple of `meta` and `rows`, record read first, `None` and an empty container for a missing table. A record-carrying write into a folder without a recorded width is refused, and a record that does not fit is refused with an error naming both sizes. Existing calls and the constructor are unchanged.
 
 ## 8. The width operation
 
@@ -60,9 +60,9 @@ Layout conditions gain: first offset equals the slot length when line one is a s
 
 ## 10. Report files
 
-Based on `designs/folder_database/integrity_logs.md`.
+Based on `designs/folder_database/integrity_logs.md` and `designs/source_code_folder_structure.md`.
 
-Create `.jsonldb/` in the database folder. Open writes `integrity.log` and `lint_db` writes `lint.log`, each replacing the previous contents: a header with timestamp and writer, then one line per anomaly with kind, file, offset, detail, and removed bytes capped per entry, stopping after a fixed count with an omitted total. `FolderDB` captures logger records from the library during those two operations, filtered to its own folder. Ordinary reads and writes never touch the files. Open never writes to a table.
+Create `jsonldb/reports.py`, a leaf holding the capture handler and the two writers, and `.jsonldb/` in the database folder. Open writes `integrity.log` and `lint_db` writes `lint.log`, each replacing the previous contents: a header with timestamp and writer, then one line per anomaly with kind, file, offset, detail, and removed bytes capped per entry, stopping after a fixed count with an omitted total. `FolderDB` captures logger records from the library during those two operations, filtered to its own folder. Ordinary reads and writes never touch the files. Open never writes to a table.
 
 ## Notes with no gaps
 
