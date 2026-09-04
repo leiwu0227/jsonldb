@@ -1,6 +1,6 @@
 # Version Control
 
-Version control gives a database a history of whole-folder snapshots using Git. The database directory itself becomes the repository, so a snapshot captures every table, index, and control file exactly as they are on disk, and restoring a snapshot restores all of them together.
+Version control gives a database a history of whole-folder snapshots using Git. The database directory itself becomes the repository, so a snapshot captures every table, index, control file, and report exactly as they are on disk, and restoring a snapshot restores all of them together.
 
 ## Model
 
@@ -11,7 +11,9 @@ Version control gives a database a history of whole-folder snapshots using Git. 
 
 ## Why whole-folder snapshots
 
-Tables, indexes, and metadata are interdependent. Snapshotting only data files would leave indexes and statistics stale after a revert; snapshotting the whole folder means a restored database is immediately consistent without a lint pass. The cost is that rebuildable index files and control files are stored in history alongside data. No ignore rules are written, so callers who want smaller histories must add their own.
+Tables, indexes, and metadata are interdependent. Snapshotting only data files would leave indexes and statistics stale after a revert; snapshotting the whole folder means a restored database is immediately consistent without a lint pass. The cost is that rebuildable index files, control files, and the `.jsonldb/` reports are stored in history alongside data. No ignore rules are written, so callers who want smaller histories must add their own.
+
+A metadata record lives inside its table file, so a snapshot and a revert carry it with the rows by construction. Reverting to a snapshot taken before a table gained its slot yields a legacy file, and to one taken before the folder recorded a slot width yields a legacy folder; both are ordinary states the metadata-slot note defines.
 
 ## Boundaries
 

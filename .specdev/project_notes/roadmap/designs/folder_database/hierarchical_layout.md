@@ -1,6 +1,6 @@
 # Hierarchical Layout
 
-Hierarchy mode spreads a database's tables across subdirectories so that a folder with tens of thousands of tables stays navigable and directory listings stay fast. It changes only where a table's file lives; the table's logical name, its index, and every data operation are unchanged.
+Hierarchy mode spreads a database's tables across subdirectories so that a folder with tens of thousands of tables stays navigable and directory listings stay fast. It changes only where a table's file lives; the table's logical name, its index, its metadata record, and every data operation are unchanged.
 
 ## Naming rule
 
@@ -29,13 +29,15 @@ Reorganization is the operation that establishes or changes the hierarchy. It wa
 - directories left empty are pruned bottom-up;
 - `db.meta` is rebuilt and `h.meta` written.
 
+A metadata record lives inside the table file, so a move carries it automatically; only the index travels alongside.
+
 Quarantine instead of deletion is deliberate: a badly named table is still data, and a later change of depth or delimiter may make it valid. A separate reprocess step re-examines the quarantine folder and moves back any table whose name has become valid, building an index if it lacks one.
 
 Moves are performed file by file and are not transactional. An interruption can leave a table moved without its index, which index self-healing repairs on the next read, or leave a partially reorganized tree, which re-running the open with the same depth completes.
 
 ## Discovery under hierarchy
 
-Listing tables walks the whole tree and reports filenames without their extension. Hidden directories, including the quarantine folder and any Git directory, are never entered, so quarantined and version-control files are invisible to data operations. Deleting a table prunes any directories it leaves empty so the tree never accumulates empty branches.
+Listing tables walks the whole tree and reports filenames without their extension. Hidden directories, including the quarantine folder, the `.jsonldb/` report folder, and any Git directory, are never entered, so quarantined, report, and version-control files are invisible to data operations. Deleting a table prunes any directories it leaves empty so the tree never accumulates empty branches.
 
 ## Trade-offs
 
@@ -45,4 +47,4 @@ Listing tables walks the whole tree and reports filenames without their extensio
 
 ## Source target
 
-- `jsonldb/folderdb.py`: at most 1000 lines in total, shared with the folder-database and metadata notes.
+- `jsonldb/folderdb.py`: at most 1200 lines in total, shared with the folder-database, metadata, metadata-slot, and integrity-logs notes.
