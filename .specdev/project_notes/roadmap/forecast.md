@@ -2,7 +2,7 @@
 
 <!-- Treat designs as the target. Record absent or incomplete code requirements in dependency order. Ignore code-only features. Use numbered sections, one per gap, below 200 words. Each section should cite the Roadmap design note or notes it is based on. -->
 
-Checked on 2026-09-04 against `master` (design notes at 5560d2a, package code at 79cf618). Every section of the twelve published notes was compared read-only with the implementation. Gaps are listed in the order they should be built; later items assume earlier ones.
+Checked on 2026-09-04 against `master` (design notes at c7e1413, package code at 79cf618). Every section of the twelve published notes was compared read-only with the implementation. Gaps are listed in the order they should be built; later items assume earlier ones.
 
 ## 1. Retire print in favour of logging
 
@@ -52,11 +52,11 @@ Based on `designs/jsonl_file_store/metadata_slot.md` (Width and enablement) and 
 
 Add `set_meta_slot_bytes(width)`: record `meta_slot_bytes` in `config.meta`, verify every existing record fits when shrinking and refuse naming the tables, then rewrite every table whose line one is not a slot of that width through a temporary file and an atomic replace. Default 4096. In an enabled folder, save creates new tables with a slot of the folder width. This is the only full-folder rewrite and the only way to enable a folder.
 
-## 9. Lint repairs the slot, torn lines, and companions
+## 9. Lint repairs the slot and torn lines
 
 Based on `designs/jsonl_file_store/index_integrity_and_lint.md` (Checking fidelity, Checking layout, Fast path and `force`) and `designs/folder_database/integrity_logs.md` (Open observes, lint repairs).
 
-Layout conditions gain: first offset equals the slot length when line one is a slot, newline count equals index size plus one, line one is a slot of the folder width in an enabled folder, and no `.jsonl.aux` sits beside the table. The rewrite carries the slot first, re-padded or created with the record preserved. Lint truncates an unparseable last line, heals a missing trailing newline, deletes orphan companions, and under `force` parses every indexed line and blanks torn ones in place. The cardinality scan subtracts the slot. Each removal is reported with the removed bytes.
+Layout conditions gain: first offset equals the slot length when line one is a slot, newline count equals index size plus one, and line one is a slot of the folder width in an enabled folder. The rewrite carries the slot first, re-padded or created with the record preserved. Lint truncates an unparseable last line, heals a missing trailing newline, and under `force` parses every indexed line and blanks torn ones in place. The cardinality scan subtracts the slot. Each removal is reported with the removed bytes.
 
 ## 10. Report files
 
