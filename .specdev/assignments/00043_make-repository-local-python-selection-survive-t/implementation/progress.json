@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "T-1",
+      "status": "completed"
+    },
+    {
+      "id": "T-2",
+      "status": "completed"
+    },
+    {
+      "id": "T-3",
+      "status": "completed"
+    }
+  ],
+  "selected_guides": {
+    "implementation": [
+      "api-security"
+    ],
+    "review": []
+  },
+  "verification": [
+    {
+      "command": "sh -n .specdev/cache/bin/python-runtime-env .specdev/cache/bin/specdev",
+      "revision": "working-tree@fc8120da5a9284f230292c2b47318b39c15578e2",
+      "scope": "Repository-local environment launcher and SpecDev wrapper shell syntax",
+      "status": "passed",
+      "duration_ms": 0,
+      "role": "qualification"
+    },
+    {
+      "command": ".specdev/cache/bin/python-runtime-env node -e 'const {spawnSync}=require(\"child_process\");const r=spawnSync(\"/bin/sh\",[\"-lc\",\"type python3 && python3 --version\"],{stdio:\"inherit\",env:process.env});process.exit(r.status??1)'",
+      "revision": "working-tree@fc8120da5a9284f230292c2b47318b39c15578e2",
+      "scope": "Controller-shaped Node-to-login-shell handoff",
+      "status": "passed",
+      "duration_ms": 60,
+      "role": "qualification"
+    },
+    {
+      "command": ".specdev/cache/bin/python-runtime-env /bin/sh -lc 'MPLCONFIGDIR=\"$PWD/.specdev/cache/python-runtime/matplotlib\" PYTHONDONTWRITEBYTECODE=1 python3 .specdev/cache/python-runtime-probe.py'",
+      "revision": "working-tree@fc8120da5a9284f230292c2b47318b39c15578e2",
+      "scope": "AC-1 fresh login-shell interpreter identity and declared runtime dependencies",
+      "status": "passed",
+      "duration_ms": 350,
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": ".specdev/cache/bin/python-runtime-env /bin/sh -lc \"python3 -c 'import subprocess,sys; required=(\\\"tests/test_dependency_runtime_logging.py::test_gitpython_init_logs_repository_path_without_stdio\\\",\\\"tests/test_dependency_runtime_logging.py::test_real_visualizers_log_discovery_and_empty_data_without_stdio\\\"); run=subprocess.run([sys.executable,\\\"-m\\\",\\\"pytest\\\",\\\"--collect-only\\\",\\\"-q\\\",\\\"tests\\\"],capture_output=True,text=True); print(run.stdout,end=\\\"\\\"); print(run.stderr,end=\\\"\\\",file=sys.stderr); assert run.returncode==0,run.returncode; missing=[node for node in required if node not in run.stdout]; assert not missing,missing'\"",
+      "revision": "working-tree@fc8120da5a9284f230292c2b47318b39c15578e2",
+      "scope": "AC-2 tracked-suite collection through the login-shell boundary",
+      "status": "passed",
+      "duration_ms": 8960,
+      "role": "authoritative_acceptance"
+    }
+  ],
+  "deviations": [],
+  "follow_up": "none",
+  "selected_guide_versions": {
+    "implementation": [
+      {
+        "id": "api-security",
+        "version": "1"
+      }
+    ],
+    "review": []
+  }
+}

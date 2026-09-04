@@ -77,9 +77,9 @@ execution_policy:
     bypassed: []
     decisions: []
 last_checkpoint:
-  base_revision: 40c8dee552dadae6a3fade7b98ecdd7fcac6df77
+  base_revision: fc8120da5a9284f230292c2b47318b39c15578e2
   push_requested: false
-  created_at: 2026-09-04T14:54:41.736Z
+  created_at: 2026-09-04T15:17:36.249Z
 updated_at: 2026-09-04T11:39:09.035Z
 gaps:
   version: 1
@@ -132,20 +132,24 @@ gaps:
         id: authorized-command
         key: final-verification:authorized-command
       status: validating
-      stage: resolution
+      stage: resolver
       disposition: unresolved
       assignments:
         - id: "00042"
           stage: resolution
+        - id: "00043"
+          stage: resolver
       signals:
         - final-verification:2026-09-04T14:29:33.864Z
+        - final-verification:2026-09-04T14:57:42.193Z
       created_at: 2026-09-04T14:29:33.865Z
-      updated_at: 2026-09-04T14:54:41.633Z
-      artifact: .specdev/assignments/00042_establish-a-dependency-complete-python-runtime-f/outcome.md
+      updated_at: 2026-09-04T15:17:36.151Z
+      artifact: .specdev/assignments/00043_make-repository-local-python-selection-survive-t/outcome.md
   processed_signals:
     - child:00037:follow-up
     - child:00038:follow-up
     - child:00040:follow-up
     - child:00041:follow-up
     - final-verification:2026-09-04T14:29:33.864Z
+    - final-verification:2026-09-04T14:57:42.193Z
 convergence_disposition: needs_product_change

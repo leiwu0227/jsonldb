@@ -1,0 +1,238 @@
+{
+  "version": 1,
+  "kind": "standalone_assignment_candidate",
+  "completeness": "complete",
+  "identity": "9a1e09583765a1c0cfff96d5fa45630eee01eadc6bbb3df4c8c90a1eaa6db540",
+  "assignment": {
+    "id": "00043",
+    "folder": "00043_make-repository-local-python-selection-survive-t"
+  },
+  "implementation_execution": {
+    "version": 1,
+    "configured_mode": "spawned",
+    "effective_mode": "spawned",
+    "source": "mission",
+    "reason": "Mission-controlled Assignment execution",
+    "owner": "mission-controller",
+    "frozen_at": "2026-09-04T15:06:29.804Z"
+  },
+  "contract": {
+    "path": ".specdev/assignments/00043_make-repository-local-python-selection-survive-t/brainstorm/contract.md",
+    "hash": "494e5141dd222348a0586de0991d0b12b194a3f53b9b2bc02bc12d6a74ca7434"
+  },
+  "acceptance": {
+    "total": 2,
+    "items": [
+      {
+        "id": "AC-1",
+        "evidence": "Through `python-runtime-env` and a fresh `/bin/sh -lc`, unqualified `python3` invoked the exported function, resolved to the repository Python 3.12.12 interpreter, and imported pandas, orjson, NumPy, GitPython, Bokeh, and Matplotlib from...",
+        "result": "passed"
+      },
+      {
+        "id": "AC-2",
+        "evidence": "Through the same handoff and login-shell boundary, `python3 -m pytest --collect-only -q tests` collected all 123 tests and explicitly included the GitPython and combined Bokeh/Matplotlib regression nodes.",
+        "result": "passed"
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 2,
+      "failed": 0,
+      "blocked": 0,
+      "missing": 0
+    }
+  },
+  "verification": {
+    "total": 4,
+    "items": [
+      {
+        "command": ".specdev/cache/bin/python-runtime-env /bin/sh -lc 'MPLCONFIGDIR=\"$PWD/.specdev/cache/python-runtime/matplotlib\" PYTHONDONTWRITEBYTECODE=1 python3 .specdev/cache/python-runtime-probe.py'",
+        "revision": "working-tree@fc8120da5a9284f230292c2b47318b39c15578e2",
+        "scope": "AC-1 fresh login-shell interpreter identity and declared runtime dependencies",
+        "status": "passed",
+        "duration_ms": 350,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env /bin/sh -lc \"python3 -c 'import subprocess,sys; required=(\\\"tests/test_dependency_runtime_logging.py::test_gitpython_init_logs_repository_path_without_stdio\\\",\\\"tests/test_dependency_runtime_logging....",
+        "revision": "working-tree@fc8120da5a9284f230292c2b47318b39c15578e2",
+        "scope": "AC-2 tracked-suite collection through the login-shell boundary",
+        "status": "passed",
+        "duration_ms": 8960,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "sh -n .specdev/cache/bin/python-runtime-env .specdev/cache/bin/specdev",
+        "revision": "working-tree@fc8120da5a9284f230292c2b47318b39c15578e2",
+        "scope": "Repository-local environment launcher and SpecDev wrapper shell syntax",
+        "status": "passed",
+        "duration_ms": 0,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env node -e 'const {spawnSync}=require(\"child_process\");const r=spawnSync(\"/bin/sh\",[\"-lc\",\"type python3 && python3 --version\"],{stdio:\"inherit\",env:process.env});process.exit(r.status??1)'",
+        "revision": "working-tree@fc8120da5a9284f230292c2b47318b39c15578e2",
+        "scope": "Controller-shaped Node-to-login-shell handoff",
+        "status": "passed",
+        "duration_ms": 60,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "missing": 0
+    },
+    "by_role": {
+      "qualification": {
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      },
+      "authoritative_acceptance": {
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      }
+    },
+    "raw": {
+      "total": 4,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 2,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 2,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "effective": {
+      "total": 4,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 2,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 2,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "superseded": 0,
+    "authoritative_evidence": [
+      {
+        "command": ".specdev/cache/bin/python-runtime-env /bin/sh -lc 'MPLCONFIGDIR=\"$PWD/.specdev/cache/python-runtime/matplotlib\" PYTHONDONTWRITEBYTECODE=1 python3 .specdev/cache/python-runtime-probe.py'",
+        "revision": "working-tree@fc8120da5a9284f230292c2b47318b39c15578e2",
+        "status": "passed"
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env /bin/sh -lc \"python3 -c 'import subprocess,sys; required=(\\\"tests/test_dependency_runtime_logging.py::test_gitpython_init_logs_repository_path_without_stdio\\\",\\\"tests/test_dependency_runtime_logging....",
+        "revision": "working-tree@fc8120da5a9284f230292c2b47318b39c15578e2",
+        "status": "passed"
+      }
+    ],
+    "authoritative_evidence_omitted": 0
+  },
+  "changed_project_paths": {
+    "count": 0,
+    "groups": [],
+    "omitted_groups": 0
+  },
+  "unresolved_risks": {
+    "status": "present",
+    "items": [
+      "The handoff is intentionally machine-local under ignored `.specdev/cache` and",
+      "must be reprovisioned if that cache is purged. It targets the verified macOS",
+      "`/bin/sh` implementation (Bash 3.2); replacing that shell with one that does not",
+      "import exported Bash functions would require a new repository-local handoff."
+    ],
+    "source": "canonical_section"
+  },
+  "artifacts": {
+    "contract": {
+      "path": ".specdev/assignments/00043_make-repository-local-python-selection-survive-t/brainstorm/contract.md",
+      "exists": true,
+      "digest": "494e5141dd222348a0586de0991d0b12b194a3f53b9b2bc02bc12d6a74ca7434"
+    },
+    "plan": {
+      "path": ".specdev/assignments/00043_make-repository-local-python-selection-survive-t/design/plan.md",
+      "exists": true,
+      "digest": "b77973684a17b67fa9b8482236b3d63b8e0dce788066a9590c4309fd69963c1b"
+    },
+    "progress": {
+      "path": ".specdev/assignments/00043_make-repository-local-python-selection-survive-t/implementation/progress.json",
+      "exists": true,
+      "digest": "51c79368f98750fd8087787dc7a756939abcbed7748d8bae4a0dc5337258ea7c"
+    },
+    "outcome": {
+      "path": ".specdev/assignments/00043_make-repository-local-python-selection-survive-t/outcome.md",
+      "exists": true,
+      "digest": "a5176e76aa10fc0a7070c8396097ab7caba603b18426a5f2ec136f44b2787fa8"
+    }
+  },
+  "issues": [],
+  "issues_omitted": 0
+}

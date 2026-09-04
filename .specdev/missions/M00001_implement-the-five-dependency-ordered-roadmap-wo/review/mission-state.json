@@ -2,20 +2,25 @@
   "version": 2,
   "mode": "automatic",
   "stage": "complete",
-  "primary_round": 1,
-  "round": 1,
+  "primary_round": 2,
+  "round": 2,
   "history": [
     {
       "round": 1,
       "candidate_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "findings_digest": "cb43114a413fab1ed2dffac9969928bab5f207d8a4d627e500a05fa6001800dc"
+    },
+    {
+      "round": 2,
+      "candidate_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "findings_digest": "51bbd1d69ce9cbced8c2a40da80d501f1bc454e36baa36bea3fd9ed0a02fc2ed"
     }
   ],
   "status": "approved",
   "candidate_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-  "findings_digest": "cb43114a413fab1ed2dffac9969928bab5f207d8a4d627e500a05fa6001800dc",
-  "attempt": "Attempt-00050",
-  "updated_at": "2026-09-04T14:29:33.304Z",
+  "findings_digest": "51bbd1d69ce9cbced8c2a40da80d501f1bc454e36baa36bea3fd9ed0a02fc2ed",
+  "attempt": "Attempt-00056",
+  "updated_at": "2026-09-04T14:57:41.516Z",
   "profile": {
     "provider": "claude",
     "model": "claude-opus-5",

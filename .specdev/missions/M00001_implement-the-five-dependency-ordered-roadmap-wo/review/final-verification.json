@@ -1,7 +1,7 @@
 {
-  "id": "verification-001",
+  "id": "verification-002",
   "command": "python3 -m pytest -q tests && git diff --exit-code d5cd7b1ff3c462897667e5d19d17dfc092a6ecb5 -- tests/legacy && python3 -c 'from pathlib import Path; caps={\"jsonldb/metaslot.py\":250,\"jsonldb/jsonlfile.py\":950,\"jsonldb/reports.py\":150,\"jsonldb/folderdb.py\":1250,\"jsonldb/jsonldf.py\":150,\"jsonldb/vercontrol.py\":160,\"jsonldb/visual.py\":500}; counts={p:len(Path(p).read_text(encoding=\"utf-8\").splitlines()) for p in caps}; excess={p:(counts[p],caps[p]) for p in caps if counts[p]>caps[p]}; assert not excess,excess' && python3 -c 'import ast,pathlib; trees={str(p):ast.parse(p.read_text(encoding=\"utf-8\"),feature_version=(3,8)) for p in pathlib.Path(\"jsonldb\").rglob(\"*.py\")}; calls=[(p,n) for p,t in trees.items() for n in ast.walk(t) if isinstance(n,ast.Call)]; bad=[p for p,n in calls if (isinstance(n.func,ast.Name) and n.func.id==\"print\") or (isinstance(n.func,ast.Attribute) and isinstance(n.func.value,ast.Name) and n.func.value.id==\"builtins\" and n.func.attr==\"print\") or (isinstance(n.func,ast.Attribute) and n.func.attr in {\"write\",\"writelines\"} and isinstance(n.func.value,ast.Attribute) and isinstance(n.func.value.value,ast.Name) and n.func.value.value.id==\"sys\" and n.func.value.attr in {\"stdout\",\"stderr\"})]; assert not bad,bad'",
-  "revision": "working-tree@40c8dee552dadae6a3fade7b98ecdd7fcac6df77",
+  "revision": "working-tree@fc8120da5a9284f230292c2b47318b39c15578e2",
   "candidate_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "scope": "integrated",
   "status": "failed",
@@ -12,6 +12,6 @@
   "executor_class": "managed-worker",
   "route": "primary",
   "exit_code": 2,
-  "duration_ms": 448,
-  "completed_at": "2026-09-04T14:29:33.864Z"
+  "duration_ms": 570,
+  "completed_at": "2026-09-04T14:57:42.193Z"
 }
