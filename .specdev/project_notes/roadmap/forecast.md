@@ -72,4 +72,4 @@ Create `jsonldb/reports.py`, a leaf holding the capture handler and the two writ
 - `designs/folder_database/hierarchical_layout.md`
 - `designs/version_control.md`
 
-Code-only features are outside this forecast by rule. The opaque companion, catalog system, and range replacement on branch `post-fc22cba` remain in that category.
+Code-only features are outside this forecast by rule. The catalog system and range replacement on branch `post-fc22cba` remain in that category.
