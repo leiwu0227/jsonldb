@@ -77,9 +77,9 @@ execution_policy:
     bypassed: []
     decisions: []
 last_checkpoint:
-  base_revision: ad02bb2d41365f7acc6af2ee1a64e1b6fbc10020
+  base_revision: a061a12233a64e90147e843fcc9af92b33293a0c
   push_requested: false
-  created_at: 2026-09-04T15:22:43.966Z
+  created_at: 2026-09-04T15:27:06.531Z
 updated_at: 2026-09-04T15:18:37.666Z
 convergence_disposition: needs_evidence
 completed_at: 2026-09-04T15:22:26.909Z
@@ -92,8 +92,8 @@ activity:
     completed: 58
     failed: 1
     blocked: 0
-    interrupted: 0
-    running: 1
+    interrupted: 1
+    running: 0
   elapsed_ms: 13483882
   agent_duration_ms: 14105343
   provider_reported_tokens: 2007133

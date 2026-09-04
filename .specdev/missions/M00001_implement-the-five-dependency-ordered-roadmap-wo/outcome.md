@@ -31,7 +31,7 @@ Implement the five dependency-ordered roadmap work packages in todo.md on master
 ## Activity
 
 - Orchestration Attempts: 3
-- Provider agent Attempts: 60 total (58 completed, 1 failed, 1 running)
+- Provider agent Attempts: 60 total (58 completed, 1 failed, 1 interrupted)
 - Elapsed: 3h 44m 44s
 - Provider-reported tokens: 2007133
 
