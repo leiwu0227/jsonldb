@@ -11,7 +11,7 @@
     "node": "advance-queue"
   },
   "createdAt": "2026-09-04T09:26:07.455Z",
-  "updatedAt": "2026-09-04T13:49:27.207Z",
+  "updatedAt": "2026-09-04T14:09:06.425Z",
   "outputs": {
     "create-mission": {
       "id": "M00001",
@@ -79,16 +79,15 @@
     },
     "child-assignment": {
       "approved": true,
-      "verdict": ".specdev/assignments/00039_make-standalone-lint-converge-when-a-metadata-on/review/implementation-verdict.md",
-      "attempt": "Attempt-00039",
+      "verdict": ".specdev/assignments/00040_add-dependency-backed-runtime-coverage-for-versi/review/implementation-verdict.md",
+      "attempt": "Attempt-00043",
       "disposition": "approved"
     },
     "advance-queue": {
       "remaining": true,
-      "completed": "00038",
-      "follow_up_required": true,
-      "gap_open": true,
-      "gap_id": "gap-a0276bb3f8ae5eca",
+      "completed": "00039",
+      "follow_up_required": false,
+      "gap_open": false,
       "parallel": false
     },
     "f2/create-assignment": {
@@ -310,6 +309,47 @@
       "verdict": ".specdev/assignments/00039_make-standalone-lint-converge-when-a-metadata-on/review/implementation-verdict.md",
       "attempt": "Attempt-00039",
       "disposition": "approved"
+    },
+    "f7/create-assignment": {
+      "id": "00040",
+      "name": "00040_add-dependency-backed-runtime-coverage-for-versi",
+      "path": ".specdev/assignments/00040_add-dependency-backed-runtime-coverage-for-versi",
+      "description": "Add dependency-backed runtime coverage for version-control and visualization logging",
+      "review_policy": {
+        "brainstorm": "required",
+        "implementation": "required"
+      }
+    },
+    "f7/brainstorm": {
+      "contract": ".specdev/assignments/00040_add-dependency-backed-runtime-coverage-for-versi/brainstorm/contract.md",
+      "contract_hash": "3c21cadf44dbfede4bbef81eef142241b30d76006110c297c979bbd23632000e"
+    },
+    "f7/approve-contract": {
+      "approved": true,
+      "contract_hash": "3c21cadf44dbfede4bbef81eef142241b30d76006110c297c979bbd23632000e",
+      "actor": "mission:M00001",
+      "approved_at": "2026-09-04T13:54:56.827Z",
+      "revision": "fb6a4f10d3c789b87b8490fdb9f54dfd98e0f431",
+      "review_override": false,
+      "review_policy": {
+        "brainstorm": "required",
+        "implementation": "required"
+      }
+    },
+    "f7/design": {
+      "plan": ".specdev/assignments/00040_add-dependency-backed-runtime-coverage-for-versi/design/plan.md",
+      "attempt": "Attempt-00042"
+    },
+    "f7/implementation": {
+      "progress": ".specdev/assignments/00040_add-dependency-backed-runtime-coverage-for-versi/implementation/progress.json",
+      "outcome": ".specdev/assignments/00040_add-dependency-backed-runtime-coverage-for-versi/outcome.md",
+      "attempt": "Attempt-00042"
+    },
+    "f7/implementation-review": {
+      "approved": true,
+      "verdict": ".specdev/assignments/00040_add-dependency-backed-runtime-coverage-for-versi/review/implementation-verdict.md",
+      "attempt": "Attempt-00043",
+      "disposition": "approved"
     }
   },
   "gateDecisions": {
@@ -393,6 +433,18 @@
         "brainstorm": "required",
         "implementation": "required"
       }
+    },
+    "f7/approve-contract": {
+      "approved": true,
+      "contract_hash": "3c21cadf44dbfede4bbef81eef142241b30d76006110c297c979bbd23632000e",
+      "actor": "mission:M00001",
+      "approved_at": "2026-09-04T13:54:56.827Z",
+      "revision": "fb6a4f10d3c789b87b8490fdb9f54dfd98e0f431",
+      "review_override": false,
+      "review_policy": {
+        "brainstorm": "required",
+        "implementation": "required"
+      }
     }
   },
   "graphSource": {
@@ -402,5 +454,5 @@
     "packagePath": "workflows/mission-lifecycle@1.5.0"
   },
   "stack": [],
-  "frameCounter": 6
+  "frameCounter": 7
 }

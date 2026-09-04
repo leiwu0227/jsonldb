@@ -1,8 +1,7 @@
 {
   "remaining": true,
-  "completed": "00038",
-  "follow_up_required": true,
-  "gap_open": true,
-  "gap_id": "gap-a0276bb3f8ae5eca",
+  "completed": "00039",
+  "follow_up_required": false,
+  "gap_open": false,
   "parallel": false
 }

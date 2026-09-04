@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "id": "00040",
+  "kind": "change",
+  "description": "Add dependency-backed runtime coverage for version-control and visualization logging",
+  "run_id": "mission-lifecycle-20260904T09260745",
+  "created_at": "2026-09-04T13:49:27.496Z",
+  "review_policy": {
+    "brainstorm": "required",
+    "implementation": "required"
+  },
+  "mission": "M00001",
+  "updated_at": "2026-09-04T14:09:06.426Z",
+  "review_policy_frozen_at": "2026-09-04T13:54:56.827Z",
+  "implementation_execution": {
+    "version": 1,
+    "configured_mode": "spawned",
+    "effective_mode": "spawned",
+    "source": "mission",
+    "reason": "Mission-controlled Assignment execution",
+    "owner": "mission-controller",
+    "frozen_at": "2026-09-04T13:54:56.899Z"
+  },
+  "status": "completed",
+  "completed_at": "2026-09-04T14:09:06.426Z"
+}

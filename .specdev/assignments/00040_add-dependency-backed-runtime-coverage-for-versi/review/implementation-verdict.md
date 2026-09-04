@@ -1,0 +1,26 @@
+---
+verdict: approved
+material_divergence: false
+scope_divergence: none
+procedure_divergence: disclosed
+evidence_integrity: complete
+user_reapproval_required: false
+---
+
+## Findings
+
+Identity and evidence integrity are intact. The frozen receipt's `contract.hash`, `plan`, `progress`, and `outcome` digests all recompute to the recorded values, and `review/implementation-state.json` carries the same `contract_hash` (`3c21cadf…`) and `candidate_receipt_identity` (`c8b06eef…`) named in the invocation. `issues` is empty, `omitted`/`omitted_groups`/`authoritative_evidence_omitted` are all zero, and `raw` and `effective` verification counts agree, so nothing is elided or reconciled away.
+
+Scope is unchanged from the approved contract. Working-tree inspection confirms the only project change is the untracked `tests/test_dependency_runtime_logging.py`; `git diff` and `git diff --cached` over the repository excluding `.specdev` are empty, so no production behavior, public API, dependency range, report, or unrelated test was touched. The contract's stated non-goals therefore hold, and the change stays inside the parent Mission's delegated test authority (`assignments.yaml` entry `00040`, wave 7, `gap-a0276bb3f8ae5eca`).
+
+Both acceptance criteria have final results backed by one authoritative acceptance run at the candidate revision (`working-tree@fb6a4f10d3c789b87b8490fdb9f54dfd98e0f431`, matching current `HEAD`), reported as 2 passed. AC-1 is genuinely dependency-backed: the test drives `vercontrol.init_folder`, then reopens the directory with real `git.Repo`, asserts `working_tree_dir`, the preserved `None` return, `is_versioned`, the path-bearing `initialized git repository in %s` record from `jsonldb/vercontrol.py:46`, and empty stdout/stderr. `init_folder` reaches only `git.Repo.init`, so the test does not depend on global Git identity, satisfying the contract constraint. AC-2 executes both `visualize_folderdb_bokeh` and `visualize_folderdb_matplot` for real, asserting concrete Bokeh renderer data and Matplotlib collection offsets alongside `found 2 JSONL files in %s` and `empty index for %s` counted twice each — one per visualizer — matching `jsonldb/visual.py:200,242,315,353`. Headlessness is honored via `matplotlib.use("Agg")` plus `MPLBACKEND=Agg`, and the figure is closed in a `finally` block. No dependency is faked and no visualization evidence is reduced to static inspection, so the contract's "Important decisions" clause is met.
+
+No dependency was added or upgraded — `setup.py` already declares `gitpython>=3.1.0`, `bokeh>=2.0.0`, and `matplotlib>=3.0.0`, and the clean tracked diff proves the declaration is untouched — so the added/upgraded-dependency gate does not fire. Even so, execution-time runtime evidence is present: the qualification entry imports and reports Python 3.12.12, pytest 8.4.2, GitPython 3.1.57, Bokeh 3.9.2, and Matplotlib 3.11.1, all inside the declared ranges. That is real entry-point startup, not a lockfile-only claim, and I credited nothing beyond it.
+
+The contract's verification authority is respected: only the focused new test file was run, plus the required Python 3.8 AST floor audit and the seven-file inventory. The inventory command is character-for-character the Mission's own `splitlines()`-based cap check from `assignments.yaml:96`, so the receipt's "logical-line" wording tracks the Mission's established counting convention rather than introducing a new one. No full suite was run, correctly leaving it to the Mission's final integrated verification.
+
+Procedure divergence is disclosed, not material. The recorded `failed` entry is the default-interpreter probe (`python3 -m pytest -q tests/test_dependency_runtime_logging.py`), explicitly roled `qualification` and scoped as "collection lacked GitPython"; the sole `authoritative_acceptance` entry passed. Acceptance consequently ran on `/opt/homebrew/bin/python3.12` with a `PYTHONPATH` assembled from locally cached real wheels because the default Python 3.14 interpreter is dependency-incomplete and sandboxed network access blocked refreshing lockfile pins. This is disclosed identically in `implementation/progress.json` deviations and the outcome's Deviations section, evidence remains complete, and nothing about it enlarges scope or requires user reapproval.
+
+Two non-blocking observations, neither affecting the verdict. First, because the new test file imports `git` and `matplotlib` unconditionally at module scope, the Mission's final `python3 -m pytest -q tests` will error at collection on any interpreter missing the declared dependencies; the candidate discloses exactly this as its unresolved risk, and the dependencies are declared in `install_requires`, so this is an environment prerequisite rather than a defect. Second, `capsys` silence under pytest is weaker evidence than it looks — pytest's logging plugin installs a root handler, so `logging.lastResort` stderr emission is suppressed during the run. The assertion still correctly proves no residual `print()`/`sys.stdout` diagnostic remains on these paths, which is what the acceptance criteria ask, and the Mission retains a separate print-inventory check in its final command.
+
+Every acceptance criterion has a final result, no blocking contract defect remains, and no tracked file was modified during this review.

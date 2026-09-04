@@ -77,9 +77,9 @@ execution_policy:
     bypassed: []
     decisions: []
 last_checkpoint:
-  base_revision: d49cd4377a6a06949ca1e8b428896d7fd9f2faa1
+  base_revision: fb6a4f10d3c789b87b8490fdb9f54dfd98e0f431
   push_requested: false
-  created_at: 2026-09-04T13:49:27.360Z
+  created_at: 2026-09-04T14:09:06.586Z
 updated_at: 2026-09-04T11:39:09.035Z
 gaps:
   version: 1
@@ -109,17 +109,19 @@ gaps:
         kind: child
         id: "00038"
         key: child:00038
-      status: resolving
-      stage: resolution
+      status: open
+      stage: resolver
       disposition: unresolved
       assignments:
         - id: "00040"
           stage: resolution
       signals:
         - child:00038:follow-up
+        - child:00040:follow-up
       created_at: 2026-09-04T13:34:17.823Z
-      updated_at: 2026-09-04T13:36:46.051Z
-      artifact: .specdev/assignments/00038_replace-runtime-prints-with-logging-and-add-boun/outcome.md
+      updated_at: 2026-09-04T14:09:06.496Z
+      artifact: .specdev/assignments/00040_add-dependency-backed-runtime-coverage-for-versi/outcome.md
   processed_signals:
     - child:00037:follow-up
     - child:00038:follow-up
+    - child:00040:follow-up

@@ -1,0 +1,258 @@
+{
+  "version": 1,
+  "kind": "standalone_assignment_candidate",
+  "completeness": "complete",
+  "identity": "c8b06eef31474b112d0ae7a68de9f7a119fb282cadd15b63117f7aaebf5bfd26",
+  "assignment": {
+    "id": "00040",
+    "folder": "00040_add-dependency-backed-runtime-coverage-for-versi"
+  },
+  "implementation_execution": {
+    "version": 1,
+    "configured_mode": "spawned",
+    "effective_mode": "spawned",
+    "source": "mission",
+    "reason": "Mission-controlled Assignment execution",
+    "owner": "mission-controller",
+    "frozen_at": "2026-09-04T13:54:56.899Z"
+  },
+  "contract": {
+    "path": ".specdev/assignments/00040_add-dependency-backed-runtime-coverage-for-versi/brainstorm/contract.md",
+    "hash": "3c21cadf44dbfede4bbef81eef142241b30d76006110c297c979bbd23632000e"
+  },
+  "acceptance": {
+    "total": 2,
+    "items": [
+      {
+        "id": "AC-1",
+        "evidence": "The focused Python 3.12 run initialized a temporary repository through real GitPython, preserved the `None` result and valid repository state, captured the repository path in the logger record, and observed empty stdout/stderr; 1 test pa...",
+        "result": "passed"
+      },
+      {
+        "id": "AC-2",
+        "evidence": "The same run executed real Bokeh and Matplotlib against populated and empty tables, captured path-bearing discovery and empty-index records twice, preserved concrete plot data/results, and observed empty stdout/stderr; 1 test passed.",
+        "result": "passed"
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 2,
+      "failed": 0,
+      "blocked": 0,
+      "missing": 0
+    }
+  },
+  "verification": {
+    "total": 5,
+    "items": [
+      {
+        "command": "dependency_path='/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages:/Users/leiwu/.cache/uv/wheels-v5/pypi/gitpython/3.1.57-py3-none-any:/Users/leiwu/.cache/uv/wheels-v5/pypi/gitdb/4.0.12...",
+        "revision": "working-tree@fb6a4f10d3c789b87b8490fdb9f54dfd98e0f431",
+        "scope": "real GitPython repository initialization and real Bokeh/Matplotlib discovery, empty-table logging, plot-result, and stdio acceptance; 2 passed",
+        "status": "passed",
+        "duration_ms": 1241,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "python3 -m pytest -q tests/test_dependency_runtime_logging.py",
+        "revision": "working-tree@fb6a4f10d3c789b87b8490fdb9f54dfd98e0f431",
+        "scope": "default-interpreter dependency qualification; collection lacked GitPython",
+        "status": "failed",
+        "duration_ms": 80,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 0,
+          "failed": 1,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "dependency_path='/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages:/Users/leiwu/.cache/uv/wheels-v5/pypi/gitpython/3.1.57-py3-none-any:/Users/leiwu/.cache/uv/wheels-v5/pypi/gitdb/4.0.12...",
+        "revision": "working-tree@fb6a4f10d3c789b87b8490fdb9f54dfd98e0f431",
+        "scope": "real dependency entry points start on Python 3.12.12: pytest 8.4.2, GitPython 3.1.57, Bokeh 3.9.2, Matplotlib 3.11.1",
+        "status": "passed",
+        "duration_ms": 8430,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "/opt/homebrew/bin/python3.12 -c 'import ast,pathlib; files=list(pathlib.Path(\"jsonldb\").rglob(\"*.py\"))+[pathlib.Path(\"tests/test_dependency_runtime_logging.py\")]; [ast.parse(p.read_text(encoding=\"utf-8\"),filename=str(p),feature_version=(...",
+        "revision": "working-tree@fb6a4f10d3c789b87b8490fdb9f54dfd98e0f431",
+        "scope": "all eight package modules and the new test parse at the Python 3.8 syntax floor; used stdlib APIs exist by Python 3.8",
+        "status": "passed",
+        "duration_ms": 1,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "/opt/homebrew/bin/python3.12 -c 'from pathlib import Path; caps={\"jsonldb/metaslot.py\":250,\"jsonldb/jsonlfile.py\":950,\"jsonldb/reports.py\":150,\"jsonldb/folderdb.py\":1250,\"jsonldb/jsonldf.py\":150,\"jsonldb/vercontrol.py\":160,\"jsonldb/visua...",
+        "revision": "working-tree@fb6a4f10d3c789b87b8490fdb9f54dfd98e0f431",
+        "scope": "seven governed source files pass logical-line caps: 101, 950, 106, 1121, 124, 133, and 466 lines respectively",
+        "status": "passed",
+        "duration_ms": 1,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 4,
+      "failed": 1,
+      "skipped": 0,
+      "missing": 0
+    },
+    "by_role": {
+      "qualification": {
+        "passed": 3,
+        "failed": 1,
+        "skipped": 0,
+        "missing": 0
+      },
+      "authoritative_acceptance": {
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      }
+    },
+    "raw": {
+      "total": 5,
+      "counts": {
+        "passed": 4,
+        "failed": 1,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 3,
+          "failed": 1,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "effective": {
+      "total": 5,
+      "counts": {
+        "passed": 4,
+        "failed": 1,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 3,
+          "failed": 1,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "superseded": 0,
+    "authoritative_evidence": [
+      {
+        "command": "dependency_path='/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages:/Users/leiwu/.cache/uv/wheels-v5/pypi/gitpython/3.1.57-py3-none-any:/Users/leiwu/.cache/uv/wheels-v5/pypi/gitdb/4.0.12...",
+        "revision": "working-tree@fb6a4f10d3c789b87b8490fdb9f54dfd98e0f431",
+        "status": "passed"
+      }
+    ],
+    "authoritative_evidence_omitted": 0
+  },
+  "changed_project_paths": {
+    "count": 1,
+    "groups": [
+      {
+        "name": "tests",
+        "count": 1,
+        "paths": [
+          "tests/test_dependency_runtime_logging.py"
+        ],
+        "omitted": 0
+      }
+    ],
+    "omitted_groups": 0
+  },
+  "unresolved_risks": {
+    "status": "present",
+    "items": [
+      "The host's default interpreter remains dependency-incomplete, so these tests",
+      "require the declared dependencies to be installed before the Mission's final",
+      "integrated suite. No further bounded Assignment is required."
+    ],
+    "source": "canonical_section"
+  },
+  "artifacts": {
+    "contract": {
+      "path": ".specdev/assignments/00040_add-dependency-backed-runtime-coverage-for-versi/brainstorm/contract.md",
+      "exists": true,
+      "digest": "3c21cadf44dbfede4bbef81eef142241b30d76006110c297c979bbd23632000e"
+    },
+    "plan": {
+      "path": ".specdev/assignments/00040_add-dependency-backed-runtime-coverage-for-versi/design/plan.md",
+      "exists": true,
+      "digest": "8088a386e31c8d02458dce7b382845d305ea41b15a7ffe2e78690370e5e45702"
+    },
+    "progress": {
+      "path": ".specdev/assignments/00040_add-dependency-backed-runtime-coverage-for-versi/implementation/progress.json",
+      "exists": true,
+      "digest": "b5d7e866cf157c2c66db98f641fcfd67ad6dae0023adac00eac729b8059e57b0"
+    },
+    "outcome": {
+      "path": ".specdev/assignments/00040_add-dependency-backed-runtime-coverage-for-versi/outcome.md",
+      "exists": true,
+      "digest": "4720a5ec68d7c069a4ec0ea01414cdc4ced15d9627bb460de6ca4c19449de19e"
+    }
+  },
+  "issues": [],
+  "issues_omitted": 0
+}
