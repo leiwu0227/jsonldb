@@ -87,7 +87,7 @@ class FolderDB:
         # incrementally, so db.meta stays in sync during normal operation.
         if os.path.exists(self.dbmeta_path):
             dbmeta_mtime = os.path.getmtime(self.dbmeta_path)
-            folder_mtime = os.path.getmtime(self.folder_path)
+            folder_mtime = self._latest_database_directory_mtime()
             if folder_mtime > dbmeta_mtime:
                 self.build_dbmeta()
         else:
@@ -248,6 +248,17 @@ class FolderDB:
     def create_folder(self, folder_path: str) -> None:
         if not os.path.exists(folder_path):
             os.makedirs(folder_path, exist_ok=True)
+
+    def _latest_database_directory_mtime(self) -> float:
+        """Return the newest visible directory mtime relevant to discovery."""
+        latest = os.path.getmtime(self.folder_path)
+        if not self.use_hierarchy:
+            return latest
+
+        for root, dirs, _ in os.walk(self.folder_path, topdown=True):
+            dirs[:] = [directory for directory in dirs if not directory.startswith('.')]
+            latest = max(latest, os.path.getmtime(root))
+        return latest
 
     def _get_file_path(self, name: str) -> str:
         """Get the full path for a JSONL file (read-only, no folder creation)"""
@@ -508,6 +519,7 @@ class FolderDB:
                 os.remove(file_path + '.idx')
             if self.use_hierarchy:
                 self.delete_empty_folders()
+        self.delete_dbmeta(name)
 
     def delete_file_keys(self, name: str, keys: List[str]) -> None:
         """
@@ -548,7 +560,8 @@ class FolderDB:
         ]
         
         if keys_to_delete:
-            delete_jsonl(file_path, keys_to_delete)
+            delete_jsonl(file_path, keys_to_delete, self.timespec)
+            self.update_dbmeta(name)
 
     def delete_range(self, names: List[str], lower_key: Any, upper_key: Any) -> None:
         """
@@ -644,7 +657,8 @@ class FolderDB:
         """
         if not os.path.exists(self.dbmeta_path):
             self.build_dbmeta()
-        delete_jsonl(self.dbmeta_path, [name])
+        meta_key = name[:-6] if name.endswith('.jsonl') else name
+        delete_jsonl(self.dbmeta_path, [meta_key])
     
     def update_dbmeta(self, name: str, linted: bool = False) -> None:
         """
@@ -677,11 +691,12 @@ class FolderDB:
             self.build_dbmeta()
 
         metadata = select_jsonl(meta_file)
-        print(f"Found {len(metadata)} JSONL files to lint.")
+        names = sorted(set(metadata) | set(self.get_file_list()))
+        print(f"Found {len(names)} JSONL files to lint.")
 
         all_meta = {}
 
-        for name in metadata:
+        for name in names:
             print(f"Linting file: {name}")
             file_path = self._get_file_path(name)
             exist_flag = lint_jsonl(file_path, force=force)
