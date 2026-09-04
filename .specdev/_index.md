@@ -4,7 +4,8 @@
 
 ```text
 .specdev/
-  agents.yaml                         committed worker/reviewer preferences
+  agents.yaml                         committed execution mode and agent preferences
+  executors.yaml                      reusable capability facts; secret names only
   guides/review.md                    common reviewer contract
   guides/library/catalog.yaml         managed curated guides
   guides/project/catalog.yaml         repository-owned guides
@@ -13,7 +14,13 @@
   missions/M<id>_<slug>/              static-wave foreground orchestration
   discussions/D<id>_<slug>/           concurrent thought work
   test-audits/TA<id>_<slug>/           concurrent read-only test pruning proposals
+  project_notes/roadmap/designs/
+    core_concepts.md                   user-approved core architecture concepts
+    source_code_folder_structure.md    user-approved source-code folder design
+    <feature-or-module>.md              one bounded, minimally overlapping design
+  project_notes/roadmap/forecast.md    dependency-ordered design-to-code gaps
   knowledge/faq/                       current, freshness-aware troubleshooting
+  knowledge-curations/KC-<hash>.json   verified publication receipts
   processes/ATT-<id>.yaml              durable invocation summaries
   cache/                               ignored machine-local state
   worktrees/slot-N/                    ignored, bounded Mission child leases
@@ -33,6 +40,8 @@ specdev reviewloop brainstorm          # optional
 specdev approve brainstorm
 specdev implement
 
+specdev roadmap
+
 specdev discussion "<topic>"
 specdev discussion D00001 [--complete]
 specdev reviewloop discussion --discussion=D00001
@@ -44,9 +53,13 @@ specdev assignment --from-test-audit=TA00001
 specdev mission create "<objective>"
 specdev reviewloop mission --mission=M00001   # optional
 specdev mission run|status|pause|checkpoint M00001
+specdev mission abandon M00001 --reason="objective withdrawn" [--confirm=<plan-digest>]
+specdev mission approve-divergence|reject-divergence M00001 --child=00042 --identity=<sha256>
+specdev mission handoff M00001 --successor-assignment
 
 specdev knowledge rebuild
-specdev knowledge search "<terms>" [--include-stale] [--scope=history|workflow|all]
+specdev knowledge search "<terms>" [--mode=precise|broad] [--include-stale] [--scope=history|workflow|all]
+specdev knowledge curate [--repo-evidence=path#Lstart-Lend] [--status]
 specdev knowledge distill
 ```
 
@@ -58,7 +71,13 @@ specdev knowledge distill
 - `specdev next --json`: focused Assignment/Mission position.
 - `specdev discussion --list`: isolated callable positions.
 - `specdev test-audit --list`: isolated test-audit callable positions.
-- `specdev mission status M00001`: branch, queue counts, and blocker.
+- `specdev mission status M00001`: branch, queue counts, blocker, and the
+  contract-bound review/execution policy.
+- `specdev mission abandon M00001 --reason="..."`: print a read-only exact
+  terminal plan; rerun with its `--confirm=<plan-digest>` to preserve partial
+  work and publish an immutable abandoned outcome without landing or deletion.
+- `specdev mission approve-divergence|reject-divergence`: decide only the exact
+  reviewed child identity displayed by status; changed identities fail closed.
 - `specdev mission run M00001 --takeover`: explicit recovery only after a
   durable running controller has no live local process.
 

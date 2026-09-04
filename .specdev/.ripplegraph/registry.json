@@ -3,7 +3,7 @@
   "graphs": {
     "assignment-lifecycle": {
       "id": "assignment-lifecycle",
-      "version": "2.2.0",
+      "version": "2.4.0",
       "kind": "workflow",
       "title": "Assignment lifecycle",
       "description": "Guide one contract-governed change from interactive Brainstorm through automatic delivery.",
@@ -16,12 +16,12 @@
       ],
       "requires": [],
       "effects": [],
-      "path": "workflows/assignment-lifecycle@2.2.0",
-      "registeredAt": "2026-07-29T06:47:35.549Z"
+      "path": "workflows/assignment-lifecycle@2.4.0",
+      "registeredAt": "2026-09-04T05:39:05.933Z"
     },
     "discussion-lifecycle": {
       "id": "discussion-lifecycle",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "kind": "callable",
       "title": "Discussion lifecycle",
       "description": "Isolated code-read-only exploration that may coexist with a focused workflow.",
@@ -32,8 +32,8 @@
       ],
       "requires": [],
       "effects": [],
-      "path": "workflows/discussion-lifecycle@2.0.0",
-      "registeredAt": "2026-07-29T06:47:35.551Z"
+      "path": "workflows/discussion-lifecycle@2.1.0",
+      "registeredAt": "2026-09-04T05:39:05.935Z"
     },
     "layout-migration": {
       "id": "layout-migration",
@@ -55,7 +55,7 @@
     },
     "mission-lifecycle": {
       "id": "mission-lifecycle",
-      "version": "1.4.0",
+      "version": "1.5.0",
       "kind": "workflow",
       "title": "Mission lifecycle",
       "description": "Deliver an approved objective unattended through Assignment waves and durable gap convergence.",
@@ -66,8 +66,8 @@
       ],
       "requires": [],
       "effects": [],
-      "path": "workflows/mission-lifecycle@1.4.0",
-      "registeredAt": "2026-07-29T06:47:35.560Z"
+      "path": "workflows/mission-lifecycle@1.5.0",
+      "registeredAt": "2026-09-04T05:39:05.938Z"
     },
     "project-orientation": {
       "id": "project-orientation",
@@ -102,6 +102,22 @@
       "effects": [],
       "path": "workflows/test-audit-lifecycle@1.0.0",
       "registeredAt": "2026-07-29T06:47:35.562Z"
+    },
+    "update-completion": {
+      "id": "update-completion",
+      "version": "1.0.0",
+      "kind": "callable",
+      "title": "Update completion",
+      "description": "Provider-neutral semantic reconciliation of stale SpecDev platform adapters after a deterministic runtime update.",
+      "activationHints": [
+        "update completion",
+        "adapter reconciliation",
+        "resume update"
+      ],
+      "requires": [],
+      "effects": [],
+      "path": "workflows/update-completion@1.0.0",
+      "registeredAt": "2026-09-04T05:39:05.939Z"
     },
     "workspace-dispatcher": {
       "id": "workspace-dispatcher",
