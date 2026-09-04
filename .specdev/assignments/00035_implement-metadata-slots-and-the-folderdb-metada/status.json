@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "id": "00035",
+  "kind": "feature",
+  "description": "Implement metadata slots and the FolderDB metadata API",
+  "run_id": "mission-lifecycle-20260904T09260745",
+  "created_at": "2026-09-04T12:07:27.728Z",
+  "review_policy": {
+    "brainstorm": "required",
+    "implementation": "required"
+  },
+  "mission": "M00001",
+  "updated_at": "2026-09-04T12:27:39.374Z",
+  "review_policy_frozen_at": "2026-09-04T12:13:14.404Z",
+  "implementation_execution": {
+    "version": 1,
+    "configured_mode": "spawned",
+    "effective_mode": "spawned",
+    "source": "mission",
+    "reason": "Mission-controlled Assignment execution",
+    "owner": "mission-controller",
+    "frozen_at": "2026-09-04T12:13:14.452Z"
+  },
+  "status": "completed",
+  "completed_at": "2026-09-04T12:27:39.373Z"
+}

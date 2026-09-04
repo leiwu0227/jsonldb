@@ -1,0 +1,216 @@
+{
+  "version": 1,
+  "kind": "standalone_assignment_candidate",
+  "completeness": "complete",
+  "identity": "63d942bbe4d26ab434e9073ef1486e9792c77ea176566efcb875afb5e510cd83",
+  "assignment": {
+    "id": "00035",
+    "folder": "00035_implement-metadata-slots-and-the-folderdb-metada"
+  },
+  "implementation_execution": {
+    "version": 1,
+    "configured_mode": "spawned",
+    "effective_mode": "spawned",
+    "source": "mission",
+    "reason": "Mission-controlled Assignment execution",
+    "owner": "mission-controller",
+    "frozen_at": "2026-09-04T12:13:14.452Z"
+  },
+  "contract": {
+    "path": ".specdev/assignments/00035_implement-metadata-slots-and-the-folderdb-metada/brainstorm/contract.md",
+    "hash": "27da0c5191750ebcd68dfe8cef22d68e6a14340300c987100de8cd0c39111303"
+  },
+  "acceptance": {
+    "total": 2,
+    "items": [
+      {
+        "id": "AC-1",
+        "evidence": "Focused tests cover legacy, valid, malformed, and unknown-version classification; opaque records; `_meta` rejection; all bounded `FolderDB` APIs; missing tables; and existing no-meta calls.",
+        "result": "passed"
+      },
+      {
+        "id": "AC-2",
+        "evidence": "Focused ordering, oversize-refusal, absolute-offset, row-byte preservation, and slot/index publication tests pass; related durability and legacy regressions also pass.",
+        "result": "passed"
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 2,
+      "failed": 0,
+      "blocked": 0,
+      "missing": 0
+    }
+  },
+  "verification": {
+    "total": 2,
+    "items": [
+      {
+        "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -m pytest -q tests/test_metadata_slots.py tests/test_durability_atomicity....",
+        "revision": "working-tree@cf07c5d5e69662beeb579b73a92c514c8ef13ba9",
+        "scope": "Focused metadata-slot, FolderDB API, durability, metadata-upkeep, JSONL, DataFrame, and FolderDB regressions (87 passed)",
+        "status": "passed",
+        "duration_ms": 1010,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "/usr/bin/time -p /opt/homebrew/bin/python3.12 -c 'import ast,pathlib; files=list(pathlib.Path(\"jsonldb\").rglob(\"*.py\")); [ast.parse(p.read_text(encoding=\"utf-8\"),filename=str(p),feature_version=(3,8)) for p in files]; caps={\"jsonldb/meta...",
+        "revision": "working-tree@cf07c5d5e69662beeb579b73a92c514c8ef13ba9",
+        "scope": "Python 3.8 syntax and added-API floor plus all seven governed source caps (101/250 metaslot, 882/950 jsonlfile, reports absent, 1024/1250 folderdb, 120/150 jsonldf, 128/160 vercontrol, 454/500 visual)",
+        "status": "passed",
+        "duration_ms": 20,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "missing": 0
+    },
+    "by_role": {
+      "qualification": {
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      },
+      "authoritative_acceptance": {
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      }
+    },
+    "raw": {
+      "total": 2,
+      "counts": {
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "effective": {
+      "total": 2,
+      "counts": {
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "superseded": 0,
+    "authoritative_evidence": [
+      {
+        "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -m pytest -q tests/test_metadata_slots.py tests/test_durability_atomicity....",
+        "revision": "working-tree@cf07c5d5e69662beeb579b73a92c514c8ef13ba9",
+        "status": "passed"
+      }
+    ],
+    "authoritative_evidence_omitted": 0
+  },
+  "changed_project_paths": {
+    "count": 5,
+    "groups": [
+      {
+        "name": "jsonldb",
+        "count": 4,
+        "paths": [
+          "jsonldb/folderdb.py",
+          "jsonldb/jsonldf.py",
+          "jsonldb/jsonlfile.py",
+          "jsonldb/metaslot.py"
+        ],
+        "omitted": 0
+      },
+      {
+        "name": "tests",
+        "count": 1,
+        "paths": [
+          "tests/test_metadata_slots.py"
+        ],
+        "omitted": 0
+      }
+    ],
+    "omitted_groups": 0
+  },
+  "unresolved_risks": {
+    "status": "present",
+    "items": [
+      "None within this Assignment; folder-wide slot enablement/resizing and slot-aware lint repair remain with later approved Mission children."
+    ],
+    "source": "canonical_section"
+  },
+  "artifacts": {
+    "contract": {
+      "path": ".specdev/assignments/00035_implement-metadata-slots-and-the-folderdb-metada/brainstorm/contract.md",
+      "exists": true,
+      "digest": "27da0c5191750ebcd68dfe8cef22d68e6a14340300c987100de8cd0c39111303"
+    },
+    "plan": {
+      "path": ".specdev/assignments/00035_implement-metadata-slots-and-the-folderdb-metada/design/plan.md",
+      "exists": true,
+      "digest": "55004fa851590fdefed1593fe5551240b2cee81dea2b13a0dd44d2e9c9399766"
+    },
+    "progress": {
+      "path": ".specdev/assignments/00035_implement-metadata-slots-and-the-folderdb-metada/implementation/progress.json",
+      "exists": true,
+      "digest": "af4098c5aba2244a755940bd66ecaeb4dd0029506c2946f033e1a74c1a5c5a6d"
+    },
+    "outcome": {
+      "path": ".specdev/assignments/00035_implement-metadata-slots-and-the-folderdb-metada/outcome.md",
+      "exists": true,
+      "digest": "94894166df5f14e3679d6ca7f6e98922a79f38e7b3a47d70773666af57f2c629"
+    }
+  },
+  "issues": [],
+  "issues_omitted": 0
+}

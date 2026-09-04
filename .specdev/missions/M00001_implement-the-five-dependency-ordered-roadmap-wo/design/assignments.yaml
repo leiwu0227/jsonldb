@@ -30,7 +30,13 @@ assignments:
     title: Implement metadata slots and the FolderDB metadata API
     kind: feature
     wave: 2
-    status: pending
+    status: integrated
+    started_at: 2026-09-04T12:07:27.724Z
+    folder: 00035_implement-metadata-slots-and-the-folderdb-metada
+    outcome: .specdev/assignments/00035_implement-metadata-slots-and-the-folderdb-metada/outcome.md
+    completed_at: 2026-09-04T12:27:39.424Z
+    follow_up: none
+    disposition: completed
   - id: "00036"
     title: Implement atomic folder-wide metadata-slot width migration
     kind: feature

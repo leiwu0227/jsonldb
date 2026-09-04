@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "T-1",
+      "status": "completed"
+    },
+    {
+      "id": "T-2",
+      "status": "completed"
+    },
+    {
+      "id": "T-3",
+      "status": "completed"
+    }
+  ],
+  "selected_guides": {
+    "implementation": [
+      "api-security"
+    ],
+    "review": []
+  },
+  "verification": [
+    {
+      "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -m pytest -q tests/test_metadata_slots.py tests/test_durability_atomicity.py tests/test_metadata_upkeep.py tests/legacy/test_jsonlfile.py tests/legacy/test_jsonldf.py tests/legacy/test_folderdb.py",
+      "revision": "working-tree@cf07c5d5e69662beeb579b73a92c514c8ef13ba9",
+      "scope": "Focused metadata-slot, FolderDB API, durability, metadata-upkeep, JSONL, DataFrame, and FolderDB regressions (87 passed)",
+      "status": "passed",
+      "duration_ms": 1010,
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": "/usr/bin/time -p /opt/homebrew/bin/python3.12 -c 'import ast,pathlib; files=list(pathlib.Path(\"jsonldb\").rglob(\"*.py\")); [ast.parse(p.read_text(encoding=\"utf-8\"),filename=str(p),feature_version=(3,8)) for p in files]; caps={\"jsonldb/metaslot.py\":250,\"jsonldb/jsonlfile.py\":950,\"jsonldb/reports.py\":150,\"jsonldb/folderdb.py\":1250,\"jsonldb/jsonldf.py\":150,\"jsonldb/vercontrol.py\":160,\"jsonldb/visual.py\":500}; counts={p:(len(pathlib.Path(p).read_text(encoding=\"utf-8\").splitlines()) if pathlib.Path(p).exists() else None) for p in caps}; assert not {p:(counts[p],cap) for p,cap in caps.items() if counts[p] is not None and counts[p]>cap}; assert hasattr(__import__(\"typing\"),\"NamedTuple\") and hasattr(__import__(\"os\"),\"utime\"); print(\"python3.8-compatible\",len(files),counts)'",
+      "revision": "working-tree@cf07c5d5e69662beeb579b73a92c514c8ef13ba9",
+      "scope": "Python 3.8 syntax and added-API floor plus all seven governed source caps (101/250 metaslot, 882/950 jsonlfile, reports absent, 1024/1250 folderdb, 120/150 jsonldf, 128/160 vercontrol, 454/500 visual)",
+      "status": "passed",
+      "duration_ms": 20,
+      "role": "qualification"
+    }
+  ],
+  "deviations": [],
+  "follow_up": "none",
+  "selected_guide_versions": {
+    "implementation": [
+      {
+        "id": "api-security",
+        "version": "1"
+      }
+    ],
+    "review": []
+  }
+}

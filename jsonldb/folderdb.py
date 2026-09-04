@@ -6,7 +6,7 @@ Each table is stored in a separate JSONL file.
 import os
 import logging
 import pandas as pd
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, NamedTuple
 from datetime import datetime
 from jsonldb.jsonlfile import (
     save_jsonl, load_jsonl, select_jsonl, update_jsonl, delete_jsonl,
@@ -20,6 +20,13 @@ import jsonldb.jsonlfile as jsonlfile
 
 
 logger = logging.getLogger(__name__)
+
+
+class TableWithMeta(NamedTuple):
+    """A metadata record paired with rows read after that record."""
+
+    meta: Any
+    rows: Any
 
 # Version control (gitpython) is imported lazily inside commit/revert/version
 # so that importing FolderDB does not load git.
@@ -345,12 +352,10 @@ class FolderDB:
         return matching_files
 
     # =============== DataFrame Operations ===============
-    def overwrite_df(self, name: str, df: pd.DataFrame) -> None:
+    def overwrite_df(self, name: str, df: pd.DataFrame,
+                     meta: Optional[dict] = None) -> None:
         file_path = self._get_or_create_file_path(name)
-        if os.path.exists(file_path):
-           os.remove(file_path)
-      
-        save_jsonldf(file_path, df, self.timespec)
+        save_jsonldf(file_path, df, self.timespec, meta=meta)
         self.update_dbmeta(self._get_file_name(name))
 
     def overwrite_dfs(self, dict_dfs: Dict[Any, pd.DataFrame]) -> None:
@@ -363,7 +368,8 @@ class FolderDB:
         for name, df in dict_dfs.items():
             self.overwrite_df(name, df)
 
-    def upsert_df(self, name: str, df: pd.DataFrame) -> None:
+    def upsert_df(self, name: str, df: pd.DataFrame,
+                  meta: Optional[dict] = None) -> None:
         """
         Update or insert a DataFrame into a JSONL file.
 
@@ -373,9 +379,9 @@ class FolderDB:
         """
         file_path = self._get_or_create_file_path(name)
         if os.path.exists(file_path):
-            update_jsonldf(file_path, df, self.timespec)
+            update_jsonldf(file_path, df, self.timespec, meta=meta)
         else:
-            save_jsonldf(file_path, df, self.timespec)
+            save_jsonldf(file_path, df, self.timespec, meta=meta)
         
         self.update_dbmeta(self._get_file_name(name))
 
@@ -420,13 +426,30 @@ class FolderDB:
                 print(f"File {name} not found")
         return result
 
+    def get_df_with_meta(
+        self,
+        name: str,
+        lower_key: Optional[Any] = None,
+        upper_key: Optional[Any] = None,
+        auto_deserialize: bool = True,
+    ) -> TableWithMeta:
+        """Read one table's metadata first, followed by its DataFrame rows."""
+        file_path = self._get_file_path(name)
+        if not os.path.exists(file_path):
+            return TableWithMeta(None, pd.DataFrame())
+        meta = self.read_meta(name)
+        rows = select_jsonldf(
+            file_path, lower_key, upper_key, auto_deserialize,
+            timespec=self.timespec,
+        )
+        return TableWithMeta(meta, rows)
+
     # =============== Dictionary Operations ===============
-    def overwrite_dict(self, name: str, data_dict: Dict[Any, Dict[str, Any]]) -> None:
+    def overwrite_dict(self, name: str,
+                       data_dict: Dict[Any, Dict[str, Any]],
+                       meta: Optional[dict] = None) -> None:
         file_path = self._get_or_create_file_path(name)
-        if os.path.exists(file_path):
-           os.remove(file_path)
-      
-        save_jsonl(file_path, data_dict, self.timespec)
+        save_jsonl(file_path, data_dict, self.timespec, meta=meta)
         self.update_dbmeta(self._get_file_name(name))
 
     def overwrite_dicts(self, dict_dicts: Dict[Any, Dict[str, Dict[str, Any]]]) -> None:
@@ -439,7 +462,9 @@ class FolderDB:
         for name, data_dict in dict_dicts.items():
             self.overwrite_dict(name, data_dict)
 
-    def upsert_dict(self, name: str, data_dict: Dict[Any, Dict[str, Any]]) -> None:
+    def upsert_dict(self, name: str,
+                    data_dict: Dict[Any, Dict[str, Any]],
+                    meta: Optional[dict] = None) -> None:
         """
         Update or insert a dictionary into a JSONL file.
         
@@ -449,9 +474,9 @@ class FolderDB:
         """
         file_path = self._get_or_create_file_path(name)
         if os.path.exists(file_path):
-            update_jsonl(file_path, data_dict, self.timespec)
+            update_jsonl(file_path, data_dict, self.timespec, meta=meta)
         else:
-            save_jsonl(file_path, data_dict, self.timespec)
+            save_jsonl(file_path, data_dict, self.timespec, meta=meta)
 
         self.update_dbmeta(self._get_file_name(name))
 
@@ -496,6 +521,24 @@ class FolderDB:
             if os.path.exists(file_path):
                 result[name] = select_jsonl(file_path, lower_key, upper_key, auto_deserialize, timespec=self.timespec)
         return result
+
+    def get_dict_with_meta(
+        self,
+        name: str,
+        lower_key: Optional[Any] = None,
+        upper_key: Optional[Any] = None,
+        auto_deserialize: bool = True,
+    ) -> TableWithMeta:
+        """Read one table's metadata first, followed by its dictionary rows."""
+        file_path = self._get_file_path(name)
+        if not os.path.exists(file_path):
+            return TableWithMeta(None, {})
+        meta = self.read_meta(name)
+        rows = select_jsonl(
+            file_path, lower_key, upper_key, auto_deserialize,
+            timespec=self.timespec,
+        )
+        return TableWithMeta(meta, rows)
 
     # =============== Delete Operations ===============
     def clear_folder(self, force: bool = False) -> None:
@@ -588,6 +631,20 @@ class FolderDB:
             self.delete_file_range(name, lower_key, upper_key)
 
     # =============== Metadata Management ===============
+    def read_meta(self, name: str):
+        """Return one table's metadata record, or ``None`` when unavailable."""
+        file_path = self._get_file_path(name)
+        if not os.path.exists(file_path):
+            return None
+        return jsonlfile.read_jsonl_meta(file_path)
+
+    def clear_meta(self, name: str) -> None:
+        """Clear an existing table's slot record without changing its rows."""
+        file_path = self._get_file_path(name)
+        if not os.path.exists(file_path):
+            return
+        jsonlfile.write_jsonl_meta(file_path, None)
+
     def _make_meta_entry(self, name: str, file_path: str, linted: bool = False,
                          lint_time: str = "") -> Dict[str, Any]:
         """Build one db.meta entry for a JSONL file from its index file.

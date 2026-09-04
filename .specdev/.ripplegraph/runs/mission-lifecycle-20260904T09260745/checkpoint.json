@@ -11,7 +11,7 @@
     "node": "advance-queue"
   },
   "createdAt": "2026-09-04T09:26:07.455Z",
-  "updatedAt": "2026-09-04T12:07:27.429Z",
+  "updatedAt": "2026-09-04T12:27:39.372Z",
   "outputs": {
     "create-mission": {
       "id": "M00001",
@@ -79,8 +79,56 @@
     },
     "child-assignment": {
       "approved": true,
-      "verdict": ".specdev/assignments/00034_harden-jsonl-durability-and-atomic-index-and-con/review/implementation-verdict.md",
-      "attempt": "Attempt-00015",
+      "verdict": ".specdev/assignments/00035_implement-metadata-slots-and-the-folderdb-metada/review/implementation-verdict.md",
+      "attempt": "Attempt-00019",
+      "disposition": "approved"
+    },
+    "advance-queue": {
+      "remaining": true,
+      "completed": "00034",
+      "follow_up_required": false,
+      "gap_open": false,
+      "parallel": false
+    },
+    "f2/create-assignment": {
+      "id": "00035",
+      "name": "00035_implement-metadata-slots-and-the-folderdb-metada",
+      "path": ".specdev/assignments/00035_implement-metadata-slots-and-the-folderdb-metada",
+      "description": "Implement metadata slots and the FolderDB metadata API",
+      "review_policy": {
+        "brainstorm": "required",
+        "implementation": "required"
+      }
+    },
+    "f2/brainstorm": {
+      "contract": ".specdev/assignments/00035_implement-metadata-slots-and-the-folderdb-metada/brainstorm/contract.md",
+      "contract_hash": "27da0c5191750ebcd68dfe8cef22d68e6a14340300c987100de8cd0c39111303"
+    },
+    "f2/approve-contract": {
+      "approved": true,
+      "contract_hash": "27da0c5191750ebcd68dfe8cef22d68e6a14340300c987100de8cd0c39111303",
+      "actor": "mission:M00001",
+      "approved_at": "2026-09-04T12:13:14.404Z",
+      "revision": "cf07c5d5e69662beeb579b73a92c514c8ef13ba9",
+      "review_override": false,
+      "review_policy": {
+        "brainstorm": "required",
+        "implementation": "required"
+      }
+    },
+    "f2/design": {
+      "plan": ".specdev/assignments/00035_implement-metadata-slots-and-the-folderdb-metada/design/plan.md",
+      "attempt": "Attempt-00018"
+    },
+    "f2/implementation": {
+      "progress": ".specdev/assignments/00035_implement-metadata-slots-and-the-folderdb-metada/implementation/progress.json",
+      "outcome": ".specdev/assignments/00035_implement-metadata-slots-and-the-folderdb-metada/outcome.md",
+      "attempt": "Attempt-00018"
+    },
+    "f2/implementation-review": {
+      "approved": true,
+      "verdict": ".specdev/assignments/00035_implement-metadata-slots-and-the-folderdb-metada/review/implementation-verdict.md",
+      "attempt": "Attempt-00019",
       "disposition": "approved"
     }
   },
@@ -105,6 +153,18 @@
         "brainstorm": "required",
         "implementation": "required"
       }
+    },
+    "f2/approve-contract": {
+      "approved": true,
+      "contract_hash": "27da0c5191750ebcd68dfe8cef22d68e6a14340300c987100de8cd0c39111303",
+      "actor": "mission:M00001",
+      "approved_at": "2026-09-04T12:13:14.404Z",
+      "revision": "cf07c5d5e69662beeb579b73a92c514c8ef13ba9",
+      "review_override": false,
+      "review_policy": {
+        "brainstorm": "required",
+        "implementation": "required"
+      }
     }
   },
   "graphSource": {
@@ -114,5 +174,5 @@
     "packagePath": "workflows/mission-lifecycle@1.5.0"
   },
   "stack": [],
-  "frameCounter": 1
+  "frameCounter": 2
 }

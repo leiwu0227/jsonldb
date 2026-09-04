@@ -7,7 +7,9 @@ import pandas as pd
 from typing import Dict, List, Optional, Union, Any
 from jsonldb.jsonlfile import save_jsonl, load_jsonl, select_jsonl, update_jsonl, delete_jsonl, build_jsonl_index, lint_jsonl
 
-def save_jsonldf(jsonl_file_path: str, df: pd.DataFrame, timespec: Optional[str] = None) -> None:
+def save_jsonldf(jsonl_file_path: str, df: pd.DataFrame,
+                 timespec: Optional[str] = None,
+                 meta: Optional[dict] = None) -> None:
     """Convert DataFrame to JSONL format and save it using index as keys.
     
     Args:
@@ -24,7 +26,7 @@ def save_jsonldf(jsonl_file_path: str, df: pd.DataFrame, timespec: Optional[str]
     records_dict = df.to_dict('index')
     
     # Save to JSONL
-    save_jsonl(jsonl_file_path, records_dict, timespec)
+    save_jsonl(jsonl_file_path, records_dict, timespec, meta=meta)
 
 def load_jsonldf(jsonl_file_path: str, timespec: Optional[str] = None) -> pd.DataFrame:
     """Load JSONL file into a DataFrame using line keys as index.
@@ -47,7 +49,9 @@ def load_jsonldf(jsonl_file_path: str, timespec: Optional[str] = None) -> pd.Dat
     
     return df
 
-def update_jsonldf(jsonl_file_path: str, df: pd.DataFrame, timespec: Optional[str] = None) -> None:
+def update_jsonldf(jsonl_file_path: str, df: pd.DataFrame,
+                   timespec: Optional[str] = None,
+                   meta: Optional[dict] = None) -> None:
     """Update JSONL file with data from DataFrame using index as keys.
     
     Args:
@@ -58,7 +62,7 @@ def update_jsonldf(jsonl_file_path: str, df: pd.DataFrame, timespec: Optional[st
     updates_dict = df.to_dict('index')
     
     # Update JSONL file
-    update_jsonl(jsonl_file_path, updates_dict, timespec)
+    update_jsonl(jsonl_file_path, updates_dict, timespec, meta=meta)
 
 def select_jsonldf(
     jsonl_file_path: str,
@@ -113,4 +117,4 @@ def lint_jsonldf(jsonl_file_path: str) -> None:
     Args:
         jsonl_file_path (str): Path to the JSONL file
     """
-    lint_jsonl(jsonl_file_path) 
+    lint_jsonl(jsonl_file_path)
