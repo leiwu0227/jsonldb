@@ -77,9 +77,9 @@ execution_policy:
     bypassed: []
     decisions: []
 last_checkpoint:
-  base_revision: 4d6be4deb7a095de1efeaef44bb5ee734a1aa6f6
+  base_revision: d49cd4377a6a06949ca1e8b428896d7fd9f2faa1
   push_requested: false
-  created_at: 2026-09-04T13:34:17.922Z
+  created_at: 2026-09-04T13:49:27.360Z
 updated_at: 2026-09-04T11:39:09.035Z
 gaps:
   version: 1
@@ -89,30 +89,36 @@ gaps:
         kind: child
         id: "00037"
         key: child:00037
-      status: resolving
+      status: superseded
       stage: resolution
-      disposition: unresolved
+      disposition: evidence-superseded
       assignments:
         - id: "00039"
           stage: resolution
       signals:
         - child:00037:follow-up
       created_at: 2026-09-04T13:04:25.973Z
-      updated_at: 2026-09-04T13:06:51.221Z
+      updated_at: 2026-09-04T13:49:27.266Z
       artifact: .specdev/assignments/00037_make-lint-slot-aware-and-damage-aware-while-pres/outcome.md
+      superseded_by: child:00039:complete
+      superseded_at: 2026-09-04T13:49:27.266Z
+      evidence: .specdev/assignments/00039_make-standalone-lint-converge-when-a-metadata-on/outcome.md
+      closure_authority: "00039"
     - id: gap-a0276bb3f8ae5eca
       source:
         kind: child
         id: "00038"
         key: child:00038
-      status: open
+      status: resolving
       stage: resolution
       disposition: unresolved
-      assignments: []
+      assignments:
+        - id: "00040"
+          stage: resolution
       signals:
         - child:00038:follow-up
       created_at: 2026-09-04T13:34:17.823Z
-      updated_at: 2026-09-04T13:34:17.823Z
+      updated_at: 2026-09-04T13:36:46.051Z
       artifact: .specdev/assignments/00038_replace-runtime-prints-with-logging-and-add-boun/outcome.md
   processed_signals:
     - child:00037:follow-up

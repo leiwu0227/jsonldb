@@ -11,7 +11,7 @@
     "node": "advance-queue"
   },
   "createdAt": "2026-09-04T09:26:07.455Z",
-  "updatedAt": "2026-09-04T13:34:17.748Z",
+  "updatedAt": "2026-09-04T13:49:27.207Z",
   "outputs": {
     "create-mission": {
       "id": "M00001",
@@ -79,16 +79,16 @@
     },
     "child-assignment": {
       "approved": true,
-      "verdict": ".specdev/assignments/00038_replace-runtime-prints-with-logging-and-add-boun/review/implementation-verdict.md",
-      "attempt": "Attempt-00034",
+      "verdict": ".specdev/assignments/00039_make-standalone-lint-converge-when-a-metadata-on/review/implementation-verdict.md",
+      "attempt": "Attempt-00039",
       "disposition": "approved"
     },
     "advance-queue": {
       "remaining": true,
-      "completed": "00037",
+      "completed": "00038",
       "follow_up_required": true,
       "gap_open": true,
-      "gap_id": "gap-f4323203e2f7d1e0",
+      "gap_id": "gap-a0276bb3f8ae5eca",
       "parallel": false
     },
     "f2/create-assignment": {
@@ -216,10 +216,10 @@
     },
     "resolve-gap": {
       "queue": ".specdev/missions/M00001_implement-the-five-dependency-ordered-roadmap-wo/design/assignments.yaml",
-      "reason": "child:00037",
-      "gap_id": "gap-f4323203e2f7d1e0",
+      "reason": "child:00038",
+      "gap_id": "gap-a0276bb3f8ae5eca",
       "stage": "resolution",
-      "attempt": "Attempt-00028",
+      "attempt": "Attempt-00035",
       "disposition": "resolution-added",
       "gap_open": false,
       "remaining": true,
@@ -269,6 +269,47 @@
     "f5/repair": {
       "attempt": "Attempt-00033",
       "result": ".specdev/assignments/00038_replace-runtime-prints-with-logging-and-add-boun/implementation/repair-result.md"
+    },
+    "f6/create-assignment": {
+      "id": "00039",
+      "name": "00039_make-standalone-lint-converge-when-a-metadata-on",
+      "path": ".specdev/assignments/00039_make-standalone-lint-converge-when-a-metadata-on",
+      "description": "Make standalone lint converge when a metadata-only line lacks its terminal newline",
+      "review_policy": {
+        "brainstorm": "required",
+        "implementation": "required"
+      }
+    },
+    "f6/brainstorm": {
+      "contract": ".specdev/assignments/00039_make-standalone-lint-converge-when-a-metadata-on/brainstorm/contract.md",
+      "contract_hash": "5ef96339c3fa22919230eeee0b6f03c6c4697a5a55693175d1ccaca6e3a60817"
+    },
+    "f6/approve-contract": {
+      "approved": true,
+      "contract_hash": "5ef96339c3fa22919230eeee0b6f03c6c4697a5a55693175d1ccaca6e3a60817",
+      "actor": "mission:M00001",
+      "approved_at": "2026-09-04T13:41:25.261Z",
+      "revision": "d49cd4377a6a06949ca1e8b428896d7fd9f2faa1",
+      "review_override": false,
+      "review_policy": {
+        "brainstorm": "required",
+        "implementation": "required"
+      }
+    },
+    "f6/design": {
+      "plan": ".specdev/assignments/00039_make-standalone-lint-converge-when-a-metadata-on/design/plan.md",
+      "attempt": "Attempt-00038"
+    },
+    "f6/implementation": {
+      "progress": ".specdev/assignments/00039_make-standalone-lint-converge-when-a-metadata-on/implementation/progress.json",
+      "outcome": ".specdev/assignments/00039_make-standalone-lint-converge-when-a-metadata-on/outcome.md",
+      "attempt": "Attempt-00038"
+    },
+    "f6/implementation-review": {
+      "approved": true,
+      "verdict": ".specdev/assignments/00039_make-standalone-lint-converge-when-a-metadata-on/review/implementation-verdict.md",
+      "attempt": "Attempt-00039",
+      "disposition": "approved"
     }
   },
   "gateDecisions": {
@@ -340,6 +381,18 @@
         "brainstorm": "required",
         "implementation": "required"
       }
+    },
+    "f6/approve-contract": {
+      "approved": true,
+      "contract_hash": "5ef96339c3fa22919230eeee0b6f03c6c4697a5a55693175d1ccaca6e3a60817",
+      "actor": "mission:M00001",
+      "approved_at": "2026-09-04T13:41:25.261Z",
+      "revision": "d49cd4377a6a06949ca1e8b428896d7fd9f2faa1",
+      "review_override": false,
+      "review_policy": {
+        "brainstorm": "required",
+        "implementation": "required"
+      }
     }
   },
   "graphSource": {
@@ -349,5 +402,5 @@
     "packagePath": "workflows/mission-lifecycle@1.5.0"
   },
   "stack": [],
-  "frameCounter": 5
+  "frameCounter": 6
 }

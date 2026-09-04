@@ -30,6 +30,63 @@ def _assert_canonical(path, rows, slot_bytes=None, meta=None):
 
 
 @pytest.mark.parametrize('force', [False, True])
+def test_standalone_lint_converges_metadata_only_missing_newline(
+        tmp_path, caplog, force):
+    path = tmp_path / 'metadata-only.jsonl'
+    meta = {'owner': 'consumer'}
+    canonical = metaslot.encode_slot(meta, 128)
+    path.write_bytes(canonical[:-1])
+    path.with_suffix('.jsonl.idx').write_bytes(b'{}')
+    os.utime(str(path) + '.idx')
+    caplog.set_level(logging.WARNING, logger='jsonldb.jsonlfile')
+
+    assert jsonlfile.lint_jsonl(str(path), force=force) is True
+
+    assert path.read_bytes() == canonical
+    assert metaslot.read_slot(str(path)) == meta
+    assert jsonlfile.load_index(str(path)) == {}
+    assert sum(
+        record.jsonldb_kind == 'layout_repaired'
+        for record in caplog.records
+        if hasattr(record, 'jsonldb_kind')) == 1
+
+    caplog.clear()
+    assert jsonlfile.lint_jsonl(str(path), force=force) is True
+    assert path.read_bytes() == canonical
+    assert not any(
+        getattr(record, 'jsonldb_kind', None) == 'layout_repaired'
+        for record in caplog.records)
+
+
+@pytest.mark.parametrize('force', [False, True])
+def test_standalone_lint_keeps_canonical_metadata_only_and_legacy_behavior(
+        tmp_path, caplog, force):
+    meta = {'owner': 'consumer'}
+    slot_path = tmp_path / 'canonical-slot.jsonl'
+    slot_bytes = metaslot.encode_slot(meta, 128)
+    slot_path.write_bytes(slot_bytes)
+    slot_path.with_suffix('.jsonl.idx').write_bytes(b'{}')
+    os.utime(str(slot_path) + '.idx')
+    caplog.set_level(logging.WARNING, logger='jsonldb.jsonlfile')
+
+    assert jsonlfile.lint_jsonl(str(slot_path), force=force) is True
+    assert slot_path.read_bytes() == slot_bytes
+    assert jsonlfile.load_index(str(slot_path)) == {}
+    assert not any(
+        getattr(record, 'jsonldb_kind', None) == 'layout_repaired'
+        for record in caplog.records)
+
+    legacy_path = tmp_path / 'legacy.jsonl'
+    legacy_path.write_bytes(b'{"row":{"value":1}}')
+    legacy_path.with_suffix('.jsonl.idx').write_bytes(b'{"row":0}')
+    os.utime(str(legacy_path) + '.idx')
+    assert jsonlfile.lint_jsonl(str(legacy_path), force=force) is True
+    assert legacy_path.read_bytes() == b'{"row":{"value":1}}\n'
+    assert metaslot.inspect_file(str(legacy_path)).is_slot is False
+    assert jsonlfile.load_index(str(legacy_path)) == {'row': 0}
+
+
+@pytest.mark.parametrize('force', [False, True])
 @pytest.mark.parametrize('slot_bytes', [None, 128])
 def test_lint_canonicalizes_legacy_and_slotted_files(
         tmp_path, force, slot_bytes):

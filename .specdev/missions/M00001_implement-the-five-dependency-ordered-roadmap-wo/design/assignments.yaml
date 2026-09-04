@@ -74,8 +74,21 @@ assignments:
     title: Make standalone lint converge when a metadata-only line lacks its terminal newline
     kind: bugfix
     wave: 6
-    status: pending
+    status: integrated
     gap_id: gap-f4323203e2f7d1e0
+    gap_stage: resolution
+    started_at: 2026-09-04T13:36:46.146Z
+    folder: 00039_make-standalone-lint-converge-when-a-metadata-on
+    outcome: .specdev/assignments/00039_make-standalone-lint-converge-when-a-metadata-on/outcome.md
+    completed_at: 2026-09-04T13:49:27.265Z
+    follow_up: none
+    disposition: completed
+  - id: "00040"
+    title: Add dependency-backed runtime coverage for version-control and visualization logging
+    kind: change
+    wave: 7
+    status: pending
+    gap_id: gap-a0276bb3f8ae5eca
     gap_stage: resolution
 final_verification:
   command: python3 -m pytest -q tests && git diff --exit-code d5cd7b1ff3c462897667e5d19d17dfc092a6ecb5 -- tests/legacy && python3 -c 'from pathlib import Path; caps={"jsonldb/metaslot.py":250,"jsonldb/jsonlfile.py":950,"jsonldb/reports.py":150,"jsonldb/folderdb.py":1250,"jsonldb/jsonldf.py":150,"jsonldb/vercontrol.py":160,"jsonldb/visual.py":500}; counts={p:len(Path(p).read_text(encoding="utf-8").splitlines()) for p in caps}; excess={p:(counts[p],caps[p]) for p in caps if counts[p]>caps[p]}; assert not excess,excess' && python3 -c 'import ast,pathlib; trees={str(p):ast.parse(p.read_text(encoding="utf-8"),feature_version=(3,8)) for p in pathlib.Path("jsonldb").rglob("*.py")}; calls=[(p,n) for p,t in trees.items() for n in ast.walk(t) if isinstance(n,ast.Call)]; bad=[p for p,n in calls if (isinstance(n.func,ast.Name) and n.func.id=="print") or (isinstance(n.func,ast.Attribute) and isinstance(n.func.value,ast.Name) and n.func.value.id=="builtins" and n.func.attr=="print") or (isinstance(n.func,ast.Attribute) and n.func.attr in {"write","writelines"} and isinstance(n.func.value,ast.Attribute) and isinstance(n.func.value.value,ast.Name) and n.func.value.value.id=="sys" and n.func.value.attr in {"stdout","stderr"})]; assert not bad,bad'

@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "id": "00039",
+  "kind": "bugfix",
+  "description": "Make standalone lint converge when a metadata-only line lacks its terminal newline",
+  "run_id": "mission-lifecycle-20260904T09260745",
+  "created_at": "2026-09-04T13:36:46.151Z",
+  "review_policy": {
+    "brainstorm": "required",
+    "implementation": "required"
+  },
+  "mission": "M00001",
+  "updated_at": "2026-09-04T13:49:27.209Z",
+  "review_policy_frozen_at": "2026-09-04T13:41:25.261Z",
+  "implementation_execution": {
+    "version": 1,
+    "configured_mode": "spawned",
+    "effective_mode": "spawned",
+    "source": "mission",
+    "reason": "Mission-controlled Assignment execution",
+    "owner": "mission-controller",
+    "frozen_at": "2026-09-04T13:41:25.322Z"
+  },
+  "status": "completed",
+  "completed_at": "2026-09-04T13:49:27.208Z"
+}

@@ -1,0 +1,225 @@
+{
+  "version": 1,
+  "kind": "standalone_assignment_candidate",
+  "completeness": "complete",
+  "identity": "02ea4f9ffe52a8b398a04504646240e0c7ee7daed320a244489e7fe586a2e8f1",
+  "assignment": {
+    "id": "00039",
+    "folder": "00039_make-standalone-lint-converge-when-a-metadata-on"
+  },
+  "implementation_execution": {
+    "version": 1,
+    "configured_mode": "spawned",
+    "effective_mode": "spawned",
+    "source": "mission",
+    "reason": "Mission-controlled Assignment execution",
+    "owner": "mission-controller",
+    "frozen_at": "2026-09-04T13:41:25.322Z"
+  },
+  "contract": {
+    "path": ".specdev/assignments/00039_make-standalone-lint-converge-when-a-metadata-on/brainstorm/contract.md",
+    "hash": "5ef96339c3fa22919230eeee0b6f03c6c4697a5a55693175d1ccaca6e3a60817"
+  },
+  "acceptance": {
+    "total": 1,
+    "items": [
+      {
+        "id": "AC-1",
+        "evidence": "Focused default/forced convergence, canonical-slot, legacy, and adjacent lint-integrity checks passed (14 tests); Python 3.8 grammar/API and all seven source caps also passed.",
+        "result": "passed"
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 1,
+      "failed": 0,
+      "blocked": 0,
+      "missing": 0
+    }
+  },
+  "verification": {
+    "total": 4,
+    "items": [
+      {
+        "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -m pytest -q tests/test_lint_integrity.py",
+        "revision": "working-tree@d49cd4377a6a06949ca1e8b428896d7fd9f2faa1",
+        "scope": "Focused standalone and folder lint integrity acceptance, including default/forced convergence and adjacent regressions; 14 passed",
+        "status": "passed",
+        "duration_ms": 440,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -m pytest -q tests/test_lint_integrity.py -k 'standalone_lint'",
+        "revision": "working-tree@d49cd4377a6a06949ca1e8b428896d7fd9f2faa1",
+        "scope": "Post-fix focused default/forced metadata-only convergence plus canonical-slot and legacy behavior; 4 passed",
+        "status": "passed",
+        "duration_ms": 350,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 2,
+        "superseded": 1,
+        "history_counts": {
+          "passed": 1,
+          "failed": 1,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -c 'import ast,inspect,os,pathlib,tempfile; files=list(pathlib.Path(\"jsonl...",
+        "revision": "working-tree@d49cd4377a6a06949ca1e8b428896d7fd9f2faa1",
+        "scope": "Python 3.8 grammar/API floor, seven governed source caps (101/950/106/1121/124/133/466), immutable legacy files, and diff hygiene",
+        "status": "passed",
+        "duration_ms": 170,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 3,
+      "failed": 1,
+      "skipped": 0,
+      "missing": 0
+    },
+    "by_role": {
+      "qualification": {
+        "passed": 2,
+        "failed": 1,
+        "skipped": 0,
+        "missing": 0
+      },
+      "authoritative_acceptance": {
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      }
+    },
+    "raw": {
+      "total": 4,
+      "counts": {
+        "passed": 3,
+        "failed": 1,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 2,
+          "failed": 1,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "effective": {
+      "total": 3,
+      "counts": {
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 2,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "superseded": 1,
+    "authoritative_evidence": [
+      {
+        "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -m pytest -q tests/test_lint_integrity.py",
+        "revision": "working-tree@d49cd4377a6a06949ca1e8b428896d7fd9f2faa1",
+        "status": "passed"
+      }
+    ],
+    "authoritative_evidence_omitted": 0
+  },
+  "changed_project_paths": {
+    "count": 2,
+    "groups": [
+      {
+        "name": "jsonldb",
+        "count": 1,
+        "paths": [
+          "jsonldb/jsonlfile.py"
+        ],
+        "omitted": 0
+      },
+      {
+        "name": "tests",
+        "count": 1,
+        "paths": [
+          "tests/test_lint_integrity.py"
+        ],
+        "omitted": 0
+      }
+    ],
+    "omitted_groups": 0
+  },
+  "unresolved_risks": {
+    "status": "present",
+    "items": [
+      "None within the approved standalone-lint scope."
+    ],
+    "source": "canonical_section"
+  },
+  "artifacts": {
+    "contract": {
+      "path": ".specdev/assignments/00039_make-standalone-lint-converge-when-a-metadata-on/brainstorm/contract.md",
+      "exists": true,
+      "digest": "5ef96339c3fa22919230eeee0b6f03c6c4697a5a55693175d1ccaca6e3a60817"
+    },
+    "plan": {
+      "path": ".specdev/assignments/00039_make-standalone-lint-converge-when-a-metadata-on/design/plan.md",
+      "exists": true,
+      "digest": "fb06b76f24dbc1827a1b072c66dc290982f6844d9afd8e7aad7c03cf723133b8"
+    },
+    "progress": {
+      "path": ".specdev/assignments/00039_make-standalone-lint-converge-when-a-metadata-on/implementation/progress.json",
+      "exists": true,
+      "digest": "897c162a3d69453c48bd107eb575b399907d55bf85cd806773a7921126f651c8"
+    },
+    "outcome": {
+      "path": ".specdev/assignments/00039_make-standalone-lint-converge-when-a-metadata-on/outcome.md",
+      "exists": true,
+      "digest": "a5053a19594b1eb758e8aaf2b219198536f9e6c75ccc9bc743d982d45a328a5a"
+    }
+  },
+  "issues": [],
+  "issues_omitted": 0
+}
