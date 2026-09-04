@@ -1,0 +1,5 @@
+{
+  "id": "M00001",
+  "path": ".specdev/missions/M00001_implement-the-five-dependency-ordered-roadmap-wo",
+  "objective": "Implement the five dependency-ordered roadmap work packages in todo.md on master to close all ten forecast gaps, excluding discarded Assignment 00008 and post-fc22cba code"
+}

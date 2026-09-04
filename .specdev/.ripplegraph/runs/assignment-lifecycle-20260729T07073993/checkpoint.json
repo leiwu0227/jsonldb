@@ -1,6 +1,6 @@
 {
   "runId": "assignment-lifecycle-20260729T07073993",
-  "status": "active",
+  "status": "abandoned",
   "rootGraph": "assignment-lifecycle",
   "workflow": {
     "id": "specdev-workspace",
@@ -11,7 +11,7 @@
     "node": "design"
   },
   "createdAt": "2026-07-29T07:07:39.931Z",
-  "updatedAt": "2026-07-29T07:16:02.684Z",
+  "updatedAt": "2026-09-04T09:26:01.577Z",
   "outputs": {
     "create-assignment": {
       "id": "00008",

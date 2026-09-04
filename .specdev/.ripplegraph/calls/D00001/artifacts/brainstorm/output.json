@@ -1,0 +1,8 @@
+{
+  "proposal": ".specdev/discussions/D00001_decompose-all-forecast-gaps-into-implementation-/brainstorm/proposal.md",
+  "design": ".specdev/discussions/D00001_decompose-all-forecast-gaps-into-implementation-/brainstorm/design.md",
+  "artifacts": [
+    "brainstorm/proposal.md",
+    "brainstorm/design.md"
+  ]
+}

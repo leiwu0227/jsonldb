@@ -9,7 +9,31 @@
     "brainstorm": "optional",
     "implementation": "required"
   },
-  "updated_at": "2026-07-29T07:16:02.686Z",
+  "updated_at": "2026-09-04T09:26:01.579Z",
   "review_policy_frozen_at": "2026-07-29T07:16:02.668Z",
-  "approved_at": "2026-07-29T07:16:02.668Z"
+  "approved_at": "2026-07-29T07:16:02.668Z",
+  "adhoc_revalidation": {
+    "version": 1,
+    "status": "satisfied",
+    "adhoc": "AH-20260904T083233176Z-8acf",
+    "disposition": "completed",
+    "starting_revision": "4f5f895b301550f70ac4b400bd15e731ab7102bd",
+    "ending_revision": "79cf618d9e2ec472df12b374a332c6bb2fbde3b4",
+    "changed_paths": [
+      ".gitignore",
+      "profile_test/benchmark.py",
+      "tests/legacy/test_folderdb.py",
+      "tests/legacy/test_jsonldf.py",
+      "tests/legacy/test_jsonlfile.py"
+    ],
+    "required_at": "2026-09-04T08:35:09.183Z",
+    "contract_assessment": "unchanged",
+    "outcome": "Restored tests cover the pre-aux compatibility baseline under tests/legacy, while Assignment 00008's ignored aux-focused test variants remain untouched and explicitly runnable; its companion path, opacity, lifecycle, invalidation, repair, and compatibility criteria are unchanged.",
+    "revalidated_revision": "79cf618d9e2ec472df12b374a332c6bb2fbde3b4",
+    "revalidated_worktree_paths": [],
+    "revalidated_at": "2026-09-04T08:35:17.536Z"
+  },
+  "status": "abandoned",
+  "abandoned_at": "2026-09-04T09:26:01.579Z",
+  "abandon_reason": "Assignment 00008 was explicitly discarded by the user; no code from it may be used"
 }

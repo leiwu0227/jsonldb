@@ -1,0 +1,29 @@
+{
+  "callId": "D00001",
+  "status": "active",
+  "graphId": "discussion-lifecycle",
+  "graphVersion": "2.1.0",
+  "packagePath": "workflows/discussion-lifecycle@2.1.0",
+  "position": {
+    "graph": "discussion-lifecycle",
+    "node": "finalize"
+  },
+  "input": {
+    "id": "D00001",
+    "path": ".specdev/discussions/D00001_decompose-all-forecast-gaps-into-implementation-",
+    "description": "Decompose all forecast gaps into implementation Assignments",
+    "start_revision": "d5cd7b1ff3c462897667e5d19d17dfc092a6ecb5"
+  },
+  "outputs": {
+    "brainstorm": {
+      "proposal": ".specdev/discussions/D00001_decompose-all-forecast-gaps-into-implementation-/brainstorm/proposal.md",
+      "design": ".specdev/discussions/D00001_decompose-all-forecast-gaps-into-implementation-/brainstorm/design.md",
+      "artifacts": [
+        "brainstorm/proposal.md",
+        "brainstorm/design.md"
+      ]
+    }
+  },
+  "createdAt": "2026-09-04T09:16:50.826Z",
+  "updatedAt": "2026-09-04T09:20:44.046Z"
+}

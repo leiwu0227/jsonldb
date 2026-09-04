@@ -1,0 +1,54 @@
+{
+  "runId": "mission-lifecycle-20260904T09260745",
+  "status": "active",
+  "rootGraph": "mission-lifecycle",
+  "workflow": {
+    "id": "specdev-workspace",
+    "version": "1.0.0"
+  },
+  "position": {
+    "graph": "mission-lifecycle",
+    "node": "design"
+  },
+  "createdAt": "2026-09-04T09:26:07.455Z",
+  "updatedAt": "2026-09-04T11:37:43.019Z",
+  "outputs": {
+    "create-mission": {
+      "id": "M00001",
+      "path": ".specdev/missions/M00001_implement-the-five-dependency-ordered-roadmap-wo",
+      "objective": "Implement the five dependency-ordered roadmap work packages in todo.md on master to close all ten forecast gaps, excluding discarded Assignment 00008 and post-fc22cba code"
+    },
+    "brainstorm": {
+      "contract": ".specdev/missions/M00001_implement-the-five-dependency-ordered-roadmap-wo/brainstorm/contract.md",
+      "contract_hash": "7e0824300f897190603ccb138e56aaf5254389c0b40f69967908352465ceac4f"
+    },
+    "approve-mission": {
+      "approved": true,
+      "contract_hash": "7e0824300f897190603ccb138e56aaf5254389c0b40f69967908352465ceac4f",
+      "actor": "user",
+      "approved_at": "2026-09-04T11:37:43.003Z",
+      "review_override": false,
+      "base_revision": "c54d13455e4ee324a67a33a9fd0a1f119bf09a68",
+      "branch": "specdev/M00001-implement-the-five-dependency-or"
+    }
+  },
+  "gateDecisions": {
+    "approve-mission": {
+      "approved": true,
+      "contract_hash": "7e0824300f897190603ccb138e56aaf5254389c0b40f69967908352465ceac4f",
+      "actor": "user",
+      "approved_at": "2026-09-04T11:37:43.003Z",
+      "review_override": false,
+      "base_revision": "c54d13455e4ee324a67a33a9fd0a1f119bf09a68",
+      "branch": "specdev/M00001-implement-the-five-dependency-or"
+    }
+  },
+  "graphSource": {
+    "kind": "package",
+    "graphId": "mission-lifecycle",
+    "graphVersion": "1.5.0",
+    "packagePath": "workflows/mission-lifecycle@1.5.0"
+  },
+  "stack": [],
+  "frameCounter": 0
+}
