@@ -4,6 +4,7 @@ Each table is stored in a separate JSONL file.
 """
 
 import os
+import logging
 import pandas as pd
 from typing import Dict, List, Union, Optional, Any
 from datetime import datetime
@@ -16,6 +17,9 @@ from jsonldb.jsonldf import (
     save_jsonldf, load_jsonldf, update_jsonldf, select_jsonldf, delete_jsonldf
 )
 import jsonldb.jsonlfile as jsonlfile
+
+
+logger = logging.getLogger(__name__)
 
 # Version control (gitpython) is imported lazily inside commit/revert/version
 # so that importing FolderDB does not load git.
@@ -98,13 +102,21 @@ class FolderDB:
         if candidate is not None:
             found = self._scan_index_timespecs()
             if found == {candidate}:
-                print(f"WARNING: config.meta timespec '{self.timespec}' does not match "
-                      f"data ('{candidate}'); auto-correcting config.meta")
+                logger.warning(
+                    "config.meta timespec '%s' does not match data ('%s'); "
+                    "auto-correcting config.meta",
+                    self.timespec,
+                    candidate,
+                )
                 self.timespec = candidate
                 self.build_configmeta()
             elif len(found) > 1:
-                print(f"WARNING: mixed datetime key precisions {sorted(found)} found in "
-                      f"{self.folder_path}; keeping timespec '{self.timespec}'")
+                logger.warning(
+                    "mixed datetime key precisions %s found in %s; keeping timespec '%s'",
+                    sorted(found),
+                    self.folder_path,
+                    self.timespec,
+                )
 
     def build_hmeta(self) -> None:
         """
@@ -468,7 +480,10 @@ class FolderDB:
         Clear all JSONL files in the database folder.
         """
         if not force:
-            print("WARNING: This will delete all data in the database folder. Call clear_folder with force=True to proceed.")
+            logger.warning(
+                "This will delete all data in the database folder. "
+                "Call clear_folder with force=True to proceed."
+            )
             return
         for root, dirs, files in os.walk(self.folder_path, topdown=True):
             # Skip hidden/system directories (e.g. .git, .invalid_tickers)

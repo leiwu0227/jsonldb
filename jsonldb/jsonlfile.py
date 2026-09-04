@@ -3,12 +3,16 @@ Core JSONL file operations for JSONLDB.
 """
 
 import os
+import logging
 import pandas as pd
 from typing import Dict, List, Optional, Union, Any
 import datetime as dt
 import orjson
 from bisect import bisect_left, bisect_right
 import mmap
+
+
+logger = logging.getLogger(__name__)
 
 # --------------------------------------------------------
 # Configuration
@@ -73,7 +77,10 @@ def build_jsonl_index(jsonl_file_path: str) -> None:
                         linekey = next(iter(data))
                         index_dict[linekey] = current_pos
                     except (orjson.JSONDecodeError, ValueError, StopIteration):
-                        print("WARNING: invalid JSON line " + line.decode('utf-8', errors='replace'))
+                        logger.warning(
+                            "invalid JSON line %s",
+                            line.decode('utf-8', errors='replace'),
+                        )
                         continue
 
                     current_pos = mm.tell()
@@ -112,7 +119,7 @@ def ensure_index_exists(jsonl_file_path: str) -> None:
 
     if should_rebuild:
         if corrupt:
-            print(f"WARNING: rebuilt empty index {index_file_path}")
+            logger.warning("rebuilt empty index %s", index_file_path)
         build_jsonl_index(jsonl_file_path)
 
 
@@ -137,7 +144,7 @@ def load_index(jsonl_file_path: str) -> dict:
             return orjson.loads(f.read())
     except (orjson.JSONDecodeError, OSError):
         # Non-empty but unparseable/unreadable index -> rebuild from the .jsonl
-        print(f"WARNING: rebuilt corrupt index {index_file_path}")
+        logger.warning("rebuilt corrupt index %s", index_file_path)
         build_jsonl_index(jsonl_file_path)
         with open(index_file_path, 'rb') as f:
             return orjson.loads(f.read())
@@ -453,7 +460,10 @@ def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True, timespec: Op
                         linekey = next(iter(data))
                         _store_with_key(result_dict, linekey, data[linekey], auto_deserialize, timespec)
                 except (orjson.JSONDecodeError, ValueError):
-                    print("WARNING: invalid JSON line " + line.decode('utf-8', errors='replace'))
+                    logger.warning(
+                        "invalid JSON line %s",
+                        line.decode('utf-8', errors='replace'),
+                    )
                     continue  # Skip invalid JSON lines
 
         return result_dict
@@ -688,4 +698,3 @@ def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey], timespec: Option
             
     except OSError as e:
         raise OSError(f"Failed to delete from JSONL file {jsonl_file_path}: {str(e)}")
-
