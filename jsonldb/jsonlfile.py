@@ -142,6 +142,18 @@ def load_index(jsonl_file_path: str) -> dict:
         with open(index_file_path, 'rb') as f:
             return orjson.loads(f.read())
 
+
+def _count_newlines(jsonl_file_path: str) -> int:
+    """Count record and tombstone terminators without parsing JSON lines."""
+    count = 0
+    with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
+        while True:
+            chunk = f.read(BUFFER_SIZE)
+            if not chunk:
+                return count
+            count += chunk.count(b'\n')
+
+
 def _verify_and_compact(jsonl_file_path: str, index_dict: dict) -> bool:
     """Spot-check, sort-verify, and compact a JSONL file using a pre-loaded index.
 
@@ -173,20 +185,23 @@ def _verify_and_compact(jsonl_file_path: str, index_dict: dict) -> bool:
     if not index_dict:
         return True
 
-    keys = list(index_dict.keys())
-    is_sorted = all(keys[i] <= keys[i+1] for i in range(len(keys)-1))
+    sorted_keys = sorted(index_dict, key=str)
+    offsets = [index_dict[key] for key in sorted_keys]
+    offsets_strictly_increase = all(
+        offsets[i] < offsets[i + 1] for i in range(len(offsets) - 1)
+    )
+    newline_count = _count_newlines(jsonl_file_path)
 
-    if is_sorted:
-        if index_dict[keys[0]] == 0:
+    if offsets_strictly_increase and newline_count == len(index_dict):
+        if offsets[0] == 0:
             with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
-                f.seek(index_dict[keys[-1]])
+                f.seek(offsets[-1])
                 last_line = f.readline()
-                expected_end = index_dict[keys[-1]] + len(last_line)
+                expected_end = offsets[-1] + len(last_line)
                 actual_size = os.path.getsize(jsonl_file_path)
                 if expected_end == actual_size:
                     return True
 
-    sorted_keys = sorted(keys, key=str)
     tmp_path = jsonl_file_path + '.tmp'
 
     with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as src:
@@ -673,5 +688,4 @@ def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey], timespec: Option
             
     except OSError as e:
         raise OSError(f"Failed to delete from JSONL file {jsonl_file_path}: {str(e)}")
-
 
