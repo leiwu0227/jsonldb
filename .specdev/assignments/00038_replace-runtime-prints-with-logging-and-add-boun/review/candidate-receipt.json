@@ -1,0 +1,319 @@
+{
+  "version": 1,
+  "kind": "standalone_assignment_candidate",
+  "completeness": "complete",
+  "identity": "22bb4ea21b39d43033dc6615cc3e11869136b3a00f3fd853bb4fd5931a5f2f43",
+  "assignment": {
+    "id": "00038",
+    "folder": "00038_replace-runtime-prints-with-logging-and-add-boun"
+  },
+  "implementation_execution": {
+    "version": 1,
+    "configured_mode": "spawned",
+    "effective_mode": "spawned",
+    "source": "mission",
+    "reason": "Mission-controlled Assignment execution",
+    "owner": "mission-controller",
+    "frozen_at": "2026-09-04T13:11:55.821Z"
+  },
+  "contract": {
+    "path": ".specdev/assignments/00038_replace-runtime-prints-with-logging-and-add-boun/brainstorm/contract.md",
+    "hash": "1b4e419e1ff8d7c54c2475e7dd5f1f828db4e36c371ba3a26026047d848a38a8"
+  },
+  "acceptance": {
+    "total": 2,
+    "items": [
+      {
+        "id": "AC-1",
+        "evidence": "The focused suite proves representative file, folder, and version-control diagnostics are path-bearing logger records with silent stdout/stderr; the Python 3.8 AST audit found zero package runtime `print` or direct stdio writes.",
+        "result": "passed"
+      },
+      {
+        "id": "AC-2",
+        "evidence": "Focused tests prove clean/anomalous replacement, 100-entry and 160-character bounds, omission counts, scoped capture and cleanup, payload privacy, open non-repair, ordinary-operation silence, and hidden-directory survival; 93 related tes...",
+        "result": "passed"
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 2,
+      "failed": 0,
+      "blocked": 0,
+      "missing": 0
+    }
+  },
+  "verification": {
+    "total": 7,
+    "items": [
+      {
+        "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -m pytest -q tests/test_reports.py tests/test_warning_channels.py tests/te...",
+        "revision": "working-tree@4d6be4deb7a095de1efeaef44bb5ee734a1aa6f6",
+        "scope": "focused report, logging, lint, metadata, folder, and file-store acceptance; 93 passed",
+        "status": "passed",
+        "duration_ms": 1240,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -c 'import ast,contextlib,datetime,logging,os,pathlib,tempfile; files=list...",
+        "revision": "working-tree@4d6be4deb7a095de1efeaef44bb5ee734a1aa6f6",
+        "scope": "8 package files parse at Python 3.8 floor; zero runtime print/stdio writes; immutable legacy and diff hygiene clean; all seven caps pass",
+        "status": "passed",
+        "duration_ms": 50,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -m pytest -q tests/test_reports.py::test_open_reports_torn_row_without_rep...",
+        "revision": "working-tree@4d6be4deb7a095de1efeaef44bb5ee734a1aa6f6",
+        "scope": "blocking-review regression: an invalid row containing an embedded 'at byte' fragment keeps the real table path and offset and leaks no payload; 1 passed",
+        "status": "passed",
+        "duration_ms": 350,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "/usr/bin/time -p /opt/homebrew/bin/python3.12 -c 'import ast,pathlib; caps={\"jsonldb/jsonlfile.py\":950,\"jsonldb/reports.py\":150}; counts={p:len(pathlib.Path(p).read_text(encoding=\"utf-8\").splitlines()) for p in caps}; [ast.parse(pathlib....",
+        "revision": "working-tree@4d6be4deb7a095de1efeaef44bb5ee734a1aa6f6",
+        "scope": "affected reports/jsonlfile Python 3.8 parse, source caps (106/150 and 950/950), and diff hygiene after compaction",
+        "status": "passed",
+        "duration_ms": 20,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "python3 -m pytest -q tests/test_reports.py tests/test_warning_channels.py tests/test_lint_integrity.py tests/test_lint_compaction.py",
+        "revision": "working-tree@4d6be4deb7a095de1efeaef44bb5ee734a1aa6f6",
+        "scope": "default-interpreter dependency qualification (collection lacked orjson)",
+        "status": "failed",
+        "duration_ms": 570,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 0,
+          "failed": 1,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -m pytest -q tests/test_reports.py tests/test_warning_channels.py tests/te...",
+        "revision": "working-tree@4d6be4deb7a095de1efeaef44bb5ee734a1aa6f6",
+        "scope": "related regression qualification including visualization (collection lacked matplotlib)",
+        "status": "failed",
+        "duration_ms": 360,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 0,
+          "failed": 1,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "/usr/bin/time -p /opt/homebrew/bin/python3.12 -c 'import ast,pathlib; caps={\"jsonldb/jsonlfile.py\":950,\"jsonldb/reports.py\":150}; counts={p:len(pathlib.Path(p).read_text(encoding=\"utf-8\").splitlines()) for p in caps}; [ast.parse(pathlib....",
+        "revision": "working-tree@4d6be4deb7a095de1efeaef44bb5ee734a1aa6f6",
+        "scope": "initial affected-file repair qualification; jsonlfile.py was one line over its 950-line cap",
+        "status": "failed",
+        "duration_ms": 20,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 0,
+          "failed": 1,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 4,
+      "failed": 3,
+      "skipped": 0,
+      "missing": 0
+    },
+    "by_role": {
+      "qualification": {
+        "passed": 0,
+        "failed": 3,
+        "skipped": 0,
+        "missing": 0
+      },
+      "authoritative_acceptance": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      }
+    },
+    "raw": {
+      "total": 7,
+      "counts": {
+        "passed": 4,
+        "failed": 3,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 0,
+          "failed": 3,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 4,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "effective": {
+      "total": 7,
+      "counts": {
+        "passed": 4,
+        "failed": 3,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 0,
+          "failed": 3,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 4,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "superseded": 0,
+    "authoritative_evidence": [
+      {
+        "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -m pytest -q tests/test_reports.py tests/test_warning_channels.py tests/te...",
+        "revision": "working-tree@4d6be4deb7a095de1efeaef44bb5ee734a1aa6f6",
+        "status": "passed"
+      },
+      {
+        "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -c 'import ast,contextlib,datetime,logging,os,pathlib,tempfile; files=list...",
+        "revision": "working-tree@4d6be4deb7a095de1efeaef44bb5ee734a1aa6f6",
+        "status": "passed"
+      },
+      {
+        "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -m pytest -q tests/test_reports.py::test_open_reports_torn_row_without_rep...",
+        "revision": "working-tree@4d6be4deb7a095de1efeaef44bb5ee734a1aa6f6",
+        "status": "passed"
+      },
+      {
+        "command": "/usr/bin/time -p /opt/homebrew/bin/python3.12 -c 'import ast,pathlib; caps={\"jsonldb/jsonlfile.py\":950,\"jsonldb/reports.py\":150}; counts={p:len(pathlib.Path(p).read_text(encoding=\"utf-8\").splitlines()) for p in caps}; [ast.parse(pathlib....",
+        "revision": "working-tree@4d6be4deb7a095de1efeaef44bb5ee734a1aa6f6",
+        "status": "passed"
+      }
+    ],
+    "authoritative_evidence_omitted": 0
+  },
+  "changed_project_paths": {
+    "count": 7,
+    "groups": [
+      {
+        "name": "jsonldb",
+        "count": 6,
+        "paths": [
+          "jsonldb/__init__.py",
+          "jsonldb/folderdb.py",
+          "jsonldb/jsonlfile.py",
+          "jsonldb/reports.py",
+          "jsonldb/vercontrol.py",
+          "jsonldb/visual.py"
+        ],
+        "omitted": 0
+      },
+      {
+        "name": "tests",
+        "count": 1,
+        "paths": [
+          "tests/test_reports.py"
+        ],
+        "omitted": 0
+      }
+    ],
+    "omitted_groups": 0
+  },
+  "unresolved_risks": {
+    "status": "present",
+    "items": [
+      "None within this Assignment. The dependency-complete full suite remains reserved",
+      "for the parent Mission's final integrated verification."
+    ],
+    "source": "canonical_section"
+  },
+  "artifacts": {
+    "contract": {
+      "path": ".specdev/assignments/00038_replace-runtime-prints-with-logging-and-add-boun/brainstorm/contract.md",
+      "exists": true,
+      "digest": "1b4e419e1ff8d7c54c2475e7dd5f1f828db4e36c371ba3a26026047d848a38a8"
+    },
+    "plan": {
+      "path": ".specdev/assignments/00038_replace-runtime-prints-with-logging-and-add-boun/design/plan.md",
+      "exists": true,
+      "digest": "b4a0cec145783e9ef3b18054478daf135c9cf175b46485b4fd346936ff166599"
+    },
+    "progress": {
+      "path": ".specdev/assignments/00038_replace-runtime-prints-with-logging-and-add-boun/implementation/progress.json",
+      "exists": true,
+      "digest": "a5a59181a38af723fa188031989e05551525c34567520d6f07a3a05ddcdddd44"
+    },
+    "outcome": {
+      "path": ".specdev/assignments/00038_replace-runtime-prints-with-logging-and-add-boun/outcome.md",
+      "exists": true,
+      "digest": "cb8f6746a3b0bfd27515e39ccd6f000e57821878bda52bb836d1f26802e2a8c5"
+    }
+  },
+  "issues": [],
+  "issues_omitted": 0
+}

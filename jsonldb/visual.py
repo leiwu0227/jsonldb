@@ -3,6 +3,7 @@ Visualization functions for JSONL files and FolderDB using Bokeh and Matplotlib.
 """
 
 from datetime import datetime
+import logging
 from typing import Union
 from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource, HoverTool
@@ -11,6 +12,9 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from jsonldb.jsonlfile import load_index
 from jsonldb.folderdb import FolderDB
+
+
+logger = logging.getLogger(__name__)
 
 def _parse_linekey(linekey: str) -> Union[float, datetime]:
     """
@@ -193,11 +197,13 @@ def visualize_folderdb_bokeh(
     if not jsonl_files:
         raise FileNotFoundError(f"No JSONL files found in: {folderdb.folder_path}")
 
-    print(f"Found {len(jsonl_files)} JSONL files in {folderdb.folder_path}")
+    logger.info("found %d JSONL files in %s",
+                len(jsonl_files), folderdb.folder_path)
 
     if prefix is not None:
         jsonl_files = [file for file in jsonl_files if file.startswith(prefix)]
-        print(f"Found {len(jsonl_files)} JSONL files with prefix: {prefix}")
+        logger.info("found %d JSONL files in %s with prefix %s",
+                    len(jsonl_files), folderdb.folder_path, prefix)
 
     # Prepare data for plotting
     colors = ["orange"]  # Use orange color for all files
@@ -233,7 +239,8 @@ def visualize_folderdb_bokeh(
         index_data = load_index(folderdb._get_file_path(file_name))
 
         if not index_data:  # Skip empty files
-            print(f"Warning: Empty index file for {file_name}")
+            logger.warning("empty index for %s",
+                           folderdb._get_file_path(file_name))
             continue
 
         # print(f"Processing {file_name} with {len(index_data)} entries")
@@ -262,7 +269,8 @@ def visualize_folderdb_bokeh(
         # print(f"Added {len(linekeys)} points for {file_name}")
 
     if not has_data:
-        print("Warning: No valid data found to plot")
+        logger.warning("no valid data found to plot in %s",
+                       folderdb.folder_path)
         # Add a dummy point to prevent the "no renderers" warning
         p.scatter([0], ["No Data"], size=0, alpha=0)
 
@@ -304,11 +312,13 @@ def visualize_folderdb_matplot(
     if not jsonl_files:
         raise FileNotFoundError(f"No JSONL files found in: {folderdb.folder_path}")
 
-    print(f"Found {len(jsonl_files)} JSONL files in {folderdb.folder_path}")
+    logger.info("found %d JSONL files in %s",
+                len(jsonl_files), folderdb.folder_path)
 
     if prefix is not None:
         jsonl_files = [file for file in jsonl_files if file.startswith(prefix)]
-        print(f"Found {len(jsonl_files)} JSONL files with prefix: {prefix}")
+        logger.info("found %d JSONL files in %s with prefix %s",
+                    len(jsonl_files), folderdb.folder_path, prefix)
 
     # Check if all first keys are datetime
     all_datetime = True
@@ -340,7 +350,8 @@ def visualize_folderdb_matplot(
         index_data = load_index(folderdb._get_file_path(file_name))
 
         if not index_data:  # Skip empty files
-            print(f"Warning: Empty index file for {file_name}")
+            logger.warning("empty index for %s",
+                           folderdb._get_file_path(file_name))
             continue
 
         # Convert linekeys to numbers or datetimes
@@ -368,7 +379,8 @@ def visualize_folderdb_matplot(
             has_data = True
 
     if not has_data:
-        print("Warning: No valid data found to plot")
+        logger.warning("no valid data found to plot in %s",
+                       folderdb.folder_path)
         ax.text(0.5, 0.5, 'No Data', transform=ax.transAxes, ha='center', va='center')
 
     # Set labels and title

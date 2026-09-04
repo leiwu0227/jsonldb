@@ -3,10 +3,14 @@ Version control functions for JSONLDB using Git.
 """
 
 import os
+import logging
 from typing import Dict
 import git
 from datetime import datetime
 import warnings
+
+
+logger = logging.getLogger(__name__)
 
 
 def is_versioned(folder_path: str) -> bool:
@@ -39,7 +43,7 @@ def init_folder(folder_path: str) -> None:
         except git.exc.InvalidGitRepositoryError:
             # Initialize new repository
             repo = git.Repo.init(folder_path)
-            print(f"Initialized git repository in {folder_path}")
+            logger.info("initialized git repository in %s", folder_path)
             
     except git.exc.GitCommandError as e:
         raise git.exc.GitCommandError(f"Failed to initialize git repository: {str(e)}")
@@ -69,7 +73,8 @@ def commit(folder_path: str, msg: str = "") -> None:
         
         # Commit changes
         repo.index.commit(commit_msg)
-        print(f"Committed changes with message: {commit_msg}")
+        logger.info("committed changes in %s with message: %s",
+                    folder_path, commit_msg)
         
     except git.exc.GitCommandError as e:
         raise git.exc.GitCommandError(f"Failed to commit changes: {str(e)}")
@@ -118,11 +123,11 @@ def revert(folder_path: str, version_hash: str) -> None:
         try:
             commit = repo.commit(full_hash)
         except git.exc.BadName:
-            print(f"Commit {full_hash} not found")            
+            logger.warning("commit %s not found in %s", full_hash, folder_path)
             
         # Reset to the specified commit
         repo.git.reset(full_hash, hard=True)
-        print(f"Reverted to commit {full_hash}")
+        logger.info("reverted %s to commit %s", folder_path, full_hash)
         
     except git.exc.GitCommandError as e:
         raise git.exc.GitCommandError(f"Failed to revert to version {version_hash}: {str(e)}")

@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "mode": "automatic",
+  "stage": "complete",
+  "primary_round": 2,
+  "round": 2,
+  "history": [
+    {
+      "round": 1,
+      "candidate_digest": "70c8fb18df8c1f87ae8e63b84eff2162cb03811ce08fc31f63503edc3fe642aa",
+      "findings_digest": "77a6b787f651cf6acfeba45d712ea4bb9b6f39efa90296fc586c4a05f4b0dc59"
+    },
+    {
+      "round": 2,
+      "candidate_digest": "79d218776471a4e7708886ae4277e98557c2ddd23149db5aaf9c1f51075d9e83",
+      "findings_digest": "92bbb49b009ec76268591666dfe0a286a638fba31fa5cadefc03c81d96b7311e"
+    }
+  ],
+  "profile": {
+    "provider": "claude",
+    "model": "claude-opus-5",
+    "effort": "xhigh",
+    "filesystem": "read-only",
+    "network": false,
+    "timeout_ms": 1200000
+  },
+  "guide_ids": [],
+  "contract_hash": "1b4e419e1ff8d7c54c2475e7dd5f1f828db4e36c371ba3a26026047d848a38a8",
+  "candidate_receipt_identity": "22bb4ea21b39d43033dc6615cc3e11869136b3a00f3fd853bb4fd5931a5f2f43",
+  "status": "approved",
+  "candidate_digest": "79d218776471a4e7708886ae4277e98557c2ddd23149db5aaf9c1f51075d9e83",
+  "findings_digest": "92bbb49b009ec76268591666dfe0a286a638fba31fa5cadefc03c81d96b7311e",
+  "attempt": "Attempt-00034",
+  "updated_at": "2026-09-04T13:34:17.736Z",
+  "reviewer_continuity": {
+    "mode": "fresh"
+  },
+  "material_divergence": false,
+  "scope_divergence": "none",
+  "procedure_divergence": "disclosed",
+  "evidence_integrity": "complete",
+  "user_reapproval_required": false,
+  "taxonomy_source": "structured",
+  "reviewer_continuation_lease": "unavailable",
+  "repair_attempt": "Attempt-00033"
+}

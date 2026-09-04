@@ -15,7 +15,6 @@ from . import metaslot
 
 
 logger = logging.getLogger(__name__)
-
 # --------------------------------------------------------
 # Configuration
 # --------------------------------------------------------
@@ -23,12 +22,12 @@ logger = logging.getLogger(__name__)
 # Buffer size for file operations (50MB)
 BUFFER_SIZE: int = 1024 * 1024 * 50
 TIME_SPEC = 'seconds'  #or seconds/microseconds
+REMOVED_DETAIL_BYTES = 160
 
 # Type aliases for better readability
 LineKey = Union[str, dt.datetime]
 DataDict = Dict[str, dict]
 IndexDict = Dict[str, int]
-
 
 def _validate_row_keys(db_dict: DataDict,
                        timespec: Optional[str] = None) -> None:
@@ -54,8 +53,8 @@ def _warn_invalid_row(jsonl_file_path: str, offset: int, line: bytes) -> None:
         jsonl_file_path,
         offset,
         line.decode('utf-8', errors='replace').strip(),
+        extra={"jsonldb_file": jsonl_file_path, "jsonldb_offset": offset, "jsonldb_kind": "invalid_json"},
     )
-
 
 def _atomic_write_bytes(file_path: str, content: bytes) -> None:
     """Write complete bytes to a same-directory temporary, then replace."""
@@ -132,50 +131,31 @@ def build_jsonl_index(jsonl_file_path: str, warn_invalid: bool = True) -> None:
         raise OSError(f"Failed to build index for {jsonl_file_path}: {str(e)}")
 
 def ensure_index_exists(jsonl_file_path: str) -> None:
-    """
-    Ensure an index file exists for the given JSONL file.
-    
-    Creates the index if it doesn't exist or if the JSONL file is newer
-    than the index file.
-    
-    Args:
-        jsonl_file_path: Path to the JSONL file
-    """
+    """Rebuild a missing, corrupt-empty, or stale index."""
     index_file_path = f"{jsonl_file_path}.idx"
 
     should_rebuild = False
-    corrupt = False
+    reason = None
     if not os.path.exists(index_file_path):
         should_rebuild = True
+        reason = "missing"
     elif os.path.getsize(index_file_path) == 0:
         # An empty .idx (e.g. left by an interrupted write) is corrupt: a valid
         # empty index is b'{}' (2 bytes), never zero-length. Treat it as missing.
         should_rebuild = True
-        corrupt = True
+        reason = "empty"
     elif os.path.getmtime(jsonl_file_path) > os.path.getmtime(index_file_path):
         # Rebuild if JSONL file is newer than index (stale, but not corrupt)
         should_rebuild = True
+        reason = "stale"
 
     if should_rebuild:
-        if corrupt:
-            logger.warning("rebuilt empty index %s", index_file_path)
+        logger.warning("rebuilt %s index %s", reason, index_file_path)
         build_jsonl_index(jsonl_file_path)
 
 
 def load_index(jsonl_file_path: str) -> dict:
-    """Load a JSONL file's index, self-healing if it is missing/empty/corrupt.
-
-    The .idx is fully derived from the .jsonl (the source of truth), so an empty
-    or unparseable index is treated exactly like a missing one: rebuilt via
-    build_jsonl_index and re-read. This is the single index-read path for the
-    library — every other read site routes through here.
-
-    Args:
-        jsonl_file_path: Path to the JSONL file
-
-    Returns:
-        dict: key -> byte offset index
-    """
+    """Load the single self-healing index-read path."""
     index_file_path = f"{jsonl_file_path}.idx"
     ensure_index_exists(jsonl_file_path)  # heals missing / empty / stale
     try:
@@ -212,6 +192,9 @@ def _lint_load_index(jsonl_file_path: str):
     index_path = jsonl_file_path + '.idx'
     fresh = (os.path.exists(index_path) and os.path.getsize(index_path) > 0
              and os.path.getmtime(index_path) >= os.path.getmtime(jsonl_file_path))
+    reason = "missing" if not os.path.exists(index_path) else "stale"
+    if os.path.exists(index_path) and os.path.getsize(index_path) == 0:
+        reason = "empty"
     if fresh:
         try:
             with open(index_path, 'rb') as f:
@@ -220,7 +203,8 @@ def _lint_load_index(jsonl_file_path: str):
                 raise TypeError("index is not an object")
             return index, True
         except (orjson.JSONDecodeError, OSError, TypeError):
-            logger.warning("rebuilt corrupt index %s", index_path)
+            reason = "corrupt"
+    logger.warning("rebuilt %s index %s", reason, index_path)
     build_jsonl_index(jsonl_file_path, warn_invalid=False)
     with open(index_path, 'rb') as f:
         return orjson.loads(f.read()), False
@@ -244,16 +228,28 @@ def _lint_index_valid(jsonl_file_path: str, index: dict, force: bool) -> bool:
     return True
 
 
-def _lint_removed(jsonl_file_path: str, intervals, size: int) -> None:
-    end = 0
-    for start, stop in sorted(intervals):
-        if start > end:
-            logger.warning("lint removed %d bytes from %s at byte %d",
-                           start - end, jsonl_file_path, end)
-        end = max(end, stop)
-    if end < size:
+def _lint_removed(jsonl_file_path: str, intervals, size: int):
+    regions, end = [], 0
+    with open(jsonl_file_path, 'rb') as source:
+        for start, stop in sorted(intervals):
+            if start > end:
+                source.seek(end)
+                regions.append((end, start - end,
+                                source.read(min(REMOVED_DETAIL_BYTES, start - end))))
+            end = max(end, stop)
+        if end < size:
+            source.seek(end)
+            regions.append((end, size - end,
+                            source.read(min(REMOVED_DETAIL_BYTES, size - end))))
+    return regions
+
+
+def _log_lint_removed(jsonl_file_path: str, regions) -> None:
+    for offset, count, removed in regions:
         logger.warning("lint removed %d bytes from %s at byte %d",
-                       size - end, jsonl_file_path, end)
+                       count, jsonl_file_path, offset,
+                       extra={"jsonldb_removed": removed,
+                              "jsonldb_file": jsonl_file_path})
 
 
 def _lint_rewrite(jsonl_file_path: str, index: dict, slot: Optional[bytes]) -> None:
@@ -281,9 +277,13 @@ def _lint_rewrite(jsonl_file_path: str, index: dict, slot: Optional[bytes]) -> N
         info = metaslot.inspect_file(jsonl_file_path) if old_size else None
         if info is not None and info.is_slot and slot == info.raw_line:
             kept.append((0, len(info.raw_line)))
+        removed = _lint_removed(jsonl_file_path, kept, old_size)
         os.replace(tmp_path, jsonl_file_path)
-        _lint_removed(jsonl_file_path, kept, old_size)
+        _log_lint_removed(jsonl_file_path, removed)
         _write_index(jsonl_file_path, new_index)
+        logger.warning("lint repaired layout in %s", jsonl_file_path,
+                       extra={"jsonldb_file": jsonl_file_path,
+                              "jsonldb_kind": "layout_repaired"})
     except BaseException:
         try:
             os.unlink(tmp_path)

@@ -77,9 +77,9 @@ execution_policy:
     bypassed: []
     decisions: []
 last_checkpoint:
-  base_revision: 78dd06188614bca335e02b12948c9ab057e73197
+  base_revision: 4d6be4deb7a095de1efeaef44bb5ee734a1aa6f6
   push_requested: false
-  created_at: 2026-09-04T13:04:26.065Z
+  created_at: 2026-09-04T13:34:17.922Z
 updated_at: 2026-09-04T11:39:09.035Z
 gaps:
   version: 1
@@ -89,14 +89,31 @@ gaps:
         kind: child
         id: "00037"
         key: child:00037
+      status: resolving
+      stage: resolution
+      disposition: unresolved
+      assignments:
+        - id: "00039"
+          stage: resolution
+      signals:
+        - child:00037:follow-up
+      created_at: 2026-09-04T13:04:25.973Z
+      updated_at: 2026-09-04T13:06:51.221Z
+      artifact: .specdev/assignments/00037_make-lint-slot-aware-and-damage-aware-while-pres/outcome.md
+    - id: gap-a0276bb3f8ae5eca
+      source:
+        kind: child
+        id: "00038"
+        key: child:00038
       status: open
       stage: resolution
       disposition: unresolved
       assignments: []
       signals:
-        - child:00037:follow-up
-      created_at: 2026-09-04T13:04:25.973Z
-      updated_at: 2026-09-04T13:04:25.973Z
-      artifact: .specdev/assignments/00037_make-lint-slot-aware-and-damage-aware-while-pres/outcome.md
+        - child:00038:follow-up
+      created_at: 2026-09-04T13:34:17.823Z
+      updated_at: 2026-09-04T13:34:17.823Z
+      artifact: .specdev/assignments/00038_replace-runtime-prints-with-logging-and-add-boun/outcome.md
   processed_signals:
     - child:00037:follow-up
+    - child:00038:follow-up

@@ -11,7 +11,7 @@
     "node": "advance-queue"
   },
   "createdAt": "2026-09-04T09:26:07.455Z",
-  "updatedAt": "2026-09-04T13:04:25.910Z",
+  "updatedAt": "2026-09-04T13:34:17.748Z",
   "outputs": {
     "create-mission": {
       "id": "M00001",
@@ -79,15 +79,16 @@
     },
     "child-assignment": {
       "approved": true,
-      "verdict": ".specdev/assignments/00037_make-lint-slot-aware-and-damage-aware-while-pres/review/implementation-verdict.md",
-      "attempt": "Attempt-00027",
+      "verdict": ".specdev/assignments/00038_replace-runtime-prints-with-logging-and-add-boun/review/implementation-verdict.md",
+      "attempt": "Attempt-00034",
       "disposition": "approved"
     },
     "advance-queue": {
       "remaining": true,
-      "completed": "00036",
-      "follow_up_required": false,
-      "gap_open": false,
+      "completed": "00037",
+      "follow_up_required": true,
+      "gap_open": true,
+      "gap_id": "gap-f4323203e2f7d1e0",
       "parallel": false
     },
     "f2/create-assignment": {
@@ -212,6 +213,62 @@
       "verdict": ".specdev/assignments/00037_make-lint-slot-aware-and-damage-aware-while-pres/review/implementation-verdict.md",
       "attempt": "Attempt-00027",
       "disposition": "approved"
+    },
+    "resolve-gap": {
+      "queue": ".specdev/missions/M00001_implement-the-five-dependency-ordered-roadmap-wo/design/assignments.yaml",
+      "reason": "child:00037",
+      "gap_id": "gap-f4323203e2f7d1e0",
+      "stage": "resolution",
+      "attempt": "Attempt-00028",
+      "disposition": "resolution-added",
+      "gap_open": false,
+      "remaining": true,
+      "parallel": false
+    },
+    "f5/create-assignment": {
+      "id": "00038",
+      "name": "00038_replace-runtime-prints-with-logging-and-add-boun",
+      "path": ".specdev/assignments/00038_replace-runtime-prints-with-logging-and-add-boun",
+      "description": "Replace runtime prints with logging and add bounded integrity and lint reports",
+      "review_policy": {
+        "brainstorm": "required",
+        "implementation": "required"
+      }
+    },
+    "f5/brainstorm": {
+      "contract": ".specdev/assignments/00038_replace-runtime-prints-with-logging-and-add-boun/brainstorm/contract.md",
+      "contract_hash": "1b4e419e1ff8d7c54c2475e7dd5f1f828db4e36c371ba3a26026047d848a38a8"
+    },
+    "f5/approve-contract": {
+      "approved": true,
+      "contract_hash": "1b4e419e1ff8d7c54c2475e7dd5f1f828db4e36c371ba3a26026047d848a38a8",
+      "actor": "mission:M00001",
+      "approved_at": "2026-09-04T13:11:55.766Z",
+      "revision": "4d6be4deb7a095de1efeaef44bb5ee734a1aa6f6",
+      "review_override": false,
+      "review_policy": {
+        "brainstorm": "required",
+        "implementation": "required"
+      }
+    },
+    "f5/design": {
+      "plan": ".specdev/assignments/00038_replace-runtime-prints-with-logging-and-add-boun/design/plan.md",
+      "attempt": "Attempt-00031"
+    },
+    "f5/implementation": {
+      "progress": ".specdev/assignments/00038_replace-runtime-prints-with-logging-and-add-boun/implementation/progress.json",
+      "outcome": ".specdev/assignments/00038_replace-runtime-prints-with-logging-and-add-boun/outcome.md",
+      "attempt": "Attempt-00031"
+    },
+    "f5/implementation-review": {
+      "approved": true,
+      "verdict": ".specdev/assignments/00038_replace-runtime-prints-with-logging-and-add-boun/review/implementation-verdict.md",
+      "attempt": "Attempt-00034",
+      "disposition": "approved"
+    },
+    "f5/repair": {
+      "attempt": "Attempt-00033",
+      "result": ".specdev/assignments/00038_replace-runtime-prints-with-logging-and-add-boun/implementation/repair-result.md"
     }
   },
   "gateDecisions": {
@@ -271,6 +328,18 @@
         "brainstorm": "required",
         "implementation": "required"
       }
+    },
+    "f5/approve-contract": {
+      "approved": true,
+      "contract_hash": "1b4e419e1ff8d7c54c2475e7dd5f1f828db4e36c371ba3a26026047d848a38a8",
+      "actor": "mission:M00001",
+      "approved_at": "2026-09-04T13:11:55.766Z",
+      "revision": "4d6be4deb7a095de1efeaef44bb5ee734a1aa6f6",
+      "review_override": false,
+      "review_policy": {
+        "brainstorm": "required",
+        "implementation": "required"
+      }
     }
   },
   "graphSource": {
@@ -280,5 +349,5 @@
     "packagePath": "workflows/mission-lifecycle@1.5.0"
   },
   "stack": [],
-  "frameCounter": 4
+  "frameCounter": 5
 }

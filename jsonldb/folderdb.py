@@ -17,6 +17,7 @@ from jsonldb.jsonldf import (
     save_jsonldf, update_jsonldf, select_jsonldf
 )
 import jsonldb.jsonlfile as jsonlfile
+from jsonldb.reports import capture_report
 
 
 logger = logging.getLogger(__name__)
@@ -52,14 +53,21 @@ class FolderDB:
         if not os.path.exists(folder_path):
             raise FileNotFoundError(f"Folder not found: {folder_path}")
 
+        with capture_report(folder_path, "open", "integrity.log"):
+            self._open(hierarchy_depth)
+
+    def _open(self, hierarchy_depth: int = None) -> None:
+        """Load and reconcile database controls under integrity capture."""
+
         self.use_hierarchy = False
         self.delimiter = '.'
 
         # Initialize all paths first
-        self.hmeta_path = os.path.join(folder_path, "h.meta")
-        self.dbmeta_path = os.path.join(folder_path, "db.meta")
-        self.configmeta_path = os.path.join(folder_path, "config.meta")
-        self.invalid_tickers_path = os.path.join(folder_path, ".invalid_tickers")
+        self.hmeta_path = os.path.join(self.folder_path, "h.meta")
+        self.dbmeta_path = os.path.join(self.folder_path, "db.meta")
+        self.configmeta_path = os.path.join(self.folder_path, "config.meta")
+        self.invalid_tickers_path = os.path.join(
+            self.folder_path, ".invalid_tickers")
 
         if os.path.exists(self.hmeta_path):
             hmeta = select_jsonl(self.hmeta_path)
@@ -73,6 +81,10 @@ class FolderDB:
         else:
             #no h.meta file found, so we need to build it
             if hierarchy_depth is not None:
+                logger.warning("regenerated missing control file %s",
+                               self.hmeta_path,
+                               extra={"jsonldb_file": self.hmeta_path,
+                                      "jsonldb_kind": "control_regenerated"})
                 self.use_hierarchy = True 
                 self.hierarchy_depth = hierarchy_depth
                 self.lint_hierarchy(hierarchy_depth)
@@ -91,6 +103,10 @@ class FolderDB:
             else:
                 self.build_configmeta()
         else:
+            logger.warning("regenerated missing control file %s",
+                           self.configmeta_path,
+                           extra={"jsonldb_file": self.configmeta_path,
+                                  "jsonldb_kind": "control_regenerated"})
             self.build_configmeta()
 
         # Only rebuild db.meta if it doesn't exist or the folder has been
@@ -102,6 +118,10 @@ class FolderDB:
             if folder_mtime > dbmeta_mtime:
                 self.build_dbmeta()
         else:
+            logger.warning("regenerated missing control file %s",
+                           self.dbmeta_path,
+                           extra={"jsonldb_file": self.dbmeta_path,
+                                  "jsonldb_kind": "control_regenerated"})
             self.build_dbmeta()
 
         # Guard against config.meta disagreeing with the data's actual datetime
@@ -114,10 +134,13 @@ class FolderDB:
             found = self._scan_index_timespecs()
             if found == {candidate}:
                 logger.warning(
-                    "config.meta timespec '%s' does not match data ('%s'); "
+                    "%s timespec '%s' does not match data ('%s'); "
                     "auto-correcting config.meta",
+                    self.configmeta_path,
                     self.timespec,
                     candidate,
+                    extra={"jsonldb_file": self.configmeta_path,
+                           "jsonldb_kind": "timespec_corrected"},
                 )
                 self.timespec = candidate
                 self.build_configmeta()
@@ -127,6 +150,8 @@ class FolderDB:
                     sorted(found),
                     self.folder_path,
                     self.timespec,
+                    extra={"jsonldb_file": self.folder_path,
+                           "jsonldb_kind": "mixed_timespec"},
                 )
 
     def build_hmeta(self) -> None:
@@ -437,7 +462,7 @@ class FolderDB:
             if os.path.exists(file_path):
                 result[name] = select_jsonldf(file_path, lower_key, upper_key, auto_deserialize, timespec=self.timespec)
             else:
-                print(f"File {name} not found")
+                logger.warning("file not found: %s", file_path)
         return result
 
     def get_df_with_meta(
@@ -801,6 +826,11 @@ class FolderDB:
         update_jsonl(self.dbmeta_path, {meta_key: entry})
 
     def lint_db(self, force: bool = False) -> None:
+        """Lint the database and replace its scoped persistent report."""
+        with capture_report(self.folder_path, "lint_db", "lint.log"):
+            self._lint_db(force)
+
+    def _lint_db(self, force: bool = False) -> None:
         """Lint all JSONL files in the database.
 
         Args:
@@ -813,18 +843,22 @@ class FolderDB:
 
         metadata = select_jsonl(meta_file)
         names = sorted(set(metadata) | set(self.get_file_list()))
-        print(f"Found {len(names)} JSONL files to lint.")
+        logger.info("found %d JSONL files to lint in %s",
+                    len(names), self.folder_path)
 
         all_meta = {}
 
         for name in names:
-            print(f"Linting file: {name}")
             file_path = self._get_file_path(name)
+            logger.info("linting file %s", file_path)
             exist_flag = lint_jsonl(
                 file_path, force=force, slot_bytes=self.meta_slot_bytes)
 
             if not exist_flag:
-                print(f"File {name} no longer exist, deleting metadata.")
+                logger.warning("file no longer exists; deleting metadata: %s",
+                               file_path,
+                               extra={"jsonldb_file": file_path,
+                                      "jsonldb_kind": "metadata_removed"})
                 # Simply skip — don't add to all_meta
             else:
                 all_meta[name] = self._make_meta_entry(
@@ -852,7 +886,8 @@ class FolderDB:
 
         import shutil
             
-        print(f"Organizing files for hierarchy level {hierarchy_depth}")
+        logger.info("organizing %s for hierarchy level %d",
+                    self.folder_path, hierarchy_depth)
             
         self.use_hierarchy = True
         self.hierarchy_depth = hierarchy_depth
@@ -886,7 +921,8 @@ class FolderDB:
             else:
                 invalid_files.append((name, file_path))
         
-        print(f"Found {len(valid_files)} valid files and {len(invalid_files)} invalid files")
+        logger.info("found %d valid files and %d invalid files in %s",
+                    len(valid_files), len(invalid_files), self.folder_path)
         
         # Move invalid files to .invalid_tickers folder
         for name, file_path in invalid_files:
@@ -894,7 +930,8 @@ class FolderDB:
                 dest_path = os.path.join(self.invalid_tickers_path, os.path.basename(file_path))
                 if file_path != dest_path:  # Avoid moving file to itself
                     shutil.move(file_path, dest_path)
-                    print(f"Moved invalid file {name} to .invalid_tickers")
+                    logger.info("moved invalid file %s to %s",
+                                file_path, dest_path)
                     
                     # Also move .idx file if it exists
                     idx_path = file_path + '.idx'
@@ -902,7 +939,8 @@ class FolderDB:
                         idx_dest = dest_path + '.idx'
                         shutil.move(idx_path, idx_dest)
             except Exception as e:
-                print(f"Warning: Could not move invalid file {name}: {str(e)}")
+                logger.warning("could not move invalid file %s: %s",
+                               file_path, e)
         
         # Reorganize valid files according to hierarchy
         for name, file_path in valid_files:
@@ -919,7 +957,7 @@ class FolderDB:
                 
                 # Move JSONL file
                 shutil.move(file_path, target_file)
-                print(f"Moved {name} to {target_dir}")
+                logger.info("moved %s to %s", file_path, target_file)
                 
                 # Move .idx file if it exists
                 idx_path = file_path + '.idx'
@@ -928,7 +966,8 @@ class FolderDB:
                     shutil.move(idx_path, idx_target)
                     
             except Exception as e:
-                print(f"Warning: Could not move valid file {name}: {str(e)}")
+                logger.warning("could not move valid file %s: %s",
+                               file_path, e)
         
         # Clean up empty directories
         self.delete_empty_folders()
@@ -937,7 +976,7 @@ class FolderDB:
         self.build_dbmeta()
         self.build_hmeta()
         
-        print("Hierarchy organization completed")
+        logger.info("hierarchy organization completed for %s", self.folder_path)
 
     def reprocess_invalid_tickers(self) -> None:
         """
@@ -946,7 +985,8 @@ class FolderDB:
         import shutil
         
         if not os.path.exists(self.invalid_tickers_path):
-            print("No .invalid_tickers folder found")
+            logger.info("no invalid-tickers folder found at %s",
+                        self.invalid_tickers_path)
             return
             
         # Get all JSONL files in .invalid_tickers folder
@@ -958,10 +998,11 @@ class FolderDB:
                 invalid_files.append((name, file_path))
         
         if not invalid_files:
-            print("No files found in .invalid_tickers folder")
+            logger.info("no files found in %s", self.invalid_tickers_path)
             return
             
-        print(f"Found {len(invalid_files)} files to reprocess")
+        logger.info("found %d files to reprocess in %s",
+                    len(invalid_files), self.invalid_tickers_path)
         
         now_valid_files = []
         still_invalid_files = []
@@ -973,7 +1014,9 @@ class FolderDB:
             else:
                 still_invalid_files.append((name, file_path))
         
-        print(f"{len(now_valid_files)} files are now valid, {len(still_invalid_files)} remain invalid")
+        logger.info("%d files in %s are now valid; %d remain invalid",
+                    len(now_valid_files), self.invalid_tickers_path,
+                    len(still_invalid_files))
         
         # Move now-valid files to appropriate hierarchy folders
         for name, file_path in now_valid_files:
@@ -986,7 +1029,7 @@ class FolderDB:
                 
                 # Move JSONL file
                 shutil.move(file_path, target_file)
-                print(f"Moved {name} from .invalid_tickers to {target_dir}")
+                logger.info("moved %s to %s", file_path, target_file)
                 
                 # Move .idx file if it exists (but don't build new one yet)
                 idx_path = file_path + '.idx'
@@ -1001,13 +1044,13 @@ class FolderDB:
                 self.update_dbmeta(name)
                     
             except Exception as e:
-                print(f"Warning: Could not move file {name}: {str(e)}")
+                logger.warning("could not move file %s: %s", file_path, e)
         
         # Rebuild metadata to include newly valid files
         if now_valid_files:
             self.build_dbmeta()
             
-        print("Reprocessing completed")
+        logger.info("reprocessing completed for %s", self.invalid_tickers_path)
 
     def delete_empty_folders(self) -> None:
         """
@@ -1044,7 +1087,7 @@ class FolderDB:
 
         # Commit changes
         vercontrol_commit(self.folder_path, msg)
-        print("Commit successful.")
+        logger.info("commit successful for %s", self.folder_path)
     
     def revert(self, version_hash: str) -> None:
         """
@@ -1060,7 +1103,8 @@ class FolderDB:
         from .vercontrol import revert as vercontrol_revert
 
         vercontrol_revert(self.folder_path, version_hash)
-        print(f"Successfully reverted the folder: {self.folder_path} to version: {version_hash}")
+        logger.info("successfully reverted %s to version %s",
+                    self.folder_path, version_hash)
     
     def version(self) -> Dict[str, str]:
         """

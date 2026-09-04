@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "T-1",
+      "status": "completed"
+    },
+    {
+      "id": "T-2",
+      "status": "completed"
+    },
+    {
+      "id": "T-3",
+      "status": "completed"
+    }
+  ],
+  "selected_guides": {
+    "implementation": [],
+    "review": []
+  },
+  "verification": [
+    {
+      "command": "python3 -m pytest -q tests/test_reports.py tests/test_warning_channels.py tests/test_lint_integrity.py tests/test_lint_compaction.py",
+      "revision": "working-tree@4d6be4deb7a095de1efeaef44bb5ee734a1aa6f6",
+      "scope": "default-interpreter dependency qualification (collection lacked orjson)",
+      "status": "failed",
+      "duration_ms": 570,
+      "role": "qualification"
+    },
+    {
+      "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -m pytest -q tests/test_reports.py tests/test_warning_channels.py tests/test_lint_integrity.py tests/test_lint_compaction.py tests/test_metadata_upkeep.py tests/test_metadata_slots.py tests/test_metadata_slot_migration.py tests/test_visualization.py tests/legacy/test_folderdb.py tests/legacy/test_jsonlfile.py",
+      "revision": "working-tree@4d6be4deb7a095de1efeaef44bb5ee734a1aa6f6",
+      "scope": "related regression qualification including visualization (collection lacked matplotlib)",
+      "status": "failed",
+      "duration_ms": 360,
+      "role": "qualification"
+    },
+    {
+      "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -m pytest -q tests/test_reports.py tests/test_warning_channels.py tests/test_lint_integrity.py tests/test_lint_compaction.py tests/test_metadata_upkeep.py tests/test_metadata_slots.py tests/test_metadata_slot_migration.py tests/legacy/test_folderdb.py tests/legacy/test_jsonlfile.py",
+      "revision": "working-tree@4d6be4deb7a095de1efeaef44bb5ee734a1aa6f6",
+      "scope": "focused report, logging, lint, metadata, folder, and file-store acceptance; 93 passed",
+      "status": "passed",
+      "duration_ms": 1240,
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -c 'import ast,contextlib,datetime,logging,os,pathlib,tempfile; files=list(pathlib.Path(\"jsonldb\").rglob(\"*.py\")); trees={str(p):ast.parse(p.read_text(encoding=\"utf-8\"),filename=str(p),feature_version=(3,8)) for p in files}; calls=[(p,n) for p,t in trees.items() for n in ast.walk(t) if isinstance(n,ast.Call)]; bad=[p for p,n in calls if (isinstance(n.func,ast.Name) and n.func.id==\"print\") or (isinstance(n.func,ast.Attribute) and isinstance(n.func.value,ast.Name) and n.func.value.id==\"builtins\" and n.func.attr==\"print\") or (isinstance(n.func,ast.Attribute) and n.func.attr in {\"write\",\"writelines\"} and isinstance(n.func.value,ast.Attribute) and isinstance(n.func.value.value,ast.Name) and n.func.value.value.id==\"sys\" and n.func.value.attr in {\"stdout\",\"stderr\"})]; assert not bad,bad; caps={\"jsonldb/metaslot.py\":250,\"jsonldb/jsonlfile.py\":950,\"jsonldb/reports.py\":150,\"jsonldb/folderdb.py\":1250,\"jsonldb/jsonldf.py\":150,\"jsonldb/vercontrol.py\":160,\"jsonldb/visual.py\":500}; counts={p:len(pathlib.Path(p).read_text(encoding=\"utf-8\").splitlines()) for p in caps}; excess={p:(counts[p],caps[p]) for p in caps if counts[p]>caps[p]}; assert not excess,excess; assert hasattr(contextlib,\"contextmanager\") and hasattr(datetime,\"timezone\") and hasattr(logging,\"Handler\") and hasattr(os,\"replace\") and hasattr(tempfile,\"mkstemp\"); print(\"python3.8-compatible\",len(files),\"package files; runtime-stream-writes\",len(bad),\"; caps\",counts)' && git diff --exit-code HEAD -- tests/legacy && git diff --check",
+      "revision": "working-tree@4d6be4deb7a095de1efeaef44bb5ee734a1aa6f6",
+      "scope": "8 package files parse at Python 3.8 floor; zero runtime print/stdio writes; immutable legacy and diff hygiene clean; all seven caps pass",
+      "status": "passed",
+      "duration_ms": 50,
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": "/usr/bin/time -p env PYTHONPATH=/private/tmp/jsonldb-attempt14-runtime-py312:/Users/leiwu/Library/Python/3.9/lib/python/site-packages /opt/homebrew/bin/python3.12 -m pytest -q tests/test_reports.py::test_open_reports_torn_row_without_repair_and_capture_is_scoped",
+      "revision": "working-tree@4d6be4deb7a095de1efeaef44bb5ee734a1aa6f6",
+      "scope": "blocking-review regression: an invalid row containing an embedded 'at byte' fragment keeps the real table path and offset and leaks no payload; 1 passed",
+      "status": "passed",
+      "duration_ms": 350,
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": "/usr/bin/time -p /opt/homebrew/bin/python3.12 -c 'import ast,pathlib; caps={\"jsonldb/jsonlfile.py\":950,\"jsonldb/reports.py\":150}; counts={p:len(pathlib.Path(p).read_text(encoding=\"utf-8\").splitlines()) for p in caps}; [ast.parse(pathlib.Path(p).read_text(encoding=\"utf-8\"),filename=p,feature_version=(3,8)) for p in caps]; excess={p:(counts[p],caps[p]) for p in caps if counts[p]>caps[p]}; assert not excess,excess; print(\"python3.8-compatible; caps\",counts)' && git diff --check",
+      "revision": "working-tree@4d6be4deb7a095de1efeaef44bb5ee734a1aa6f6",
+      "scope": "initial affected-file repair qualification; jsonlfile.py was one line over its 950-line cap",
+      "status": "failed",
+      "duration_ms": 20,
+      "role": "qualification"
+    },
+    {
+      "command": "/usr/bin/time -p /opt/homebrew/bin/python3.12 -c 'import ast,pathlib; caps={\"jsonldb/jsonlfile.py\":950,\"jsonldb/reports.py\":150}; counts={p:len(pathlib.Path(p).read_text(encoding=\"utf-8\").splitlines()) for p in caps}; [ast.parse(pathlib.Path(p).read_text(encoding=\"utf-8\"),filename=p,feature_version=(3,8)) for p in caps]; excess={p:(counts[p],caps[p]) for p in caps if counts[p]>caps[p]}; assert not excess,excess; print(\"python3.8-compatible; caps\",counts)' && git diff --check",
+      "revision": "working-tree@4d6be4deb7a095de1efeaef44bb5ee734a1aa6f6",
+      "scope": "affected reports/jsonlfile Python 3.8 parse, source caps (106/150 and 950/950), and diff hygiene after compaction",
+      "status": "passed",
+      "duration_ms": 20,
+      "role": "authoritative_acceptance"
+    }
+  ],
+  "deviations": [
+    "The available interpreters lacked portions of the declared dependency set: default python3 lacked orjson, and the established Python 3.12 test runtime lacked matplotlib and GitPython. Focused product tests used the established orjson/pandas runtime, the version-control transport test stubbed GitPython, and visualization's logging-only edit was covered by the authoritative AST inventory; the full dependency-backed suite remains reserved for Mission integration.",
+    "The first repair cap check found jsonlfile.py at 951/950 lines after adding structured diagnostic metadata. The metadata was compacted without behavioral change; the repeated affected-file Python 3.8 and cap check passed at 950/950."
+  ],
+  "follow_up": "none",
+  "selected_guide_versions": {
+    "implementation": [],
+    "review": []
+  }
+}
