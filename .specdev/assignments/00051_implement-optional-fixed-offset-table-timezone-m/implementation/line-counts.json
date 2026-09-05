@@ -1,0 +1,27 @@
+[
+  {
+    "path": "jsonldb/metaslot.py",
+    "physical_lines": 179,
+    "limit": 250
+  },
+  {
+    "path": "jsonldb/jsonlfile.py",
+    "physical_lines": 950,
+    "limit": 950
+  },
+  {
+    "path": "jsonldb/jsonldf.py",
+    "physical_lines": 144,
+    "limit": 150
+  },
+  {
+    "path": "jsonldb/folderdb.py",
+    "physical_lines": 1198,
+    "limit": 1250
+  },
+  {
+    "path": "jsonldb/_tabletimezone.py",
+    "physical_lines": 146,
+    "limit": 250
+  }
+]

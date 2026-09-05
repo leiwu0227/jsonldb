@@ -1,6 +1,7 @@
 """Fixed-width line-one metadata slots for JSONL table files."""
 
 from typing import Any, NamedTuple, Optional
+import re
 
 import orjson
 
@@ -23,6 +24,37 @@ class SlotInfo(NamedTuple):
     def is_unknown_version(self) -> bool:
         return (self.is_slot and type(self.version) is int
                 and self.version != CURRENT_VERSION)
+
+    @property
+    def timezone(self):
+        """Return a canonical known offset; never guess damaged declarations."""
+        if not self.is_slot or self.is_unknown_version:
+            return None
+        try:
+            envelope = orjson.loads(self.raw_line)[META_KEY]
+            if type(envelope) is dict and 'timezone' in envelope:
+                if type(self.version) is not int or self.version != CURRENT_VERSION:
+                    raise ValueError('invalid timezone envelope')
+                return _normalize_timezone(envelope['timezone'])
+        except (orjson.JSONDecodeError, KeyError, TypeError):
+            if b'"timezone"' in self.raw_line:
+                raise ValueError('damaged timezone declaration') from None
+        return None
+
+
+def _normalize_timezone(value):
+    """Normalize fixed offsets, including the explicitly supported UTC alias."""
+    if not isinstance(value, str):
+        raise ValueError('timezone declaration must be a fixed-offset string')
+    if value == 'UTC':
+        return '+00:00'
+    match = re.fullmatch(r'([+-])([0-9]{1,2}):([0-9]{2})', value)
+    if match:
+        sign, hours, minutes = match.groups()
+        hours, minutes = int(hours), int(minutes)
+        if hours < 24 and minutes < 60:
+            return '%s%02d:%02d' % (sign if hours or minutes else '+', hours, minutes)
+    raise ValueError('timezone must be UTC or a signed offset less than 24 hours')
 
 
 def _looks_like_torn_slot(line: bytes) -> bool:
@@ -60,12 +92,19 @@ def classify_line(line: bytes) -> SlotInfo:
 
 def encode_slot(record: Optional[dict], width: int) -> bytes:
     """Encode a version-1 envelope padded to exactly ``width`` bytes."""
+    return _encode_slot(record, width)
+
+
+def _encode_slot(record, width, timezone=None):
+    """Encode library properties independently of the opaque consumer record."""
     if type(width) is not int or width <= 0:
         raise ValueError("metadata slot width must be a positive integer")
     if record is not None and not isinstance(record, dict):
         raise TypeError("metadata record must be a dict or None")
 
     envelope = {"v": CURRENT_VERSION}
+    if timezone is not None:
+        envelope['timezone'] = _normalize_timezone(timezone)
     if record is not None:
         envelope["data"] = record
     serialized = orjson.dumps(
@@ -104,11 +143,13 @@ def _preserve_slot(info: Optional[SlotInfo], width: int) -> bytes:
                 % (required, width))
         return content + b' ' * (width - required) + b'\n'
     record = info.record if info is not None and info.is_slot else None
-    return encode_slot(record, width)
+    return _encode_slot(record, width, info.timezone if info is not None else None)
 
 
 def lint_slot(info: Optional[SlotInfo], width: Optional[int] = None) -> Optional[bytes]:
     """Choose lint's slot bytes, preserving opaque unknown-version envelopes."""
+    if info is not None:
+        info.timezone  # Refuse recognizable damage before repair can discard it.
     if width is not None:
         return _preserve_slot(info, width)
     if info is not None and info.is_slot:
@@ -131,7 +172,7 @@ def write_slot(file_path: str, record: Optional[dict]) -> None:
     info = inspect_file(file_path)
     if not info.is_slot:
         raise ValueError("metadata slot is not enabled for this file")
-    encoded = encode_slot(record, info.width)
+    encoded = _encode_slot(record, info.width, info.timezone)
     with open(file_path, 'rb+') as f:
         f.seek(0)
         f.write(encoded)

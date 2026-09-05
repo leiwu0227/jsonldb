@@ -180,6 +180,54 @@ unreadable directory stop recovery with an error before tables are moved.
 An interrupted move can be retried by opening the database again. Explicitly
 supplying `hierarchy_depth` takes precedence over the inferred depth.
 
+## Optional Table Timezone
+
+Existing databases and callers keep their current behavior. To declare a fixed
+UTC offset for a new table, explicitly enable metadata slots and configure the
+empty table before writing rows:
+
+```python
+from datetime import datetime, timedelta, timezone
+
+# Enabling slots rewrites existing tables to reserve their metadata space.
+db.set_meta_slot_bytes(4096)
+db.overwrite_dict("prices", {})
+db.set_timezone("prices", "+8:00")
+assert db.read_timezone("prices") == "+08:00"
+
+key = datetime(2026, 9, 5, 10, 30, tzinfo=timezone(timedelta(hours=8)))
+db.upsert_dict("prices", {key: {"price": 123.0}}, meta={"source": "feed"})
+rows = db.get_dict(["prices"])["prices"]
+# The stored key is 2026-09-05T10:30:00; reads return a naive datetime.
+```
+
+The envelope stores `timezone` alongside `v` and `data`. All datetime linekeys
+in that file share the declared offset; row values and consumer `meta` remain
+uninterpreted. Replacing or clearing consumer metadata preserves timezone.
+The low-level equivalents are `jsonlfile.read_jsonl_timezone(path)` and
+`jsonlfile.write_jsonl_timezone(path, offset)`.
+
+Accepted offsets are signed `H:MM` or `HH:MM`, with hours 0–23 and minutes
+0–59. `UTC` and signed zero normalize to `+00:00`. This deliberately supports
+fixed offsets up to `±23:59`, rather than a registry of geographic zones.
+Named zones and daylight-saving transitions are not supported. Naive datetime
+keys represent local time at the declared offset. Aware keys and ISO timestamp
+strings with offsets must match it; conflicting offsets are rejected without
+conversion. The same rules apply to lookup, range and deletion bounds.
+
+Timezone is optional: absence means unspecified, not UTC or the machine's
+local timezone. `auto_deserialize=False` continues returning stored strings.
+Tables without a declaration retain their existing handling of timezone-aware
+keys, including their offset suffixes.
+
+Timezone setters require an existing slotted table. Set `None` to remove the
+declaration while empty; repeating the same offset is allowed on populated
+tables. Adding, changing or removing timezone on populated tables is refused;
+an explicit migration facility is not included. Recognizably damaged declarations
+are preserved and refused during mutation or repair. If the declaration is
+completely erased, it cannot be distinguished from intentional absence, and
+jsonldb cannot reconstruct it safely.
+
 ## Requirements
 
 - Python >= 3.8

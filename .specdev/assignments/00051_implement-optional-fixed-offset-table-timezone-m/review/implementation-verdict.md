@@ -1,0 +1,34 @@
+---
+verdict: approved
+material_divergence: false
+scope_divergence: none
+procedure_divergence: none
+evidence_integrity: complete
+user_reapproval_required: false
+---
+
+## Findings
+
+Evidence integrity is complete and independently confirmed. I recomputed all four artifact digests and they match the receipt exactly: contract `f33c4556…`, plan `e932f02e…`, progress `5c5f030c…`, outcome `a7b57f5e…`. All eight authoritative receipts are `passed` at `working-tree@f05791ea…`, which equals current `HEAD`, with zero omitted, skipped, superseded or qualification-role gaps. The receipt's eight `changed_project_paths` match `git status` exactly (`README.md`, four `jsonldb/` files, three `unit_tests/` files). No tracked file was modified by this review.
+
+AC-4 is the only criterion with a hard numeric threshold, so I re-measured it rather than crediting the receipt: `wc -l` gives metaslot 179, jsonlfile 950, jsonldf 144, folderdb 1198, `_tabletimezone` 146 — identical to `implementation/line-counts.json` and within every contract cap (jsonlfile is exactly at its 950 limit, satisfying `<= 950`). The new private module's 250-line cap is recorded in `design/plan.md` T-1 as the contract requires. All five acceptance criteria carry a final `passed` result.
+
+No blocking contract defect. Targeted inspection confirms the contract's structural requirements, not merely test names:
+
+- **Mutation-entry enforcement** ("Important decisions" 2). Every writer routes through a timezone-carrying encoder: `_save_jsonl`/`_update_jsonl` via `_tabletimezone.save_slots`/`metadata_bytes`, `delete_jsonl` via `prepare`, `write_jsonl_meta` via `metaslot.write_slot` (`_encode_slot(record, width, info.timezone)`), `migrate_jsonl_slot` and `folderdb.set_meta_slot_bytes` via `metaslot._preserve_slot`, and both lint paths via `lint_slot`. `save_jsonl_atomic` refuses declared tables before replacement, matching the "safely reject that unsupported use" decision. The one remaining timezone-free `encode_slot` call (`folderdb.py:812`) is a bare-envelope width preflight; the per-table `_preserve_slot(info, width)` loop at `folderdb.py:821` is what actually gates each table and does carry the timezone.
+- **Preflight ordering** ("Important decisions" 3). `save_slots` and `configure_bytes` fit-check slot bytes before any `open(..., 'wb')`/`rb+`; `lint_jsonl:488` and `write_jsonl_meta` hoist the fit check ahead of index recovery. `_encode_slot` returns exactly `width` bytes (`serialized[:-1] + padding + b'\n'`), so `width = len(placeholder)` reproduces the previous byte-offset arithmetic. Placeholders carry the timezone (`_tabletimezone.py:98`), so rows are never published behind a timezone-free slot. `configure_bytes` determines emptiness from physical nonblank rows rather than the index, as the plan requires.
+- **Damage refusal** ("Important decisions" 6). `SlotInfo.timezone` catches only `JSONDecodeError`/`KeyError`/`TypeError`; `_normalize_timezone` failures and the explicit "invalid timezone envelope" raise are `ValueError` and correctly escape rather than degrading to `None`. Torn slots re-raise when `b'"timezone"'` survives in the raw line, and `lint_slot` evaluates the property before any repair path that could re-encode. Unknown-version envelopes short-circuit to `None` and are preserved verbatim, keeping `de7217f` intact.
+- **Key normalization symmetry** (AC-2). Normalization precedes the equal-bound shortcut in `select_jsonl`, precedes index load in `folderdb.delete_file_range`, and is applied in `select_line_jsonl` and `delete_jsonl`. `serialize_linekey` returns `str` unchanged, so the deliberate double-serialization on these paths is idempotent. `_tabletimezone.bound` reads the slot only for aware/offset-bearing keys, so undeclared and naive-key fast paths take no extra header I/O. The strict-suffix repair is present and effective: `_SUFFIX.fullmatch(key[19:])` leaves labels such as `2026-09-05T10:30:15_batch-7` as arbitrary strings.
+
+Procedure note, non-blocking: `review/implementation-verdict.md` on disk is a **prior round's** artifact. It cites superseded digests (plan `80598109…`, progress `538bfd93…`, outcome `83c6b44f…`) and `_tabletimezone` at 133 lines, and its own non-blocking observation about timestamp-prefixed string labels is what the plan's "Suffix-validation refinement" section and the current 146-line module answer. `review/implementation-state.json` carries this candidate's identity `3a180c7d…` at round 0 with empty history and profile `claude-opus-5` / `xhigh`, so this review is the contract-required implementation review for the current candidate, and the outcome's "independent implementation review pending" risk refers to this step rather than an omission.
+
+Non-blocking observations, for information only:
+
+1. On declared tables, compact ISO offsets without a colon (`…T10:30:15+0800`) are accepted or rejected according to the host interpreter's `datetime.fromisoformat` leniency — accepted on 3.11+, rejected on 3.8. The contract does not require compact-form support, and Python 3.8 was syntax-checked only (disclosed).
+2. A lowercase `z` suffix is rejected as malformed rather than treated as UTC; only uppercase `Z` is honored.
+3. `folderdb.set_meta_slot_bytes` correctly refuses (never erases) a table with a damaged declaration, but reports it through the "metadata records do not fit in N bytes" blocker message, which misattributes the cause.
+4. `lint_jsonl` computes the slot twice — the new preflight plus the existing call inside `_lint_file`. Redundant first-line I/O confined to the lint path.
+5. `configure_bytes` validates the timezone argument before opening the file, so a missing file combined with an invalid offset raises `ValueError` rather than `FileNotFoundError`. The contract fixes neither precedence.
+6. `jsonldb/jsonlfile.py` sits at exactly 950/950, leaving no headroom for the next change to that file.
+
+Delivered scope matches the contract: exactly the four authorized accessors (corroborated by the `verify_compatibility.py` receipt's 66 existing signatures plus "exactly four new APIs"), `SlotInfo` gains a property without altering its tuple shape, and `encode_slot`'s public signature is unchanged. No dependency was added or upgraded, so no registry, lockfile or advisory evidence is required. `README.md` states the wholly-erased-declaration limitation explicitly, as AC-3 requires. `deviations` is empty in `progress.json` and I found nothing undisclosed; the unavailable Python 3.8/pandas 1.3 runtimes and the bounded 0.5–6.5% undeclared-table overhead are measured and reported honestly, which the contract's "representative available supported pandas runtimes" language permits. No user reapproval is required.

@@ -776,7 +776,9 @@ class FolderDB:
         if not os.path.exists(file_path):
             return
             
-        # Read the index file (self-heals missing/empty/corrupt)
+        lower_key = jsonlfile._tabletimezone.bound(file_path, lower_key, self.timespec, serialize_linekey)
+        upper_key = jsonlfile._tabletimezone.bound(file_path, upper_key, self.timespec, serialize_linekey)
+        # Read the index only after timezone bounds have passed validation.
         index = jsonlfile.load_index(file_path)
             
         # Filter keys within range (bounds must use the same serialization as
@@ -836,6 +838,14 @@ class FolderDB:
             raise
         for _, file_path, _ in tables:
             jsonlfile.migrate_jsonl_slot(file_path, width)
+
+    def read_timezone(self, name: str):
+        """Return a table's fixed UTC offset, or None when undeclared/missing."""
+        return jsonlfile.read_jsonl_timezone(self._get_file_path(name))
+
+    def set_timezone(self, name: str, timezone: Optional[str]) -> None:
+        """Configure an empty existing slotted table without changing its data."""
+        jsonlfile.write_jsonl_timezone(self._get_file_path(name), timezone)
 
     def read_meta(self, name: str):
         """Return one table's metadata record, or ``None`` when unavailable."""

@@ -15,7 +15,7 @@ from pandas import Timestamp as _Timestamp
 from bisect import bisect_left, bisect_right
 import mmap
 
-from . import metaslot
+from . import metaslot, _tabletimezone
 
 
 logger = logging.getLogger(__name__)
@@ -485,6 +485,7 @@ def lint_jsonl(jsonl_file_path: str, force: bool = False,
     """Restore fidelity and canonical layout with a fresh-index fast path."""
     if not os.path.exists(jsonl_file_path):
         return False
+    metaslot.lint_slot(metaslot.inspect_file(jsonl_file_path), slot_bytes)
     index, fresh = _lint_load_index(jsonl_file_path)
     return _lint_file(jsonl_file_path, index, force or not fresh, slot_bytes)
 def _is_datetime_string(linekey: str, timespec: Optional[str] = None) -> bool:
@@ -550,23 +551,10 @@ def _save_jsonl(jsonl_file_path, db_dict, timespec=None, meta=None,
     """Internal save; statistics are requested only by metadata-maintenance callers."""
     _invalidate_index_cache(jsonl_file_path)
     index: IndexDict = {}
-    items = _validate_row_keys(db_dict, timespec, reuse=True)
-
-    existing_slot = None
-    if os.path.exists(jsonl_file_path) and os.path.getsize(jsonl_file_path):
-        info = metaslot.inspect_file(jsonl_file_path)
-        existing_slot = info if info.is_slot else None
-
-    width = existing_slot.width if slot_bytes is None and existing_slot else slot_bytes
-    if meta is not None and width is None:
-        raise ValueError("metadata slot is not enabled for this file")
-
-    placeholder = final_slot = None
-    if width is not None:
-        placeholder = metaslot.encode_slot(None, width)
-        final_slot = (metaslot.encode_slot(meta, width) if meta is not None else
-                      existing_slot.raw_line if existing_slot is not None and slot_bytes is None
-                      else metaslot._preserve_slot(existing_slot, width))
+    info = _tabletimezone.inspect(jsonl_file_path)
+    items = _tabletimezone.validate(db_dict, info, timespec, _validate_row_keys, serialize_linekey)
+    placeholder, final_slot = _tabletimezone.save_slots(info, meta, slot_bytes)
+    width = len(placeholder) if placeholder is not None else None
 
     try:
         byte_offset = width or 0
@@ -596,6 +584,8 @@ def save_jsonl_atomic(jsonl_file_path: str, db_dict: DataDict,
                       timespec: Optional[str] = None) -> None:
     """Atomically replace a protected control file; ordinary saves stay in place."""
     _invalidate_index_cache(jsonl_file_path)
+    if _tabletimezone.read(jsonl_file_path) is not None:
+        raise ValueError('atomic control-file save cannot replace a timezone-declared table')
     items = _validate_row_keys(db_dict, timespec, reuse=True)
     directory = os.path.dirname(os.path.abspath(jsonl_file_path))
     prefix = "." + os.path.basename(jsonl_file_path) + "."
@@ -717,6 +707,10 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
     if lower_key is None and upper_key is None:
         return load_jsonl(jsonl_file_path, auto_deserialize, timespec)
 
+    if lower_key is not None:
+        lower_key = _tabletimezone.bound(jsonl_file_path, lower_key, timespec, serialize_linekey)
+    if upper_key is not None:
+        upper_key = _tabletimezone.bound(jsonl_file_path, upper_key, timespec, serialize_linekey)
     if lower_key == upper_key:
         return select_line_jsonl(jsonl_file_path, lower_key, auto_deserialize, timespec)
 
@@ -728,18 +722,14 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
         if not index_dict:
             return {}
 
-        # Get all keys from index
-
         # Set default values if None
         if lower_key is None:
             lower_key = all_keys[0]   # index keys are stored sorted
         if upper_key is None:
             upper_key = all_keys[-1]
 
-        # Serialize the keys
         lower_key = serialize_linekey(lower_key, timespec)
         upper_key = serialize_linekey(upper_key, timespec)
-
         # Use bisect for O(log n) range selection
         lo = bisect_left(all_keys, lower_key)
         hi = bisect_right(all_keys, upper_key)
@@ -782,19 +772,16 @@ def select_line_jsonl(
     timespec: Optional[str] = None,
 ) -> DataDict:
     """Seek one indexed row; missing or malformed records return an empty dictionary."""
-    linekey = serialize_linekey(linekey, timespec)
+    linekey = _tabletimezone.key(jsonl_file_path, linekey, timespec, serialize_linekey)
 
     # Read the index file (self-heals an empty/corrupt .idx)
     index_dict, _ = _read_cached_index(jsonl_file_path)
 
-    # Check if key exists in index
     if linekey not in index_dict:
         return {}
 
     result_dict: DataDict = {}
 
-
-    # Load selected records
     with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
         offset = index_dict[linekey]
         line = b''
@@ -831,13 +818,9 @@ def _update_jsonl(jsonl_file_path, update_dict, timespec=None, meta=None,
                   *, with_stats=False):
     """Internal upsert with an optional post-publication statistics result."""
     _invalidate_index_cache(jsonl_file_path)
-    items = _validate_row_keys(update_dict, timespec, reuse=True)
-    encoded_meta = None
-    if meta is not None:
-        info = metaslot.inspect_file(jsonl_file_path)
-        if not info.is_slot:
-            raise ValueError("metadata slot is not enabled for this file")
-        encoded_meta = metaslot.encode_slot(meta, info.width)
+    info = _tabletimezone.inspect(jsonl_file_path)
+    items = _tabletimezone.validate(update_dict, info, timespec, _validate_row_keys, serialize_linekey)
+    encoded_meta = _tabletimezone.metadata_bytes(jsonl_file_path, meta) if meta is not None else None
 
     try:
         # Load index (self-heals an empty/corrupt .idx)
@@ -908,7 +891,12 @@ def _update_jsonl(jsonl_file_path, update_dict, timespec=None, meta=None,
 def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey], timespec: Optional[str] = None) -> None:
     """Blank selected rows without moving others, then publish the reduced index."""
     _invalidate_index_cache(jsonl_file_path)
-    _validate_row_keys({key: {} for key in linekeys}, timespec)
+    timezone = _tabletimezone.read(jsonl_file_path)
+    if timezone is not None:
+        linekeys = [k for k, _ in _tabletimezone.prepare(
+            {key: {} for key in linekeys}, timezone, timespec, serialize_linekey)()]
+    else:
+        _validate_row_keys({key: {} for key in linekeys}, timespec)
     try:
         # Load index (self-heals an empty/corrupt .idx)
         index = load_index(jsonl_file_path)
@@ -929,7 +917,6 @@ def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey], timespec: Option
                     f.write(b' ' * (len(line) - 1) + b'\n')
                     del index[linekey]
 
-        # Update index using orjson for faster JSON serialization
         _write_index(jsonl_file_path, index)
 
     except OSError as e:
@@ -944,6 +931,20 @@ def read_jsonl_meta(jsonl_file_path: str):
 def write_jsonl_meta(jsonl_file_path: str, meta: Optional[dict]) -> None:
     """Publish one slot-only metadata change, then mark the index fresh last."""
     _invalidate_index_cache(jsonl_file_path)
+    _tabletimezone.metadata_bytes(jsonl_file_path, meta)  # Fit before index recovery.
     load_index(jsonl_file_path)
     metaslot.write_slot(jsonl_file_path, meta)
     os.utime(jsonl_file_path + '.idx', None)
+
+
+def read_jsonl_timezone(jsonl_file_path: str):
+    """Return the fixed table offset, independently of consumer metadata."""
+    return _tabletimezone.read(jsonl_file_path)
+
+
+def write_jsonl_timezone(jsonl_file_path: str, timezone: Optional[str]) -> None:
+    """Set/remove timezone on an empty slotted table; equal offsets are a no-op."""
+    encoded = _tabletimezone.configure_bytes(jsonl_file_path, timezone)
+    if encoded is not None:
+        _invalidate_index_cache(jsonl_file_path)
+        _tabletimezone.publish(jsonl_file_path, encoded, load_index)

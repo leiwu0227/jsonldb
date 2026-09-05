@@ -1,0 +1,107 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "T-1",
+      "status": "completed"
+    },
+    {
+      "id": "T-2",
+      "status": "completed"
+    },
+    {
+      "id": "T-3",
+      "status": "completed"
+    }
+  ],
+  "selected_guides": {
+    "implementation": [
+      "api-security"
+    ],
+    "review": [
+      "api-security"
+    ]
+  },
+  "verification": [
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest -q -p no:cacheprovider --tb=short --maxfail=3 unit_tests/test_table_timezone.py unit_tests/test_timezone_recovery.py unit_tests/test_timezone_legacy_compatibility.py unit_tests/test_unknown_metadata_writes.py unit_tests/test_unknown_metadata_lint.py unit_tests/test_metadata_slot_migration.py unit_tests/test_metaslot.py unit_tests/test_durability_atomicity.py unit_tests/test_byte_serialization.py unit_tests/test_write_statistics.py unit_tests/test_index_cache.py unit_tests/test_dataframe_conversion.py unit_tests/test_datetime_key_reuse.py unit_tests/test_jsonlfile.py unit_tests/test_jsonldf.py unit_tests/test_folderdb.py unit_tests/test_lint_integrity.py unit_tests/test_lint_compaction.py unit_tests/test_metadata_upkeep.py unit_tests/test_reports.py unit_tests/test_clear_configuration.py",
+      "scope": "855 focused tests on pandas 3.0.5, including 236 timezone and legacy cases after strict suffix repair",
+      "duration_ms": 5030,
+      "status": "passed",
+      "revision": "working-tree@f05791eaf6d2d5aa21369a5f9bf8d079e2bcfe3a",
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest -q -p no:cacheprovider --tb=short --maxfail=3 unit_tests/test_timezone_legacy_compatibility.py",
+      "scope": "8 dedicated historical file/caller compatibility tests",
+      "duration_ms": 490,
+      "status": "passed",
+      "revision": "working-tree@f05791eaf6d2d5aa21369a5f9bf8d079e2bcfe3a",
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": ".specdev/cache/df-pandas15/bin/python -m pytest -q -p no:cacheprovider --tb=short --maxfail=3 unit_tests/test_table_timezone.py unit_tests/test_timezone_recovery.py unit_tests/test_timezone_legacy_compatibility.py unit_tests/test_datetime_key_reuse.py unit_tests/test_dataframe_conversion.py",
+      "scope": "512 focused tests on pandas 1.5.3 after strict suffix repair",
+      "duration_ms": 3590,
+      "status": "passed",
+      "revision": "working-tree@f05791eaf6d2d5aa21369a5f9bf8d079e2bcfe3a",
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": ".specdev/cache/df-pandas23/bin/python -m pytest -q -p no:cacheprovider --tb=short --maxfail=3 unit_tests/test_table_timezone.py unit_tests/test_timezone_recovery.py unit_tests/test_timezone_legacy_compatibility.py unit_tests/test_datetime_key_reuse.py unit_tests/test_dataframe_conversion.py",
+      "scope": "512 focused tests on pandas 2.3.3 after strict suffix repair",
+      "duration_ms": 3610,
+      "status": "passed",
+      "revision": "working-tree@f05791eaf6d2d5aa21369a5f9bf8d079e2bcfe3a",
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 .specdev/assignments/00051_implement-optional-fixed-offset-table-timezone-m/implementation/verify_compatibility.py .specdev/cache/timezone-baseline",
+      "scope": "66 existing signatures, exactly four new APIs, 40 storage snapshots and 18 historical observations match baseline",
+      "duration_ms": 410,
+      "status": "passed",
+      "revision": "working-tree@f05791eaf6d2d5aa21369a5f9bf8d079e2bcfe3a",
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 .specdev/assignments/00051_implement-optional-fixed-offset-table-timezone-m/implementation/benchmark_legacy.py .specdev/cache/timezone-baseline",
+      "scope": "Seven alternating process rounds: undeclared-table medians +2.9% large save, +0.5% point, +6.5% small upsert (13 microseconds), +0.7% small save",
+      "duration_ms": 11634,
+      "status": "passed",
+      "revision": "working-tree@f05791eaf6d2d5aa21369a5f9bf8d079e2bcfe3a",
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": "git diff --check",
+      "scope": "No whitespace errors",
+      "duration_ms": 0,
+      "status": "passed",
+      "revision": "working-tree@f05791eaf6d2d5aa21369a5f9bf8d079e2bcfe3a",
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 .specdev/assignments/00051_implement-optional-fixed-offset-table-timezone-m/implementation/check_evidence.py",
+      "scope": "Five physical source caps, Python 3.8 syntax and whitespace",
+      "duration_ms": 28,
+      "status": "passed",
+      "revision": "working-tree@f05791eaf6d2d5aa21369a5f9bf8d079e2bcfe3a",
+      "role": "authoritative_acceptance"
+    }
+  ],
+  "deviations": [],
+  "follow_up": "none",
+  "selected_guide_versions": {
+    "implementation": [
+      {
+        "id": "api-security",
+        "version": "1"
+      }
+    ],
+    "review": [
+      {
+        "id": "api-security",
+        "version": "1"
+      }
+    ]
+  }
+}
