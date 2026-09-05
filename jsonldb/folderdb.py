@@ -119,6 +119,11 @@ class FolderDB:
                 self.timespec = config_meta["timespec"]
             if not canonical or not config_meta.get("timespec"):
                 self.build_configmeta()
+                reason = 'missing timespec' if not config_meta.get('timespec') else 'noncanonical format'
+                logger.warning("regenerated control file %s: %s",
+                               self.configmeta_path, reason,
+                               extra={"jsonldb_file": self.configmeta_path,
+                                      "jsonldb_kind": "control_regenerated"})
         else:
             logger.warning("regenerated missing control file %s",
                            self.configmeta_path,
@@ -917,10 +922,7 @@ class FolderDB:
         for name in jsonl_files:
             file_path = self._get_file_path(name)
 
-            # Build index if it doesn't exist
-            if not os.path.exists(file_path + '.idx'):
-                build_jsonl_index(file_path)
-
+            # Measurement uses the shared loader, including recovery reporting.
             metadata[name] = self._make_meta_entry(name, file_path)
         
         # Save metadata using jsonlfile
