@@ -518,9 +518,9 @@ def _store_with_key(result_dict: DataDict, linekey: str, value: dict,
             pass
     result_dict[linekey] = value
 
-def _fast_dumps(obj: dict) -> str:
+def _fast_dumps(obj: dict) -> bytes:
     """Serialize with NumPy support and a trailing newline."""
-    return orjson.dumps(obj, option=orjson.OPT_SERIALIZE_NUMPY).decode('utf-8') + '\n'
+    return orjson.dumps(obj, option=orjson.OPT_SERIALIZE_NUMPY | orjson.OPT_APPEND_NEWLINE)
 
 def save_jsonl(jsonl_file_path: str, db_dict: DataDict,
                timespec: Optional[str] = None, meta: Optional[dict] = None,
@@ -572,7 +572,7 @@ def _save_jsonl(jsonl_file_path, db_dict, timespec=None, meta=None,
                 f.write(placeholder)
             for linekey, data in db_dict.items():
                 serialized_key = serialize_linekey(linekey, timespec)
-                line = _fast_dumps({serialized_key: data}).encode('utf-8')
+                line = _fast_dumps({serialized_key: data})
                 f.write(line)
                 index[serialized_key] = byte_offset
                 byte_offset += len(line)
@@ -606,7 +606,7 @@ def save_jsonl_atomic(jsonl_file_path: str, db_dict: DataDict,
         with os.fdopen(fd, 'wb', buffering=BUFFER_SIZE) as f:
             for linekey, data in db_dict.items():
                 serialized_key = serialize_linekey(linekey, timespec)
-                line = _fast_dumps({serialized_key: data}).encode('utf-8')
+                line = _fast_dumps({serialized_key: data})
                 f.write(line)
                 index[serialized_key] = byte_offset
                 byte_offset += len(line)
@@ -858,7 +858,7 @@ def _update_jsonl(jsonl_file_path, update_dict, timespec=None, meta=None,
 
             for linekey, data in update_dict.items():
                 linekey = serialize_linekey(linekey, timespec)
-                new_line = _fast_dumps({linekey: data}).encode('utf-8')
+                new_line = _fast_dumps({linekey: data})
 
                 if linekey in index:
                     f.seek(index[linekey])

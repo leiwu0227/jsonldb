@@ -1,0 +1,207 @@
+{
+  "0/dict/upsert": {
+    "baseline": 0.39768749999999997,
+    "candidate": 0.38268800000000003,
+    "speedup": 1.0391951145580733
+  },
+  "0/dict/overwrite": {
+    "baseline": 0.353458,
+    "candidate": 0.34622949999999997,
+    "speedup": 1.020877770380629
+  },
+  "0/dict/create": {
+    "baseline": 0.433104,
+    "candidate": 0.384312,
+    "speedup": 1.1269593455317555
+  },
+  "0/df/upsert": {
+    "baseline": 0.456229,
+    "candidate": 0.43185399999999996,
+    "speedup": 1.0564426866487286
+  },
+  "0/df/overwrite": {
+    "baseline": 0.3980205,
+    "candidate": 0.3887915,
+    "speedup": 1.023737658873715
+  },
+  "0/df/create": {
+    "baseline": 0.41231249999999997,
+    "candidate": 0.4085835,
+    "speedup": 1.009126653425799
+  },
+  "0/lowlevel/upsert": {
+    "baseline": 0.238625,
+    "candidate": 0.182312,
+    "speedup": 1.3088825749264996
+  },
+  "0/lowlevel/overwrite": {
+    "baseline": 0.1527505,
+    "candidate": 0.1776455,
+    "speedup": 0.859861353088032
+  },
+  "0/summary_only": {
+    "baseline": 0.002104,
+    "candidate": 0.004062,
+    "speedup": 0.5179714426390941
+  },
+  "0/serialization_only": {
+    "baseline": 8.3e-05,
+    "candidate": 8.3e-05,
+    "speedup": 1.0
+  },
+  "10/dict/upsert": {
+    "baseline": 0.443229,
+    "candidate": 0.401563,
+    "speedup": 1.1037595595211709
+  },
+  "10/dict/overwrite": {
+    "baseline": 0.38218799999999997,
+    "candidate": 0.38206249999999997,
+    "speedup": 1.000328480287911
+  },
+  "10/dict/create": {
+    "baseline": 0.376375,
+    "candidate": 0.377542,
+    "speedup": 0.9969089531760705
+  },
+  "10/df/upsert": {
+    "baseline": 0.4668335,
+    "candidate": 0.5891245,
+    "speedup": 0.7924190896830805
+  },
+  "10/df/overwrite": {
+    "baseline": 0.496208,
+    "candidate": 0.46979150000000003,
+    "speedup": 1.0562302638510912
+  },
+  "10/df/create": {
+    "baseline": 0.46545800000000004,
+    "candidate": 0.4694375,
+    "speedup": 0.9915228331780056
+  },
+  "10/lowlevel/upsert": {
+    "baseline": 0.193854,
+    "candidate": 0.2004785,
+    "speedup": 0.9669565564387204
+  },
+  "10/lowlevel/overwrite": {
+    "baseline": 0.2191455,
+    "candidate": 0.18945800000000002,
+    "speedup": 1.1566969988071234
+  },
+  "10/summary_only": {
+    "baseline": 0.0024790000000000003,
+    "candidate": 0.002229,
+    "speedup": 1.1121579183490355
+  },
+  "10/serialization_only": {
+    "baseline": 0.001729,
+    "candidate": 0.0010834999999999998,
+    "speedup": 1.5957544993077992
+  },
+  "1000/dict/upsert": {
+    "baseline": 0.5735625,
+    "candidate": 0.589208,
+    "speedup": 0.9734465587704173
+  },
+  "1000/dict/overwrite": {
+    "baseline": 0.8723335,
+    "candidate": 0.75875,
+    "speedup": 1.149698187808896
+  },
+  "1000/dict/create": {
+    "baseline": 0.8024165,
+    "candidate": 0.740583,
+    "speedup": 1.0834930048353797
+  },
+  "1000/df/upsert": {
+    "baseline": 0.567354,
+    "candidate": 0.5712495,
+    "speedup": 0.9931807380137752
+  },
+  "1000/df/overwrite": {
+    "baseline": 1.4286455,
+    "candidate": 1.24475,
+    "speedup": 1.1477368949588271
+  },
+  "1000/df/create": {
+    "baseline": 1.3554165,
+    "candidate": 1.228875,
+    "speedup": 1.1029734513274336
+  },
+  "1000/lowlevel/upsert": {
+    "baseline": 0.269125,
+    "candidate": 0.2654165,
+    "speedup": 1.0139723792605206
+  },
+  "1000/lowlevel/overwrite": {
+    "baseline": 0.5754795,
+    "candidate": 0.5154375,
+    "speedup": 1.1164874499818116
+  },
+  "1000/summary_only": {
+    "baseline": 0.020146,
+    "candidate": 0.020750499999999998,
+    "speedup": 0.9708681718512808
+  },
+  "1000/serialization_only": {
+    "baseline": 0.1591665,
+    "candidate": 0.0963755,
+    "speedup": 1.6515245057094385
+  },
+  "100000/dict/upsert": {
+    "baseline": 10.1409795,
+    "candidate": 10.2875415,
+    "speedup": 0.9857534475073564
+  },
+  "100000/dict/overwrite": {
+    "baseline": 40.375395499999996,
+    "candidate": 34.312312500000004,
+    "speedup": 1.176702838084725
+  },
+  "100000/dict/create": {
+    "baseline": 40.216145999999995,
+    "candidate": 34.271666499999995,
+    "speedup": 1.1734517199506478
+  },
+  "100000/df/upsert": {
+    "baseline": 10.084146,
+    "candidate": 10.073374999999999,
+    "speedup": 1.0010692543462347
+  },
+  "100000/df/overwrite": {
+    "baseline": 89.74422899999999,
+    "candidate": 82.64654150000001,
+    "speedup": 1.0858800304426528
+  },
+  "100000/df/create": {
+    "baseline": 88.949729,
+    "candidate": 82.550521,
+    "speedup": 1.077518687011073
+  },
+  "100000/lowlevel/upsert": {
+    "baseline": 8.122437999999999,
+    "candidate": 8.116208,
+    "speedup": 1.0007675998446564
+  },
+  "100000/lowlevel/overwrite": {
+    "baseline": 39.00875,
+    "candidate": 32.1954375,
+    "speedup": 1.2116235413791163
+  },
+  "100000/summary_only": {
+    "baseline": 1.8128745,
+    "candidate": 1.810916,
+    "speedup": 1.0010814968778232
+  },
+  "100000/serialization_only": {
+    "baseline": 15.850229,
+    "candidate": 9.6625625,
+    "speedup": 1.6403753145193112
+  },
+  "control/atomic_save": {
+    "baseline": 0.286063,
+    "candidate": 0.28093749999999995,
+    "speedup": 1.018244271412681
+  }
+}

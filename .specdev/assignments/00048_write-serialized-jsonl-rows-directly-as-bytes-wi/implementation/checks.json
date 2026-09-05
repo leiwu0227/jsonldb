@@ -1,0 +1,26 @@
+[
+  {
+    "command": "/Users/leiwu/code/oceanwave/lib/jsonldb/.specdev/cache/python-runtime/bin/python3 .specdev/assignments/00048_write-serialized-jsonl-rows-directly-as-bytes-wi/implementation/check_evidence.py",
+    "scope": "Durable benchmark samples, source identity, acceptance gain and line cap",
+    "duration_ms": 187,
+    "status": "passed"
+  },
+  {
+    "command": "/Users/leiwu/code/oceanwave/lib/jsonldb/.specdev/cache/python-runtime/bin/python3 .specdev/assignments/00047_reuse-write-time-index-statistics-for-folderdb-m/implementation/verify_compatibility.py .specdev/cache/byte-serialization-baseline",
+    "scope": "66 public signatures and 40 storage snapshots against 784b038",
+    "duration_ms": 444,
+    "status": "passed"
+  },
+  {
+    "command": "git diff --cached --check",
+    "scope": "Whitespace check on staged product changes",
+    "duration_ms": 11,
+    "status": "passed"
+  },
+  {
+    "command": "/Users/leiwu/code/oceanwave/lib/jsonldb/.specdev/cache/python-runtime/bin/python3 profile_test/benchmark_write_statistics.py --serialization --sizes 0 10 --repeats 2",
+    "scope": "Fresh extracted staged tree 12d08ee10cf741dae613d92f99b333c3e98942c1",
+    "duration_ms": 240,
+    "status": "passed"
+  }
+]

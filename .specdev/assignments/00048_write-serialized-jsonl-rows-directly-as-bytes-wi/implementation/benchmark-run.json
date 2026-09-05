@@ -1,0 +1,6 @@
+{
+  "duration_ms": 36618,
+  "pairs": 4,
+  "baseline_revision": "784b038",
+  "command": "profile_test/benchmark_write_statistics.py --serialization; alternate --source-root .specdev/cache/byte-serialization-baseline and current source"
+}

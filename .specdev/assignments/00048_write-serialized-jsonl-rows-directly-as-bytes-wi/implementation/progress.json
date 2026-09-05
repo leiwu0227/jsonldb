@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "T-1",
+      "status": "completed"
+    },
+    {
+      "id": "T-2",
+      "status": "completed"
+    },
+    {
+      "id": "T-3",
+      "status": "completed"
+    }
+  ],
+  "selected_guides": {
+    "implementation": [
+      "api-security"
+    ],
+    "review": [
+      "api-security"
+    ]
+  },
+  "verification": [
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest -q -p no:cacheprovider unit_tests/test_byte_serialization.py unit_tests/test_durability_atomicity.py unit_tests/test_write_statistics.py unit_tests/test_index_cache.py unit_tests/test_jsonlfile.py unit_tests/test_jsonldf.py unit_tests/test_folderdb.py unit_tests/test_lint_integrity.py unit_tests/test_lint_compaction.py unit_tests/test_metadata_slot_migration.py unit_tests/test_unknown_metadata_lint.py unit_tests/test_reports.py unit_tests/test_metadata_upkeep.py unit_tests/test_hierarchy_recovery.py unit_tests/test_clear_configuration.py",
+      "scope": "330 focused tests including 25 new serialization cases and durability/atomicity coverage",
+      "duration_ms": 2020,
+      "status": "passed",
+      "revision": "working-tree@784b038a2330ee7b19d8bb1f72e89a05de947601",
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": "/Users/leiwu/code/oceanwave/lib/jsonldb/.specdev/cache/python-runtime/bin/python3 .specdev/assignments/00048_write-serialized-jsonl-rows-directly-as-bytes-wi/implementation/check_evidence.py",
+      "scope": "Durable benchmark samples, source identity, acceptance gain and line cap",
+      "duration_ms": 187,
+      "status": "passed",
+      "revision": "working-tree@784b038a2330ee7b19d8bb1f72e89a05de947601",
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": "/Users/leiwu/code/oceanwave/lib/jsonldb/.specdev/cache/python-runtime/bin/python3 .specdev/assignments/00047_reuse-write-time-index-statistics-for-folderdb-m/implementation/verify_compatibility.py .specdev/cache/byte-serialization-baseline",
+      "scope": "66 public signatures and 40 storage snapshots against 784b038",
+      "duration_ms": 444,
+      "status": "passed",
+      "revision": "working-tree@784b038a2330ee7b19d8bb1f72e89a05de947601",
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": "git diff --cached --check",
+      "scope": "Whitespace check on staged product changes",
+      "duration_ms": 11,
+      "status": "passed",
+      "revision": "working-tree@784b038a2330ee7b19d8bb1f72e89a05de947601",
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": "/Users/leiwu/code/oceanwave/lib/jsonldb/.specdev/cache/python-runtime/bin/python3 profile_test/benchmark_write_statistics.py --serialization --sizes 0 10 --repeats 2",
+      "scope": "Fresh extracted staged tree 12d08ee10cf741dae613d92f99b333c3e98942c1",
+      "duration_ms": 240,
+      "status": "passed",
+      "revision": "working-tree@784b038a2330ee7b19d8bb1f72e89a05de947601",
+      "role": "authoritative_acceptance"
+    }
+  ],
+  "deviations": [],
+  "follow_up": "none",
+  "selected_guide_versions": {
+    "implementation": [
+      {
+        "id": "api-security",
+        "version": "1"
+      }
+    ],
+    "review": [
+      {
+        "id": "api-security",
+        "version": "1"
+      }
+    ]
+  }
+}

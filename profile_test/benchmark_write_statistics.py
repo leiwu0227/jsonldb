@@ -1,7 +1,8 @@
-"""FolderDB write-statistics benchmark on disposable, OS-cache-warm fixtures.
+"""FolderDB write benchmark on disposable, OS-cache-warm fixtures.
 
 Run with --source-root PATH to measure an extracted historical package with the
 same harness. Use --save FILE and --compare FILE for repeated-run evidence.
+Add --serialization for isolated row serialization and atomic control writes.
 """
 import argparse
 import hashlib
@@ -35,6 +36,7 @@ def main():
     parser.add_argument('--compare', type=Path)
     parser.add_argument('--sizes', type=int, nargs='+', default=[0, 10, 1000, 100000])
     parser.add_argument('--repeats', type=int, default=11)
+    parser.add_argument('--serialization', action='store_true')
     args = parser.parse_args()
     root = (args.source_root or Path(__file__).resolve().parents[1]).resolve()
     sys.path.insert(0, str(root))
@@ -86,6 +88,22 @@ def main():
             if hasattr(jf, '_index_stats'):
                 index = jf.load_index(path)
                 operations[f'{size}/summary_only'] = timed(lambda: jf._index_stats(path, index))
+            if args.serialization:
+                records = [{key: value} for key, value in rows.items()]
+                # Match each revision's real writer path, outside any file I/O.
+                if isinstance(jf._fast_dumps({}), str):
+                    def serialize_rows():
+                        for record in records:
+                            jf._fast_dumps(record).encode('utf-8')
+                else:
+                    def serialize_rows():
+                        for record in records:
+                            jf._fast_dumps(record)
+                operations[f'{size}/serialization_only'] = timed(serialize_rows)
+        if args.serialization:
+            control = os.path.join(folder, 'config.meta')
+            operations['control/atomic_save'] = timed(
+                lambda: jf.save_jsonl_atomic(control, {'config': {'timespec': 'seconds'}}))
 
     if args.compare:
         baseline = json.loads(args.compare.read_text())['operations']

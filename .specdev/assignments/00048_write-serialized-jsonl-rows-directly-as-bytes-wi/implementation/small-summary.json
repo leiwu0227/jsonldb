@@ -1,0 +1,107 @@
+{
+  "0/dict/upsert": {
+    "baseline": 0.3813955,
+    "candidate": 0.403229,
+    "speedup": 0.9458533488414772
+  },
+  "0/dict/overwrite": {
+    "baseline": 0.347187,
+    "candidate": 0.362104,
+    "speedup": 0.9588046528069285
+  },
+  "0/dict/create": {
+    "baseline": 0.383125,
+    "candidate": 0.3850835,
+    "speedup": 0.9949140900609867
+  },
+  "0/df/upsert": {
+    "baseline": 0.441354,
+    "candidate": 0.43614600000000003,
+    "speedup": 1.0119409555515813
+  },
+  "0/df/overwrite": {
+    "baseline": 0.3980415,
+    "candidate": 0.4032915,
+    "speedup": 0.9869821208728673
+  },
+  "0/df/create": {
+    "baseline": 0.4248125,
+    "candidate": 0.4241245,
+    "speedup": 1.0016221651897024
+  },
+  "0/lowlevel/upsert": {
+    "baseline": 0.183146,
+    "candidate": 0.200834,
+    "speedup": 0.9119272633119889
+  },
+  "0/lowlevel/overwrite": {
+    "baseline": 0.1554795,
+    "candidate": 0.1519165,
+    "speedup": 1.023453673564096
+  },
+  "0/summary_only": {
+    "baseline": 0.0022919999999999998,
+    "candidate": 0.001979,
+    "speedup": 1.1581606872157655
+  },
+  "0/serialization_only": {
+    "baseline": 6.25e-05,
+    "candidate": 6.25e-05,
+    "speedup": 1.0
+  },
+  "10/dict/upsert": {
+    "baseline": 0.41308350000000005,
+    "candidate": 0.403,
+    "speedup": 1.0250210918114144
+  },
+  "10/dict/overwrite": {
+    "baseline": 0.424688,
+    "candidate": 0.40872949999999997,
+    "speedup": 1.039044160012918
+  },
+  "10/dict/create": {
+    "baseline": 0.42872849999999996,
+    "candidate": 0.41458300000000003,
+    "speedup": 1.034119826428001
+  },
+  "10/df/upsert": {
+    "baseline": 0.5092705,
+    "candidate": 0.47702100000000003,
+    "speedup": 1.067606038308586
+  },
+  "10/df/overwrite": {
+    "baseline": 0.506604,
+    "candidate": 0.47662499999999997,
+    "speedup": 1.0628985051140836
+  },
+  "10/df/create": {
+    "baseline": 0.526854,
+    "candidate": 0.4733545,
+    "speedup": 1.1130220585206225
+  },
+  "10/lowlevel/upsert": {
+    "baseline": 0.2010005,
+    "candidate": 0.1980415,
+    "speedup": 1.0149413128056493
+  },
+  "10/lowlevel/overwrite": {
+    "baseline": 0.1943125,
+    "candidate": 0.19804149999999998,
+    "speedup": 0.9811706132300554
+  },
+  "10/summary_only": {
+    "baseline": 0.002188,
+    "candidate": 0.0022085,
+    "speedup": 0.9907176816844011
+  },
+  "10/serialization_only": {
+    "baseline": 0.001666,
+    "candidate": 0.0010414999999999999,
+    "speedup": 1.599615938550168
+  },
+  "control/atomic_save": {
+    "baseline": 0.2756875,
+    "candidate": 0.275271,
+    "speedup": 1.0015130544082014
+  }
+}
