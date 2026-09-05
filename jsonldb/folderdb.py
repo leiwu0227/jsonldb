@@ -288,6 +288,8 @@ class FolderDB:
             str: Full path to the directory where the file should be stored
         """
         if self.use_hierarchy:
+            if name.endswith('.jsonl'):
+                name = name[:-6]
             # Take first hierarchy_depth parts for the path
             parts = name.split(self.delimiter)[:self.hierarchy_depth]
             return os.path.join(self.folder_path, *parts)

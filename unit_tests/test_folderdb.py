@@ -4,7 +4,7 @@ import os
 from datetime import datetime, timedelta
 from jsonldb import FolderDB
 import json
-from jsonldb.jsonlfile import select_jsonl
+from jsonldb.jsonlfile import save_jsonl_atomic, select_jsonl
 
 @pytest.fixture
 def test_folder(tmp_path):
@@ -388,6 +388,55 @@ def test_hierarchical_file_operations(db_folder, sample_data):
     # Verify files were created in correct folders
     assert os.path.exists(os.path.join(db.folder_path, "region", "north", "users", "region.north.users.jsonl"))
     assert os.path.exists(os.path.join(db.folder_path, "region", "south", "products", "region.south.products.jsonl"))
+
+@pytest.mark.parametrize('writer', [
+    'overwrite_dict', 'upsert_dict', 'overwrite_df', 'upsert_df',
+])
+@pytest.mark.parametrize('name', ['a-b', 'a-b.jsonl'])
+def test_custom_delimiter_suffix_round_trip(tmp_path, writer, name):
+    save_jsonl_atomic(str(tmp_path / 'h.meta'), {
+        'hierarchy': {
+            'use_hierarchy': True, 'delimiter': '-', 'hierarchy_depth': 2,
+        },
+    })
+    db = FolderDB(str(tmp_path))
+    rows = {'first': {'value': 1}}
+    content = (pd.DataFrame.from_dict(rows, orient='index')
+               if writer.endswith('_df') else rows)
+
+    getattr(db, writer)(name, content)
+
+    path = tmp_path / 'a' / 'b' / 'a-b.jsonl'
+    assert path.is_file()
+    assert db._get_file_path('a-b') == db._get_file_path('a-b.jsonl') == str(path)
+    assert not (tmp_path / 'a' / 'b.jsonl').exists()
+    assert db.get_dbmeta()['a-b']['path'] == str(path)
+    assert db.get_dbmeta()['a-b']['count'] == 1
+
+    other_name = 'a-b.jsonl' if name == 'a-b' else 'a-b'
+    added = {'second': {'value': 2}}
+    if writer.endswith('_df'):
+        db.upsert_df(other_name, pd.DataFrame.from_dict(added, orient='index'))
+    else:
+        db.upsert_dict(other_name, added)
+    rows.update(added)
+
+    reopened = FolderDB(str(tmp_path))
+    assert reopened.get_file_list() == ['a-b']
+    assert reopened.get_dbmeta()['a-b']['count'] == 2
+    for alias in ('a-b', 'a-b.jsonl'):
+        assert reopened.get_dict(alias) == {alias: rows}
+        pd.testing.assert_frame_equal(
+            reopened.get_df([alias])[alias],
+            pd.DataFrame.from_dict(rows, orient='index'))
+    assert reopened.get_dict('missing-table.jsonl') == {}
+    assert not (tmp_path / 'missing').exists()
+
+    reopened.delete_file('a-b.jsonl')
+    assert not path.exists()
+    assert not path.with_suffix('.jsonl.idx').exists()
+    assert reopened.get_dbmeta() == {}
+
 
 def test_hierarchical_file_deletion(db_folder, sample_data):
     """Test file deletion in hierarchical mode."""
