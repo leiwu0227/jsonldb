@@ -475,9 +475,6 @@ class FolderDB:
             for root, dirs, files in os.walk(self.folder_path, topdown=True):
                 # Skip hidden/system directories (starting with '.')
                 dirs[:] = [d for d in dirs if not d.startswith('.')]
-                # Skip .invalid_tickers folder
-                if '.invalid_tickers' in root:  # this is important to skip the .invalid_tickers folder
-                    continue
                 # Add all JSONL files in this directory
                 for file in files:
                     if file.endswith('.jsonl'):
@@ -1034,9 +1031,6 @@ class FolderDB:
         for root, dirs, files in os.walk(self.folder_path, topdown=True):
             # Skip hidden/system directories (starting with '.')
             dirs[:] = [d for d in dirs if not d.startswith('.')]
-            # Skip .invalid_tickers folder
-            if '.invalid_tickers' in root:
-                continue
             for file in files:
                 if file.endswith('.jsonl'):
                     file_path = os.path.join(root, file)
