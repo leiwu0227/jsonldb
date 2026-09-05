@@ -894,12 +894,6 @@ class FolderDB:
         # Get all JSONL files
         jsonl_files = self.get_file_list()
         
-        if not jsonl_files:
-            # If no JSONL files are found, create an empty db.meta file
-            with open(self.dbmeta_path, 'w', encoding='utf-8') as f:
-                f.write('\n')
-            return
-            
         # Initialize metadata dictionary
         metadata = {}
         

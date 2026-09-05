@@ -1,7 +1,43 @@
 import os
 
+import pytest
+
 from jsonldb import FolderDB
 from jsonldb.jsonlfile import delete_jsonl, load_jsonl, save_jsonl
+
+
+@pytest.mark.parametrize('hierarchy_depth', [None, 2])
+def test_empty_database_metadata_is_immediately_canonical(tmp_path, caplog, hierarchy_depth):
+    db = FolderDB(str(tmp_path), hierarchy_depth=hierarchy_depth)
+
+    assert (tmp_path / 'db.meta').read_bytes() == b''
+    assert (tmp_path / 'db.meta.idx').read_bytes() == b'{}'
+
+    caplog.set_level('WARNING', logger='jsonldb')
+    caplog.clear()
+    db.overwrite_dict('region.table', {'row': {'value': 1}})
+    assert db.get_dbmeta()['region.table']['count'] == 1
+    assert caplog.messages == []
+
+
+@pytest.mark.parametrize('operation', ['rebuild', 'reopen', 'clear'])
+def test_empty_database_metadata_replaces_leftover_index(tmp_path, operation):
+    db = FolderDB(str(tmp_path))
+    db.overwrite_dict('last', {'row': {'value': 1}})
+    (tmp_path / 'last.jsonl').unlink()
+    (tmp_path / 'last.jsonl.idx').unlink()
+    assert b'last' in (tmp_path / 'db.meta.idx').read_bytes()
+
+    if operation == 'rebuild':
+        db.build_dbmeta()
+    elif operation == 'reopen':
+        os.utime(tmp_path / 'db.meta', ns=(0, 0))
+        FolderDB(str(tmp_path))
+    else:
+        db.clear_folder(force=True)
+
+    assert (tmp_path / 'db.meta').read_bytes() == b''
+    assert (tmp_path / 'db.meta.idx').read_bytes() == b'{}'
 
 
 def test_file_and_range_deletion_refresh_metadata(tmp_path):
