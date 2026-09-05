@@ -1177,15 +1177,14 @@ class FolderDB:
         logger.info("reprocessing completed for %s", self.invalid_tickers_path)
 
     def delete_empty_folders(self) -> None:
-        """
-        Delete empty folders in the database.
-        Recursively removes empty folders from bottom up.
-        """
-        for root, dirs, files in os.walk(self.folder_path, topdown=False):
-            if root == self.folder_path:
-                continue
+        """Prune empty visible directories without entering hidden trees."""
+        directories = []
+        for root, dirs, _ in os.walk(self.folder_path, topdown=True):
+            dirs[:] = [directory for directory in dirs if not directory.startswith('.')]
+            if root != self.folder_path:
+                directories.append(root)
+        for directory in reversed(directories):
             try:
-                if not os.listdir(root):
-                    os.rmdir(root)
+                os.rmdir(directory)
             except OSError:
                 pass

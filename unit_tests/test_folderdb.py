@@ -458,6 +458,51 @@ def test_hierarchical_file_deletion(db_folder, sample_data):
     # Verify empty folders are cleaned up
     assert not os.path.exists(os.path.join(db.folder_path, "org", "hr", "employees"))
 
+@pytest.mark.parametrize('operation', ['prune', 'delete', 'lint', 'clear'])
+def test_empty_folder_pruning_preserves_hidden_trees(tmp_path, monkeypatch, operation):
+    db = FolderDB(str(tmp_path), hierarchy_depth=2)
+    db.overwrite_dict('group.table', {'row': {'value': 1}})
+    empty_branch = tmp_path / 'unused' / 'branch' / 'deep'
+    empty_branch.mkdir(parents=True)
+    hidden_paths = [tmp_path / relative for relative in (
+        '.invalid_tickers/empty/deep', '.external/cache',
+        '.jsonldb/cache/empty', 'visible/.external/cache',
+    )]
+    for path in hidden_paths:
+        path.mkdir(parents=True, exist_ok=True)
+    sentinel = tmp_path / '.external' / 'keep.jsonl'
+    sentinel.write_bytes(b'{"hidden":{"value":1}}\n')
+    scanned = []
+    real_scandir = os.scandir
+
+    def recording_scandir(path):
+        relative = os.path.relpath(path, tmp_path)
+        if relative != '.':
+            scanned.append(relative.split(os.sep))
+        return real_scandir(path)
+
+    monkeypatch.setattr(os, 'scandir', recording_scandir)
+    if operation == 'prune':
+        db.delete_empty_folders()
+    elif operation == 'delete':
+        db.delete_file('group.table')
+    elif operation == 'lint':
+        db.lint_db()
+    else:
+        db.clear_folder(force=True)
+
+    assert all(path.is_dir() for path in hidden_paths)
+    assert sentinel.read_bytes() == b'{"hidden":{"value":1}}\n'
+    assert not any(part.startswith('.') for parts in scanned for part in parts)
+    assert not (tmp_path / 'unused').exists()
+    assert (tmp_path / 'visible').is_dir()
+    assert tmp_path.is_dir()
+    if operation in ('delete', 'clear'):
+        assert not (tmp_path / 'group').exists()
+    else:
+        assert db.get_dict('group.table') == {'group.table': {'row': {'value': 1}}}
+
+
 def test_hierarchical_validation(db_folder):
     """Test validation of hierarchical paths."""
     db = FolderDB(db_folder, hierarchy_depth=3)
