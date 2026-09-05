@@ -13,6 +13,8 @@ MAX_REMOVED_CHARS = 160
 _INVALID = re.compile(r"invalid JSON line in (.+?) at byte (\d+): (.*)")
 _REMOVED = re.compile(r"lint removed (\d+) bytes from (.+) at byte (\d+)")
 _INDEX = re.compile(r"rebuilt (empty|corrupt|missing|stale) index (.+)")
+_MOVE = re.compile(r"could not move (?:invalid file|valid file|file) (.+?): (.*)")
+_MISSING = re.compile(r"file not found: (.+)")
 
 
 def _one_line(value):
@@ -50,21 +52,37 @@ def _finding(record):
         _one_line(kind), _one_line(path), message)
 
 
+def _record_path(record):
+    """Prefer structured ownership; decode only known legacy message formats."""
+    path = getattr(record, "jsonldb_file", None)
+    if path is not None:
+        return path
+    message = record.getMessage()
+    for pattern, group in ((_INVALID, 1), (_REMOVED, 2), (_INDEX, 2),
+                           (_MOVE, 1), (_MISSING, 1)):
+        match = pattern.fullmatch(message)
+        if match:
+            return match[group]
+    return None
+
+
 class _Capture(logging.Handler):
     def __init__(self, folder):
         super().__init__(logging.WARNING)
-        normalized = os.path.normpath(folder)
-        absolute = os.path.abspath(folder)
-        self._scopes = tuple({normalized, absolute} - {"", "."})
+        self._folder = os.path.normcase(os.path.abspath(folder))
         self.findings = []
         self.total = 0
 
     def emit(self, record):
-        message = record.getMessage()
-        pattern = r"(?:^|\s)(?:%s)(?:[\\/]|$|[,:;])" % "|".join(
-            re.escape(scope) for scope in self._scopes)
-        if not self._scopes or not re.search(pattern, message):
+        path = _record_path(record)
+        if path is None:
             return
+        try:
+            absolute = os.path.normcase(os.path.abspath(path))
+            if os.path.commonpath((self._folder, absolute)) != self._folder:
+                return
+        except (TypeError, ValueError, OSError):
+            return  # An unusable diagnostic path must not break recovery.
         self.total += 1
         if len(self.findings) < MAX_FINDINGS:
             self.findings.append(_finding(record))
