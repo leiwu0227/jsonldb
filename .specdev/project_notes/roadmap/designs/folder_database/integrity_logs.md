@@ -4,7 +4,7 @@ The library repairs and skips damage rather than raising: torn rows are skipped,
 
 ## Files
 
-Both live in `.jsonldb/` inside the database folder. A hidden directory is invisible to table discovery, hierarchy moves, and `clear_folder`, so the reports can never be mistaken for tables or removed by data operations. Version control commits them with everything else.
+Both live in `.jsonldb/` inside the database folder. A hidden directory is invisible to table discovery, hierarchy moves, and `clear_folder`, so the reports can never be mistaken for tables or removed by data operations.
 
 - `.jsonldb/integrity.log` is written by `FolderDB` open, replacing the previous contents every time.
 - `.jsonldb/lint.log` is written by `lint_db`, replacing the previous contents every time.

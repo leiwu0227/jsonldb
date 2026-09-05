@@ -37,7 +37,7 @@ Moves are performed file by file and are not transactional. An interruption can 
 
 ## Discovery under hierarchy
 
-Listing tables walks the whole tree and reports filenames without their extension. Hidden directories, including the quarantine folder, the `.jsonldb/` report folder, and any Git directory, are never entered, so quarantined, report, and version-control files are invisible to data operations. Deleting a table prunes any directories it leaves empty so the tree never accumulates empty branches.
+Listing tables walks the whole tree and reports filenames without their extension. Hidden directories, including the quarantine folder, the `.jsonldb/` report folder, and metadata created by external tools, are never entered, so their contents are invisible to data operations. Deleting a table prunes any visible directories it leaves empty so the tree never accumulates empty branches.
 
 ## Trade-offs
 
