@@ -4,7 +4,7 @@ The index is a cache of the data file. This note covers how the cache stays trus
 
 ## Single loader
 
-All index reads go through one loader that guarantees the index is present and parseable before returning:
+Uncached index reads share one authoritative loader that guarantees a present, parseable index:
 
 - **Missing**: rebuilt from the data file.
 - **Empty** file: corrupt (a valid empty index is `{}`, never zero bytes), rebuilt with a warning.
@@ -13,7 +13,7 @@ All index reads go through one loader that guarantees the index is present and p
 
 The rebuild scans the data file, skips a slot on line one, records the byte offset of every other non-blank line by its linekey, and writes the index with keys sorted. Tombstones are excluded, so a post-crash rebuild forgets a deletion that reached the file but not the index. The loader never modifies the data file: torn lines are skipped with a warning and removed only by lint.
 
-One loader is deliberate: a stale or empty index once caused silent write failures downstream.
+The [read cache](index_read_cache.md) reuses validated indexes; misses share this loader. Writers receive independent indexes, and lint retains its own verification.
 
 ## Every writer finishes with the index
 
