@@ -9,8 +9,73 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from jsonldb.jsonlfile import (
     save_jsonl, load_jsonl, update_jsonl, delete_jsonl,
-    lint_jsonl, build_jsonl_index, select_jsonl
+    lint_jsonl, build_jsonl_index, select_jsonl, select_line_jsonl, load_index
 )
+
+
+def _write_fresh_index(path, content):
+    index_path = path.with_suffix('.jsonl.idx')
+    index_path.write_bytes(content)
+    fresh = path.stat().st_mtime_ns + 1_000_000_000
+    os.utime(index_path, ns=(fresh, fresh))
+    return index_path
+
+
+@pytest.mark.parametrize('content', [
+    b'[]', b'"key"', b'42', b'1.5', b'true', b'false', b'null',
+])
+def test_load_index_rebuilds_non_objects(tmp_path, caplog, content):
+    path = tmp_path / 'rows.jsonl'
+    save_jsonl(str(path), {'z': {'value': 2}, 'a': {'value': 1}},
+               slot_bytes=128, meta={'owner': 'kept'})
+    expected = load_index(str(path))
+    before = path.read_bytes()
+    index_path = _write_fresh_index(path, content)
+    caplog.set_level('WARNING', logger='jsonldb.jsonlfile')
+
+    assert load_index(str(path)) == expected
+
+    assert json.loads(index_path.read_bytes()) == expected
+    assert list(expected) == ['a', 'z']
+    assert path.read_bytes() == before
+    assert 'rebuilt corrupt index ' + str(index_path) in caplog.messages
+
+
+@pytest.mark.parametrize('operation', ['single', 'range', 'upsert', 'delete'])
+def test_operations_recover_non_object_indexes(tmp_path, operation):
+    path = tmp_path / 'rows.jsonl'
+    expected = {'a': {'value': 1}, 'z': {'value': 2}}
+    save_jsonl(str(path), expected)
+    index_path = _write_fresh_index(path, b'[]')
+
+    if operation == 'single':
+        assert select_line_jsonl(str(path), 'a') == {'a': expected['a']}
+    elif operation == 'range':
+        assert select_jsonl(str(path), 'a', 'z') == expected
+    elif operation == 'upsert':
+        update_jsonl(str(path), {'b': {'value': 3}})
+        expected['b'] = {'value': 3}
+    else:
+        delete_jsonl(str(path), ['a'])
+        del expected['a']
+
+    assert load_jsonl(str(path)) == expected
+    assert list(json.loads(index_path.read_bytes())) == sorted(expected)
+
+
+def test_load_index_accepts_valid_empty_object(tmp_path, caplog):
+    path = tmp_path / 'empty.jsonl'
+    save_jsonl(str(path), {})
+    index_path = _write_fresh_index(path, b'{}')
+    before = index_path.stat()
+    caplog.set_level('WARNING', logger='jsonldb.jsonlfile')
+
+    assert load_index(str(path)) == {}
+
+    assert index_path.stat().st_ino == before.st_ino
+    assert index_path.stat().st_mtime_ns == before.st_mtime_ns
+    assert caplog.messages == []
+
 
 # Test fixtures
 @pytest.fixture

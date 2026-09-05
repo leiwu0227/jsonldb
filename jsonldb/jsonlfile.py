@@ -156,13 +156,16 @@ def load_index(jsonl_file_path: str) -> dict:
     ensure_index_exists(jsonl_file_path)  # heals missing / empty / stale
     try:
         with open(index_file_path, 'rb') as f:
-            return orjson.loads(f.read())
+            index = orjson.loads(f.read())
+        if isinstance(index, dict):
+            return index
     except (orjson.JSONDecodeError, OSError):
-        # Non-empty but unparseable/unreadable index -> rebuild from the .jsonl
-        logger.warning("rebuilt corrupt index %s", index_file_path)
-        build_jsonl_index(jsonl_file_path)
-        with open(index_file_path, 'rb') as f:
-            return orjson.loads(f.read())
+        pass
+    # Unparseable, unreadable, or non-object index -> rebuild from the .jsonl.
+    logger.warning("rebuilt corrupt index %s", index_file_path)
+    build_jsonl_index(jsonl_file_path)
+    with open(index_file_path, 'rb') as f:
+        return orjson.loads(f.read())
 
 
 def _lint_counts(jsonl_file_path: str, full: bool):
