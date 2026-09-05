@@ -36,7 +36,7 @@ Every save and upsert finishes by refreshing that table's entry in `db.meta`.
 
 - Delete specific keys from one table, or an inclusive key range from one or several tables. Range bounds are serialized with the database timespec so datetime bounds match stored keys. The record is preserved.
 - Delete a whole table, removing its data and index and pruning folders it leaves empty.
-- Clear the database, removing every data, index, and metadata file under non-hidden folders; this requires an explicit `force` flag and otherwise only warns.
+- With `force=True`, remove tables and their indexes under non-hidden folders, preserve `config.meta` and `h.meta` with their indexes, and reset `db.meta` to a canonical empty indexed table. The live instance retains its configuration. Without `force=True`, only warn.
 
 Key and range deletes leave tombstones; table deletion and clearing remove files.
 
