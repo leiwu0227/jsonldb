@@ -67,6 +67,7 @@ class FolderDB:
 
         self.use_hierarchy = False
         self.delimiter = '.'
+        self.hierarchy_depth = 0
 
         # Initialize all paths first
         self.hmeta_path = os.path.join(self.folder_path, "h.meta")
@@ -75,8 +76,15 @@ class FolderDB:
         self.invalid_tickers_path = os.path.join(
             self.folder_path, ".invalid_tickers")
 
-        if os.path.exists(self.hmeta_path):
-            hmeta, canonical = _load_control(self.hmeta_path, "hierarchy")
+        hmeta, canonical = (_load_control(self.hmeta_path, "hierarchy")
+                            if os.path.exists(self.hmeta_path) else ({}, False))
+        valid_hierarchy = (
+            type(hmeta.get('use_hierarchy')) is bool
+            and isinstance(hmeta.get('delimiter'), str) and bool(hmeta['delimiter'])
+            and type(hmeta.get('hierarchy_depth')) is int
+            and hmeta['hierarchy_depth'] >= int(hmeta['use_hierarchy']))
+        hierarchy_recovered = False
+        if valid_hierarchy:
             self.use_hierarchy = hmeta["use_hierarchy"]
             self.delimiter = hmeta["delimiter"]
             self.hierarchy_depth = hmeta["hierarchy_depth"]
@@ -87,15 +95,14 @@ class FolderDB:
                 #current hierarchy depth is not the same as the one provided, so we need to lint the hierarchy
                 self.lint_hierarchy(hierarchy_depth)
         else:
-            #no h.meta file found, so we need to build it
-            if hierarchy_depth is not None:
-                logger.warning("regenerated missing control file %s",
-                               self.hmeta_path,
+            try:
+                hierarchy_recovered = self._recover_hierarchy(hierarchy_depth)
+            except (ValueError, OSError) as exc:
+                logger.warning("hierarchy recovery failed for %s: %s",
+                               self.hmeta_path, exc,
                                extra={"jsonldb_file": self.hmeta_path,
-                                      "jsonldb_kind": "control_regenerated"})
-                self.use_hierarchy = True 
-                self.hierarchy_depth = hierarchy_depth
-                self.lint_hierarchy(hierarchy_depth)
+                                      "jsonldb_kind": "hierarchy_recovery_failed"})
+                raise
 
         # Configuration is per-instance state; never mutate module globals.
         # Retain unknown settings when rewriting the protected control file.
@@ -121,7 +128,9 @@ class FolderDB:
         # Only rebuild db.meta if it doesn't exist or the folder has been
         # modified externally.  Writes already call update_dbmeta()
         # incrementally, so db.meta stays in sync during normal operation.
-        if os.path.exists(self.dbmeta_path):
+        if hierarchy_recovered:
+            self.build_dbmeta()
+        elif os.path.exists(self.dbmeta_path):
             dbmeta_mtime = os.path.getmtime(self.dbmeta_path)
             folder_mtime = self._latest_database_directory_mtime()
             if folder_mtime > dbmeta_mtime:
@@ -162,6 +171,116 @@ class FolderDB:
                     extra={"jsonldb_file": self.folder_path,
                            "jsonldb_kind": "mixed_timespec"},
                 )
+
+    def _recover_hierarchy(self, requested_depth: Optional[int]) -> bool:
+        """Infer lost controls, preflight every move, then publish settings last."""
+        def scan_error(error):
+            raise error
+
+        tables, directories = [], []
+        for root, dirs, files in os.walk(self.folder_path, onerror=scan_error):
+            dirs[:] = sorted(d for d in dirs if not d.startswith('.')
+                             and not os.path.islink(os.path.join(root, d)))
+            relative = os.path.relpath(root, self.folder_path)
+            parts = [] if relative == '.' else relative.split(os.sep)
+            if parts:
+                directories.append(root)
+            for filename in sorted(files):
+                source = os.path.join(root, filename)
+                if (filename.endswith('.jsonl') and os.path.isfile(source)
+                        and not os.path.islink(source)):
+                    tables.append((filename[:-6], source, parts))
+
+        damaged = os.path.exists(self.hmeta_path)
+        depths = sorted({len(parts) for _, _, parts in tables})
+        if not damaged and not any(depths) and requested_depth is None:
+            return False
+        depth = min(depths, default=0)
+        if requested_depth is not None:
+            if type(requested_depth) is not int or requested_depth < 1:
+                raise ValueError('Hierarchy level must be a positive integer')
+            depth = requested_depth
+            if not damaged and not any(depths):
+                # Explicit creation on a flat folder retains ordinary reorganization.
+                logger.warning('regenerated missing control file %s', self.hmeta_path,
+                               extra={"jsonldb_file": self.hmeta_path,
+                                      "jsonldb_kind": "control_regenerated"})
+                self.lint_hierarchy(depth)
+                return True
+
+        # Intersect separators that reproduce every observed directory prefix.
+        # The shortest match avoids treating whole name segments as delimiters.
+        candidates = None
+        if depth:
+            for name, source, parts in tables:
+                if not parts or (len(parts) == 1 and name == parts[0]):
+                    continue
+                separators = set()
+                if name.startswith(parts[0]):
+                    tail = name[len(parts[0]):]
+                    for length in range(1, len(tail)):
+                        separator = tail[:length]
+                        segments = name.split(separator)
+                        if all(segments) and segments[:len(parts)] == parts:
+                            separators.add(separator)
+                candidates = (separators if candidates is None
+                              else candidates & separators)
+                if not candidates:
+                    raise ValueError('contradictory hierarchy prefixes at %s' % source)
+        delimiter = min(candidates, key=len) if candidates else '.'
+        self.use_hierarchy, self.hierarchy_depth, self.delimiter = bool(depth), depth, delimiter
+
+        moves, destinations = [], set()
+        for name, source, _ in tables:
+            index_path = source + '.idx'
+            if os.path.lexists(index_path) and (not os.path.isfile(index_path)
+                                               or os.path.islink(index_path)):
+                raise ValueError('hierarchy recovery index is not a regular file: %s' % index_path)
+            if not self.validate_name(name):
+                raise ValueError('recovered depth %d would exclude table %s' % (depth, source))
+            if depth and any(not part or part.startswith('.')
+                             for part in name.split(delimiter)[:depth]):
+                raise ValueError('unsafe hierarchy prefix in %s' % source)
+            target = self._get_file_path(name)
+            if target in destinations:
+                raise ValueError('hierarchy recovery collision at %s' % target)
+            destinations.add(target)
+            if source == target:
+                continue
+            parent = os.path.abspath(os.path.dirname(target))
+            while parent != os.path.abspath(self.folder_path):
+                if os.path.lexists(parent) and (not os.path.isdir(parent) or os.path.islink(parent)):
+                    raise ValueError('hierarchy recovery directory collision at %s' % parent)
+                parent = os.path.dirname(parent)
+            for old, new in ((source, target), (source + '.idx', target + '.idx')):
+                if os.path.lexists(new):
+                    raise ValueError('hierarchy recovery collision at %s' % new)
+                if os.path.lexists(old):
+                    moves.append((old, new))
+
+        for source, target in moves:
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            if os.path.lexists(target):
+                raise ValueError('hierarchy recovery collision at %s' % target)
+            os.rename(source, target)
+        if self.use_hierarchy:
+            self.build_hmeta()
+        else:
+            # Absence of h.meta is the canonical flat configuration.
+            for path in (self.hmeta_path, self.hmeta_path + '.idx'):
+                if os.path.exists(path):
+                    os.remove(path)
+        for directory in reversed(directories):
+            try:
+                os.rmdir(directory)
+            except OSError:
+                pass
+        logger.warning(
+            'recovered hierarchy for %s: source=%s observed_depths=%s depth=%d delimiter=%r tables=%d',
+            self.hmeta_path, 'invalid' if damaged else 'missing', depths,
+            depth, delimiter, len(tables),
+            extra={"jsonldb_file": self.hmeta_path, "jsonldb_kind": "hierarchy_recovered"})
+        return True
 
     def build_hmeta(self) -> None:
         """

@@ -149,6 +149,17 @@ measurements_metadata = metadata.get("measurements")
 db.lint_db()
 ```
 
+Opening a database automatically recovers missing or invalid `h.meta` settings
+from visible table paths. Recovery infers the delimiter from directory and
+filename prefixes and chooses the shallowest observed table-directory depth.
+Root-level tables or an empty database imply a flat layout. It reconciles mixed
+layouts by moving tables with their indexes, preserves table contents and hidden
+directories, and records the inferred settings and evidence in
+`.jsonldb/integrity.log`. Contradictory prefixes, destination collisions, or an
+unreadable directory stop recovery with an error before tables are moved.
+An interrupted move can be retried by opening the database again. Explicitly
+supplying `hierarchy_depth` takes precedence over the inferred depth.
+
 ## Requirements
 
 - Python >= 3.8
