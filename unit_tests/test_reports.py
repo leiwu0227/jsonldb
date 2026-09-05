@@ -1,12 +1,78 @@
 import logging
 import os
 
+import orjson
+import pytest
+
 from jsonldb import FolderDB, jsonlfile
 from jsonldb import reports
 
 
 def _lines(path):
     return path.read_text(encoding="utf-8").splitlines()
+
+
+@pytest.mark.parametrize('operation', ['open', 'lint'])
+@pytest.mark.parametrize('index_bytes, reason', [
+    (b'{}', 'stale'), (b'', 'empty'), (b'not-json', 'corrupt'), (b'[]', 'corrupt'),
+])
+def test_index_rebuild_reports_distinguish_staleness_from_corruption(
+        tmp_path, caplog, operation, index_bytes, reason):
+    db = FolderDB(str(tmp_path))
+    rows = {'a': {'value': 1}, 'b': {'value': 2}}
+    db.overwrite_dict('table', rows)
+    path = tmp_path / 'table.jsonl'
+    before = path.read_bytes()
+    index_path = tmp_path / 'table.jsonl.idx'
+    index_path.write_bytes(index_bytes)
+    timestamp = 0 if reason == 'stale' else path.stat().st_mtime_ns + 1_000_000_000
+    os.utime(index_path, ns=(timestamp, timestamp))
+    caplog.set_level(logging.WARNING, logger='jsonldb')
+    caplog.clear()
+
+    if operation == 'open':
+        os.utime(tmp_path / 'db.meta', ns=(0, 0))
+        FolderDB(str(tmp_path))
+    else:
+        db.lint_db()
+
+    report_path = tmp_path / '.jsonldb' / ('integrity.log' if operation == 'open' else 'lint.log')
+    assert list(orjson.loads(index_path.read_bytes())) == ['a', 'b']
+    assert index_path.stat().st_mtime_ns >= path.stat().st_mtime_ns
+    assert path.read_bytes() == before
+    assert not any('rebuilt stale index' in message for message in caplog.messages)
+    if reason == 'stale':
+        assert caplog.messages == []
+        assert len(_lines(report_path)) == 1
+    else:
+        assert 'kind=index_rebuilt' in report_path.read_text()
+        assert 'detail=' + reason in report_path.read_text()
+
+
+@pytest.mark.parametrize('operation', ['open', 'lint'])
+def test_stale_index_rebuild_still_reports_damaged_rows(tmp_path, caplog, operation):
+    db = FolderDB(str(tmp_path))
+    db.overwrite_dict('table', {'a': {'value': 1}})
+    path = tmp_path / 'table.jsonl'
+    clean = path.read_bytes()
+    path.write_bytes(clean + b'broken-row\n')
+    os.utime(tmp_path / 'table.jsonl.idx', ns=(0, 0))
+    caplog.set_level(logging.WARNING, logger='jsonldb')
+    caplog.clear()
+
+    if operation == 'open':
+        os.utime(tmp_path / 'db.meta', ns=(0, 0))
+        FolderDB(str(tmp_path))
+        report = tmp_path / '.jsonldb' / 'integrity.log'
+        assert 'kind=invalid_json' in report.read_text()
+        assert path.read_bytes() == clean + b'broken-row\n'
+    else:
+        db.lint_db()
+        report = tmp_path / '.jsonldb' / 'lint.log'
+        assert 'kind=lint_removed' in report.read_text()
+        assert path.read_bytes() == clean
+    assert not any('rebuilt stale index' in message for message in caplog.messages)
+    assert 'detail=stale' not in report.read_text()
 
 
 def test_clean_reports_replace_and_ordinary_operations_are_silent(tmp_path):

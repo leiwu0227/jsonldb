@@ -136,17 +136,16 @@ def ensure_index_exists(jsonl_file_path: str) -> None:
         should_rebuild = True
         reason = "missing"
     elif os.path.getsize(index_file_path) == 0:
-        # An empty .idx (e.g. left by an interrupted write) is corrupt: a valid
-        # empty index is b'{}' (2 bytes), never zero-length. Treat it as missing.
+        # Zero bytes are corrupt; a valid empty index is b'{}'.
         should_rebuild = True
         reason = "empty"
     elif os.path.getmtime(jsonl_file_path) > os.path.getmtime(index_file_path):
-        # Rebuild if JSONL file is newer than index (stale, but not corrupt)
         should_rebuild = True
         reason = "stale"
 
     if should_rebuild:
-        logger.warning("rebuilt %s index %s", reason, index_file_path)
+        if reason != "stale":
+            logger.warning("rebuilt %s index %s", reason, index_file_path)
         build_jsonl_index(jsonl_file_path)
 
 
@@ -203,7 +202,8 @@ def _lint_load_index(jsonl_file_path: str):
             return index, True
         except (orjson.JSONDecodeError, OSError, TypeError):
             reason = "corrupt"
-    logger.warning("rebuilt %s index %s", reason, index_path)
+    if reason != "stale":
+        logger.warning("rebuilt %s index %s", reason, index_path)
     build_jsonl_index(jsonl_file_path, warn_invalid=False)
     with open(index_path, 'rb') as f:
         return orjson.loads(f.read()), False
