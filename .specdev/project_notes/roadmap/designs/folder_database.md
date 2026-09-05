@@ -44,10 +44,6 @@ Key and range deletes leave tombstones; table deletion and clearing remove files
 
 Database-level lint iterates the tables recorded in `db.meta`, lints each, drops entries for vanished tables, rewrites `db.meta` in one pass with lint timestamps, then lints `db.meta` and, in hierarchy mode, `h.meta`. In a slot-enabled folder it also repairs any table whose line one is not a slot of the folder width. `force` passes through to every table; findings go to `.jsonldb/lint.log`. Tables absent from `db.meta` are picked up by the next metadata rebuild, not by lint.
 
-## Version-control facade
-
-`commit`, `revert`, and `version` forward to the Git module, initializing a repository on the first commit. The module is imported inside those methods, so GitPython loads only when used.
-
 ## Inspection
 
 Printing a database renders `db.meta`: sizes, row counts, key ranges, lint status.
