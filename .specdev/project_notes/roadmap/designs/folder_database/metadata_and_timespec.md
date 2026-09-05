@@ -23,7 +23,7 @@ One record per table: name and resolved path; smallest and largest key, from the
 
 ### Refresh policy
 
-- **Incremental.** Saves, upserts, and key deletes refresh that one table's record.
+- **Incremental.** Saves, upserts, and key deletes refresh that one table's record. Saves and upserts reuse statistics from the successful write, avoiding a reread of the published table index. These statistics match the published index and file size. Refresh remains synchronous for each table; a later metadata failure does not roll back the table. Explicit refresh, rebuild, and lint derive statistics from disk and retain recovery behavior.
 - **On open.** If `db.meta` is missing, or the folder was modified after `db.meta` was written, every table is re-measured. Folder modification time changes only when entries are added or removed at the root, so this catches external file drops in flat mode and misses edits to existing files, which is accepted.
 - **On lint.** Database lint rewrites the whole file and marks every surviving table as linted.
 
