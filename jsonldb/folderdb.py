@@ -14,7 +14,7 @@ from jsonldb.jsonlfile import (
     detect_timespec
 )
 from jsonldb.jsonldf import (
-    save_jsonldf, update_jsonldf, select_jsonldf
+    save_jsonldf, update_jsonldf, select_jsonldf, _save_jsonldf, _update_jsonldf
 )
 import jsonldb.jsonlfile as jsonlfile
 from jsonldb.reports import capture_report
@@ -518,11 +518,11 @@ class FolderDB:
     def overwrite_df(self, name: str, df: pd.DataFrame,
                      meta: Optional[dict] = None) -> None:
         file_path = self._get_or_create_file_path(name)
-        save_jsonldf(
+        stats = _save_jsonldf(
             file_path, df, self.timespec, meta=meta,
             slot_bytes=self.meta_slot_bytes,
         )
-        self.update_dbmeta(self._get_file_name(name))
+        self._update_dbmeta(self._get_file_name(name), stats=stats)
 
     def overwrite_dfs(self, dict_dfs: Dict[Any, pd.DataFrame]) -> None:
         """
@@ -545,14 +545,14 @@ class FolderDB:
         """
         file_path = self._get_or_create_file_path(name)
         if os.path.exists(file_path):
-            update_jsonldf(file_path, df, self.timespec, meta=meta)
+            stats = _update_jsonldf(file_path, df, self.timespec, meta=meta)
         else:
-            save_jsonldf(
+            stats = _save_jsonldf(
                 file_path, df, self.timespec, meta=meta,
                 slot_bytes=self.meta_slot_bytes,
             )
         
-        self.update_dbmeta(self._get_file_name(name))
+        self._update_dbmeta(self._get_file_name(name), stats=stats)
 
     def upsert_dfs(self, dict_dfs: Dict[Any, pd.DataFrame]) -> None:
         """
@@ -618,11 +618,11 @@ class FolderDB:
                        data_dict: Dict[Any, Dict[str, Any]],
                        meta: Optional[dict] = None) -> None:
         file_path = self._get_or_create_file_path(name)
-        save_jsonl(
+        stats = jsonlfile._save_jsonl(
             file_path, data_dict, self.timespec, meta=meta,
-            slot_bytes=self.meta_slot_bytes,
+            slot_bytes=self.meta_slot_bytes, with_stats=True,
         )
-        self.update_dbmeta(self._get_file_name(name))
+        self._update_dbmeta(self._get_file_name(name), stats=stats)
 
     def overwrite_dicts(self, dict_dicts: Dict[Any, Dict[str, Dict[str, Any]]]) -> None:
         """
@@ -646,14 +646,15 @@ class FolderDB:
         """
         file_path = self._get_or_create_file_path(name)
         if os.path.exists(file_path):
-            update_jsonl(file_path, data_dict, self.timespec, meta=meta)
+            stats = jsonlfile._update_jsonl(
+                file_path, data_dict, self.timespec, meta=meta, with_stats=True)
         else:
-            save_jsonl(
+            stats = jsonlfile._save_jsonl(
                 file_path, data_dict, self.timespec, meta=meta,
-                slot_bytes=self.meta_slot_bytes,
+                slot_bytes=self.meta_slot_bytes, with_stats=True,
             )
 
-        self.update_dbmeta(self._get_file_name(name))
+        self._update_dbmeta(self._get_file_name(name), stats=stats)
 
     def upsert_dicts(self, dict_dicts: Dict[Any, Dict[str, Dict[str, Any]]]) -> None:
         """
@@ -851,28 +852,23 @@ class FolderDB:
         jsonlfile.write_jsonl_meta(file_path, None)
 
     def _make_meta_entry(self, name: str, file_path: str, linted: bool = False,
-                         lint_time: str = "") -> Dict[str, Any]:
-        """Build one db.meta entry for a JSONL file from its index file.
+                         lint_time: str = "", stats=None) -> Dict[str, Any]:
+        """Build a db.meta entry from published write statistics or the disk index.
 
         Example: {"name": "users", "path": ".../users.jsonl", "min_index": "a",
                   "max_index": "z", "size": 123, "count": 3, "lint_time": "", "linted": False}
         """
-        index_file = file_path + '.idx'
-        min_index = max_index = None
-        count = 0
-        if os.path.exists(index_file):
-            index = jsonlfile.load_index(file_path)  # heals empty/corrupt
-            if index:
-                keys = list(index.keys())
-                min_index, max_index = keys[0], keys[-1]
-                count = len(keys)
+        if stats is None:
+            index = (jsonlfile.load_index(file_path)
+                     if os.path.exists(file_path + '.idx') else {})
+            keys = list(index)
+            stats = dict(min_index=keys[0] if keys else None,
+                         max_index=keys[-1] if keys else None,
+                         size=os.path.getsize(file_path), count=len(keys))
         return {
             "name": name,
             "path": file_path,
-            "min_index": min_index,
-            "max_index": max_index,
-            "size": os.path.getsize(file_path),
-            "count": count,
+            **stats,
             "lint_time": lint_time,
             "linted": linted,
         }
@@ -936,13 +932,17 @@ class FolderDB:
             name: Name of the JSONL file (with or without .jsonl extension)
             linted: Value to set for the linted field
         """
+        self._update_dbmeta(name, linted)
+
+    def _update_dbmeta(self, name, linted=False, stats=None):
+        """Publish one table's metadata; explicit refreshes keep disk recovery."""
         # Metadata key is the name without the .jsonl extension
         meta_key = name[:-6] if name.endswith('.jsonl') else name
 
         # Use hierarchical path for the data file
         file_path = self._get_file_path(name)
         lint_time = datetime.now().isoformat() if linted else ""
-        entry = self._make_meta_entry(meta_key, file_path, linted, lint_time)
+        entry = self._make_meta_entry(meta_key, file_path, linted, lint_time, stats)
 
         # Update metadata file using jsonlfile
         update_jsonl(self.dbmeta_path, {meta_key: entry})

@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "id": "00047",
+  "kind": "change",
+  "description": "Reuse write-time index statistics for FolderDB metadata upkeep without rereading the just-published table index",
+  "run_id": "assignment-lifecycle-20260905T06102585",
+  "created_at": "2026-09-05T06:10:25.857Z",
+  "review_policy": {
+    "brainstorm": "optional",
+    "implementation": "required"
+  },
+  "updated_at": "2026-09-05T06:39:01.888Z",
+  "review_policy_frozen_at": "2026-09-05T06:20:44.363Z",
+  "approved_at": "2026-09-05T06:20:44.363Z",
+  "git_boundary": {
+    "version": 1,
+    "starting_git_commit_hash": "58bdf0d7da136b8cc279ca863115734d68dc4410",
+    "starting_branch": "master",
+    "starting_worktree": "clean",
+    "adopted_path_count": 0,
+    "established_at": "2026-09-05T06:20:44.670Z"
+  },
+  "implementation_execution": {
+    "version": 1,
+    "configured_mode": "auto",
+    "effective_mode": "inline",
+    "source": "auto-default",
+    "reason": null,
+    "owner": "foreground-agent",
+    "frozen_at": "2026-09-05T06:20:44.632Z"
+  },
+  "status": "completed",
+  "completed_at": "2026-09-05T06:39:01.838Z",
+  "activity": {
+    "attempt_count": 2,
+    "orchestration_attempt_count": 0,
+    "provider_attempt_count": 2,
+    "provider_attempts": {
+      "total": 2,
+      "completed": 2,
+      "failed": 0,
+      "blocked": 0,
+      "interrupted": 0,
+      "running": 0
+    },
+    "elapsed_ms": 1097475,
+    "agent_duration_ms": 388356,
+    "provider_reported_tokens": null
+  },
+  "delivery_phase": "ready",
+  "delivery_prepared_at": "2026-09-05T06:39:01.887Z"
+}

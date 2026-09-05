@@ -30,6 +30,7 @@ env/
 .journal/
 profile_test/*
 !profile_test/benchmark.py
+!profile_test/benchmark_write_statistics.py
 
 # Agent / assistant config
 .claude/

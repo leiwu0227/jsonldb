@@ -1,0 +1,88 @@
+{
+  "0/dict/upsert": {
+    "baseline": 0.4146455,
+    "candidate": 0.38404150000000004,
+    "speedup": 1.0796893044111118
+  },
+  "0/dict/overwrite": {
+    "baseline": 0.38045850000000003,
+    "candidate": 0.3435005,
+    "speedup": 1.1075922742470536
+  },
+  "0/dict/create": {
+    "baseline": 0.400042,
+    "candidate": 0.3653545,
+    "speedup": 1.094942035748841
+  },
+  "0/df/upsert": {
+    "baseline": 0.452125,
+    "candidate": 0.42274999999999996,
+    "speedup": 1.0694855115316382
+  },
+  "0/df/overwrite": {
+    "baseline": 0.426062,
+    "candidate": 0.3938335,
+    "speedup": 1.0818328049797694
+  },
+  "0/df/create": {
+    "baseline": 0.44883300000000004,
+    "candidate": 0.41841649999999997,
+    "speedup": 1.0726943129632796
+  },
+  "0/lowlevel/upsert": {
+    "baseline": 0.1829375,
+    "candidate": 0.1801665,
+    "speedup": 1.0153802177430322
+  },
+  "0/lowlevel/overwrite": {
+    "baseline": 0.154229,
+    "candidate": 0.1565,
+    "speedup": 0.9854888178913739
+  },
+  "10/dict/upsert": {
+    "baseline": 0.436083,
+    "candidate": 0.3959165,
+    "speedup": 1.1014519475697526
+  },
+  "10/dict/overwrite": {
+    "baseline": 0.4300215,
+    "candidate": 0.3893545,
+    "speedup": 1.104447232534875
+  },
+  "10/dict/create": {
+    "baseline": 0.4180205,
+    "candidate": 0.3883125,
+    "speedup": 1.0765053919201675
+  },
+  "10/df/upsert": {
+    "baseline": 0.507062,
+    "candidate": 0.468333,
+    "speedup": 1.0826954325234395
+  },
+  "10/df/overwrite": {
+    "baseline": 0.5052085,
+    "candidate": 0.47033400000000003,
+    "speedup": 1.0741483711575177
+  },
+  "10/df/create": {
+    "baseline": 0.500625,
+    "candidate": 0.46641699999999997,
+    "speedup": 1.0733420951637698
+  },
+  "10/lowlevel/upsert": {
+    "baseline": 0.1980835,
+    "candidate": 0.19660450000000002,
+    "speedup": 1.0075227169266217
+  },
+  "10/lowlevel/overwrite": {
+    "baseline": 0.191396,
+    "candidate": 0.1947705,
+    "speedup": 0.9826744809917313
+  },
+  "0/summary_only": {
+    "candidate": 0.0020205
+  },
+  "10/summary_only": {
+    "candidate": 0.0021875
+  }
+}

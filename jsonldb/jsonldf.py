@@ -6,6 +6,20 @@ DataFrame-specific operations for JSONLDB.
 import pandas as pd
 from typing import Dict, List, Optional, Union, Any
 from jsonldb.jsonlfile import save_jsonl, load_jsonl, select_jsonl, update_jsonl, delete_jsonl, build_jsonl_index, lint_jsonl
+from jsonldb.jsonlfile import _save_jsonl, _update_jsonl
+
+def _df_records(df):
+    """Validate overwrite uniqueness before converting the records."""
+    if not df.index.is_unique:
+        raise ValueError("DataFrame index must be unique")
+    return df.to_dict('index')
+
+def _save_jsonldf(path, df, timespec=None, meta=None, slot_bytes=None):
+    return _save_jsonl(path, _df_records(df), timespec, meta, slot_bytes,
+                       with_stats=True)
+
+def _update_jsonldf(path, df, timespec=None, meta=None):
+    return _update_jsonl(path, df.to_dict('index'), timespec, meta, with_stats=True)
 
 def save_jsonldf(jsonl_file_path: str, df: pd.DataFrame,
                  timespec: Optional[str] = None,
@@ -20,15 +34,8 @@ def save_jsonldf(jsonl_file_path: str, df: pd.DataFrame,
     Raises:
         ValueError: If DataFrame index is not unique
     """
-    if not df.index.is_unique:
-        raise ValueError("DataFrame index must be unique")
-    
-    # Convert DataFrame to dict using index as keys
-    records_dict = df.to_dict('index')
-    
-    # Save to JSONL
     save_jsonl(
-        jsonl_file_path, records_dict, timespec, meta=meta,
+        jsonl_file_path, _df_records(df), timespec, meta=meta,
         slot_bytes=slot_bytes,
     )
 

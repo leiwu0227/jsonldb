@@ -526,6 +526,16 @@ def save_jsonl(jsonl_file_path: str, db_dict: DataDict,
                timespec: Optional[str] = None, meta: Optional[dict] = None,
                slot_bytes: Optional[int] = None) -> None:
     """Rewrite rows in input order, preserve/configure the slot, and publish the index last."""
+    _save_jsonl(jsonl_file_path, db_dict, timespec, meta, slot_bytes)
+
+def _index_stats(path, index):
+    """Measure the final effective keys without exposing the writer's index."""
+    return dict(min_index=min(index, default=None), max_index=max(index, default=None),
+                size=os.path.getsize(path), count=len(index))
+
+def _save_jsonl(jsonl_file_path, db_dict, timespec=None, meta=None,
+                slot_bytes=None, *, with_stats=False):
+    """Internal save; statistics are requested only by metadata-maintenance callers."""
     _invalidate_index_cache(jsonl_file_path)
     index: IndexDict = {}
     _validate_row_keys(db_dict, timespec)
@@ -554,16 +564,8 @@ def save_jsonl(jsonl_file_path: str, db_dict: DataDict,
             final_slot = metaslot.encode_slot(record, width)
 
     try:
-        # Handle empty legacy dictionary case
-        if not db_dict and width is None:
-            with open(jsonl_file_path, 'wb') as f:
-                pass  # create empty file
-            _write_index(jsonl_file_path, {})
-            return
-
-        # Stream lines to the file while tracking byte offsets
         byte_offset = width or 0
-        with open(jsonl_file_path, 'wb', buffering=BUFFER_SIZE) as f:
+        with open(jsonl_file_path, 'wb', buffering=BUFFER_SIZE if db_dict or width else -1) as f:
             if placeholder is not None:
                 # The absent-record placeholder reserves offsets. The actual
                 # record is published only after every row has been flushed.
@@ -580,12 +582,11 @@ def save_jsonl(jsonl_file_path: str, db_dict: DataDict,
                 f.seek(0)
                 f.write(final_slot)
 
-        # Write index (OPT_SORT_KEYS sorts on dump)
         _write_index(jsonl_file_path, index)
 
     except OSError as e:
         raise OSError(f"Failed to save JSONL file {jsonl_file_path}: {str(e)}")
-
+    return _index_stats(jsonl_file_path, index) if with_stats else None
 
 def save_jsonl_atomic(jsonl_file_path: str, db_dict: DataDict,
                       timespec: Optional[str] = None) -> None:
@@ -824,6 +825,11 @@ def update_jsonl(jsonl_file_path: str, update_dict: DataDict,
                  timespec: Optional[str] = None,
                  meta: Optional[dict] = None) -> None:
     """Upsert rows in place when they fit, otherwise append and blank old rows."""
+    _update_jsonl(jsonl_file_path, update_dict, timespec, meta)
+
+def _update_jsonl(jsonl_file_path, update_dict, timespec=None, meta=None,
+                  *, with_stats=False):
+    """Internal upsert with an optional post-publication statistics result."""
     _invalidate_index_cache(jsonl_file_path)
     _validate_row_keys(update_dict, timespec)
     encoded_meta = None
@@ -841,7 +847,6 @@ def update_jsonl(jsonl_file_path: str, update_dict: DataDict,
         appends = []
         old_lines = []
 
-        # Process records
         with open(jsonl_file_path, 'rb+', buffering=BUFFER_SIZE) as f:
             f.seek(0, os.SEEK_END)
             # Heal a missing trailing newline so appends start on a fresh line
@@ -895,11 +900,11 @@ def update_jsonl(jsonl_file_path: str, update_dict: DataDict,
 
             _blank_old_lines(f, old_lines)
 
-        # Update index
         _write_index(jsonl_file_path, index)
 
     except OSError as e:
         raise OSError(f"Failed to update JSONL file {jsonl_file_path}: {str(e)}")
+    return _index_stats(jsonl_file_path, index) if with_stats else None
 
 def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey], timespec: Optional[str] = None) -> None:
     """Blank selected rows without moving others, then publish the reduced index."""

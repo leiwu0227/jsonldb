@@ -1,0 +1,7 @@
+{
+  "jsonldb/jsonlfile.py": "4e86fa6505406e0aad720eaa8fe36ded00e7921a88b5929c6c01c4346eaed859",
+  "jsonldb/jsonldf.py": "9a987450375db4fe30becdeb51bf23505f36955a328bf1293f45a55320ec5923",
+  "jsonldb/folderdb.py": "c10326610985553c35964817ce01ba94bab44542a43632c9667878776c45c960",
+  "unit_tests/test_write_statistics.py": "8cb8f34dbf50355a250b0442e0134ec935bc052298542c1da4442364eadaf668",
+  "profile_test/benchmark_write_statistics.py": "477325a93daa688ca563fa1b0cd7cace98687bd09de428905ff7e3ea1df237b5"
+}

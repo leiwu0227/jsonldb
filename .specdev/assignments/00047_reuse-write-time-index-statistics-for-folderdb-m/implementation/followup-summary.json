@@ -1,0 +1,45 @@
+{
+  "10/dict/upsert": {
+    "baseline": 0.4392505,
+    "candidate": 0.4031665,
+    "speedup": 1.0895014838782489
+  },
+  "10/dict/overwrite": {
+    "baseline": 0.42520800000000003,
+    "candidate": 0.40537500000000004,
+    "speedup": 1.0489250693802035
+  },
+  "10/dict/create": {
+    "baseline": 0.411354,
+    "candidate": 0.404334,
+    "speedup": 1.0173618839870007
+  },
+  "10/df/upsert": {
+    "baseline": 0.494396,
+    "candidate": 0.4830215,
+    "speedup": 1.023548641209553
+  },
+  "10/df/overwrite": {
+    "baseline": 0.496521,
+    "candidate": 0.4936665,
+    "speedup": 1.0057822436807033
+  },
+  "10/df/create": {
+    "baseline": 0.509292,
+    "candidate": 0.4720625,
+    "speedup": 1.0788656163113994
+  },
+  "10/lowlevel/upsert": {
+    "baseline": 0.1938745,
+    "candidate": 0.19868750000000002,
+    "speedup": 0.9757760301981755
+  },
+  "10/lowlevel/overwrite": {
+    "baseline": 0.195771,
+    "candidate": 0.196938,
+    "speedup": 0.9940742771836821
+  },
+  "10/summary_only": {
+    "candidate": 0.002229
+  }
+}

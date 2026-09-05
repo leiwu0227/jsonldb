@@ -1,0 +1,290 @@
+{
+  "version": 1,
+  "kind": "standalone_assignment_candidate",
+  "completeness": "complete",
+  "identity": "dc02df8fd7dac7c2e154619466b2a6ad88acc59df34fa5fe97d4ee99e94a8485",
+  "assignment": {
+    "id": "00047",
+    "folder": "00047_reuse-write-time-index-statistics-for-folderdb-m"
+  },
+  "implementation_execution": {
+    "version": 1,
+    "configured_mode": "auto",
+    "effective_mode": "inline",
+    "source": "auto-default",
+    "reason": null,
+    "owner": "foreground-agent",
+    "frozen_at": "2026-09-05T06:20:44.632Z"
+  },
+  "contract": {
+    "path": ".specdev/assignments/00047_reuse-write-time-index-statistics-for-folderdb-m/brainstorm/contract.md",
+    "hash": "4a36872b26ad8345dfc49d3951956c591aa5a1241681c8e4d843dddf797e07f5"
+  },
+  "acceptance": {
+    "total": 3,
+    "items": [
+      {
+        "id": "AC-1",
+        "evidence": "295 passing focused tests, including 49 new cases; 66 public signatures and 40 byte-identical storage snapshots independently compared with 58bdf0d.",
+        "result": "passed"
+      },
+      {
+        "id": "AC-2",
+        "evidence": "Injected row/index/metadata failures, plural partial completion, cache invalidation, validation, corrupt-index refresh/rebuild/lint, and existing slot/recovery suites all pass.",
+        "result": "passed"
+      },
+      {
+        "id": "AC-3",
+        "evidence": "Guarded post-publication reads prove no table/index reload; ordinary low-level writes reject summary computation in tests. Four alternating benchmark pairs show 100k upserts improve 1.492x dict and 1.539x DataFrame; complete small/large/...",
+        "result": "passed"
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 3,
+      "failed": 0,
+      "blocked": 0,
+      "missing": 0
+    }
+  },
+  "verification": {
+    "total": 4,
+    "items": [
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest -q -p no:cacheprovider unit_tests/test_write_statistics.py unit_tests/test_index_cache.py unit_tests/test_jsonlfile.py unit_tests/test_jsonldf.py unit_tests/test_folderdb.py unit_te...",
+        "revision": "working-tree@58bdf0d7da136b8cc279ca863115734d68dc4410",
+        "scope": "295 focused tests, including 49 new publication/statistics cases",
+        "status": "passed",
+        "duration_ms": 2040,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 .specdev/assignments/00047_reuse-write-time-index-statistics-for-folderdb-m/implementation/verify_compatibility.py .specdev/cache/write-statistics-baseline",
+        "revision": "working-tree@58bdf0d7da136b8cc279ca863115734d68dc4410",
+        "scope": "66 public signatures and 40 byte-identical storage snapshots versus 58bdf0d",
+        "status": "passed",
+        "duration_ms": 478,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 profile_test/benchmark_write_statistics.py --save .specdev/cache/write-statistics-candidate.json --compare .specdev/cache/write-statistics-baseline.json",
+        "revision": "working-tree@58bdf0d7da136b8cc279ca863115734d68dc4410",
+        "scope": "Repeated final benchmark commands and all sample evidence documented in implementation/performance.md; four alternating pairs plus dense small-table follow-ups",
+        "status": "passed",
+        "duration_ms": 4596,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "git diff --check",
+        "revision": "working-tree@58bdf0d7da136b8cc279ca863115734d68dc4410",
+        "scope": "Whitespace check; source line counts 950/134/1188 verified; extracted staged-snapshot benchmark execution also passed (performance.md)",
+        "status": "passed",
+        "duration_ms": 12,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "missing": 0
+    },
+    "by_role": {
+      "qualification": {
+        "passed": 0,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      },
+      "authoritative_acceptance": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      }
+    },
+    "raw": {
+      "total": 4,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 4,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "effective": {
+      "total": 4,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 4,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "superseded": 0,
+    "authoritative_evidence": [
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest -q -p no:cacheprovider unit_tests/test_write_statistics.py unit_tests/test_index_cache.py unit_tests/test_jsonlfile.py unit_tests/test_jsonldf.py unit_tests/test_folderdb.py unit_te...",
+        "revision": "working-tree@58bdf0d7da136b8cc279ca863115734d68dc4410",
+        "status": "passed"
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 .specdev/assignments/00047_reuse-write-time-index-statistics-for-folderdb-m/implementation/verify_compatibility.py .specdev/cache/write-statistics-baseline",
+        "revision": "working-tree@58bdf0d7da136b8cc279ca863115734d68dc4410",
+        "status": "passed"
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 profile_test/benchmark_write_statistics.py --save .specdev/cache/write-statistics-candidate.json --compare .specdev/cache/write-statistics-baseline.json",
+        "revision": "working-tree@58bdf0d7da136b8cc279ca863115734d68dc4410",
+        "status": "passed"
+      },
+      {
+        "command": "git diff --check",
+        "revision": "working-tree@58bdf0d7da136b8cc279ca863115734d68dc4410",
+        "status": "passed"
+      }
+    ],
+    "authoritative_evidence_omitted": 0
+  },
+  "changed_project_paths": {
+    "count": 6,
+    "groups": [
+      {
+        "name": "(root)",
+        "count": 1,
+        "paths": [
+          ".gitignore"
+        ],
+        "omitted": 0
+      },
+      {
+        "name": "jsonldb",
+        "count": 3,
+        "paths": [
+          "jsonldb/folderdb.py",
+          "jsonldb/jsonldf.py",
+          "jsonldb/jsonlfile.py"
+        ],
+        "omitted": 0
+      },
+      {
+        "name": "profile_test",
+        "count": 1,
+        "paths": [
+          "profile_test/benchmark_write_statistics.py"
+        ],
+        "omitted": 0
+      },
+      {
+        "name": "unit_tests",
+        "count": 1,
+        "paths": [
+          "unit_tests/test_write_statistics.py"
+        ],
+        "omitted": 0
+      }
+    ],
+    "omitted_groups": 0
+  },
+  "unresolved_risks": {
+    "status": "present",
+    "items": [
+      "No unresolved implementation blocker. The existing single-writer and multi-file",
+      "failure model remains unchanged. Gains depend on workload: large one-row upserts",
+      "improve about 1.49–1.54x, whereas large creates/overwrites improve 1.07–1.16x.",
+      "Short small-table measurements are noisy; a negative short-run result and denser",
+      "follow-ups are retained in implementation/performance.md. No universal or twofold",
+      "gain is claimed. Full-suite execution was not performed."
+    ],
+    "source": "canonical_section"
+  },
+  "artifacts": {
+    "contract": {
+      "path": ".specdev/assignments/00047_reuse-write-time-index-statistics-for-folderdb-m/brainstorm/contract.md",
+      "exists": true,
+      "digest": "4a36872b26ad8345dfc49d3951956c591aa5a1241681c8e4d843dddf797e07f5"
+    },
+    "plan": {
+      "path": ".specdev/assignments/00047_reuse-write-time-index-statistics-for-folderdb-m/design/plan.md",
+      "exists": true,
+      "digest": "1a07c277e8620a06cced5cf9168001a905bfb0b0c0e3556f0f34d9833a197bac"
+    },
+    "progress": {
+      "path": ".specdev/assignments/00047_reuse-write-time-index-statistics-for-folderdb-m/implementation/progress.json",
+      "exists": true,
+      "digest": "2d67d64003e2d422e5d9413cdec880363d45f11fc901b2aa469e696dde6cf32c"
+    },
+    "outcome": {
+      "path": ".specdev/assignments/00047_reuse-write-time-index-statistics-for-folderdb-m/outcome.md",
+      "exists": true,
+      "digest": "8ed9bf5876f012df04ca2d42269b1fb7fc88922bd2d089842fdec80f7b7a43e1"
+    }
+  },
+  "issues": [],
+  "issues_omitted": 0
+}

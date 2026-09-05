@@ -1,0 +1,174 @@
+{
+  "0/dict/upsert": {
+    "baseline": 0.4219165,
+    "candidate": 0.393208,
+    "speedup": 1.073010976378914
+  },
+  "0/dict/overwrite": {
+    "baseline": 0.381313,
+    "candidate": 0.3487085,
+    "speedup": 1.0935007319867456
+  },
+  "0/dict/create": {
+    "baseline": 0.397062,
+    "candidate": 0.3789795,
+    "speedup": 1.0477136626123578
+  },
+  "0/df/upsert": {
+    "baseline": 0.5468744999999999,
+    "candidate": 0.48702100000000004,
+    "speedup": 1.1228971645986516
+  },
+  "0/df/overwrite": {
+    "baseline": 0.48862500000000003,
+    "candidate": 0.4502085,
+    "speedup": 1.0853304635518877
+  },
+  "0/df/create": {
+    "baseline": 0.445959,
+    "candidate": 0.41452100000000003,
+    "speedup": 1.075841754700003
+  },
+  "0/lowlevel/upsert": {
+    "baseline": 0.1877915,
+    "candidate": 0.1862705,
+    "speedup": 1.0081655441951356
+  },
+  "0/lowlevel/overwrite": {
+    "baseline": 0.1531875,
+    "candidate": 0.185771,
+    "speedup": 0.824603947871304
+  },
+  "10/dict/upsert": {
+    "baseline": 0.49262449999999997,
+    "candidate": 0.45585450000000005,
+    "speedup": 1.0806617023633636
+  },
+  "10/dict/overwrite": {
+    "baseline": 0.4364795,
+    "candidate": 0.39181299999999997,
+    "speedup": 1.1139995354926968
+  },
+  "10/dict/create": {
+    "baseline": 0.41829150000000004,
+    "candidate": 0.382,
+    "speedup": 1.0950039267015708
+  },
+  "10/df/upsert": {
+    "baseline": 0.5002295,
+    "candidate": 0.4687915,
+    "speedup": 1.0670617961289826
+  },
+  "10/df/overwrite": {
+    "baseline": 0.5239795,
+    "candidate": 0.5018545,
+    "speedup": 1.0440864832336865
+  },
+  "10/df/create": {
+    "baseline": 0.4995625,
+    "candidate": 0.45789599999999997,
+    "speedup": 1.0909955535754845
+  },
+  "10/lowlevel/upsert": {
+    "baseline": 0.1944795,
+    "candidate": 0.19056299999999998,
+    "speedup": 1.020552258308276
+  },
+  "10/lowlevel/overwrite": {
+    "baseline": 0.21120850000000002,
+    "candidate": 0.23631249999999998,
+    "speedup": 0.8937677862999208
+  },
+  "1000/dict/upsert": {
+    "baseline": 0.570125,
+    "candidate": 0.508562,
+    "speedup": 1.1210530869392523
+  },
+  "1000/dict/overwrite": {
+    "baseline": 0.887667,
+    "candidate": 0.8163545000000001,
+    "speedup": 1.0873548195054965
+  },
+  "1000/dict/create": {
+    "baseline": 0.8809375,
+    "candidate": 0.8071665,
+    "speedup": 1.0913950219688255
+  },
+  "1000/df/upsert": {
+    "baseline": 0.6264160000000001,
+    "candidate": 0.570667,
+    "speedup": 1.097690947610428
+  },
+  "1000/df/overwrite": {
+    "baseline": 1.4136665000000002,
+    "candidate": 1.3164165,
+    "speedup": 1.073874795704855
+  },
+  "1000/df/create": {
+    "baseline": 1.4129375,
+    "candidate": 1.319417,
+    "speedup": 1.0708801690443581
+  },
+  "1000/lowlevel/upsert": {
+    "baseline": 0.266146,
+    "candidate": 0.270208,
+    "speedup": 0.9849671364282331
+  },
+  "1000/lowlevel/overwrite": {
+    "baseline": 0.593167,
+    "candidate": 0.579,
+    "speedup": 1.02446804835924
+  },
+  "100000/dict/upsert": {
+    "baseline": 15.2768125,
+    "candidate": 10.481895999999999,
+    "speedup": 1.4574474408065108
+  },
+  "100000/dict/overwrite": {
+    "baseline": 45.687062499999996,
+    "candidate": 40.5988545,
+    "speedup": 1.125328856261203
+  },
+  "100000/dict/create": {
+    "baseline": 45.496521,
+    "candidate": 39.951125000000005,
+    "speedup": 1.1388045017505763
+  },
+  "100000/df/upsert": {
+    "baseline": 14.986917,
+    "candidate": 10.118187500000001,
+    "speedup": 1.4811859337455446
+  },
+  "100000/df/overwrite": {
+    "baseline": 94.32875,
+    "candidate": 89.27977100000001,
+    "speedup": 1.0565523291944823
+  },
+  "100000/df/create": {
+    "baseline": 92.7666875,
+    "candidate": 88.8206045,
+    "speedup": 1.044427562976111
+  },
+  "100000/lowlevel/upsert": {
+    "baseline": 8.063729,
+    "candidate": 8.1687705,
+    "speedup": 0.9871410881233595
+  },
+  "100000/lowlevel/overwrite": {
+    "baseline": 38.014375,
+    "candidate": 38.3555625,
+    "speedup": 0.9911046148782202
+  },
+  "0/summary_only": {
+    "candidate": 0.002333
+  },
+  "10/summary_only": {
+    "candidate": 0.003875
+  },
+  "1000/summary_only": {
+    "candidate": 0.0207085
+  },
+  "100000/summary_only": {
+    "candidate": 1.8262079999999998
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "T-1",
+      "status": "completed"
+    },
+    {
+      "id": "T-2",
+      "status": "completed"
+    },
+    {
+      "id": "T-3",
+      "status": "completed"
+    }
+  ],
+  "selected_guides": {
+    "implementation": [
+      "api-security"
+    ],
+    "review": [
+      "api-security"
+    ]
+  },
+  "verification": [
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest -q -p no:cacheprovider unit_tests/test_write_statistics.py unit_tests/test_index_cache.py unit_tests/test_jsonlfile.py unit_tests/test_jsonldf.py unit_tests/test_folderdb.py unit_tests/test_lint_integrity.py unit_tests/test_lint_compaction.py unit_tests/test_metadata_slot_migration.py unit_tests/test_unknown_metadata_lint.py unit_tests/test_reports.py unit_tests/test_metadata_upkeep.py unit_tests/test_hierarchy_recovery.py unit_tests/test_clear_configuration.py",
+      "revision": "working-tree@58bdf0d7da136b8cc279ca863115734d68dc4410",
+      "scope": "295 focused tests, including 49 new publication/statistics cases",
+      "status": "passed",
+      "role": "authoritative_acceptance",
+      "duration_ms": 2040
+    },
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 .specdev/assignments/00047_reuse-write-time-index-statistics-for-folderdb-m/implementation/verify_compatibility.py .specdev/cache/write-statistics-baseline",
+      "revision": "working-tree@58bdf0d7da136b8cc279ca863115734d68dc4410",
+      "scope": "66 public signatures and 40 byte-identical storage snapshots versus 58bdf0d",
+      "status": "passed",
+      "role": "authoritative_acceptance",
+      "duration_ms": 478
+    },
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 profile_test/benchmark_write_statistics.py --save .specdev/cache/write-statistics-candidate.json --compare .specdev/cache/write-statistics-baseline.json",
+      "revision": "working-tree@58bdf0d7da136b8cc279ca863115734d68dc4410",
+      "scope": "Repeated final benchmark commands and all sample evidence documented in implementation/performance.md; four alternating pairs plus dense small-table follow-ups",
+      "status": "passed",
+      "role": "authoritative_acceptance",
+      "duration_ms": 4596
+    },
+    {
+      "command": "git diff --check",
+      "revision": "working-tree@58bdf0d7da136b8cc279ca863115734d68dc4410",
+      "scope": "Whitespace check; source line counts 950/134/1188 verified; extracted staged-snapshot benchmark execution also passed (performance.md)",
+      "status": "passed",
+      "role": "authoritative_acceptance",
+      "duration_ms": 12
+    }
+  ],
+  "deviations": [],
+  "follow_up": "none",
+  "selected_guide_versions": {
+    "implementation": [
+      {
+        "id": "api-security",
+        "version": "1"
+      }
+    ],
+    "review": [
+      {
+        "id": "api-security",
+        "version": "1"
+      }
+    ]
+  }
+}
