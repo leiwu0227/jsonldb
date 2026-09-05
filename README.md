@@ -71,6 +71,20 @@ Keys are ordered by their serialized text representation. Use strings whose
 lexicographic order matches the intended range order, such as zero-padded
 numeric strings.
 
+New `FolderDB` table names may contain ASCII letters, digits, underscores,
+hyphens and dots, for example `prices.2024-01-01`. The optional `.jsonl`
+suffix is still accepted. Empty names, leading/trailing dots, consecutive dots,
+empty hierarchy segments, spaces, path separators and other special characters
+are rejected. `_meta` (case-insensitive) and Windows device names such as `CON`,
+`NUL`, `COM1` and `LPT1` are reserved, including device names with extensions and
+device names used as hierarchy directories. Invalid new names raise `ValueError`
+before folders or files are created. Names are never silently changed.
+
+These creation rules do not rename or exclude existing tables: they remain
+readable, writable and maintainable under their historical names. Database
+metadata always treats table names as strings; datetime conversion applies only
+to row keys in user tables. Low-level file-store APIs continue accepting paths.
+
 Repeated point and range reads automatically reuse unchanged indexes in a
 private process-local cache. The cache checks both files on every read and uses
 a 64 MiB budget for conservatively accounted retained index objects; it does not

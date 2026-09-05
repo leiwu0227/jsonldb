@@ -5,6 +5,7 @@ Each table is stored in a separate JSONL file.
 
 import os
 import logging
+import re
 import pandas as pd
 from typing import Dict, List, Optional, Any, NamedTuple
 from datetime import datetime
@@ -317,7 +318,7 @@ class FolderDB:
         """
         if not os.path.exists(self.dbmeta_path):
             return None
-        metadata = select_jsonl(self.dbmeta_path)
+        metadata = select_jsonl(self.dbmeta_path, auto_deserialize=False)
         for info in metadata.values():
             if not isinstance(info, dict):
                 continue
@@ -379,7 +380,7 @@ class FolderDB:
         
         # Get metadata
         if os.path.exists(self.dbmeta_path):
-            metadata = select_jsonl(self.dbmeta_path)
+            metadata = select_jsonl(self.dbmeta_path, auto_deserialize=False)
             result += f"Found {len(metadata)} JSONL files\n\n"
             
             for name, info in metadata.items():
@@ -441,15 +442,30 @@ class FolderDB:
 
     def _get_or_create_file_path(self, name: str) -> str:
         """Get the full path for a JSONL file, creating folders as needed (for writes)"""
-        if self.use_hierarchy and not self.validate_name(name):
-            raise ValueError(f"Invalid hierarchical name '{name}'. Name must contain at least {self.hierarchy_depth-1} '{self.delimiter}' delimiters")
+        if not isinstance(name, str):
+            raise ValueError('Table name must be a string')
+        file_path = self._get_file_path(name)
+        if not os.path.isfile(file_path):
+            self._validate_new_table_name(name)
+        self.create_folder(self._get_hierarchy_path(name))
+        return file_path
 
-        folder_path = self._get_hierarchy_path(name)
-        self.create_folder(folder_path) #create the folder if it doesn't exist
-
-        if name.endswith('.jsonl'):
-            return os.path.join(folder_path, name)
-        return os.path.join(folder_path, f"{name}.jsonl")
+    def _validate_new_table_name(self, name: str) -> None:
+        """Apply portable creation rules without excluding historical tables."""
+        stem = name[:-6] if name.endswith('.jsonl') else name
+        segments = stem.split(self.delimiter) if self.use_hierarchy else [stem]
+        components = [stem] + (segments[:self.hierarchy_depth] if self.use_hierarchy else [])
+        reserved = {'CON', 'PRN', 'AUX', 'NUL'}
+        reserved.update('%s%d' % (prefix, n) for prefix in ('COM', 'LPT') for n in range(1, 10))
+        if (re.fullmatch(r'[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*', stem) is None
+                or stem.lower() == '_meta'
+                or any(not segment or segment.startswith('.') or segment.endswith('.')
+                       for segment in segments)
+                or any(component.split('.')[0].upper() in reserved for component in components)):
+            raise ValueError(
+                'Invalid new table name %r: use ASCII letters, digits, underscores, '
+                'hyphens and dots; empty segments, leading/trailing dots and reserved '
+                'filenames are not allowed' % name)
     
     def _get_file_name(self, name: str) -> str:
         """Get the name of a JSONL file"""
@@ -919,7 +935,7 @@ class FolderDB:
         """
         if not os.path.exists(self.dbmeta_path):
             self.build_dbmeta()
-        return load_jsonl(self.dbmeta_path)
+        return load_jsonl(self.dbmeta_path, auto_deserialize=False)
     
     def delete_dbmeta(self, name: str) -> None:
         """
@@ -969,7 +985,7 @@ class FolderDB:
         if not os.path.exists(meta_file):
             self.build_dbmeta()
 
-        metadata = select_jsonl(meta_file)
+        metadata = select_jsonl(meta_file, auto_deserialize=False)
         names = sorted(set(metadata) | set(self.get_file_list()))
         logger.info("found %d JSONL files to lint in %s",
                     len(names), self.folder_path)
