@@ -564,10 +564,9 @@ def _save_jsonl(jsonl_file_path, db_dict, timespec=None, meta=None,
     placeholder = final_slot = None
     if width is not None:
         placeholder = metaslot.encode_slot(None, width)
-        record = meta if meta is not None else (existing_slot.record if existing_slot else None)
-        final_slot = (existing_slot.raw_line
-                      if meta is None and existing_slot is not None and slot_bytes is None
-                      else metaslot.encode_slot(record, width))
+        final_slot = (metaslot.encode_slot(meta, width) if meta is not None else
+                      existing_slot.raw_line if existing_slot is not None and slot_bytes is None
+                      else metaslot._preserve_slot(existing_slot, width))
 
     try:
         byte_offset = width or 0
@@ -635,7 +634,7 @@ def migrate_jsonl_slot(jsonl_file_path: str, slot_bytes: int) -> bool:
     """
     _invalidate_index_cache(jsonl_file_path)
     info = metaslot.inspect_file(jsonl_file_path)
-    slot = metaslot.encode_slot(info.record if info.is_slot else None, slot_bytes)
+    slot = metaslot._preserve_slot(info, slot_bytes)
     if info.is_slot and info.width == slot_bytes:
         build_jsonl_index(jsonl_file_path)
         return False

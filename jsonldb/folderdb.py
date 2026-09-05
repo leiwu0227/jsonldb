@@ -816,7 +816,7 @@ class FolderDB:
             tables.append((name, file_path, info))
             if info.is_slot:
                 try:
-                    jsonlfile.metaslot.encode_slot(info.record, width)
+                    jsonlfile.metaslot._preserve_slot(info, width)
                 except (TypeError, ValueError):
                     blockers.append(name)
 

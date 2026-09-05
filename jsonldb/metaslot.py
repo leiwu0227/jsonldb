@@ -89,13 +89,11 @@ def inspect_file(file_path: str) -> SlotInfo:
     return classify_line(line)
 
 
-def lint_slot(info: Optional[SlotInfo], width: Optional[int] = None) -> Optional[bytes]:
-    """Choose lint's slot bytes, preserving opaque unknown-version envelopes."""
-    if width is not None and (type(width) is not int or width <= 0):
+def _preserve_slot(info: Optional[SlotInfo], width: int) -> bytes:
+    """Fit an existing envelope without interpreting an unknown version."""
+    if type(width) is not int or width <= 0:
         raise ValueError("metadata slot width must be a positive integer")
     if info is not None and info.is_unknown_version:
-        if width is None:
-            return info.raw_line if info.raw_line.endswith(b'\n') else info.raw_line + b'\n'
         if width == info.width and info.raw_line.endswith(b'\n'):
             return info.raw_line
         content = info.raw_line.rstrip()
@@ -105,11 +103,16 @@ def lint_slot(info: Optional[SlotInfo], width: Optional[int] = None) -> Optional
                 "metadata envelope requires %d bytes but slot is %d bytes"
                 % (required, width))
         return content + b' ' * (width - required) + b'\n'
+    record = info.record if info is not None and info.is_slot else None
+    return encode_slot(record, width)
+
+
+def lint_slot(info: Optional[SlotInfo], width: Optional[int] = None) -> Optional[bytes]:
+    """Choose lint's slot bytes, preserving opaque unknown-version envelopes."""
     if width is not None:
-        record = info.record if info is not None and info.is_slot else None
-        return encode_slot(record, width)
+        return _preserve_slot(info, width)
     if info is not None and info.is_slot:
-        if type(info.version) is int and info.version == CURRENT_VERSION:
+        if info.is_unknown_version or (type(info.version) is int and info.version == CURRENT_VERSION):
             return info.raw_line if info.raw_line.endswith(b'\n') else info.raw_line + b'\n'
         try:
             return encode_slot(None, info.width)
