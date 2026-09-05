@@ -138,6 +138,12 @@ db.delete_file("users")
 Use `delete_range(["table_a", "table_b"], lower_key, upper_key)` to remove the
 same inclusive range from multiple tables.
 
+`clear_folder(force=True)` removes tables and their indexes under non-hidden
+folders and resets table statistics. It preserves database configuration,
+including hierarchy, delimiter, datetime precision, and metadata-slot width, so
+the existing instance and a reopened database retain the same settings. Without
+`force=True`, it only warns and leaves the database unchanged.
+
 ## Metadata and Linting
 
 ```python

@@ -717,9 +717,7 @@ class FolderDB:
 
     # =============== Delete Operations ===============
     def clear_folder(self, force: bool = False) -> None:
-        """
-        Clear all JSONL files in the database folder.
-        """
+        """Clear visible tables and statistics while retaining configuration."""
         if not force:
             logger.warning(
                 "This will delete all data in the database folder. "
@@ -730,7 +728,7 @@ class FolderDB:
             # Skip hidden/system directories (e.g. .git, .invalid_tickers)
             dirs[:] = [d for d in dirs if not d.startswith('.')]
             for file in files:
-                if file.endswith(('.idx', '.jsonl', '.meta')):
+                if file.endswith(('.jsonl', '.jsonl.idx')):
                     os.remove(os.path.join(root, file))
         self.delete_empty_folders()
         self.build_dbmeta()
