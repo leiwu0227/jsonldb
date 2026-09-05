@@ -353,9 +353,6 @@ def lint_jsonl(jsonl_file_path: str, force: bool = False,
     """Restore fidelity and canonical layout with a fresh-index fast path."""
     if not os.path.exists(jsonl_file_path):
         return False
-    if os.path.getsize(jsonl_file_path) == 0 and slot_bytes is None:
-        ensure_index_exists(jsonl_file_path)
-        return True
     index, fresh = _lint_load_index(jsonl_file_path)
     return _lint_file(jsonl_file_path, index, force or not fresh, slot_bytes)
 def _is_datetime_string(linekey: str, timespec: Optional[str] = None) -> bool:

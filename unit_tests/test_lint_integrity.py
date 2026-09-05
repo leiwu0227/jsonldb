@@ -30,6 +30,29 @@ def _assert_canonical(path, rows, slot_bytes=None, meta=None):
 
 
 @pytest.mark.parametrize('force', [False, True])
+@pytest.mark.parametrize('index_bytes', [
+    None, b'', b'{', b'[]', b'{"ghost":0}', b'{}',
+], ids=['missing', 'empty', 'malformed', 'non-object', 'phantom', 'canonical'])
+def test_empty_table_lint_repairs_index_without_rewriting_data(
+        tmp_path, force, index_bytes):
+    path = tmp_path / 'empty.jsonl'
+    path.write_bytes(b'')
+    original = path.stat()
+    index_path = tmp_path / 'empty.jsonl.idx'
+    if index_bytes is not None:
+        index_path.write_bytes(index_bytes)
+        fresh = original.st_mtime_ns + 1_000_000_000
+        os.utime(index_path, ns=(fresh, fresh))
+
+    assert jsonlfile.lint_jsonl(str(path), force=force) is True
+
+    assert index_path.read_bytes() == b'{}'
+    assert path.read_bytes() == b''
+    assert path.stat().st_ino == original.st_ino
+    assert path.stat().st_mtime_ns == original.st_mtime_ns
+
+
+@pytest.mark.parametrize('force', [False, True])
 def test_standalone_lint_converges_metadata_only_missing_newline(
         tmp_path, caplog, force):
     path = tmp_path / 'metadata-only.jsonl'
