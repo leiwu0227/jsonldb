@@ -276,6 +276,9 @@ def _lint_rewrite(jsonl_file_path: str, index: dict, slot: Optional[bytes]) -> N
         info = metaslot.inspect_file(jsonl_file_path) if old_size else None
         if info is not None and info.is_slot and slot == info.raw_line:
             kept.append((0, len(info.raw_line)))
+        elif (info is not None and info.is_unknown_version and slot is not None
+              and slot.rstrip() == info.raw_line.rstrip()):
+            kept.append((0, len(info.raw_line.rstrip())))
         removed = _lint_removed(jsonl_file_path, kept, old_size)
         os.replace(tmp_path, jsonl_file_path)
         _log_lint_removed(jsonl_file_path, removed)
@@ -299,20 +302,7 @@ def _lint_file(jsonl_file_path: str, index: dict, force: bool,
                slot_bytes: Optional[int]) -> bool:
     size = os.path.getsize(jsonl_file_path)
     info = metaslot.inspect_file(jsonl_file_path) if size else None
-    desired_slot = None
-    if slot_bytes is not None:
-        record = info.record if info is not None and info.is_slot else None
-        desired_slot = metaslot.encode_slot(record, slot_bytes)
-    elif info is not None and info.is_slot:
-        if info.version != metaslot.CURRENT_VERSION:
-            try:
-                desired_slot = metaslot.encode_slot(None, info.width)
-            except ValueError:
-                pass
-        else:
-            desired_slot = (info.raw_line + b'\n'
-                            if not info.raw_line.endswith(b'\n')
-                            else info.raw_line)
+    desired_slot = metaslot.lint_slot(info, slot_bytes)
     if not _lint_index_valid(jsonl_file_path, index, force):
         build_jsonl_index(jsonl_file_path, warn_invalid=False)
         index = load_index(jsonl_file_path)

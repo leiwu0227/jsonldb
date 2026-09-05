@@ -19,6 +19,11 @@ class SlotInfo(NamedTuple):
     version: Optional[int]
     raw_line: bytes
 
+    @property
+    def is_unknown_version(self) -> bool:
+        return (self.is_slot and type(self.version) is int
+                and self.version != CURRENT_VERSION)
+
 
 def _looks_like_torn_slot(line: bytes) -> bool:
     """Recognize the stable reserved-key prefix when the envelope is torn."""
@@ -82,6 +87,35 @@ def inspect_file(file_path: str) -> SlotInfo:
     if not line:
         return SlotInfo(False, 0, None, None, b'')
     return classify_line(line)
+
+
+def lint_slot(info: Optional[SlotInfo], width: Optional[int] = None) -> Optional[bytes]:
+    """Choose lint's slot bytes, preserving opaque unknown-version envelopes."""
+    if width is not None and (type(width) is not int or width <= 0):
+        raise ValueError("metadata slot width must be a positive integer")
+    if info is not None and info.is_unknown_version:
+        if width is None:
+            return info.raw_line if info.raw_line.endswith(b'\n') else info.raw_line + b'\n'
+        if width == info.width and info.raw_line.endswith(b'\n'):
+            return info.raw_line
+        content = info.raw_line.rstrip()
+        required = len(content) + 1
+        if required > width:
+            raise ValueError(
+                "metadata envelope requires %d bytes but slot is %d bytes"
+                % (required, width))
+        return content + b' ' * (width - required) + b'\n'
+    if width is not None:
+        record = info.record if info is not None and info.is_slot else None
+        return encode_slot(record, width)
+    if info is not None and info.is_slot:
+        if type(info.version) is int and info.version == CURRENT_VERSION:
+            return info.raw_line if info.raw_line.endswith(b'\n') else info.raw_line + b'\n'
+        try:
+            return encode_slot(None, info.width)
+        except ValueError:
+            pass
+    return None
 
 
 def read_slot(file_path: str) -> Optional[Any]:
