@@ -1,6 +1,6 @@
 # JSONL File Store
 
-The file store is the lowest layer: a set of functions that treat one `.jsonl` file as an ordered key-value table with an optional metadata slot. It has no notion of folders or databases; every function takes a path. Higher layers compose it and pass down the database settings.
+The file store treats one `.jsonl` file as an ordered key-value table with an optional metadata slot. Every function takes a path; higher layers supply database settings and folder organization.
 
 ## Record format
 
@@ -11,11 +11,13 @@ One record per line, one line per record:
 {"2024-01-01T09:31:00": {"open": 101.4, "volume": 3900}}
 ```
 
-The single top-level key is the serialized linekey; its value is the record. Lines are UTF-8, newline-terminated, and serialized with orjson, which also accepts NumPy scalars. Blank lines are legal and mean "nothing here"; they are how deletions and moved records leave their old space behind. Line one may instead be a metadata slot: a padded single-key object under the reserved key `_meta`, defined in the metadata-slot note.
+The single top-level key is the serialized linekey; its value is the record. orjson produces newline-terminated UTF-8 bytes, written without intermediate text conversion, and supports NumPy scalars. Blank lines represent space left by deleted or moved records. Line one may instead be a metadata slot: a padded single-key object under the reserved key `_meta`, defined in the metadata-slot note.
 
 ## Key handling
 
-Every public function accepts linekeys as strings or datetimes and serializes them before touching the file. Datetimes become ISO text at the caller's timespec, falling back to the module default of seconds. On the way out, `auto_deserialize` (on by default) converts keys that look like datetimes at that precision back into `datetime` objects. Passing the same timespec on every call keeps a table's keys uniform; the folder layer does this automatically. `_meta` is reserved and rejected as a linekey.
+Linekeys are strings or datetimes, serialized before file access. Datetimes become ISO text at the caller's timespec, defaulting to seconds. On reads, `auto_deserialize` (on by default) converts keys resembling datetimes at that precision into `datetime` objects. Consistent timespec use keeps table keys uniform; the folder layer ensures this. `_meta` is reserved and rejected as a linekey.
+
+Saves and upserts validate record shapes and reserved keys before mutation. Within a write, stable datetime key conversions may be retained and reused. Reuse preserves input row order, physical rows and effective-index behavior when distinct keys normalize to the same text. Custom keys, datetime subclasses, timezones or mappings whose behavior is not proven stable retain their existing conversion and iteration behavior. Temporary retention trades memory for speed: its cost scales with input rows, including keys that collide, rather than effective index size. Validation failures and publication ordering remain unchanged.
 
 ## Operations
 
@@ -36,9 +38,9 @@ Index-driven paths (single lookup, range select, delete, in-place update) never 
 
 ## In-place update rules
 
-An update never moves a record that still fits. The replacement line is padded with spaces before its newline so the record keeps its exact old length and following offsets stay valid. A record that outgrows its slot is appended, the index is pointed at the new offset, and the old line is blanked after the record write. Before appending, a file lacking a trailing newline is healed so the append starts on a fresh line.
+Records that still fit stay at their offsets, padded with spaces before the newline to preserve their length. Larger records append; the index points to the new offset, then the old line is blanked after the record write. A missing trailing newline is healed before appending.
 
-This keeps upserts proportional to the number of touched keys rather than the file size, at the price of dead space and an unsorted physical layout. Both are repaired by lint.
+Upserts write in proportion to touched keys, leaving dead space and unsorted physical rows that lint repairs.
 
 ## Durability model
 
