@@ -1,0 +1,85 @@
+{
+  "python": "3.12.12",
+  "pandas": "3.0.5",
+  "numpy": "2.5.2",
+  "platform": "macOS-15.3-arm64-arm-64bit",
+  "repeats": 1,
+  "source_hashes": {
+    "jsonlfile.py": "8b9e56519aee2621af23b602584a54f5d4c291369c3fca569a5771b62196a107",
+    "jsonldf.py": "5b863a3b24ff7a74ddfa2f9b3f0af3190403dba65bfc9323ad33db7d5987d65e",
+    "folderdb.py": "c10326610985553c35964817ce01ba94bab44542a43632c9667878776c45c960"
+  },
+  "method": "One warmup then repeated samples; warm input/OS cache; full FolderDB conversion/table/index/metadata writes included; input construction excluded. Upsert replaces existing rows. Separate allocation traces exclude input frame but include conversion and full write; validation retains its result through peak measurement. Not RSS.",
+  "operations": {
+    "20000/datetime_1/overwrite": {
+      "median_ms": 47.437875,
+      "samples_ms": [47.437875]
+    },
+    "20000/datetime_8/overwrite": {
+      "median_ms": 62.344792,
+      "samples_ms": [62.344792]
+    },
+    "20000/datetime_mixed/overwrite": {
+      "median_ms": 69.54775,
+      "samples_ms": [69.54775]
+    },
+    "20000/string_8/overwrite": {
+      "median_ms": 25.168375,
+      "samples_ms": [25.168375]
+    },
+    "20000/named_timezone_8/overwrite": {
+      "median_ms": 131.799166,
+      "samples_ms": [131.799166]
+    },
+    "20000/collision_8/overwrite": {
+      "median_ms": 60.112083,
+      "samples_ms": [60.112083]
+    },
+    "20000/datetime_8/upsert_0": {
+      "median_ms": 2.57525,
+      "samples_ms": [2.57525]
+    },
+    "20000/datetime_8/upsert_1": {
+      "median_ms": 2.922125,
+      "samples_ms": [2.922125]
+    },
+    "20000/datetime_8/upsert_1000": {
+      "median_ms": 7.642708,
+      "samples_ms": [7.642708]
+    },
+    "20000/datetime_8/upsert_20000": {
+      "median_ms": 114.427584,
+      "samples_ms": [114.427584]
+    },
+    "20000/datetime_dict/overwrite": {
+      "median_ms": 24.37725,
+      "samples_ms": [24.37725]
+    }
+  },
+  "memory": {
+    "20000/datetime_1": {
+      "whole_write": 61996913,
+      "validation": 723
+    },
+    "20000/datetime_8": {
+      "whole_write": 66970259,
+      "validation": 723
+    },
+    "20000/datetime_mixed": {
+      "whole_write": 67551987,
+      "validation": 723
+    },
+    "20000/string_8": {
+      "whole_write": 63195177,
+      "validation": 232
+    },
+    "20000/named_timezone_8": {
+      "whole_write": 67090908,
+      "validation": 2854
+    },
+    "20000/collision_8": {
+      "whole_write": 64715451,
+      "validation": 723
+    }
+  }
+}

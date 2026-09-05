@@ -1,0 +1,26 @@
+---
+verdict: approved
+material_divergence: false
+scope_divergence: none
+procedure_divergence: none
+evidence_integrity: complete
+user_reapproval_required: false
+---
+
+## Findings
+
+**Evidence integrity — complete.** All four artifact digests recomputed and match the frozen receipt exactly (contract `1017c4ae…`, plan `46d14c25…`, progress `882e0665…`, outcome `b9dd50db…`). All four changed-project-path source hashes in `implementation/source-hashes.json` match the current working tree byte-for-byte (`.gitignore`, `jsonldb/jsonlfile.py`, `profile_test/benchmark_datetime_keys.py`, `unit_tests/test_datetime_key_reuse.py`). HEAD is `5f56588`, matching the recorded git boundary and every receipt revision. Changed project paths are exactly the four declared; remaining working-tree entries are SpecDev workflow metadata and concurrent-Discussion state, outside delivery ownership. All 9 verification receipts are `authoritative_acceptance`, passed, attempts 1, superseded 0, with no omissions.
+
+**Acceptance — all four have final results.** AC-1/AC-2 rest on 606 focused tests on the main runtime plus 256 on each of pandas 1.5.3/2.0.3/2.3.3/3.0.0, and 66 public signatures plus 40 storage snapshots identical to baseline `0c54d29`. AC-3 is backed by three alternating same-host matrices: at 100k rows, datetime DataFrame overwrites 1.31x/1.23x (numeric) and 1.20x (mixed), dictionary overwrites 1.44x, large upserts 1.13x — the five intended gains. AC-4 independently reverified with `wc -l`: `jsonlfile.py` 950/950, `jsonldf.py` 144/150, `folderdb.py` 1188/1250 — conforming.
+
+**Code correctness — no blocking defect.** I verified the reuse mechanism rather than accepting the receipts. `serialize_linekey` returns `str` inputs verbatim (`jsonldb/jsonlfile.py:499`), so the writers' unchanged second `serialize_linekey` call on a prepared key is exact identity and produced row bytes are necessarily byte-identical to baseline. The eligibility gate uses exact `type(...) is` checks, excluding dict subclasses, custom mappings, datetime subclasses other than `Timestamp`, and any `tzinfo` that is not `dt.timezone`; a disqualifying key discards reuse for the entire input, and the closure reads `keys` at call time after the function has returned, so partial lists never leak into a write. Retention is a list consumed by `zip`, never a dict, so distinct timestamps normalizing to one string preserve row order and duplicates. The validation loop runs to completion before the factory is returned, so `_meta` and record-shape errors still raise pre-mutation; on the fallback path `db_dict.items()` is invoked inside the `with open(...)` block, preserving custom-mapping lookup timing.
+
+**Slot consolidation is semantically equivalent.** The rewritten `_save_jsonl` slot block replaces `existing_slot is not None` with truthiness; `metaslot.SlotInfo` is a five-field `NamedTuple`, so it is unconditionally truthy and the substitution is exact. I enumerated all four `final_slot` branches against baseline and they agree; `record` is now computed eagerly but is a plain field with no side effects, and `existing_slot = None` initialization and exception ordering are preserved.
+
+**No dependency change.** `from pandas import Timestamp` adds no dependency: `pandas>=1.3.0` is already a declared `install_requires` in `setup.py` and is already imported transitively by `jsonldb/__init__.py` → `folderdb`. No lockfile, registry, or advisory evidence is applicable.
+
+**Scope and procedure — no divergence.** The one-line `.gitignore` exception is required by the contract's "ship reproducible benchmark helpers" clause and follows the three existing tracked-benchmark exceptions. The required implementation review is this pass at the frozen identity `f92c9856…`; brainstorm review was optional. No full-suite execution, no worktree, no cap increase, no public-signature change. Deviations list is empty and consistent with the diff.
+
+**Independent confirmation.** I re-ran a focused subset within reviewer authority — `test_datetime_key_reuse.py`, `test_jsonlfile.py`, `test_jsonldf.py`, `test_durability_atomicity.py` — 263 passed in 1.06s. No tracked file was modified during review.
+
+**Non-blocking observations** (no action required for delivery): `jsonlfile.py` sits at exactly its 950-line cap with zero headroom, so the next change to that file will need consolidation or a contract-approved cap change. Separately, reuse correctness depends implicitly on `serialize_linekey` returning `str` unchanged; that coupling is exercised by mixed-key tests but not asserted directly, so a future change to string handling in that function would need care. Disclosed unresolved risks — workload-specific gains, small upserts near baseline, the accepted O(input rows) allocation (173,312 bytes unique / 1,373,192 bytes collision-heavy at 20k rows, matching the exploratory ~0.17 MB / ~1.37 MB), and untested Python 3.8 / pandas 1.3 runtimes — are honestly recorded and fall within the contract's accepted tradeoffs.

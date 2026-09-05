@@ -1,0 +1,12 @@
+{
+  "command": [
+    "git",
+    "diff",
+    "--cached",
+    "--check"
+  ],
+  "duration_ms": 11,
+  "status": "passed",
+  "exit_code": 0,
+  "output": ""
+}

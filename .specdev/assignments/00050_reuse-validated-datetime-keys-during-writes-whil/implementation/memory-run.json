@@ -1,0 +1,11 @@
+{
+  "duration_ms": 12327,
+  "pairs": 1,
+  "options": [
+    "--sizes",
+    "20000",
+    "--repeats",
+    "1",
+    "--memory"
+  ]
+}

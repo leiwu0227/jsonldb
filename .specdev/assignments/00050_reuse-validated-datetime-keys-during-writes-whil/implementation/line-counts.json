@@ -1,0 +1,14 @@
+{
+  "jsonldb/jsonlfile.py": {
+    "lines": 950,
+    "limit": 950
+  },
+  "jsonldb/jsonldf.py": {
+    "lines": 144,
+    "limit": 150
+  },
+  "jsonldb/folderdb.py": {
+    "lines": 1188,
+    "limit": 1250
+  }
+}

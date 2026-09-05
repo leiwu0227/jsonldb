@@ -1,0 +1,177 @@
+{
+  "0/datetime_1/overwrite": {
+    "baseline": 0.471667,
+    "candidate": 0.473958,
+    "speedup": 0.9951662383586731
+  },
+  "0/datetime_8/overwrite": {
+    "baseline": 0.512875,
+    "candidate": 0.531584,
+    "speedup": 0.9648051860101132
+  },
+  "0/datetime_mixed/overwrite": {
+    "baseline": 0.515042,
+    "candidate": 0.528334,
+    "speedup": 0.9748416721240731
+  },
+  "0/string_8/overwrite": {
+    "baseline": 0.511875,
+    "candidate": 0.529166,
+    "speedup": 0.9673240533216418
+  },
+  "0/named_timezone_8/overwrite": {
+    "baseline": 0.526,
+    "candidate": 0.536166,
+    "speedup": 0.9810394541988862
+  },
+  "0/datetime_8/upsert_0": {
+    "baseline": 0.638083,
+    "candidate": 0.569375,
+    "speedup": 1.1206726673984633
+  },
+  "0/datetime_dict/overwrite": {
+    "baseline": 0.374875,
+    "candidate": 0.457459,
+    "speedup": 0.8194723461556118
+  },
+  "10/datetime_1/overwrite": {
+    "baseline": 0.50175,
+    "candidate": 0.502708,
+    "speedup": 0.9980943211566158
+  },
+  "10/datetime_8/overwrite": {
+    "baseline": 0.584917,
+    "candidate": 0.590834,
+    "speedup": 0.9899853427527868
+  },
+  "10/datetime_mixed/overwrite": {
+    "baseline": 0.590042,
+    "candidate": 0.589833,
+    "speedup": 1.0003543375836887
+  },
+  "10/string_8/overwrite": {
+    "baseline": 0.572334,
+    "candidate": 0.589458,
+    "speedup": 0.9709495841942937
+  },
+  "10/named_timezone_8/overwrite": {
+    "baseline": 0.639833,
+    "candidate": 0.637875,
+    "speedup": 1.0030695669214187
+  },
+  "10/datetime_8/upsert_0": {
+    "baseline": 0.670542,
+    "candidate": 0.585625,
+    "speedup": 1.1450023479188902
+  },
+  "10/datetime_8/upsert_1": {
+    "baseline": 0.614167,
+    "candidate": 0.588292,
+    "speedup": 1.0439832600137346
+  },
+  "10/datetime_8/upsert_10": {
+    "baseline": 0.616166,
+    "candidate": 0.603084,
+    "speedup": 1.0216918372896646
+  },
+  "10/datetime_dict/overwrite": {
+    "baseline": 0.4,
+    "candidate": 0.398375,
+    "speedup": 1.0040790712268592
+  },
+  "1000/datetime_1/overwrite": {
+    "baseline": 2.885125,
+    "candidate": 2.274208,
+    "speedup": 1.2686284631836666
+  },
+  "1000/datetime_8/overwrite": {
+    "baseline": 3.515917,
+    "candidate": 2.929833,
+    "speedup": 1.2000400705432699
+  },
+  "1000/datetime_mixed/overwrite": {
+    "baseline": 3.952459,
+    "candidate": 3.342625,
+    "speedup": 1.1824416439175798
+  },
+  "1000/string_8/overwrite": {
+    "baseline": 1.742291,
+    "candidate": 1.744417,
+    "speedup": 0.9987812547114594
+  },
+  "1000/named_timezone_8/overwrite": {
+    "baseline": 7.137125,
+    "candidate": 7.040084,
+    "speedup": 1.0137840684855464
+  },
+  "1000/datetime_8/upsert_0": {
+    "baseline": 0.680709,
+    "candidate": 0.638583,
+    "speedup": 1.06596793212472
+  },
+  "1000/datetime_8/upsert_1": {
+    "baseline": 0.68475,
+    "candidate": 0.645167,
+    "speedup": 1.0613531070250026
+  },
+  "1000/datetime_8/upsert_1000": {
+    "baseline": 5.342834,
+    "candidate": 4.6805,
+    "speedup": 1.141509240465762
+  },
+  "1000/datetime_dict/overwrite": {
+    "baseline": 1.646416,
+    "candidate": 1.237042,
+    "speedup": 1.3309297501620803
+  },
+  "100000/datetime_1/overwrite": {
+    "baseline": 255.771209,
+    "candidate": 195.246667,
+    "speedup": 1.3099901418547646
+  },
+  "100000/datetime_8/overwrite": {
+    "baseline": 314.896375,
+    "candidate": 255.024875,
+    "speedup": 1.2347672947589916
+  },
+  "100000/datetime_mixed/overwrite": {
+    "baseline": 359.575917,
+    "candidate": 299.515542,
+    "speedup": 1.200525069914402
+  },
+  "100000/string_8/overwrite": {
+    "baseline": 125.176333,
+    "candidate": 125.127417,
+    "speedup": 1.0003909295114755
+  },
+  "100000/named_timezone_8/overwrite": {
+    "baseline": 676.448625,
+    "candidate": 667.572584,
+    "speedup": 1.0132959938930026
+  },
+  "100000/datetime_8/upsert_0": {
+    "baseline": 10.443959,
+    "candidate": 10.574083,
+    "speedup": 0.9876940629272534
+  },
+  "100000/datetime_8/upsert_1": {
+    "baseline": 11.611042,
+    "candidate": 11.66075,
+    "speedup": 0.9957371524130094
+  },
+  "100000/datetime_8/upsert_1000": {
+    "baseline": 16.361375,
+    "candidate": 15.844917,
+    "speedup": 1.032594553824422
+  },
+  "100000/datetime_8/upsert_100000": {
+    "baseline": 564.7995,
+    "candidate": 501.978875,
+    "speedup": 1.125145953602131
+  },
+  "100000/datetime_dict/overwrite": {
+    "baseline": 120.247542,
+    "candidate": 83.568708,
+    "speedup": 1.4389063188580107
+  }
+}

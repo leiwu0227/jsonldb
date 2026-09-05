@@ -1,0 +1,11 @@
+{
+  "command": [
+    ".specdev/cache/bin/python-runtime-env",
+    "python3",
+    ".specdev/assignments/00050_reuse-validated-datetime-keys-during-writes-whil/implementation/fresh_checkout.py"
+  ],
+  "duration_ms": 502,
+  "status": "passed",
+  "exit_code": 0,
+  "output": "0/datetime_1/overwrite 0.48 ms \n0/datetime_8/overwrite 0.5299 ms \n0/datetime_mixed/overwrite 0.517 ms \n0/string_8/overwrite 0.5373 ms \n0/named_timezone_8/overwrite 0.5288 ms \n0/datetime_8/upsert_0 0.5544 ms \n0/datetime_dict/overwrite 0.3531 ms \n10/datetime_1/overwrite 0.5042 ms \n10/datetime_8/overwrite 0.5835 ms \n10/datetime_mixed/overwrite 0.5877 ms \n10/string_8/overwrite 0.5689 ms \n10/named_timezone_8/overwrite 0.644 ms \n10/datetime_8/upsert_0 0.6144 ms \n10/datetime_8/upsert_1 0.6676 ms \n10/datetime_8/upsert_10 0.8125 ms \n10/datetime_dict/overwrite 0.5263 ms \nFresh staged tree: 8a30d2caf24af1f626ad6b35a61aa673a5c14ddf\n"
+}

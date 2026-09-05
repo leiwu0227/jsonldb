@@ -1,0 +1,11 @@
+{
+  "command": [
+    ".specdev/cache/bin/python-runtime-env",
+    "python3",
+    ".specdev/assignments/00050_reuse-validated-datetime-keys-during-writes-whil/implementation/check_evidence.py"
+  ],
+  "duration_ms": 309,
+  "status": "passed",
+  "exit_code": 0,
+  "output": "PASS: baseline/source identity, all sample aggregates, five performance targets, physical line caps and Python 3.8 syntax.\n"
+}

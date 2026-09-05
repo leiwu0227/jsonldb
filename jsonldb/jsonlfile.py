@@ -11,6 +11,7 @@ from threading import RLock
 from typing import Dict, List, NamedTuple, Optional, Union
 import datetime as dt
 import orjson
+from pandas import Timestamp as _Timestamp
 from bisect import bisect_left, bisect_right
 import mmap
 
@@ -146,14 +147,25 @@ def _read_cached_index(path, with_keys=False):
             _INDEX_CACHE_BYTES += size
     return index, keys
 
-def _validate_row_keys(db_dict: DataDict,
-                       timespec: Optional[str] = None) -> None:
-    """Reject invalid records and the reserved key before file mutation."""
+def _validate_row_keys(db_dict: DataDict, timespec: Optional[str] = None, *, reuse=False):
+    """Validate eagerly; optionally defer iteration over stable prepared keys."""
+    keys = [] if (reuse and type(db_dict) is dict and db_dict
+                  and type(next(iter(db_dict))) in (dt.datetime, _Timestamp)
+                  and type(timespec) in (str, type(None)) and type(TIME_SPEC) is str) else None
     for linekey, record in db_dict.items():
         if not isinstance(record, dict):
             raise TypeError("JSONL record values must be dictionaries")
-        if serialize_linekey(linekey, timespec) == metaslot.META_KEY:
+        serialized = serialize_linekey(linekey, timespec)
+        if serialized == metaslot.META_KEY:
             raise ValueError("'_meta' is reserved for table metadata")
+        if keys is not None:
+            if (type(linekey) is str or (type(linekey) in (dt.datetime, _Timestamp)
+                    and (linekey.tzinfo is None or type(linekey.tzinfo) is dt.timezone))):
+                keys.append(serialized)
+            else:
+                keys = None  # Custom conversions retain both passes for the whole input.
+    if reuse:
+        return lambda: zip(keys, db_dict.values()) if keys is not None else db_dict.items()
 
 
 def _parse_row(line: bytes):
@@ -538,39 +550,32 @@ def _save_jsonl(jsonl_file_path, db_dict, timespec=None, meta=None,
     """Internal save; statistics are requested only by metadata-maintenance callers."""
     _invalidate_index_cache(jsonl_file_path)
     index: IndexDict = {}
-    _validate_row_keys(db_dict, timespec)
+    items = _validate_row_keys(db_dict, timespec, reuse=True)
 
     existing_slot = None
     if os.path.exists(jsonl_file_path) and os.path.getsize(jsonl_file_path):
         info = metaslot.inspect_file(jsonl_file_path)
-        if info.is_slot:
-            existing_slot = info
+        existing_slot = info if info.is_slot else None
 
-    width = slot_bytes
-    if width is None and existing_slot is not None:
-        width = existing_slot.width
+    width = existing_slot.width if slot_bytes is None and existing_slot else slot_bytes
     if meta is not None and width is None:
         raise ValueError("metadata slot is not enabled for this file")
 
     placeholder = final_slot = None
     if width is not None:
         placeholder = metaslot.encode_slot(None, width)
-        if meta is not None:
-            final_slot = metaslot.encode_slot(meta, width)
-        elif existing_slot is not None and slot_bytes is None:
-            final_slot = existing_slot.raw_line
-        else:
-            record = existing_slot.record if existing_slot is not None else None
-            final_slot = metaslot.encode_slot(record, width)
+        record = meta if meta is not None else (existing_slot.record if existing_slot else None)
+        final_slot = (existing_slot.raw_line
+                      if meta is None and existing_slot is not None and slot_bytes is None
+                      else metaslot.encode_slot(record, width))
 
     try:
         byte_offset = width or 0
         with open(jsonl_file_path, 'wb', buffering=BUFFER_SIZE if db_dict or width else -1) as f:
             if placeholder is not None:
-                # The absent-record placeholder reserves offsets. The actual
-                # record is published only after every row has been flushed.
+                # Reserve offsets; publish the final slot after flushing every row.
                 f.write(placeholder)
-            for linekey, data in db_dict.items():
+            for linekey, data in items():
                 serialized_key = serialize_linekey(linekey, timespec)
                 line = _fast_dumps({serialized_key: data})
                 f.write(line)
@@ -590,13 +595,9 @@ def _save_jsonl(jsonl_file_path, db_dict, timespec=None, meta=None,
 
 def save_jsonl_atomic(jsonl_file_path: str, db_dict: DataDict,
                       timespec: Optional[str] = None) -> None:
-    """Atomically replace a complete JSONL file, then publish its index last.
-
-    This narrow path is intended for small protected control files. Ordinary
-    table and db.meta saves retain their existing in-place publication policy.
-    """
+    """Atomically replace a protected control file; ordinary saves stay in place."""
     _invalidate_index_cache(jsonl_file_path)
-    _validate_row_keys(db_dict, timespec)
+    items = _validate_row_keys(db_dict, timespec, reuse=True)
     directory = os.path.dirname(os.path.abspath(jsonl_file_path))
     prefix = "." + os.path.basename(jsonl_file_path) + "."
     fd, tmp_path = tempfile.mkstemp(dir=directory, prefix=prefix, suffix=".tmp")
@@ -604,7 +605,7 @@ def save_jsonl_atomic(jsonl_file_path: str, db_dict: DataDict,
     try:
         byte_offset = 0
         with os.fdopen(fd, 'wb', buffering=BUFFER_SIZE) as f:
-            for linekey, data in db_dict.items():
+            for linekey, data in items():
                 serialized_key = serialize_linekey(linekey, timespec)
                 line = _fast_dumps({serialized_key: data})
                 f.write(line)
@@ -831,7 +832,7 @@ def _update_jsonl(jsonl_file_path, update_dict, timespec=None, meta=None,
                   *, with_stats=False):
     """Internal upsert with an optional post-publication statistics result."""
     _invalidate_index_cache(jsonl_file_path)
-    _validate_row_keys(update_dict, timespec)
+    items = _validate_row_keys(update_dict, timespec, reuse=True)
     encoded_meta = None
     if meta is not None:
         info = metaslot.inspect_file(jsonl_file_path)
@@ -856,7 +857,7 @@ def _update_jsonl(jsonl_file_path, update_dict, timespec=None, meta=None,
                     f.write(b'\n')
             append_pos = f.tell()
 
-            for linekey, data in update_dict.items():
+            for linekey, data in items():
                 linekey = serialize_linekey(linekey, timespec)
                 new_line = _fast_dumps({linekey: data})
 
@@ -872,7 +873,6 @@ def _update_jsonl(jsonl_file_path, update_dict, timespec=None, meta=None,
                 else:
                     appends.append((linekey, new_line))
 
-            # Apply updates
             for pos, line, old_len in updates:
                 if len(line) < old_len:
                     # Pad before the newline so the record keeps its exact old

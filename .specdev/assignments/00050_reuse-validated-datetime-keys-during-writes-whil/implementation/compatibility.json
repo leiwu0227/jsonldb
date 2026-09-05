@@ -1,0 +1,12 @@
+{
+  "command": [
+    ".specdev/cache/bin/python-runtime-env",
+    "python3",
+    ".specdev/assignments/00047_reuse-write-time-index-statistics-for-folderdb-m/implementation/verify_compatibility.py",
+    ".specdev/cache/datetime-baseline"
+  ],
+  "duration_ms": 483,
+  "status": "passed",
+  "exit_code": 0,
+  "output": "{\"public_signatures_equal\": 66, \"storage_snapshots_equal\": 40}\n"
+}

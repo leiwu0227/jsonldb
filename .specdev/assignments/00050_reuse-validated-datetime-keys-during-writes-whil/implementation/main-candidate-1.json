@@ -1,0 +1,156 @@
+{
+  "python": "3.12.12",
+  "pandas": "3.0.5",
+  "numpy": "2.5.2",
+  "platform": "macOS-15.3-arm64-arm-64bit",
+  "repeats": 7,
+  "source_hashes": {
+    "jsonlfile.py": "db08d1c8587c2a08fcaa2f931a61ee75db89a91780fd9fbd6c625e9e1e611d2c",
+    "jsonldf.py": "5b863a3b24ff7a74ddfa2f9b3f0af3190403dba65bfc9323ad33db7d5987d65e",
+    "folderdb.py": "c10326610985553c35964817ce01ba94bab44542a43632c9667878776c45c960"
+  },
+  "method": "One warmup then repeated samples; warm input/OS cache; full FolderDB conversion/table/index/metadata writes included; input construction excluded. Upsert replaces existing rows. Separate allocation traces exclude input frame but include conversion and full write; validation retains its result through peak measurement. Not RSS.",
+  "operations": {
+    "0/datetime_1/overwrite": {
+      "median_ms": 0.474292,
+      "samples_ms": [0.515709, 0.474292, 0.468458, 0.496875, 0.470083, 0.475791, 0.457584]
+    },
+    "0/datetime_8/overwrite": {
+      "median_ms": 0.532625,
+      "samples_ms": [0.520459, 0.550333, 0.532625, 0.521208, 0.548041, 0.589667, 0.513167]
+    },
+    "0/datetime_mixed/overwrite": {
+      "median_ms": 0.528334,
+      "samples_ms": [0.55725, 0.516459, 0.515167, 0.521208, 0.530958, 0.528334, 0.530875]
+    },
+    "0/string_8/overwrite": {
+      "median_ms": 0.529166,
+      "samples_ms": [0.570375, 0.529166, 0.560709, 0.522583, 0.512708, 0.542667, 0.510042]
+    },
+    "0/named_timezone_8/overwrite": {
+      "median_ms": 0.542583,
+      "samples_ms": [0.531, 0.526167, 0.574416, 0.542583, 0.545958, 0.990791, 0.529375]
+    },
+    "0/datetime_8/upsert_0": {
+      "median_ms": 0.569375,
+      "samples_ms": [0.574083, 0.568375, 0.5745, 0.637333, 0.569375, 0.554875, 0.557833]
+    },
+    "0/datetime_dict/overwrite": {
+      "median_ms": 0.362208,
+      "samples_ms": [0.378916, 0.3585, 0.362208, 0.359833, 0.3595, 0.485292, 0.492]
+    },
+    "10/datetime_1/overwrite": {
+      "median_ms": 0.551625,
+      "samples_ms": [0.67425, 0.651292, 0.687208, 0.551625, 0.501125, 0.48925, 0.514042]
+    },
+    "10/datetime_8/overwrite": {
+      "median_ms": 0.605916,
+      "samples_ms": [0.605916, 0.639959, 0.636208, 0.608584, 0.593833, 0.580834, 0.571917]
+    },
+    "10/datetime_mixed/overwrite": {
+      "median_ms": 0.589833,
+      "samples_ms": [0.586667, 0.593042, 0.589833, 0.600083, 0.578292, 0.582917, 0.616375]
+    },
+    "10/string_8/overwrite": {
+      "median_ms": 0.604583,
+      "samples_ms": [0.602375, 0.604583, 0.635208, 0.609083, 0.566083, 0.565875, 5.947833]
+    },
+    "10/named_timezone_8/overwrite": {
+      "median_ms": 0.670833,
+      "samples_ms": [0.658583, 0.670833, 0.699958, 0.681417, 0.656709, 0.643, 0.716375]
+    },
+    "10/datetime_8/upsert_0": {
+      "median_ms": 0.585625,
+      "samples_ms": [0.583709, 0.579708, 0.570791, 0.585625, 0.600375, 0.668958, 0.751375]
+    },
+    "10/datetime_8/upsert_1": {
+      "median_ms": 0.588292,
+      "samples_ms": [0.570875, 0.561208, 0.588292, 0.565333, 0.589166, 0.7395, 0.750083]
+    },
+    "10/datetime_8/upsert_10": {
+      "median_ms": 0.648583,
+      "samples_ms": [0.801333, 0.794667, 0.614042, 0.648583, 0.598208, 0.601542, 0.653333]
+    },
+    "10/datetime_dict/overwrite": {
+      "median_ms": 0.404208,
+      "samples_ms": [0.404208, 0.411375, 0.414, 0.40025, 0.402458, 0.396875, 0.4195]
+    },
+    "1000/datetime_1/overwrite": {
+      "median_ms": 2.300291,
+      "samples_ms": [2.300291, 2.284166, 2.287, 2.270625, 2.338333, 2.301084, 2.508333]
+    },
+    "1000/datetime_8/overwrite": {
+      "median_ms": 2.929958,
+      "samples_ms": [2.943625, 2.942, 2.918958, 2.937208, 2.929958, 2.908959, 2.874125]
+    },
+    "1000/datetime_mixed/overwrite": {
+      "median_ms": 3.342625,
+      "samples_ms": [3.347375, 3.302291, 3.274834, 3.342416, 3.377917, 3.342625, 3.392875]
+    },
+    "1000/string_8/overwrite": {
+      "median_ms": 1.707125,
+      "samples_ms": [1.74325, 1.707125, 1.688375, 1.701625, 1.675875, 1.7365, 1.737375]
+    },
+    "1000/named_timezone_8/overwrite": {
+      "median_ms": 7.040084,
+      "samples_ms": [7.147375, 7.039, 7.227917, 6.966583, 6.9495, 7.053334, 7.040084]
+    },
+    "1000/datetime_8/upsert_0": {
+      "median_ms": 0.640666,
+      "samples_ms": [0.654459, 0.642917, 0.635959, 0.640666, 0.634333, 0.645208, 0.632875]
+    },
+    "1000/datetime_8/upsert_1": {
+      "median_ms": 0.645167,
+      "samples_ms": [0.646208, 0.650625, 0.644833, 0.645167, 0.64575, 0.637208, 0.6405]
+    },
+    "1000/datetime_8/upsert_1000": {
+      "median_ms": 4.6805,
+      "samples_ms": [4.631125, 4.788083, 4.600083, 4.737125, 4.651667, 4.6805, 4.712625]
+    },
+    "1000/datetime_dict/overwrite": {
+      "median_ms": 1.243625,
+      "samples_ms": [1.243625, 1.2335, 1.23925, 1.265833, 1.27075, 1.254208, 1.226208]
+    },
+    "100000/datetime_1/overwrite": {
+      "median_ms": 194.640334,
+      "samples_ms": [192.126375, 200.540334, 195.048625, 194.080792, 194.640334, 194.271125, 194.775291]
+    },
+    "100000/datetime_8/overwrite": {
+      "median_ms": 255.360292,
+      "samples_ms": [251.2725, 258.582125, 255.360292, 255.515292, 256.131417, 255.263, 253.149417]
+    },
+    "100000/datetime_mixed/overwrite": {
+      "median_ms": 299.515542,
+      "samples_ms": [305.357667, 299.922959, 299.515542, 300.156166, 291.749958, 294.153667, 296.186125]
+    },
+    "100000/string_8/overwrite": {
+      "median_ms": 125.875667,
+      "samples_ms": [126.67225, 125.980167, 126.521125, 125.875667, 124.499834, 125.690125, 124.43]
+    },
+    "100000/named_timezone_8/overwrite": {
+      "median_ms": 655.188,
+      "samples_ms": [678.324375, 647.741, 666.948416, 654.198625, 658.626291, 655.188, 652.728125]
+    },
+    "100000/datetime_8/upsert_0": {
+      "median_ms": 10.574083,
+      "samples_ms": [10.56125, 10.550708, 10.603125, 10.574083, 10.631125, 10.442291, 10.660125]
+    },
+    "100000/datetime_8/upsert_1": {
+      "median_ms": 11.611875,
+      "samples_ms": [11.843375, 11.928666, 11.679084, 11.611875, 11.521875, 11.564542, 11.479916]
+    },
+    "100000/datetime_8/upsert_1000": {
+      "median_ms": 15.759416,
+      "samples_ms": [15.82825, 15.759416, 21.111709, 15.803541, 15.663291, 15.505834, 15.6305]
+    },
+    "100000/datetime_8/upsert_100000": {
+      "median_ms": 501.978875,
+      "samples_ms": [503.591292, 502.59175, 501.200209, 504.308209, 498.64625, 501.978875, 501.823416]
+    },
+    "100000/datetime_dict/overwrite": {
+      "median_ms": 82.564666,
+      "samples_ms": [82.833625, 81.983375, 82.566542, 81.581375, 82.611084, 82.564666, 81.898291]
+    }
+  },
+  "memory": {}
+}

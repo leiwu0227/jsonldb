@@ -1,0 +1,127 @@
+{
+  "0/datetime_1/overwrite": {
+    "baseline": 0.42491650000000003,
+    "candidate": 0.43025,
+    "speedup": 0.9876037187681581
+  },
+  "0/datetime_8/overwrite": {
+    "baseline": 0.5198125,
+    "candidate": 0.5226455000000001,
+    "speedup": 0.9945794998713275
+  },
+  "0/datetime_mixed/overwrite": {
+    "baseline": 0.5181039999999999,
+    "candidate": 0.5251255,
+    "speedup": 0.9866289106127961
+  },
+  "0/string_8/overwrite": {
+    "baseline": 0.5446664999999999,
+    "candidate": 0.6169585,
+    "speedup": 0.882825181920664
+  },
+  "0/named_timezone_8/overwrite": {
+    "baseline": 0.5126459999999999,
+    "candidate": 0.533979,
+    "speedup": 0.9600489906906451
+  },
+  "0/datetime_8/upsert_0": {
+    "baseline": 0.549625,
+    "candidate": 0.5495625,
+    "speedup": 1.0001137268281588
+  },
+  "0/datetime_dict/overwrite": {
+    "baseline": 0.357688,
+    "candidate": 0.35531250000000003,
+    "speedup": 1.006685664028144
+  },
+  "10/datetime_1/overwrite": {
+    "baseline": 0.508313,
+    "candidate": 0.4996665,
+    "speedup": 1.0173045421296005
+  },
+  "10/datetime_8/overwrite": {
+    "baseline": 0.6039375,
+    "candidate": 0.5714375,
+    "speedup": 1.0568741113420101
+  },
+  "10/datetime_mixed/overwrite": {
+    "baseline": 0.5980415,
+    "candidate": 0.679021,
+    "speedup": 0.8807408018308712
+  },
+  "10/string_8/overwrite": {
+    "baseline": 0.577625,
+    "candidate": 0.574292,
+    "speedup": 1.0058036678205513
+  },
+  "10/named_timezone_8/overwrite": {
+    "baseline": 0.6362705,
+    "candidate": 0.6353755,
+    "speedup": 1.0014086158499973
+  },
+  "10/datetime_8/upsert_0": {
+    "baseline": 0.5551665,
+    "candidate": 0.550875,
+    "speedup": 1.0077903335602452
+  },
+  "10/datetime_8/upsert_1": {
+    "baseline": 0.567146,
+    "candidate": 0.562667,
+    "speedup": 1.0079603033410525
+  },
+  "10/datetime_8/upsert_10": {
+    "baseline": 0.6127294999999999,
+    "candidate": 0.594875,
+    "speedup": 1.0300138684597602
+  },
+  "10/datetime_dict/overwrite": {
+    "baseline": 0.4255005,
+    "candidate": 0.5055,
+    "speedup": 0.8417418397626114
+  },
+  "1000/datetime_1/overwrite": {
+    "baseline": 2.8540415,
+    "candidate": 2.297167,
+    "speedup": 1.242417943493007
+  },
+  "1000/datetime_8/overwrite": {
+    "baseline": 3.5157705000000004,
+    "candidate": 2.8964165,
+    "speedup": 1.2138345780035436
+  },
+  "1000/datetime_mixed/overwrite": {
+    "baseline": 3.9082915,
+    "candidate": 3.316521,
+    "speedup": 1.178431102953969
+  },
+  "1000/string_8/overwrite": {
+    "baseline": 1.770812,
+    "candidate": 1.7393955,
+    "speedup": 1.0180617346658651
+  },
+  "1000/named_timezone_8/overwrite": {
+    "baseline": 7.080603999999999,
+    "candidate": 7.069437499999999,
+    "speedup": 1.0015795457559389
+  },
+  "1000/datetime_8/upsert_0": {
+    "baseline": 0.6386455,
+    "candidate": 0.6495415,
+    "speedup": 0.9832250903137059
+  },
+  "1000/datetime_8/upsert_1": {
+    "baseline": 0.644813,
+    "candidate": 0.676167,
+    "speedup": 0.9536297985556823
+  },
+  "1000/datetime_8/upsert_1000": {
+    "baseline": 5.303229,
+    "candidate": 4.712771,
+    "speedup": 1.1252889223770899
+  },
+  "1000/datetime_dict/overwrite": {
+    "baseline": 1.597396,
+    "candidate": 1.2219165,
+    "speedup": 1.3072873637437583
+  }
+}

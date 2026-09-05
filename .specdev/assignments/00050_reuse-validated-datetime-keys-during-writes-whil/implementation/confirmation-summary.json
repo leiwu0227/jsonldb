@@ -1,0 +1,82 @@
+{
+  "0/datetime_1/overwrite": {
+    "baseline": 0.437209,
+    "candidate": 0.421333,
+    "speedup": 1.037680409557286
+  },
+  "0/datetime_8/overwrite": {
+    "baseline": 0.52225,
+    "candidate": 0.505708,
+    "speedup": 1.0327105760636572
+  },
+  "0/datetime_mixed/overwrite": {
+    "baseline": 0.520583,
+    "candidate": 0.512416,
+    "speedup": 1.0159382220695685
+  },
+  "0/string_8/overwrite": {
+    "baseline": 0.516416,
+    "candidate": 0.520542,
+    "speedup": 0.9920736463148028
+  },
+  "0/named_timezone_8/overwrite": {
+    "baseline": 0.519625,
+    "candidate": 0.525667,
+    "speedup": 0.9885060313848881
+  },
+  "0/datetime_8/upsert_0": {
+    "baseline": 0.546875,
+    "candidate": 0.545084,
+    "speedup": 1.003285732107345
+  },
+  "0/datetime_dict/overwrite": {
+    "baseline": 0.352375,
+    "candidate": 0.355333,
+    "speedup": 0.9916754143296569
+  },
+  "10/datetime_1/overwrite": {
+    "baseline": 0.490875,
+    "candidate": 0.490958,
+    "speedup": 0.9998309427690353
+  },
+  "10/datetime_8/overwrite": {
+    "baseline": 0.589875,
+    "candidate": 0.590792,
+    "speedup": 0.9984478462809246
+  },
+  "10/datetime_mixed/overwrite": {
+    "baseline": 0.594792,
+    "candidate": 0.587833,
+    "speedup": 1.0118383962792152
+  },
+  "10/string_8/overwrite": {
+    "baseline": 0.575625,
+    "candidate": 0.563708,
+    "speedup": 1.0211403776423256
+  },
+  "10/named_timezone_8/overwrite": {
+    "baseline": 0.629042,
+    "candidate": 0.623,
+    "speedup": 1.0096982343499197
+  },
+  "10/datetime_8/upsert_0": {
+    "baseline": 0.553,
+    "candidate": 0.550875,
+    "speedup": 1.0038574994327207
+  },
+  "10/datetime_8/upsert_1": {
+    "baseline": 0.569666,
+    "candidate": 0.576666,
+    "speedup": 0.9878612576430724
+  },
+  "10/datetime_8/upsert_10": {
+    "baseline": 0.613667,
+    "candidate": 0.613958,
+    "speedup": 0.9995260262102619
+  },
+  "10/datetime_dict/overwrite": {
+    "baseline": 0.400416,
+    "candidate": 0.410084,
+    "speedup": 0.9764243423298641
+  }
+}

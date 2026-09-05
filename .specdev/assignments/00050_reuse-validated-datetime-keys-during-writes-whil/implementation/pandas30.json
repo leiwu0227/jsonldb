@@ -1,0 +1,17 @@
+{
+  "command": [
+    ".specdev/cache/df-pandas30/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "unit_tests/test_datetime_key_reuse.py",
+    "unit_tests/test_jsonldf.py",
+    "unit_tests/test_write_statistics.py"
+  ],
+  "duration_ms": 2153,
+  "status": "passed",
+  "exit_code": 0,
+  "output": "........................................................................ [ 28%]\n........................................................................ [ 56%]\n........................................................................ [ 84%]\n........................................                                 [100%]\n256 passed in 1.49s\n"
+}

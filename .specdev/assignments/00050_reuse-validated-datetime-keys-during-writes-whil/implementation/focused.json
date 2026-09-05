@@ -1,0 +1,32 @@
+{
+  "command": [
+    ".specdev/cache/bin/python-runtime-env",
+    "python3",
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "unit_tests/test_datetime_key_reuse.py",
+    "unit_tests/test_dataframe_conversion.py",
+    "unit_tests/test_byte_serialization.py",
+    "unit_tests/test_durability_atomicity.py",
+    "unit_tests/test_write_statistics.py",
+    "unit_tests/test_index_cache.py",
+    "unit_tests/test_jsonlfile.py",
+    "unit_tests/test_jsonldf.py",
+    "unit_tests/test_folderdb.py",
+    "unit_tests/test_lint_integrity.py",
+    "unit_tests/test_lint_compaction.py",
+    "unit_tests/test_metadata_slot_migration.py",
+    "unit_tests/test_unknown_metadata_lint.py",
+    "unit_tests/test_reports.py",
+    "unit_tests/test_metadata_upkeep.py",
+    "unit_tests/test_hierarchy_recovery.py",
+    "unit_tests/test_clear_configuration.py"
+  ],
+  "duration_ms": 3728,
+  "status": "passed",
+  "exit_code": 0,
+  "output": "........................................................................ [ 11%]\n........................................................................ [ 23%]\n........................................................................ [ 35%]\n........................................................................ [ 47%]\n........................................................................ [ 59%]\n........................................................................ [ 71%]\n........................................................................ [ 83%]\n........................................................................ [ 95%]\n..............................                                           [100%]\n606 passed in 3.59s\n"
+}

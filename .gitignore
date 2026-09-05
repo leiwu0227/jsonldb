@@ -32,6 +32,7 @@ profile_test/*
 !profile_test/benchmark.py
 !profile_test/benchmark_write_statistics.py
 !profile_test/benchmark_dataframe.py
+!profile_test/benchmark_datetime_keys.py
 
 # Agent / assistant config
 .claude/

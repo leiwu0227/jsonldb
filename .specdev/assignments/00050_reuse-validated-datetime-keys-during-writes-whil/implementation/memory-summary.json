@@ -1,0 +1,57 @@
+{
+  "20000/datetime_1/overwrite": {
+    "baseline": 47.437875,
+    "candidate": 37.829291,
+    "speedup": 1.2539985219389918
+  },
+  "20000/datetime_8/overwrite": {
+    "baseline": 62.344792,
+    "candidate": 48.843209,
+    "speedup": 1.2764270259146977
+  },
+  "20000/datetime_mixed/overwrite": {
+    "baseline": 69.54775,
+    "candidate": 57.427,
+    "speedup": 1.211063611193341
+  },
+  "20000/string_8/overwrite": {
+    "baseline": 25.168375,
+    "candidate": 24.586792,
+    "speedup": 1.023654285601798
+  },
+  "20000/named_timezone_8/overwrite": {
+    "baseline": 131.799166,
+    "candidate": 133.505708,
+    "speedup": 0.9872174603950268
+  },
+  "20000/collision_8/overwrite": {
+    "baseline": 60.112083,
+    "candidate": 46.620125,
+    "speedup": 1.2894020125428662
+  },
+  "20000/datetime_8/upsert_0": {
+    "baseline": 2.57525,
+    "candidate": 2.650041,
+    "speedup": 0.9717774177833476
+  },
+  "20000/datetime_8/upsert_1": {
+    "baseline": 2.922125,
+    "candidate": 2.726208,
+    "speedup": 1.071864289151818
+  },
+  "20000/datetime_8/upsert_1000": {
+    "baseline": 7.642708,
+    "candidate": 6.950167,
+    "speedup": 1.0996437927318867
+  },
+  "20000/datetime_8/upsert_20000": {
+    "baseline": 114.427584,
+    "candidate": 102.210667,
+    "speedup": 1.1195268298170875
+  },
+  "20000/datetime_dict/overwrite": {
+    "baseline": 24.37725,
+    "candidate": 17.007291,
+    "speedup": 1.4333411476289788
+  }
+}
