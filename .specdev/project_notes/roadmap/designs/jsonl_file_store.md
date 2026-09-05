@@ -15,7 +15,7 @@ The single top-level key is the serialized linekey; its value is the record. orj
 
 ## Key handling
 
-Linekeys are strings or datetimes, serialized before file access. Datetimes become ISO text at the caller's timespec, defaulting to seconds. On reads, `auto_deserialize` (on by default) converts keys resembling datetimes at that precision into `datetime` objects. Consistent timespec use keeps table keys uniform; the folder layer ensures this. `_meta` is reserved and rejected as a linekey.
+Linekeys are strings or datetimes, serialized before file access at the caller's timespec, defaulting to seconds. Default-on `auto_deserialize` recognizes offset-free timestamps of exactly 19 or 26 characters at the selected precision. Optional [table timezone](jsonl_file_store/table_timezone.md) governs key interpretation and input validation without changing this recognition. `_meta` is reserved and rejected as a linekey.
 
 Saves and upserts validate record shapes and reserved keys before mutation. Within a write, stable datetime key conversions may be retained and reused. Reuse preserves input row order, physical rows and effective-index behavior when distinct keys normalize to the same text. Custom keys, datetime subclasses, timezones or mappings whose behavior is not proven stable retain their existing conversion and iteration behavior. Temporary retention trades memory for speed: its cost scales with input rows, including keys that collide, rather than effective index size. Validation failures and publication ordering remain unchanged.
 

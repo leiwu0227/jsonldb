@@ -4,9 +4,11 @@ Beside its tables, a database keeps two small control files recording what the l
 
 ## Settings in `config.meta`
 
-**Timespec** fixes how datetime linekeys are serialized for the whole database: `seconds` or `microseconds`. A database opened without one receives the library default of seconds; a different precision is chosen by writing `config.meta` before the first open. Uniform precision is what makes textual key order equal chronological order. Mixing precisions in one table breaks range selection silently, which is why the value is a database property rather than a per-call option.
+**Timespec** fixes how datetime linekeys are serialized for the whole database: `seconds` or `microseconds`. A database opened without one receives the library default of seconds; a different precision is chosen by writing `config.meta` before the first open. Uniform precision and a shared fixed offset make timestamp text order chronological. Mixing precisions in one table breaks range selection silently, which is why the value is a database property rather than a per-call option.
 
 **Slot width** is recorded by the explicit width operation, which also rewrites every table to that width. Its presence makes the folder slot-enabled: new tables get a slot of that width at creation and lint repairs any table that deviates. Its absence leaves every file untouched. Readers never consult it; they measure line one. The metadata-slot note owns the rest.
+
+Timezone is an optional per-table envelope property, separate from database precision and consumer metadata. [Table Timezone](../jsonl_file_store/table_timezone.md) defines normalization, validation, and lifecycle. It is not inferred from configuration or precision repair.
 
 ### Timespec repair on open
 
