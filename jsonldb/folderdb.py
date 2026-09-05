@@ -866,8 +866,7 @@ class FolderDB:
                   "max_index": "z", "size": 123, "count": 3, "lint_time": "", "linted": False}
         """
         if stats is None:
-            index = (jsonlfile.load_index(file_path)
-                     if os.path.exists(file_path + '.idx') else {})
+            index = jsonlfile.load_index(file_path)
             keys = list(index)
             stats = dict(min_index=keys[0] if keys else None,
                          max_index=keys[-1] if keys else None,

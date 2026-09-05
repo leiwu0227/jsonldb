@@ -199,3 +199,34 @@ def test_validation_does_not_publish_metadata(tmp_path):
         with pytest.raises(ValueError):
             method('reserved', {'_meta': {'v': 1}})
     assert open(db.dbmeta_path, 'rb').read() == before
+
+
+@pytest.mark.parametrize('hierarchy', [None, 1])
+@pytest.mark.parametrize('slot', [False, True])
+@pytest.mark.parametrize('rows', [{}, {'z': {'v': 1}, 'a': {'v': 2}}])
+def test_explicit_refresh_rebuilds_missing_index(tmp_path, hierarchy, slot, rows):
+    db = FolderDB(str(tmp_path), hierarchy_depth=hierarchy)
+    if slot:
+        db.set_meta_slot_bytes(256)
+    name = 'region.table'
+    db.overwrite_dict(name, rows, meta={'owner': 'keep'} if slot else None)
+    path = db._get_file_path(name)
+    with open(path, 'rb') as stream:
+        table_bytes = stream.read()
+    with open(path + '.idx', 'rb') as stream:
+        index_bytes = stream.read()
+    if rows:
+        jf.select_line_jsonl(path, 'a')  # Retain a cached index before external removal.
+    os.remove(path + '.idx')
+
+    db.update_dbmeta(name + '.jsonl')
+
+    assert os.path.exists(path + '.idx'), 'refresh must rebuild before measuring'
+    with open(path + '.idx', 'rb') as stream:
+        assert stream.read() == index_bytes
+    with open(path, 'rb') as stream:
+        assert stream.read() == table_bytes
+    assert_disk_metadata(db, name)
+    assert db.read_meta(name) == ({'owner': 'keep'} if slot else None)
+    if rows:
+        assert jf.select_line_jsonl(path, 'a') == {'a': {'v': 2}}
