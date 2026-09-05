@@ -1,0 +1,115 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "T-1",
+      "status": "completed"
+    },
+    {
+      "id": "T-2",
+      "status": "completed"
+    },
+    {
+      "id": "T-3",
+      "status": "completed"
+    }
+  ],
+  "selected_guides": {
+    "implementation": [
+      "api-security"
+    ],
+    "review": [
+      "api-security"
+    ]
+  },
+  "verification": [
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest -q -p no:cacheprovider unit_tests/test_dataframe_conversion.py unit_tests/test_byte_serialization.py unit_tests/test_durability_atomicity.py unit_tests/test_write_statistics.py unit_tests/test_index_cache.py unit_tests/test_jsonlfile.py unit_tests/test_jsonldf.py unit_tests/test_folderdb.py unit_tests/test_lint_integrity.py unit_tests/test_lint_compaction.py unit_tests/test_metadata_slot_migration.py unit_tests/test_unknown_metadata_lint.py unit_tests/test_reports.py unit_tests/test_metadata_upkeep.py unit_tests/test_hierarchy_recovery.py unit_tests/test_clear_configuration.py",
+      "scope": "411 focused tests, including 81 new conversion cases on pandas 3.0.5",
+      "duration_ms": 2200,
+      "status": "passed",
+      "revision": "working-tree@5276e8eac2bf27270d078cb6eb1766ee8fe09473",
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": ".specdev/cache/df-pandas15/bin/python -m pytest -q -p no:cacheprovider unit_tests/test_dataframe_conversion.py unit_tests/test_jsonldf.py unit_tests/test_write_statistics.py",
+      "scope": "142 focused compatibility tests on pandas 1.5.3; isolated existing-dependency environment",
+      "duration_ms": 43870,
+      "status": "passed",
+      "revision": "working-tree@5276e8eac2bf27270d078cb6eb1766ee8fe09473",
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": ".specdev/cache/df-pandas20/bin/python -m pytest -q -p no:cacheprovider unit_tests/test_dataframe_conversion.py unit_tests/test_jsonldf.py unit_tests/test_write_statistics.py",
+      "scope": "142 focused compatibility tests on pandas 2.0.3; isolated existing-dependency environment",
+      "duration_ms": 43650,
+      "status": "passed",
+      "revision": "working-tree@5276e8eac2bf27270d078cb6eb1766ee8fe09473",
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": ".specdev/cache/df-pandas23/bin/python -m pytest -q -p no:cacheprovider unit_tests/test_dataframe_conversion.py unit_tests/test_jsonldf.py unit_tests/test_write_statistics.py",
+      "scope": "142 focused compatibility tests on pandas 2.3.3; isolated existing-dependency environment",
+      "duration_ms": 42900,
+      "status": "passed",
+      "revision": "working-tree@5276e8eac2bf27270d078cb6eb1766ee8fe09473",
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": ".specdev/cache/df-pandas30/bin/python -m pytest -q -p no:cacheprovider unit_tests/test_dataframe_conversion.py unit_tests/test_jsonldf.py unit_tests/test_write_statistics.py",
+      "scope": "142 focused compatibility tests on pandas 3.0.0; isolated existing-dependency environment",
+      "duration_ms": 42670,
+      "status": "passed",
+      "revision": "working-tree@5276e8eac2bf27270d078cb6eb1766ee8fe09473",
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": "/Users/leiwu/code/oceanwave/lib/jsonldb/.specdev/cache/python-runtime/bin/python3 .specdev/assignments/00049_accelerate-dataframe-writes-using-pandas-record/implementation/check_evidence.py",
+      "scope": "Benchmark provenance, acceptance benefits and line caps",
+      "duration_ms": 200,
+      "status": "passed",
+      "revision": "working-tree@5276e8eac2bf27270d078cb6eb1766ee8fe09473",
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": "/Users/leiwu/code/oceanwave/lib/jsonldb/.specdev/cache/python-runtime/bin/python3 .specdev/assignments/00047_reuse-write-time-index-statistics-for-folderdb-m/implementation/verify_compatibility.py .specdev/cache/dataframe-baseline",
+      "scope": "Public signatures and storage snapshots versus 5276e8e",
+      "duration_ms": 450,
+      "status": "passed",
+      "revision": "working-tree@5276e8eac2bf27270d078cb6eb1766ee8fe09473",
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": "git diff --cached --check",
+      "scope": "Staged diff whitespace",
+      "duration_ms": 11,
+      "status": "passed",
+      "revision": "working-tree@5276e8eac2bf27270d078cb6eb1766ee8fe09473",
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": "/Users/leiwu/code/oceanwave/lib/jsonldb/.specdev/cache/python-runtime/bin/python3 profile_test/benchmark_dataframe.py --sizes 0 10 --repeats 2",
+      "scope": "Fresh extracted staged tree d0d4528c533e926bf02dde946663039776c8112c",
+      "duration_ms": 258,
+      "status": "passed",
+      "revision": "working-tree@5276e8eac2bf27270d078cb6eb1766ee8fe09473",
+      "role": "authoritative_acceptance"
+    }
+  ],
+  "deviations": [],
+  "follow_up": "none",
+  "selected_guide_versions": {
+    "implementation": [
+      {
+        "id": "api-security",
+        "version": "1"
+      }
+    ],
+    "review": [
+      {
+        "id": "api-security",
+        "version": "1"
+      }
+    ]
+  }
+}

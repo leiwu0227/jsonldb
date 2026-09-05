@@ -1,0 +1,87 @@
+{
+  "python": "3.12.12",
+  "platform": "macOS-15.3-arm64-arm-64bit",
+  "pandas": "3.0.5",
+  "numpy": "2.5.2",
+  "repeats": 1,
+  "source_hashes": {
+    "jsonlfile.py": "8b9e56519aee2621af23b602584a54f5d4c291369c3fca569a5771b62196a107",
+    "jsonldf.py": "9a987450375db4fe30becdeb51bf23505f36955a328bf1293f45a55320ec5923",
+    "folderdb.py": "c10326610985553c35964817ce01ba94bab44542a43632c9667878776c45c960"
+  },
+  "method": "One warmup, repeated samples; median; warm input and OS caches. Input construction excluded; conversion and synchronous metadata included in writes. Upsert replaces one existing row; zero rows is empty upsert. Conversion-result disposal excluded from conversion timings.",
+  "operations": {
+    "20000/numeric_1/conversion": {
+      "median_ms": 9.383208,
+      "samples_ms": [9.383208]
+    },
+    "20000/numeric_1/overwrite": {
+      "median_ms": 16.707958,
+      "samples_ms": [16.707958]
+    },
+    "20000/numeric_1/upsert": {
+      "median_ms": 2.295583,
+      "samples_ms": [2.295583]
+    },
+    "20000/numeric_8/conversion": {
+      "median_ms": 17.071209,
+      "samples_ms": [17.071209]
+    },
+    "20000/numeric_8/overwrite": {
+      "median_ms": 28.326708,
+      "samples_ms": [28.326708]
+    },
+    "20000/numeric_8/upsert": {
+      "median_ms": 2.437917,
+      "samples_ms": [2.437917]
+    },
+    "20000/mixed_8/conversion": {
+      "median_ms": 27.861791,
+      "samples_ms": [27.861791]
+    },
+    "20000/mixed_8/overwrite": {
+      "median_ms": 37.199209,
+      "samples_ms": [37.199209]
+    },
+    "20000/mixed_8/upsert": {
+      "median_ms": 2.467083,
+      "samples_ms": [2.467083]
+    },
+    "20000/datetime_8/conversion": {
+      "median_ms": 21.262625,
+      "samples_ms": [21.262625]
+    },
+    "20000/datetime_8/overwrite": {
+      "median_ms": 66.271417,
+      "samples_ms": [66.271417]
+    },
+    "20000/datetime_8/upsert": {
+      "median_ms": 2.668042,
+      "samples_ms": [2.668042]
+    },
+    "20000/fallback_object_index/conversion": {
+      "median_ms": 14.709041,
+      "samples_ms": [14.709041]
+    },
+    "20000/fallback_object_index/overwrite": {
+      "median_ms": 30.621459,
+      "samples_ms": [30.621459]
+    },
+    "20000/fallback_object_index/upsert": {
+      "median_ms": 2.482166,
+      "samples_ms": [2.482166]
+    }
+  },
+  "peak_traced_bytes": {
+    "20000/numeric_1/conversion": 4729959,
+    "20000/numeric_1/overwrite": 58221860,
+    "20000/numeric_8/conversion": 9705559,
+    "20000/numeric_8/overwrite": 63195052,
+    "20000/mixed_8/conversion": 10287143,
+    "20000/mixed_8/overwrite": 63776942,
+    "20000/datetime_8/conversion": 12363812,
+    "20000/datetime_8/overwrite": 66970024,
+    "20000/fallback_object_index/conversion": 9705479,
+    "20000/fallback_object_index/overwrite": 63195100
+  }
+}

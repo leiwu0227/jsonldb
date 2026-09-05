@@ -1,0 +1,26 @@
+[
+  {
+    "command": "/Users/leiwu/code/oceanwave/lib/jsonldb/.specdev/cache/python-runtime/bin/python3 .specdev/assignments/00049_accelerate-dataframe-writes-using-pandas-record/implementation/check_evidence.py",
+    "scope": "Benchmark provenance, acceptance benefits and line caps",
+    "duration_ms": 200,
+    "status": "passed"
+  },
+  {
+    "command": "/Users/leiwu/code/oceanwave/lib/jsonldb/.specdev/cache/python-runtime/bin/python3 .specdev/assignments/00047_reuse-write-time-index-statistics-for-folderdb-m/implementation/verify_compatibility.py .specdev/cache/dataframe-baseline",
+    "scope": "Public signatures and storage snapshots versus 5276e8e",
+    "duration_ms": 450,
+    "status": "passed"
+  },
+  {
+    "command": "git diff --cached --check",
+    "scope": "Staged diff whitespace",
+    "duration_ms": 11,
+    "status": "passed"
+  },
+  {
+    "command": "/Users/leiwu/code/oceanwave/lib/jsonldb/.specdev/cache/python-runtime/bin/python3 profile_test/benchmark_dataframe.py --sizes 0 10 --repeats 2",
+    "scope": "Fresh extracted staged tree d0d4528c533e926bf02dde946663039776c8112c",
+    "duration_ms": 258,
+    "status": "passed"
+  }
+]

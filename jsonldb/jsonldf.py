@@ -12,6 +12,16 @@ def _df_records(df):
     """Validate overwrite uniqueness before converting the records."""
     if not df.index.is_unique:
         raise ValueError("DataFrame index must be unique")
+    return _convert_df(df)
+
+def _convert_df(df):
+    """Use validated pandas record conversion; preserve other inputs verbatim."""
+    if (pd.__version__.startswith('3.0.') and type(df) is pd.DataFrame
+            and type(df.index) is pd.Index and type(df.columns) is pd.Index
+            and isinstance(df.index.dtype, pd.StringDtype)
+            and df.index.dtype.storage == 'python' and not df.index.hasnans
+            and len(df) and len(df.columns) and df.index.is_unique and df.columns.is_unique):
+        return dict(zip(df.index.tolist(), df.to_dict('records')))
     return df.to_dict('index')
 
 def _save_jsonldf(path, df, timespec=None, meta=None, slot_bytes=None):
@@ -19,7 +29,7 @@ def _save_jsonldf(path, df, timespec=None, meta=None, slot_bytes=None):
                        with_stats=True)
 
 def _update_jsonldf(path, df, timespec=None, meta=None):
-    return _update_jsonl(path, df.to_dict('index'), timespec, meta, with_stats=True)
+    return _update_jsonl(path, _convert_df(df), timespec, meta, with_stats=True)
 
 def save_jsonldf(jsonl_file_path: str, df: pd.DataFrame,
                  timespec: Optional[str] = None,
@@ -72,7 +82,7 @@ def update_jsonldf(jsonl_file_path: str, df: pd.DataFrame,
         df (pd.DataFrame): DataFrame containing updates
     """
     # Convert DataFrame to dict using index as keys
-    updates_dict = df.to_dict('index')
+    updates_dict = _convert_df(df)
     
     # Update JSONL file
     update_jsonl(jsonl_file_path, updates_dict, timespec, meta=meta)

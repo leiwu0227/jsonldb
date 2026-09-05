@@ -31,6 +31,7 @@ env/
 profile_test/*
 !profile_test/benchmark.py
 !profile_test/benchmark_write_statistics.py
+!profile_test/benchmark_dataframe.py
 
 # Agent / assistant config
 .claude/
