@@ -1,0 +1,108 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "T-1",
+      "status": "completed"
+    },
+    {
+      "id": "T-2",
+      "status": "completed"
+    },
+    {
+      "id": "T-3",
+      "status": "completed"
+    },
+    {
+      "id": "T-4",
+      "status": "completed"
+    }
+  ],
+  "selected_guides": {
+    "implementation": [],
+    "review": []
+  },
+  "verification": [
+    {
+      "command": "uv pip compile setup.py requirements-dev.in --python-version 3.8 --universal --generate-hashes --output-file requirements-dev.lock",
+      "revision": "working-tree@d9bc059a9015b9f998e0d32a2b5bdb8a949cdea5",
+      "scope": "Final universal hashed lock regeneration from the normalized dependency declaration; 29 packages resolved and the generated command header records the Python 3.8 target",
+      "status": "passed",
+      "duration_ms": 500,
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest -q unit_tests/test_removed_capabilities.py",
+      "revision": "working-tree@d9bc059a9015b9f998e0d32a2b5bdb8a949cdea5",
+      "scope": "Focused missing-module, missing-facade, package-inventory, direct-dependency, and blocked-import core-operation regressions; 5 passed",
+      "status": "passed",
+      "duration_ms": 500,
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": "python3 -m zipfile -l /private/tmp/jsonldb-00045.6VYQn5/dist/jsonldb-1.0.0-py3-none-any.whl; fail if inventory contains jsonldb/(vercontrol|visual).py",
+      "revision": "working-tree@d9bc059a9015b9f998e0d32a2b5bdb8a949cdea5",
+      "scope": "Initial in-place wheel qualification found both deleted modules copied from pre-existing ignored build/lib residue",
+      "status": "failed",
+      "duration_ms": 100,
+      "role": "qualification"
+    },
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 setup.py clean --all",
+      "revision": "working-tree@d9bc059a9015b9f998e0d32a2b5bdb8a949cdea5",
+      "scope": "First generated-artifact cleanup attempt; repository runtime lacked setuptools and changed nothing",
+      "status": "failed",
+      "duration_ms": 100,
+      "role": "qualification"
+    },
+    {
+      "command": "uv run --no-project --isolated --python 3.12 --with setuptools==75.3.2 python setup.py clean --all; uv build --wheel --out-dir /private/tmp/jsonldb-00045.6VYQn5/root-final-dist; fail if wheel inventory contains jsonldb/(vercontrol|visual).py",
+      "revision": "working-tree@d9bc059a9015b9f998e0d32a2b5bdb8a949cdea5",
+      "scope": "Build-system-pinned cleanup of ignored generated residue and final in-place wheel inventory; the wheel contains exactly the six remaining package modules",
+      "status": "passed",
+      "duration_ms": 700,
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": "uv run --no-project --isolated --python 3.12 --with root-final jsonldb wheel --with packaging python -c <installed package, dependency metadata, missing imports, facade absence, and core round-trip assertions>",
+      "revision": "working-tree@d9bc059a9015b9f998e0d32a2b5bdb8a949cdea5",
+      "scope": "Final wheel installed outside the checkout with only pandas, orjson, and NumPy; GitPython, Bokeh, Matplotlib, both removed modules, and all three facade methods are absent; a FolderDB write/read round trip passed",
+      "status": "passed",
+      "duration_ms": 12690,
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": "uv run --no-project --isolated --python 3.12 --with root-final jsonldb wheel python -c <literal normalized Requires-Dist strings>",
+      "revision": "working-tree@d9bc059a9015b9f998e0d32a2b5bdb8a949cdea5",
+      "scope": "Qualification assertion expected unnormalized requirement spacing; all removal and core-operation assertions passed before the formatting-only mismatch",
+      "status": "failed",
+      "duration_ms": 11650,
+      "role": "qualification"
+    },
+    {
+      "command": "uv run --no-project --isolated --python 3.12 --with-requirements requirements-dev.lock --with-editable . python -m pytest -q",
+      "revision": "working-tree@d9bc059a9015b9f998e0d32a2b5bdb8a949cdea5",
+      "scope": "Full canonical Python 3.12 suite from the regenerated dependency closure; 142 passed",
+      "status": "passed",
+      "duration_ms": 1730,
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": "Python 3.8 ast.parse audit for package, unit_tests, and setup.py; remaining five-file Roadmap cap inventory; current-surface rg exclusions; deleted-path assertions; Roadmap and big_picture immutability; git diff --check",
+      "revision": "working-tree@d9bc059a9015b9f998e0d32a2b5bdb8a949cdea5",
+      "scope": "20 files parse at the Python 3.8 floor; caps pass at metaslot 101/250, jsonlfile 950/950, reports 106/150, folderdb 1076/1250, jsonldf 127/150; no capability surface remains outside intentional negative tests and legitimate GitHub transport; governed notes are unchanged and diff hygiene passes",
+      "status": "passed",
+      "duration_ms": 200,
+      "role": "authoritative_acceptance"
+    }
+  ],
+  "deviations": [
+    "The first in-place wheel reused pre-existing ignored build/lib files for the deleted modules. The Roadmap forbids hand-editing build artifacts, so the generated tree was cleaned with setuptools' own clean command in an isolated environment pinned to pyproject.toml's setuptools 75.3.2; a fresh in-place wheel then contained only the six remaining modules and passed isolated installation. No tracked scope changed for this repair.",
+    "The documented lock command warned that no local Python 3.8 interpreter was available and used Python 3.12.10 to build resolution dependencies. The command still resolved the requested universal Python 3.8 target and emitted that exact provenance header; the separate Python 3.8 AST audit passed."
+  ],
+  "follow_up": "none",
+  "selected_guide_versions": {
+    "implementation": [],
+    "review": []
+  }
+}

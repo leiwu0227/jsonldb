@@ -1,5 +1,6 @@
 from setuptools import setup, find_packages
 
+
 setup(
     name="jsonldb",
     version="1.0.0",
@@ -7,14 +8,11 @@ setup(
     install_requires=[
         "pandas>=1.3.0",
         "orjson>=3.6.0",
-        "gitpython>=3.1.0",
-        "bokeh>=2.0.0",
-        "matplotlib>=3.0.0",
-        "numpy>=1.20.0"
+        "numpy>=1.20.0",
     ],
     author="Lei Wu",
     author_email="leiwu0227@gmail.com",
-    description="A simple file-based database that stores data in JSONL format with version control and visualization capabilities",
+    description="A file-based database for keyed records stored in JSONL format",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/leiwu0227/jsonldb",

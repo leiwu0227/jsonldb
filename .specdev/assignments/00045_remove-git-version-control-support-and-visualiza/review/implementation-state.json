@@ -1,0 +1,40 @@
+{
+  "version": 2,
+  "mode": "automatic",
+  "stage": "complete",
+  "primary_round": 1,
+  "round": 1,
+  "history": [
+    {
+      "round": 1,
+      "candidate_digest": "0e16b6d9b9ecc3cf03af47e34c2e301900f5a783a0a07490c739a12bbe48cd37",
+      "findings_digest": "928b13ede9511b7ac5728366f28c9238715c7e0971b5291a3e54354c43024839"
+    }
+  ],
+  "profile": {
+    "provider": "claude",
+    "model": "claude-opus-5",
+    "effort": "xhigh",
+    "filesystem": "read-only",
+    "network": false,
+    "timeout_ms": 1200000
+  },
+  "guide_ids": [],
+  "contract_hash": "c59e0502f7de6788d82ad5f17b689198a9e339e16e9679ae16ce36503a65bc8a",
+  "candidate_receipt_identity": "4b15e3a080d2bb48ff8695124f6573107cad7ab6fa8aa85bc7b1cbd3575c4d2d",
+  "status": "approved",
+  "candidate_digest": "0e16b6d9b9ecc3cf03af47e34c2e301900f5a783a0a07490c739a12bbe48cd37",
+  "findings_digest": "928b13ede9511b7ac5728366f28c9238715c7e0971b5291a3e54354c43024839",
+  "attempt": "Attempt-00070",
+  "updated_at": "2026-09-05T01:17:54.367Z",
+  "reviewer_continuity": {
+    "mode": "fresh"
+  },
+  "material_divergence": false,
+  "scope_divergence": "clarifying",
+  "procedure_divergence": "disclosed",
+  "evidence_integrity": "complete",
+  "user_reapproval_required": false,
+  "taxonomy_source": "structured",
+  "reviewer_continuation_lease": "unavailable"
+}

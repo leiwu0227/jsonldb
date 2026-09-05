@@ -1,0 +1,12 @@
+{
+  "approved": true,
+  "contract_hash": "c59e0502f7de6788d82ad5f17b689198a9e339e16e9679ae16ce36503a65bc8a",
+  "actor": "user",
+  "approved_at": "2026-09-05T01:00:55.679Z",
+  "review_override": false,
+  "review_policy": {
+    "brainstorm": "optional",
+    "implementation": "required"
+  },
+  "revision": "d9bc059a9015b9f998e0d32a2b5bdb8a949cdea5"
+}

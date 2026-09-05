@@ -1,0 +1,9 @@
+{
+  "proposal": ".specdev/discussions/D00002_audit-current-code-against-all-roadmap-design-no/brainstorm/proposal.md",
+  "design": ".specdev/discussions/D00002_audit-current-code-against-all-roadmap-design-no/brainstorm/design.md",
+  "artifacts": [
+    "brainstorm/proposal.md",
+    "brainstorm/design.md",
+    "brainstorm/evidence.md"
+  ]
+}

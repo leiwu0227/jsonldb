@@ -38,9 +38,6 @@ class TableWithMeta(NamedTuple):
     meta: Any
     rows: Any
 
-# Version control (gitpython) is imported lazily inside commit/revert/version
-# so that importing FolderDB does not load git.
-
 class FolderDB:
     """
     A simple file-based database that stores data in JSONL format.
@@ -1077,57 +1074,3 @@ class FolderDB:
                     os.rmdir(root)
             except OSError:
                 pass
-
-    # =============== Version Control ===============
-    def commit(self, msg: str = "") -> None:
-        """
-        Commit changes in the database folder.
-        
-        If the folder is not already a git repository, it will be initialized first.
-        
-        Args:
-            msg: Optional commit message. If empty, an auto-generated message will be used.
-            
-        Raises:
-            git.exc.GitCommandError: If git commands fail
-        """
-        from .vercontrol import init_folder, commit as vercontrol_commit, is_versioned
-
-        # Check if folder is a git repo, if not initialize it
-        if not is_versioned(self.folder_path):
-            init_folder(self.folder_path)
-
-        # Commit changes
-        vercontrol_commit(self.folder_path, msg)
-        logger.info("commit successful for %s", self.folder_path)
-    
-    def revert(self, version_hash: str) -> None:
-        """
-        Revert the database to a previous version.
-        
-        Args:
-            version_hash: Hash of the commit to revert to
-            
-        Raises:
-            git.exc.GitCommandError: If git commands fail
-            ValueError: If the specified commit is not found
-        """
-        from .vercontrol import revert as vercontrol_revert
-
-        vercontrol_revert(self.folder_path, version_hash)
-        logger.info("successfully reverted %s to version %s",
-                    self.folder_path, version_hash)
-    
-    def version(self) -> Dict[str, str]:
-        """
-        List all versions of the database.
-        
-        Returns:
-            Dictionary with commit hashes as keys and commit messages as values
-            
-        Raises:
-            git.exc.GitCommandError: If git commands fail
-        """
-        from .vercontrol import list_version
-
-        return list_version(self.folder_path)

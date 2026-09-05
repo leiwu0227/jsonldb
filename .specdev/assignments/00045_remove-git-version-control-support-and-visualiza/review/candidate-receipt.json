@@ -1,0 +1,388 @@
+{
+  "version": 1,
+  "kind": "standalone_assignment_candidate",
+  "completeness": "complete",
+  "identity": "4b15e3a080d2bb48ff8695124f6573107cad7ab6fa8aa85bc7b1cbd3575c4d2d",
+  "assignment": {
+    "id": "00045",
+    "folder": "00045_remove-git-version-control-support-and-visualiza"
+  },
+  "implementation_execution": {
+    "version": 1,
+    "configured_mode": "auto",
+    "effective_mode": "inline",
+    "source": "auto-default",
+    "reason": null,
+    "owner": "foreground-agent",
+    "frozen_at": "2026-09-05T01:00:55.870Z"
+  },
+  "contract": {
+    "path": ".specdev/assignments/00045_remove-git-version-control-support-and-visualiza/brainstorm/contract.md",
+    "hash": "c59e0502f7de6788d82ad5f17b689198a9e339e16e9679ae16ce36503a65bc8a"
+  },
+  "acceptance": {
+    "total": 3,
+    "items": [
+      {
+        "id": "AC-1",
+        "evidence": "Source and final wheel inventories contain neither module; five focused regressions prove normal missing-module and missing-attribute behavior and the reduced `__all__`.",
+        "result": "passed"
+      },
+      {
+        "id": "AC-2",
+        "evidence": "The regenerated lock and final wheel metadata declare only pandas, orjson, and NumPy; current-surface sweeps pass after excluding the intentional negative regression and legitimate GitHub transport; the README, five notebooks, and capabi...",
+        "result": "passed"
+      },
+      {
+        "id": "AC-3",
+        "evidence": "The final wheel installed outside the checkout under isolated Python 3.12 with all three removed libraries absent and completed a FolderDB round trip; the full canonical suite passed 142 tests, 20 files passed Python 3.8 parsing, and all...",
+        "result": "passed"
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 3,
+      "failed": 0,
+      "blocked": 0,
+      "missing": 0
+    }
+  },
+  "verification": {
+    "total": 9,
+    "items": [
+      {
+        "command": "uv pip compile setup.py requirements-dev.in --python-version 3.8 --universal --generate-hashes --output-file requirements-dev.lock",
+        "revision": "working-tree@d9bc059a9015b9f998e0d32a2b5bdb8a949cdea5",
+        "scope": "Final universal hashed lock regeneration from the normalized dependency declaration; 29 packages resolved and the generated command header records the Python 3.8 target",
+        "status": "passed",
+        "duration_ms": 500,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest -q unit_tests/test_removed_capabilities.py",
+        "revision": "working-tree@d9bc059a9015b9f998e0d32a2b5bdb8a949cdea5",
+        "scope": "Focused missing-module, missing-facade, package-inventory, direct-dependency, and blocked-import core-operation regressions; 5 passed",
+        "status": "passed",
+        "duration_ms": 500,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "uv run --no-project --isolated --python 3.12 --with setuptools==75.3.2 python setup.py clean --all; uv build --wheel --out-dir /private/tmp/jsonldb-00045.6VYQn5/root-final-dist; fail if wheel inventory contains jsonldb/(vercontrol|visual...",
+        "revision": "working-tree@d9bc059a9015b9f998e0d32a2b5bdb8a949cdea5",
+        "scope": "Build-system-pinned cleanup of ignored generated residue and final in-place wheel inventory; the wheel contains exactly the six remaining package modules",
+        "status": "passed",
+        "duration_ms": 700,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "uv run --no-project --isolated --python 3.12 --with root-final jsonldb wheel --with packaging python -c <installed package, dependency metadata, missing imports, facade absence, and core round-trip assertions>",
+        "revision": "working-tree@d9bc059a9015b9f998e0d32a2b5bdb8a949cdea5",
+        "scope": "Final wheel installed outside the checkout with only pandas, orjson, and NumPy; GitPython, Bokeh, Matplotlib, both removed modules, and all three facade methods are absent; a FolderDB write/read round trip passed",
+        "status": "passed",
+        "duration_ms": 12690,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "uv run --no-project --isolated --python 3.12 --with-requirements requirements-dev.lock --with-editable . python -m pytest -q",
+        "revision": "working-tree@d9bc059a9015b9f998e0d32a2b5bdb8a949cdea5",
+        "scope": "Full canonical Python 3.12 suite from the regenerated dependency closure; 142 passed",
+        "status": "passed",
+        "duration_ms": 1730,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "Python 3.8 ast.parse audit for package, unit_tests, and setup.py; remaining five-file Roadmap cap inventory; current-surface rg exclusions; deleted-path assertions; Roadmap and big_picture immutability; git diff --check",
+        "revision": "working-tree@d9bc059a9015b9f998e0d32a2b5bdb8a949cdea5",
+        "scope": "20 files parse at the Python 3.8 floor; caps pass at metaslot 101/250, jsonlfile 950/950, reports 106/150, folderdb 1076/1250, jsonldf 127/150; no capability surface remains outside intentional negative tests and legitimate GitHub transp...",
+        "status": "passed",
+        "duration_ms": 200,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "python3 -m zipfile -l /private/tmp/jsonldb-00045.6VYQn5/dist/jsonldb-1.0.0-py3-none-any.whl; fail if inventory contains jsonldb/(vercontrol|visual).py",
+        "revision": "working-tree@d9bc059a9015b9f998e0d32a2b5bdb8a949cdea5",
+        "scope": "Initial in-place wheel qualification found both deleted modules copied from pre-existing ignored build/lib residue",
+        "status": "failed",
+        "duration_ms": 100,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 0,
+          "failed": 1,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 setup.py clean --all",
+        "revision": "working-tree@d9bc059a9015b9f998e0d32a2b5bdb8a949cdea5",
+        "scope": "First generated-artifact cleanup attempt; repository runtime lacked setuptools and changed nothing",
+        "status": "failed",
+        "duration_ms": 100,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 0,
+          "failed": 1,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": "uv run --no-project --isolated --python 3.12 --with root-final jsonldb wheel python -c <literal normalized Requires-Dist strings>",
+        "revision": "working-tree@d9bc059a9015b9f998e0d32a2b5bdb8a949cdea5",
+        "scope": "Qualification assertion expected unnormalized requirement spacing; all removal and core-operation assertions passed before the formatting-only mismatch",
+        "status": "failed",
+        "duration_ms": 11650,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 0,
+          "failed": 1,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 6,
+      "failed": 3,
+      "skipped": 0,
+      "missing": 0
+    },
+    "by_role": {
+      "qualification": {
+        "passed": 0,
+        "failed": 3,
+        "skipped": 0,
+        "missing": 0
+      },
+      "authoritative_acceptance": {
+        "passed": 6,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      }
+    },
+    "raw": {
+      "total": 9,
+      "counts": {
+        "passed": 6,
+        "failed": 3,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 0,
+          "failed": 3,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 6,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "effective": {
+      "total": 9,
+      "counts": {
+        "passed": 6,
+        "failed": 3,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 0,
+          "failed": 3,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 6,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "superseded": 0,
+    "authoritative_evidence": [
+      {
+        "command": "uv pip compile setup.py requirements-dev.in --python-version 3.8 --universal --generate-hashes --output-file requirements-dev.lock",
+        "revision": "working-tree@d9bc059a9015b9f998e0d32a2b5bdb8a949cdea5",
+        "status": "passed"
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest -q unit_tests/test_removed_capabilities.py",
+        "revision": "working-tree@d9bc059a9015b9f998e0d32a2b5bdb8a949cdea5",
+        "status": "passed"
+      },
+      {
+        "command": "uv run --no-project --isolated --python 3.12 --with setuptools==75.3.2 python setup.py clean --all; uv build --wheel --out-dir /private/tmp/jsonldb-00045.6VYQn5/root-final-dist; fail if wheel inventory contains jsonldb/(vercontrol|visual...",
+        "revision": "working-tree@d9bc059a9015b9f998e0d32a2b5bdb8a949cdea5",
+        "status": "passed"
+      },
+      {
+        "command": "uv run --no-project --isolated --python 3.12 --with root-final jsonldb wheel --with packaging python -c <installed package, dependency metadata, missing imports, facade absence, and core round-trip assertions>",
+        "revision": "working-tree@d9bc059a9015b9f998e0d32a2b5bdb8a949cdea5",
+        "status": "passed"
+      },
+      {
+        "command": "uv run --no-project --isolated --python 3.12 --with-requirements requirements-dev.lock --with-editable . python -m pytest -q",
+        "revision": "working-tree@d9bc059a9015b9f998e0d32a2b5bdb8a949cdea5",
+        "status": "passed"
+      },
+      {
+        "command": "Python 3.8 ast.parse audit for package, unit_tests, and setup.py; remaining five-file Roadmap cap inventory; current-surface rg exclusions; deleted-path assertions; Roadmap and big_picture immutability; git diff --check",
+        "revision": "working-tree@d9bc059a9015b9f998e0d32a2b5bdb8a949cdea5",
+        "status": "passed"
+      }
+    ],
+    "authoritative_evidence_omitted": 0
+  },
+  "changed_project_paths": {
+    "count": 16,
+    "groups": [
+      {
+        "name": "(root)",
+        "count": 3,
+        "paths": [
+          "README.md",
+          "requirements-dev.lock",
+          "setup.py"
+        ],
+        "omitted": 0
+      },
+      {
+        "name": "examples",
+        "count": 5,
+        "paths": [
+          "examples/example_folderdb/version_control_examples.ipynb",
+          "examples/example_vercontrol/version_control_example.ipynb",
+          "examples/example_visual/overlapping_datetime_example.ipynb",
+          "examples/example_visual/visualization_examples.ipynb",
+          "examples/example_visual/visualize_folder.ipynb"
+        ],
+        "omitted": 0
+      },
+      {
+        "name": "jsonldb",
+        "count": 4,
+        "paths": [
+          "jsonldb/__init__.py",
+          "jsonldb/folderdb.py",
+          "jsonldb/vercontrol.py"
+        ],
+        "omitted": 1
+      },
+      {
+        "name": "unit_tests",
+        "count": 4,
+        "paths": [
+          "unit_tests/test_dependency_runtime_logging.py"
+        ],
+        "omitted": 3
+      }
+    ],
+    "omitted_groups": 0
+  },
+  "unresolved_risks": {
+    "status": "present",
+    "items": [
+      "This is an intentional breaking API removal. `big_picture.md` still describes",
+      "the old high-level inventory and remains reserved for a separate knowledge",
+      "curation workflow. `jsonlfile.py` remains exactly at its 950-line Roadmap cap."
+    ],
+    "source": "canonical_section"
+  },
+  "artifacts": {
+    "contract": {
+      "path": ".specdev/assignments/00045_remove-git-version-control-support-and-visualiza/brainstorm/contract.md",
+      "exists": true,
+      "digest": "c59e0502f7de6788d82ad5f17b689198a9e339e16e9679ae16ce36503a65bc8a"
+    },
+    "plan": {
+      "path": ".specdev/assignments/00045_remove-git-version-control-support-and-visualiza/design/plan.md",
+      "exists": true,
+      "digest": "8907714d9cb99599818fc7f1fad88d3e5ecf5949538cd8f89b6ae74f99b2cdc3"
+    },
+    "progress": {
+      "path": ".specdev/assignments/00045_remove-git-version-control-support-and-visualiza/implementation/progress.json",
+      "exists": true,
+      "digest": "8020afaf0daadbda8694d800fca499cfc4bb4c669e1f129cd8fc2b3573f4869f"
+    },
+    "outcome": {
+      "path": ".specdev/assignments/00045_remove-git-version-control-support-and-visualiza/outcome.md",
+      "exists": true,
+      "digest": "3d2495321d48086bd2078f87c85907d4b4dd7ee726c7d5c3c31b30751ea105f0"
+    }
+  },
+  "issues": [],
+  "issues_omitted": 0
+}

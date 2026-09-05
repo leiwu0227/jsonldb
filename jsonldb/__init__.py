@@ -1,16 +1,14 @@
 """
 JSONLDB - A simple file-based database that stores data in JSONL format.
 
-Modular import structure - import only what you need to avoid loading
-unnecessary dependencies (e.g., git for vercontrol, bokeh/matplotlib for visual).
+FolderDB is imported by default. Supporting storage, DataFrame, metadata, and
+report modules remain available through the package namespace.
 
 Example usage:
-    from jsonldb import FolderDB  # Core functionality only
-    from jsonldb.vercontrol import commit  # Only if you need version control
-    from jsonldb.visual import visualize_folderdb  # Only if you need visualization
+    from jsonldb import FolderDB
 """
 
 from .folderdb import FolderDB
 
 __version__ = "1.0.0"
-__all__ = ["FolderDB", "visual", "vercontrol", "jsonlfile", "jsonldf", "metaslot", "reports"]
+__all__ = ["FolderDB", "jsonlfile", "jsonldf", "metaslot", "reports"]

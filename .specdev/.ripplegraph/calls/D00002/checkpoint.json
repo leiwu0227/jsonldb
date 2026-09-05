@@ -1,0 +1,30 @@
+{
+  "callId": "D00002",
+  "status": "active",
+  "graphId": "discussion-lifecycle",
+  "graphVersion": "2.1.0",
+  "packagePath": "workflows/discussion-lifecycle@2.1.0",
+  "position": {
+    "graph": "discussion-lifecycle",
+    "node": "finalize"
+  },
+  "input": {
+    "id": "D00002",
+    "path": ".specdev/discussions/D00002_audit-current-code-against-all-roadmap-design-no",
+    "description": "Audit current code against all roadmap design notes for remaining implementation gaps",
+    "start_revision": "88f826bab31a3dc2c0d16fd9f65bfa8d317d1e17"
+  },
+  "outputs": {
+    "brainstorm": {
+      "proposal": ".specdev/discussions/D00002_audit-current-code-against-all-roadmap-design-no/brainstorm/proposal.md",
+      "design": ".specdev/discussions/D00002_audit-current-code-against-all-roadmap-design-no/brainstorm/design.md",
+      "artifacts": [
+        "brainstorm/proposal.md",
+        "brainstorm/design.md",
+        "brainstorm/evidence.md"
+      ]
+    }
+  },
+  "createdAt": "2026-09-04T23:58:59.434Z",
+  "updatedAt": "2026-09-05T00:08:24.168Z"
+}

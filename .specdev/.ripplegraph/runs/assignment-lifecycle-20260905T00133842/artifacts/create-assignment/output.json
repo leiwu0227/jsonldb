@@ -1,0 +1,10 @@
+{
+  "id": "00045",
+  "name": "00045_remove-git-version-control-support-and-visualiza",
+  "path": ".specdev/assignments/00045_remove-git-version-control-support-and-visualiza",
+  "description": "Remove Git version-control support and visualization support from JSONLDB",
+  "review_policy": {
+    "brainstorm": "optional",
+    "implementation": "required"
+  }
+}

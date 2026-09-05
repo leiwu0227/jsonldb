@@ -1,15 +1,12 @@
 # JSONLDB
 
-A simple file-based database that stores keyed records in JSONL format, with
-optional Git version control and visualization.
+A simple file-based database that stores keyed records in JSONL format.
 
 ## Features
 
 - Store dictionaries and pandas DataFrames in JSONL files
 - Select records by an inclusive key range
 - Organize tables in a flat or hierarchical folder layout
-- Track database snapshots with Git
-- Inspect table layout with Matplotlib or Bokeh
 - Maintain and lint per-table metadata and indexes
 
 ## Installation
@@ -152,47 +149,12 @@ measurements_metadata = metadata.get("measurements")
 db.lint_db()
 ```
 
-## Version Control
-
-The database folder can be committed to Git and restored to an earlier commit:
-
-```python
-db.commit("Added new data")
-
-versions = db.version()
-for commit_hash, message in versions.items():
-    print(f"{commit_hash}: {message}")
-
-db.revert(commit_hash)
-```
-
-`revert` restores the database folder with a hard Git reset, so uncommitted
-changes in that folder are discarded.
-
-## Visualization
-
-Visualization is provided by functions in `jsonldb.visual`, not methods on
-`FolderDB`:
-
-```python
-from jsonldb.visual import visualize_folderdb, visualize_jsonl
-
-figure, axes = visualize_folderdb(db)
-file_figure, file_axes = visualize_jsonl("my_database/measurements.jsonl")
-
-# Request a Bokeh figure instead of the default Matplotlib result.
-bokeh_figure = visualize_folderdb(db, plot_lib="bokeh")
-```
-
 ## Requirements
 
 - Python >= 3.8
 - pandas >= 1.3.0
-- gitpython >= 3.1.0
-- bokeh >= 2.0.0
 - numpy >= 1.20.0
 - orjson >= 3.6.0
-- matplotlib >= 3.0.0
 
 ## License
 
