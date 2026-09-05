@@ -5,7 +5,10 @@ Core JSONL file operations for JSONLDB.
 import os
 import logging
 import tempfile
-from typing import Dict, List, Optional, Union
+import sys
+from collections import OrderedDict
+from threading import RLock
+from typing import Dict, List, NamedTuple, Optional, Union
 import datetime as dt
 import orjson
 from bisect import bisect_left, bisect_right
@@ -24,6 +27,124 @@ REMOVED_DETAIL_BYTES = 160
 LineKey = Union[str, dt.datetime]
 DataDict = Dict[str, dict]
 IndexDict = Dict[str, int]
+
+
+class _CachedIndex(NamedTuple):
+    index: dict
+    fingerprint: tuple
+    epoch: int
+    keys: Optional[tuple]
+    size: int
+
+
+_INDEX_CACHE_LIMIT = 64 * 1024 * 1024
+_INDEX_CACHE = OrderedDict()
+_INDEX_CACHE_LOCK = RLock()
+_INDEX_CACHE_BYTES = _INDEX_CACHE_EPOCH = 0
+
+
+def _file_identity(stat):
+    return (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
+
+
+def _index_fingerprint(path):
+    try:
+        return _file_identity(os.stat(path)), _file_identity(os.stat(f'{path}.idx'))
+    except OSError:
+        return None
+
+
+def _invalidate_index_cache(path):
+    """Forget affected reads before mutation; None clears all retained entries."""
+    global _INDEX_CACHE_BYTES, _INDEX_CACHE_EPOCH
+    with _INDEX_CACHE_LOCK:
+        _INDEX_CACHE_EPOCH += 1
+        if path is None:
+            _INDEX_CACHE.clear()
+            _INDEX_CACHE_BYTES = 0
+        else:
+            entry = _INDEX_CACHE.pop(os.path.abspath(path), None)
+            if entry is not None:
+                _INDEX_CACHE_BYTES -= entry.size
+
+
+def _reset_cache_after_fork():
+    global _INDEX_CACHE_LOCK
+    _INDEX_CACHE_LOCK = RLock()
+    _invalidate_index_cache(None)
+
+
+if hasattr(os, 'register_at_fork'):
+    os.register_at_fork(after_in_child=_reset_cache_after_fork)
+
+
+def _read_index_snapshot(path):
+    """Associate parsed bytes with stable paths and the opened index identity."""
+    with _INDEX_CACHE_LOCK:
+        epoch = _INDEX_CACHE_EPOCH
+    before = _index_fingerprint(path)
+    with open(f'{path}.idx', 'rb') as source:
+        start = _file_identity(os.fstat(source.fileno()))
+        raw = source.read()
+        index = orjson.loads(raw)
+        end = _file_identity(os.fstat(source.fileno()))
+    after = _index_fingerprint(path)
+    stable = before is not None and before == after and start == end == after[1]
+    # Conservative decoded-object bound: JSON bytes cover key characters;
+    # non-ASCII/escaped keys may need four bytes per decoded character.
+    ascii_keys = raw.isascii() and b'\\' not in raw
+    header = sys.getsizeof('' if ascii_keys else '\U00010000')
+    weight = (sys.getsizeof(index) + len(raw) * (1 if ascii_keys else 4)
+              + len(index) * (header + sys.getsizeof((1 << 64) - 1))) if isinstance(index, dict) else 0
+    return index, after if stable else None, epoch, weight
+
+
+def _read_cached_index(path, with_keys=False):
+    """Return a private read snapshot; never lend it to callers or writers."""
+    global _INDEX_CACHE_BYTES
+    cache_key = os.path.abspath(path)
+    fingerprint = _index_fingerprint(path)
+    with _INDEX_CACHE_LOCK:
+        entry = _INDEX_CACHE.get(cache_key)
+        if entry is not None and (fingerprint is None or entry.fingerprint != fingerprint):
+            _invalidate_index_cache(path)
+            entry = None
+        if entry is not None:
+            _INDEX_CACHE.move_to_end(cache_key)
+            if not with_keys or entry.keys is not None:
+                return entry.index, entry.keys
+        epoch = _INDEX_CACHE_EPOCH
+    if entry is None:
+        index, fingerprint, epoch, weight = _load_index_snapshot(path)
+        keys = tuple(index) if with_keys else None
+        if fingerprint is None or not isinstance(index, dict) or weight > _INDEX_CACHE_LIMIT:
+            return index, keys
+        # Malformed offset objects retain ordinary read behavior, but are not
+        # admitted: shallow accounting cannot bound arbitrary nested objects.
+        if set(map(type, index.values())) - {int}:
+            return index, keys
+        size = (weight + sys.getsizeof(cache_key)
+                + sys.getsizeof(fingerprint) + sum(map(sys.getsizeof, fingerprint))
+                + sum(sys.getsizeof(part) for stamp in fingerprint for part in stamp)
+                + 256)  # Entry and OrderedDict-node/accounting allowance.
+    else:
+        index, fingerprint, _, _, size = entry
+        keys = tuple(index)
+    if keys is not None:
+        size += sys.getsizeof(keys)
+    candidate = _CachedIndex(index, fingerprint, epoch, keys, size)
+    with _INDEX_CACHE_LOCK:
+        if (epoch == _INDEX_CACHE_EPOCH and size <= _INDEX_CACHE_LIMIT
+                and _INDEX_CACHE.get(cache_key) is entry):
+            previous = _INDEX_CACHE.pop(cache_key, None)
+            if previous is not None:
+                _INDEX_CACHE_BYTES -= previous.size
+            while _INDEX_CACHE and _INDEX_CACHE_BYTES + size > _INDEX_CACHE_LIMIT:
+                _, evicted = _INDEX_CACHE.popitem(last=False)
+                _INDEX_CACHE_BYTES -= evicted.size
+            _INDEX_CACHE[cache_key] = candidate
+            _INDEX_CACHE_BYTES += size
+    return index, keys
 
 def _validate_row_keys(db_dict: DataDict,
                        timespec: Optional[str] = None) -> None:
@@ -78,11 +199,13 @@ def _serialize_index(index: IndexDict) -> bytes:
 
 
 def _write_index(jsonl_file_path: str, index: IndexDict) -> None:
+    _invalidate_index_cache(jsonl_file_path)
     _atomic_write_bytes(f"{jsonl_file_path}.idx", _serialize_index(index))
 
 def build_jsonl_index(jsonl_file_path: str, warn_invalid: bool = True) -> None:
     """Build a sorted absolute-offset index, optionally warning on bad rows."""
     index_dict: IndexDict = {}
+    _invalidate_index_cache(jsonl_file_path)
 
     if not os.path.exists(jsonl_file_path):
         raise FileNotFoundError(f"JSONL file not found: {jsonl_file_path}")
@@ -122,7 +245,7 @@ def build_jsonl_index(jsonl_file_path: str, warn_invalid: bool = True) -> None:
 
         # Save index (OPT_SORT_KEYS sorts on dump)
         _write_index(jsonl_file_path, index_dict)
-            
+
     except OSError as e:
         raise OSError(f"Failed to build index for {jsonl_file_path}: {str(e)}")
 
@@ -150,21 +273,24 @@ def ensure_index_exists(jsonl_file_path: str) -> None:
 
 
 def load_index(jsonl_file_path: str) -> dict:
-    """Load the single self-healing index-read path."""
+    """Load an independent mutable index through the shared recovery path."""
+    return _load_index_snapshot(jsonl_file_path)[0]
+
+
+def _load_index_snapshot(jsonl_file_path):
+    """Recover once, then return the final parsed index and admission evidence."""
     index_file_path = f"{jsonl_file_path}.idx"
     ensure_index_exists(jsonl_file_path)  # heals missing / empty / stale
     try:
-        with open(index_file_path, 'rb') as f:
-            index = orjson.loads(f.read())
-        if isinstance(index, dict):
-            return index
+        snapshot = _read_index_snapshot(jsonl_file_path)
+        if isinstance(snapshot[0], dict):
+            return snapshot
     except (orjson.JSONDecodeError, OSError):
         pass
     # Unparseable, unreadable, or non-object index -> rebuild from the .jsonl.
     logger.warning("rebuilt corrupt index %s", index_file_path)
     build_jsonl_index(jsonl_file_path)
-    with open(index_file_path, 'rb') as f:
-        return orjson.loads(f.read())
+    return _read_index_snapshot(jsonl_file_path)
 
 
 def _lint_counts(jsonl_file_path: str, full: bool):
@@ -252,6 +378,7 @@ def _log_lint_removed(jsonl_file_path: str, regions) -> None:
 
 
 def _lint_rewrite(jsonl_file_path: str, index: dict, slot: Optional[bytes]) -> None:
+    _invalidate_index_cache(jsonl_file_path)
     directory = os.path.dirname(os.path.abspath(jsonl_file_path))
     fd, tmp_path = tempfile.mkstemp(
         dir=directory, prefix='.' + os.path.basename(jsonl_file_path) + '.',
@@ -356,17 +483,7 @@ def _is_datetime_string(linekey: str, timespec: Optional[str] = None) -> bool:
         return len(linekey) == 26 and 'T' in linekey and '-' in linekey and ':' in linekey
 
 def serialize_linekey(linekey: LineKey, timespec: Optional[str] = None) -> str:
-    """
-    Convert a linekey to its string representation.
-
-    Args:
-        linekey: String or datetime object to serialize
-        timespec: Datetime precision ('seconds' or 'microseconds').
-            Defaults to the module-level TIME_SPEC.
-
-    Returns:
-        String representation of the linekey
-    """
+    """Serialize strings, datetimes at the requested precision, or other keys."""
     if isinstance(linekey, str):
         return linekey
     elif isinstance(linekey, dt.datetime):
@@ -374,34 +491,13 @@ def serialize_linekey(linekey: LineKey, timespec: Optional[str] = None) -> str:
     return str(linekey)
 
 def deserialize_linekey(linekey_str: str, default_format: Optional[str] = None) -> LineKey:
-    """
-    Convert a string linekey back to its original type.
-    
-    Args:
-        linekey_str: String to deserialize
-        default_format: Format hint for deserialization ('datetime' supported)
-        
-    Returns:
-        Original type of the linekey (datetime or string)
-    """
+    """Convert an ISO key to datetime only when explicitly requested."""
     if default_format == "datetime":
         return dt.datetime.fromisoformat(linekey_str)
     return linekey_str
 
 def detect_timespec(linekey: str) -> Optional[str]:
-    """Detect the datetime precision of a linekey string.
-
-    Example: detect_timespec("2024-01-01T12:00:00.123456") -> 'microseconds'
-             detect_timespec("2024-01-01T12:00:00") -> 'seconds'
-             detect_timespec("key1") -> None
-
-    Args:
-        linekey: String to classify
-
-    Returns:
-        'seconds' or 'microseconds' if the string is a parseable ISO datetime
-        of that precision, None otherwise
-    """
+    """Identify parseable ISO keys at second or microsecond precision."""
     for spec in ('seconds', 'microseconds'):
         if _is_datetime_string(linekey, spec):
             try:
@@ -413,11 +509,7 @@ def detect_timespec(linekey: str) -> Optional[str]:
 
 def _store_with_key(result_dict: DataDict, linekey: str, value: dict,
                     auto_deserialize: bool, timespec: Optional[str] = None) -> None:
-    """Store value under linekey, converting datetime-looking keys when requested.
-
-    Example: _store_with_key(d, "2024-01-01T00:00:00", {"v": 1}, True)
-    stores under datetime(2024, 1, 1); non-datetime keys stay strings.
-    """
+    """Store a row, optionally converting datetime-looking keys at the requested precision."""
     if auto_deserialize and _is_datetime_string(linekey, timespec):
         try:
             result_dict[deserialize_linekey(linekey, "datetime")] = value
@@ -427,33 +519,14 @@ def _store_with_key(result_dict: DataDict, linekey: str, value: dict,
     result_dict[linekey] = value
 
 def _fast_dumps(obj: dict) -> str:
-    """
-    Fast JSON serialization using orjson if available.
-    
-    Args:
-        obj: Dictionary to serialize
-        
-    Returns:
-        JSON string with newline
-    """
+    """Serialize with NumPy support and a trailing newline."""
     return orjson.dumps(obj, option=orjson.OPT_SERIALIZE_NUMPY).decode('utf-8') + '\n'
 
 def save_jsonl(jsonl_file_path: str, db_dict: DataDict,
                timespec: Optional[str] = None, meta: Optional[dict] = None,
                slot_bytes: Optional[int] = None) -> None:
-    """
-    Save a dictionary to a JSONL file with automatic indexing.
-    
-    Efficiently writes records and maintains an index of byte positions.
-    Handles empty dictionaries and ensures atomic writes.
-    
-    Args:
-        jsonl_file_path: Path to save the JSONL file
-        db_dict: Dictionary of records to save
-        
-    Raises:
-        OSError: If file operations fail
-    """
+    """Rewrite rows in input order, preserve/configure the slot, and publish the index last."""
+    _invalidate_index_cache(jsonl_file_path)
     index: IndexDict = {}
     _validate_row_keys(db_dict, timespec)
 
@@ -479,7 +552,7 @@ def save_jsonl(jsonl_file_path: str, db_dict: DataDict,
         else:
             record = existing_slot.record if existing_slot is not None else None
             final_slot = metaslot.encode_slot(record, width)
-    
+
     try:
         # Handle empty legacy dictionary case
         if not db_dict and width is None:
@@ -509,7 +582,7 @@ def save_jsonl(jsonl_file_path: str, db_dict: DataDict,
 
         # Write index (OPT_SORT_KEYS sorts on dump)
         _write_index(jsonl_file_path, index)
-            
+
     except OSError as e:
         raise OSError(f"Failed to save JSONL file {jsonl_file_path}: {str(e)}")
 
@@ -521,6 +594,7 @@ def save_jsonl_atomic(jsonl_file_path: str, db_dict: DataDict,
     This narrow path is intended for small protected control files. Ordinary
     table and db.meta saves retain their existing in-place publication policy.
     """
+    _invalidate_index_cache(jsonl_file_path)
     _validate_row_keys(db_dict, timespec)
     directory = os.path.dirname(os.path.abspath(jsonl_file_path))
     prefix = "." + os.path.basename(jsonl_file_path) + "."
@@ -557,6 +631,7 @@ def migrate_jsonl_slot(jsonl_file_path: str, slot_bytes: int) -> bool:
     interruption between those two publication boundaries without rewriting
     the conforming table.
     """
+    _invalidate_index_cache(jsonl_file_path)
     info = metaslot.inspect_file(jsonl_file_path)
     slot = metaslot.encode_slot(info.record if info.is_slot else None, slot_bytes)
     if info.is_slot and info.width == slot_bytes:
@@ -588,28 +663,12 @@ def migrate_jsonl_slot(jsonl_file_path: str, slot_bytes: int) -> bool:
         raise
 
 def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True, timespec: Optional[str] = None) -> DataDict:
-    """
-    Load a JSONL file into a dictionary.
-    
-    Reads each line as a JSON object and builds a dictionary.
-    Handles datetime deserialization and skips invalid lines.
-    
-    Args:
-        jsonl_file_path: Path to the JSONL file to load
-        auto_deserialize: Whether to convert datetime strings back to datetime objects
-        
-    Returns:
-        Dictionary of loaded records
-        
-    Raises:
-        FileNotFoundError: If the file doesn't exist
-        OSError: If file operations fail
-    """
+    """Stream rows, skipping slots and malformed lines; optionally convert datetime keys."""
     if not os.path.exists(jsonl_file_path):
         raise FileNotFoundError(f"JSONL file not found: {jsonl_file_path}")
 
     result_dict: DataDict = {}
-    
+
     try:
         with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
             offset = 0
@@ -652,22 +711,7 @@ def _load_legacy_rows(jsonl_file_path: str) -> dict:
 
 
 def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, upper_key: Optional[LineKey] = None, auto_deserialize: bool = True, timespec: Optional[str] = None) -> DataDict:
-    """
-    Select records from a JSONL file within a key range.
-    
-    Args:
-        jsonl_file_path: Path to the JSONL file
-        lower_key: Lower bound key (inclusive). If None, uses smallest key.
-        upper_key: Upper bound key (inclusive). If None, uses largest key.
-        auto_deserialize: Whether to auto-deserialize datetime keys
-        
-    Returns:
-        Dictionary of records within the range
-        
-    Raises:
-        FileNotFoundError: If file or index doesn't exist
-        OSError: If file operations fail
-    """
+    """Read an inclusive key range in key order; omitted bounds load all rows."""
     # If both keys are None, return all records
     if lower_key is None and upper_key is None:
         return load_jsonl(jsonl_file_path, auto_deserialize, timespec)
@@ -677,25 +721,24 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
 
     try:
         # Load index (self-heals an empty/corrupt .idx)
-        index_dict = load_index(jsonl_file_path)
+        index_dict, all_keys = _read_cached_index(jsonl_file_path, with_keys=True)
 
         # If no keys in index, return empty dict
         if not index_dict:
             return {}
-            
+
         # Get all keys from index
-        all_keys = list(index_dict.keys())
-        
+
         # Set default values if None
         if lower_key is None:
             lower_key = all_keys[0]   # index keys are stored sorted
         if upper_key is None:
             upper_key = all_keys[-1]
-            
+
         # Serialize the keys
         lower_key = serialize_linekey(lower_key, timespec)
         upper_key = serialize_linekey(upper_key, timespec)
-        
+
         # Use bisect for O(log n) range selection
         lo = bisect_left(all_keys, lower_key)
         hi = bisect_right(all_keys, upper_key)
@@ -727,7 +770,7 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
                     auto_deserialize, timespec
                 )
         return result_dict
-        
+
     except OSError as e:
         raise OSError(f"Failed to select from JSONL file {jsonl_file_path}: {str(e)}")
 
@@ -737,32 +780,18 @@ def select_line_jsonl(
     auto_deserialize: bool = True,
     timespec: Optional[str] = None,
 ) -> DataDict:
-    """
-    Get a single record from a JSONL file based on the linekey.
-
-    Args:
-        jsonl_file_path: Path to the JSONL file
-        linekey: The key to look for
-        auto_deserialize: Whether to serialize the lookup key and deserialize
-            datetime-looking keys in the result
-        timespec: Datetime precision ('seconds' or 'microseconds').
-            Defaults to the module-level TIME_SPEC.
-
-    Returns:
-        Single-record dict {linekey: value} if found, {} otherwise.
-        Example: {"key1": {"v": 1}}
-    """
+    """Seek one indexed row; missing or malformed records return an empty dictionary."""
     linekey = serialize_linekey(linekey, timespec)
-    
+
     # Read the index file (self-heals an empty/corrupt .idx)
-    index_dict = load_index(jsonl_file_path)
+    index_dict, _ = _read_cached_index(jsonl_file_path)
 
     # Check if key exists in index
     if linekey not in index_dict:
         return {}
-    
+
     result_dict: DataDict = {}
-        
+
 
     # Load selected records
     with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
@@ -784,7 +813,6 @@ def select_line_jsonl(
     return result_dict
 
 
-
 def _blank_old_lines(f, old_lines) -> None:
     """Blank grown records only after their replacement rows are flushed."""
     for pos, old_len in old_lines:
@@ -795,21 +823,8 @@ def _blank_old_lines(f, old_lines) -> None:
 def update_jsonl(jsonl_file_path: str, update_dict: DataDict,
                  timespec: Optional[str] = None,
                  meta: Optional[dict] = None) -> None:
-    """
-    Update or insert records in a JSONL file.
-    
-    Efficiently handles both updates and inserts:
-    - Updates in place if new record fits in old space
-    - Appends to file if record grows
-    - Maintains index automatically
-    
-    Args:
-        jsonl_file_path: Path to the JSONL file
-        update_dict: Dictionary of records to update/insert
-        
-    Raises:
-        OSError: If file operations fail
-    """
+    """Upsert rows in place when they fit, otherwise append and blank old rows."""
+    _invalidate_index_cache(jsonl_file_path)
     _validate_row_keys(update_dict, timespec)
     encoded_meta = None
     if meta is not None:
@@ -825,7 +840,7 @@ def update_jsonl(jsonl_file_path: str, update_dict: DataDict,
         updates = []
         appends = []
         old_lines = []
-        
+
         # Process records
         with open(jsonl_file_path, 'rb+', buffering=BUFFER_SIZE) as f:
             f.seek(0, os.SEEK_END)
@@ -843,7 +858,7 @@ def update_jsonl(jsonl_file_path: str, update_dict: DataDict,
                 if linekey in index:
                     f.seek(index[linekey])
                     old_line = f.readline()
-                    
+
                     if len(new_line) <= len(old_line):
                         updates.append((index[linekey], new_line, len(old_line)))
                     else:
@@ -882,24 +897,13 @@ def update_jsonl(jsonl_file_path: str, update_dict: DataDict,
 
         # Update index
         _write_index(jsonl_file_path, index)
-            
+
     except OSError as e:
         raise OSError(f"Failed to update JSONL file {jsonl_file_path}: {str(e)}")
 
 def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey], timespec: Optional[str] = None) -> None:
-    """
-    Delete records from a JSONL file.
-    
-    Marks deleted lines with spaces and updates the index.
-    Maintains file size but removes entries from index.
-    
-    Args:
-        jsonl_file_path: Path to the JSONL file
-        linekeys: List of keys to delete
-        
-    Raises:
-        OSError: If file operations fail
-    """
+    """Blank selected rows without moving others, then publish the reduced index."""
+    _invalidate_index_cache(jsonl_file_path)
     _validate_row_keys({key: {} for key in linekeys}, timespec)
     try:
         # Load index (self-heals an empty/corrupt .idx)
@@ -907,7 +911,7 @@ def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey], timespec: Option
 
         # Process deletions
         linekeys = [serialize_linekey(key, timespec) for key in linekeys]
-        
+
         # Use regular file operations like update_jsonl
         with open(jsonl_file_path, 'rb+', buffering=BUFFER_SIZE) as f:
             for linekey in linekeys:
@@ -916,14 +920,14 @@ def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey], timespec: Option
                     line = f.readline()
                     if not line.endswith(b'\n'):
                         line += b'\n'
-                    
+
                     f.seek(index[linekey])
                     f.write(b' ' * (len(line) - 1) + b'\n')
                     del index[linekey]
 
         # Update index using orjson for faster JSON serialization
         _write_index(jsonl_file_path, index)
-            
+
     except OSError as e:
         raise OSError(f"Failed to delete from JSONL file {jsonl_file_path}: {str(e)}")
 
@@ -935,6 +939,7 @@ def read_jsonl_meta(jsonl_file_path: str):
 
 def write_jsonl_meta(jsonl_file_path: str, meta: Optional[dict]) -> None:
     """Publish one slot-only metadata change, then mark the index fresh last."""
+    _invalidate_index_cache(jsonl_file_path)
     load_index(jsonl_file_path)
     metaslot.write_slot(jsonl_file_path, meta)
     os.utime(jsonl_file_path + '.idx', None)

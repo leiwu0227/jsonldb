@@ -1,0 +1,288 @@
+{
+  "version": 1,
+  "kind": "standalone_assignment_candidate",
+  "completeness": "complete",
+  "identity": "e547ad76ffca3aee4f4738c4c38d929fed25765c5bf6526c5c0ed937e4c0e085",
+  "assignment": {
+    "id": "00046",
+    "folder": "00046_implement-the-published-internal-index-read-cach"
+  },
+  "implementation_execution": {
+    "version": 1,
+    "configured_mode": "auto",
+    "effective_mode": "inline",
+    "source": "auto-default",
+    "reason": null,
+    "owner": "foreground-agent",
+    "frozen_at": "2026-09-05T05:27:26.116Z"
+  },
+  "contract": {
+    "path": ".specdev/assignments/00046_implement-the-published-internal-index-read-cach/brainstorm/contract.md",
+    "hash": "0d6cf5a95f132e2c4d459b45840d10b931aac0e080d5c59cc927c60f785832a5"
+  },
+  "acceptance": {
+    "total": 4,
+    "items": [
+      {
+        "id": "AC-1",
+        "evidence": "40 cache cases plus affected JSONL, DataFrame and FolderDB suites within 246 passing focused tests; public signatures unchanged.",
+        "result": "passed"
+      },
+      {
+        "id": "AC-2",
+        "evidence": "Mutation/recovery, partial failure, unstable admission, alias/rename/delete, slot/lint and diagnostics cases; all 246 focused tests pass.",
+        "result": "passed"
+      },
+      {
+        "id": "AC-3",
+        "evidence": "LRU, oversized and lazy-key limits, conservative Unicode/integer accounting, concurrent-reader/invalidation cases; benchmark pressure retained about 58 MiB under 64 MiB.",
+        "result": "passed"
+      },
+      {
+        "id": "AC-4",
+        "evidence": "Same-host nine-sample medians: 100k warm point about 63x and 100-row range about 53x; cold/write/oversized/pressure costs recorded in implementation/performance.md and benchmark-results.json.",
+        "result": "passed"
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 4,
+      "failed": 0,
+      "blocked": 0,
+      "missing": 0
+    }
+  },
+  "verification": {
+    "total": 4,
+    "items": [
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest -q -p no:cacheprovider unit_tests/test_index_cache.py unit_tests/test_jsonlfile.py unit_tests/test_jsonldf.py unit_tests/test_folderdb.py unit_tests/test_lint_integrity.py unit_test...",
+        "revision": "working-tree@b744cbd39a86b126fc49d544afabc849e28f9c17",
+        "scope": "Cache and affected JSONL/DF/folder/lint/slot/report/control integration; source SHA-256 1f9c6c4ee3bd99b139808028443ed607b540b34e00da2948808cffecceea00cf",
+        "status": "passed",
+        "duration_ms": 1848,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -c 'import json,hashlib,statistics; from pathlib import Path; d=json.loads(Path('\"'\"'.specdev/assignments/00046_implement-the-published-internal-index-read-cach/implementation/benchmark-resul...",
+        "revision": "working-tree@b744cbd39a86b126fc49d544afabc849e28f9c17",
+        "scope": "Durable repeated-sample benchmark evidence and source identity; actual timed runs recorded in implementation/performance.md",
+        "status": "passed",
+        "duration_ms": 28,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 profile_test/benchmark.py --index-cache --save .specdev/cache/index-cache-final.json --compare .specdev/cache/index-cache-baseline-final.json",
+        "revision": "working-tree@b744cbd39a86b126fc49d544afabc849e28f9c17",
+        "scope": "Final post-Path-repair nine-sample performance and memory comparison against exact b744cbd source",
+        "status": "passed",
+        "duration_ms": 5111,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -c 'import ast,subprocess; from pathlib import Path; old=ast.parse(subprocess.check_output(['\"'\"'git'\"'\"','\"'\"'show'\"'\"','\"'\"'b744cbd:jsonldb/jsonlfile.py'\"'\"'],text=True)); s=Path('\"'\"'jsonl...",
+        "revision": "working-tree@b744cbd39a86b126fc49d544afabc849e28f9c17",
+        "scope": "Public signatures, source line cap and diff whitespace",
+        "status": "passed",
+        "duration_ms": 58,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "missing": 0
+    },
+    "by_role": {
+      "qualification": {
+        "passed": 0,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      },
+      "authoritative_acceptance": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      }
+    },
+    "raw": {
+      "total": 4,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 4,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "effective": {
+      "total": 4,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 4,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "superseded": 0,
+    "authoritative_evidence": [
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest -q -p no:cacheprovider unit_tests/test_index_cache.py unit_tests/test_jsonlfile.py unit_tests/test_jsonldf.py unit_tests/test_folderdb.py unit_tests/test_lint_integrity.py unit_test...",
+        "revision": "working-tree@b744cbd39a86b126fc49d544afabc849e28f9c17",
+        "status": "passed"
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -c 'import json,hashlib,statistics; from pathlib import Path; d=json.loads(Path('\"'\"'.specdev/assignments/00046_implement-the-published-internal-index-read-cach/implementation/benchmark-resul...",
+        "revision": "working-tree@b744cbd39a86b126fc49d544afabc849e28f9c17",
+        "status": "passed"
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 profile_test/benchmark.py --index-cache --save .specdev/cache/index-cache-final.json --compare .specdev/cache/index-cache-baseline-final.json",
+        "revision": "working-tree@b744cbd39a86b126fc49d544afabc849e28f9c17",
+        "status": "passed"
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -c 'import ast,subprocess; from pathlib import Path; old=ast.parse(subprocess.check_output(['\"'\"'git'\"'\"','\"'\"'show'\"'\"','\"'\"'b744cbd:jsonldb/jsonlfile.py'\"'\"'],text=True)); s=Path('\"'\"'jsonl...",
+        "revision": "working-tree@b744cbd39a86b126fc49d544afabc849e28f9c17",
+        "status": "passed"
+      }
+    ],
+    "authoritative_evidence_omitted": 0
+  },
+  "changed_project_paths": {
+    "count": 4,
+    "groups": [
+      {
+        "name": "(root)",
+        "count": 1,
+        "paths": [
+          "README.md"
+        ],
+        "omitted": 0
+      },
+      {
+        "name": "jsonldb",
+        "count": 1,
+        "paths": [
+          "jsonldb/jsonlfile.py"
+        ],
+        "omitted": 0
+      },
+      {
+        "name": "profile_test",
+        "count": 1,
+        "paths": [
+          "profile_test/benchmark.py"
+        ],
+        "omitted": 0
+      },
+      {
+        "name": "unit_tests",
+        "count": 1,
+        "paths": [
+          "unit_tests/test_index_cache.py"
+        ],
+        "omitted": 0
+      }
+    ],
+    "omitted_groups": 0
+  },
+  "unresolved_risks": {
+    "status": "present",
+    "items": [
+      "No unresolved implementation blocker. Per the approved design, filesystem fingerprints do not supply transactional snapshots or detect edits with indistinguishable metadata. Cold admission has a small cost; a six-table cycle exceeding th..."
+    ],
+    "source": "canonical_section"
+  },
+  "artifacts": {
+    "contract": {
+      "path": ".specdev/assignments/00046_implement-the-published-internal-index-read-cach/brainstorm/contract.md",
+      "exists": true,
+      "digest": "0d6cf5a95f132e2c4d459b45840d10b931aac0e080d5c59cc927c60f785832a5"
+    },
+    "plan": {
+      "path": ".specdev/assignments/00046_implement-the-published-internal-index-read-cach/design/plan.md",
+      "exists": true,
+      "digest": "1351281278f0bef230c54a05d039903dfac950aa11e68f507c876dca7ed9c5dc"
+    },
+    "progress": {
+      "path": ".specdev/assignments/00046_implement-the-published-internal-index-read-cach/implementation/progress.json",
+      "exists": true,
+      "digest": "e3425bf88f54ff74354051500a7412c5fe0b0295b73c0f0f55bbe85183b9b411"
+    },
+    "outcome": {
+      "path": ".specdev/assignments/00046_implement-the-published-internal-index-read-cach/outcome.md",
+      "exists": true,
+      "digest": "c4f392bd6c0ec1d7e0a3e1d81bc892546ca3a6a8f197653c49a9323b65d05513"
+    }
+  },
+  "issues": [],
+  "issues_omitted": 0
+}

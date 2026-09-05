@@ -71,6 +71,20 @@ Keys are ordered by their serialized text representation. Use strings whose
 lexicographic order matches the intended range order, such as zero-padded
 numeric strings.
 
+Repeated point and range reads automatically reuse unchanged indexes in a
+private process-local cache. The cache checks both files on every read and uses
+a 64 MiB budget for conservatively accounted retained index objects; it does not
+cache rows or keep files open. Public index loads remain independent mutable
+dictionaries. Writes invalidate affected entries, and lint retains its existing
+verification. No additional files or caller configuration are needed.
+
+The benefit is largest when repeatedly querying tables whose indexes fit the
+budget. First reads, reads after writes and working sets exceeding the budget
+still load indexes; full-table loads remain sequential. The budget is not a
+limit on total process memory. Compare these workloads with
+`python profile_test/benchmark.py --index-cache --save results.json` and
+`--compare baseline.json`.
+
 ## Dictionary Operations
 
 ```python

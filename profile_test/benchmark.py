@@ -6,6 +6,7 @@ Usage:
     python benchmark.py --save baseline.json   # Run and save results to file
     python benchmark.py --compare baseline.json  # Run and compare against saved baseline
     python benchmark.py --large          # Include 1M record benchmarks
+    python benchmark.py --index-cache    # Repeated reads, cold costs and memory pressure
 """
 
 import os
@@ -139,6 +140,11 @@ def print_comparison(baseline, current):
 
 
 def main():
+    if '--index-cache' in sys.argv:
+        sys.argv.remove('--index-cache')
+        from benchmark_index_cache import main as cache_main
+        cache_main()
+        return
     parser = argparse.ArgumentParser(description="JSONLDB Performance Benchmarks")
     parser.add_argument("--large", action="store_true", help="Include 1M record benchmarks")
     parser.add_argument("--save", metavar="FILE", help="Save results to JSON file for later comparison")

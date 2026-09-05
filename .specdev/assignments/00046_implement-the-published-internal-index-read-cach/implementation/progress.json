@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "T-1",
+      "status": "completed"
+    },
+    {
+      "id": "T-2",
+      "status": "completed"
+    },
+    {
+      "id": "T-3",
+      "status": "completed"
+    }
+  ],
+  "selected_guides": {
+    "implementation": [
+      "api-security"
+    ],
+    "review": [
+      "api-security"
+    ]
+  },
+  "verification": [
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest -q -p no:cacheprovider unit_tests/test_index_cache.py unit_tests/test_jsonlfile.py unit_tests/test_jsonldf.py unit_tests/test_folderdb.py unit_tests/test_lint_integrity.py unit_tests/test_lint_compaction.py unit_tests/test_metadata_slot_migration.py unit_tests/test_unknown_metadata_lint.py unit_tests/test_reports.py unit_tests/test_metadata_upkeep.py unit_tests/test_hierarchy_recovery.py unit_tests/test_clear_configuration.py",
+      "revision": "working-tree@b744cbd39a86b126fc49d544afabc849e28f9c17",
+      "scope": "Cache and affected JSONL/DF/folder/lint/slot/report/control integration; source SHA-256 1f9c6c4ee3bd99b139808028443ed607b540b34e00da2948808cffecceea00cf",
+      "status": "passed",
+      "duration_ms": 1848,
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 -c 'import json,hashlib,statistics; from pathlib import Path; d=json.loads(Path('\"'\"'.specdev/assignments/00046_implement-the-published-internal-index-read-cach/implementation/benchmark-results.json'\"'\"').read_text()); a=d['\"'\"'candidate'\"'\"']; b=d['\"'\"'baseline'\"'\"']; assert a['\"'\"'source_sha256'\"'\"']==hashlib.sha256(Path('\"'\"'jsonldb/jsonlfile.py'\"'\"').read_bytes()).hexdigest(); assert all(len(v['\"'\"'samples_ms'\"'\"'])==9 and statistics.median(v['\"'\"'samples_ms'\"'\"'])==v['\"'\"'median_ms'\"'\"'] for r in (a,b) for v in r['\"'\"'operations'\"'\"'].values()); assert all(b['\"'\"'operations'\"'\"'][k]['\"'\"'median_ms'\"'\"']/a['\"'\"'operations'\"'\"'][k]['\"'\"'median_ms'\"'\"']>=2 for k in ('\"'\"'100000/warm_point'\"'\"','\"'\"'100000/warm_range'\"'\"')); assert a['\"'\"'pressure/retained_bytes'\"'\"']<=a['\"'\"'budget_bytes'\"'\"']; assert a['\"'\"'600000/retained_entries'\"'\"']==0; print('\"'\"'Stored baseline/candidate samples, source identity, 2x targets and memory limits verified'\"'\"')'",
+      "revision": "working-tree@b744cbd39a86b126fc49d544afabc849e28f9c17",
+      "scope": "Durable repeated-sample benchmark evidence and source identity; actual timed runs recorded in implementation/performance.md",
+      "status": "passed",
+      "duration_ms": 28,
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 profile_test/benchmark.py --index-cache --save .specdev/cache/index-cache-final.json --compare .specdev/cache/index-cache-baseline-final.json",
+      "revision": "working-tree@b744cbd39a86b126fc49d544afabc849e28f9c17",
+      "scope": "Final post-Path-repair nine-sample performance and memory comparison against exact b744cbd source",
+      "status": "passed",
+      "duration_ms": 5111,
+      "role": "authoritative_acceptance"
+    },
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 -c 'import ast,subprocess; from pathlib import Path; old=ast.parse(subprocess.check_output(['\"'\"'git'\"'\"','\"'\"'show'\"'\"','\"'\"'b744cbd:jsonldb/jsonlfile.py'\"'\"'],text=True)); s=Path('\"'\"'jsonldb/jsonlfile.py'\"'\"').read_text(); new=ast.parse(s); sig=lambda t:{n.name:ast.dump(n.args) for n in t.body if isinstance(n,ast.FunctionDef) and not n.name.startswith('\"'\"'_'\"'\"')}; assert sig(old)==sig(new); assert len(s.splitlines())<=950; subprocess.run(['\"'\"'git'\"'\"','\"'\"'diff'\"'\"','\"'\"'--check'\"'\"'],check=True); print('\"'\"'Public signatures and 950-line cap verified'\"'\"')'",
+      "revision": "working-tree@b744cbd39a86b126fc49d544afabc849e28f9c17",
+      "scope": "Public signatures, source line cap and diff whitespace",
+      "status": "passed",
+      "duration_ms": 58,
+      "role": "authoritative_acceptance"
+    }
+  ],
+  "deviations": [],
+  "follow_up": "none",
+  "selected_guide_versions": {
+    "implementation": [
+      {
+        "id": "api-security",
+        "version": "1"
+      }
+    ],
+    "review": [
+      {
+        "id": "api-security",
+        "version": "1"
+      }
+    ]
+  }
+}
