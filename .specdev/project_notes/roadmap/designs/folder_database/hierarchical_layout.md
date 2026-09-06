@@ -1,49 +1,44 @@
 # Hierarchical Layout
 
-Hierarchy mode spreads a database's tables across subdirectories so that a folder with tens of thousands of tables stays navigable and directory listings stay fast. It changes only where a table's file lives; the table's logical name, its index, its metadata record, and every data operation are unchanged.
+Hierarchy organizes a database's tables into directories while preserving each table's logical name and contents. The configured depth is a maximum: tables with different numbers of name segments coexist, and short names do not need padding to fit the database layout.
 
 ## Naming rule
 
-A table name is split on the database delimiter. In hierarchy mode with depth *d*, the first *d* segments become nested directories and the file keeps its full dotted name inside the deepest one:
+Split the table name on the database delimiter after removing an optional `.jsonl` suffix. The final segment identifies the table and never becomes a directory. Use preceding segments, in order, up to the configured maximum. The filename always retains the complete table name.
+
+For a name with *n* segments and maximum depth *m*, directory depth is **min(m, n - 1)**. A single-segment name lives directly at the database root. Names longer than the maximum remain valid; the maximum limits directories, not logical name length.
 
 ```
-depth 2, delimiter "."
-  region.us.spy   ->  <root>/region/us/region.us.spy.jsonl
-  region.eu.dax   ->  <root>/region/eu/region.eu.dax.jsonl
+maximum depth 6, delimiter "."
+  a.jsonl                 -> <root>/a.jsonl
+  a.b.jsonl               -> <root>/a/a.b.jsonl
+  a.b.c.jsonl             -> <root>/a/b/a.b.c.jsonl
+  a.b.c.d.e.f.g.h.jsonl   -> <root>/a/b/c/d/e/f/a.b.c.d.e.f.g.h.jsonl
 ```
 
-Keeping the full name in the filename makes a file self-describing wherever it sits, and discovery can recover the logical name from the filename alone without reconstructing it from the path.
+Keeping the complete name in the filename makes a table identifiable independently of its location. Existing portable-name and safe-directory restrictions continue to apply. Too few segments is never a reason to reject or quarantine a table.
 
-A name is **valid** for depth *d* when it has at least *d* minus one delimiters. In flat mode every name is valid. Reads and writes reject invalid names outright rather than guessing a location.
+## Configuration and recovery
 
-## Configuration
+Hierarchy remains a database-wide setting with a delimiter and a positive maximum depth. The existing `hierarchy_depth` argument and stored depth represent this maximum; a public parameter rename is unnecessary for the concept. Flat mode keeps every table at the root.
 
-Hierarchy settings live in `h.meta`: whether the mode is on, the delimiter, and the depth. The file is written only when hierarchy mode is enabled; a database without it is flat. Opening a database with an explicit depth that differs from the stored one triggers a reorganization to the new depth, so changing depth is an ordinary open with a new argument.
+Saved hierarchy settings in `h.meta` are authoritative. Opening with a different explicit maximum requests reorganization. Root-level tables may coexist with nested tables in hierarchy mode, so a root-level table does not establish that the database is flat.
 
-## Reorganization
+When settings are missing or damaged, recovery must account for mixed depths and preserve access to every table. The shallowest observed directory depth does not determine the maximum. Existing tables may not reveal the original configured maximum at all; recovery must distinguish inferred settings from known settings and avoid silently excluding data. The exact fallback policy remains to be settled before implementation.
 
-Reorganization is the operation that establishes or changes the hierarchy. It walks every table under the root (skipping hidden directories), classifies each name as valid or invalid for the target depth, and moves files:
+## Reorganization and compatibility
 
-- valid tables move to their computed directory, together with their index file;
-- invalid tables move to a quarantine folder `.invalid_tickers` at the root, also with their index;
-- directories left empty are pruned bottom-up;
-- `db.meta` is rebuilt and `h.meta` written.
+Reorganization brings visible tables into the layout derived from their names and the target settings. Data and companion indexes move together, embedded metadata remains intact, empty directories are pruned, and database metadata reflects the resulting locations. Short tables remain ordinary database members at every maximum.
 
-A metadata record lives inside the table file, so a move carries it automatically; only the index travels alongside.
+The new mapping changes some existing locations even when the configured number stays the same. In particular, a name with exactly that many segments loses its final directory. Compatibility must therefore cover databases opened with unchanged settings as well as explicit depth changes; existing tables must remain accessible during adoption of the new rule. The migration trigger and interrupted-migration behavior must be defined before implementation.
 
-Quarantine instead of deletion is deliberate: a badly named table is still data, and a later change of depth or delimiter may make it valid. A separate reprocess step re-examines the quarantine folder and moves back any table whose name has become valid, building an index if it lacks one.
+Previously quarantined tables can be reprocessed into the new layout if their names are safe. Restoration must preserve data and must not overwrite another table. Hidden quarantine contents remain outside ordinary discovery until restored.
 
-Moves are performed file by file and are not transactional. An interruption can leave a table moved without its index, which index self-healing repairs on the next read, or leave a partially reorganized tree, which re-running the open with the same depth completes.
+## Discovery and tradeoffs
 
-## Discovery under hierarchy
+Discovery includes root-level and nested tables and derives logical names from filenames. Hidden directories, including quarantine and reports, remain excluded. Deleting a table prunes visible directories left empty.
 
-Listing tables walks the whole tree and reports filenames without their extension. Hidden directories, including the quarantine folder, the `.jsonldb/` report folder, and metadata created by external tools, are never entered, so their contents are invisible to data operations. Deleting a table prunes any visible directories it leaves empty so the tree never accumulates empty branches.
-
-## Trade-offs
-
-- Depth is a database-wide constant. Tables with fewer segments than the depth requires cannot live in that database; they are quarantined.
-- Directory placement is derived from the name at write time, so changing the delimiter or depth always requires a reorganization pass.
-- Empty-directory pruning runs after deletes and lint and visits every directory in the tree, a cost accepted for keeping the layout canonical.
+Mixed depths allow natural names without artificial segments. The maximum bounds nesting but does not guarantee balanced directory sizes. Placement remains deterministic for a given name and configuration; changing the delimiter or maximum can require moving tables. Compatibility with older readers that enforce fixed depth requires a deliberate migration policy.
 
 ## Source target
 

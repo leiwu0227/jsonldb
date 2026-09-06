@@ -4,16 +4,16 @@
 
 ## Opening a database
 
-The directory must already exist; the library never creates the root. Opening reads the control files (`h.meta`, `config.meta`, `db.meta`), creates the ones that are missing, and may perform two repairs: reorganizing files when a hierarchy depth is requested that differs from the stored one, and correcting the recorded timespec when the data disagrees with it. Opening never writes to a table; whatever it regenerated or skipped is recorded in `.jsonldb/integrity.log`. Opening is where the database is made self-consistent.
+The directory must already exist; the library never creates the root. Opening reads the control files (`h.meta`, `config.meta`, `db.meta`), restores missing controls where possible, and can reorganize tables when a different maximum hierarchy depth is requested or correct a timespec that disagrees with the data. Adopting the maximum-depth layout must also preserve access to older tables when the requested depth is unchanged. [Hierarchical Layout](folder_database/hierarchical_layout.md) owns placement, recovery, and migration requirements. Opening preserves table contents; whatever it regenerated or skipped is recorded in `.jsonldb/integrity.log`.
 
 ## Table naming and paths
 
-A table name is a string without the `.jsonl` suffix; the suffix is tolerated and stripped. Names may contain a delimiter (default `.`) that hierarchy mode interprets as path segments. Two resolvers exist on purpose:
+A table name is a string without the `.jsonl` suffix; the suffix is tolerated and stripped. Hierarchy uses delimiter-separated prefixes (default `.`) as directories up to the configured maximum, excluding the final segment. Short names are valid, single-segment names live at the root, and filenames retain the complete name. Two resolvers exist on purpose:
 
 - a **read resolver** that maps a name to a path without creating anything, used by every query and delete; and
 - a **write resolver** that also creates intermediate folders, used by saves and upserts.
 
-This split guarantees that reading a non-existent table leaves no trace on disk. Discovery lists `.jsonl` files at the root or walks the tree in hierarchy mode, skipping hidden directories; a regex search over the names serves group operations.
+This split guarantees that reading a non-existent table leaves no trace on disk. Discovery includes both root-level and nested `.jsonl` files in hierarchy mode, skipping hidden directories; a regex search over the names serves group operations.
 
 ## Data operations
 
