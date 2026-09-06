@@ -1,4 +1,6 @@
-"""Unknown slot versions survive operations that do not replace their record."""
+"""Unknown slots survive row operations and reject explicit metadata edits."""
+from contextlib import nullcontext
+
 import pandas as pd
 import pytest
 
@@ -27,26 +29,30 @@ def snapshot(root):
 @pytest.mark.parametrize('operation', ['save_jsonl', 'update_jsonl', 'save_jsonldf',
     'update_jsonldf', 'overwrite_dict', 'upsert_dict', 'overwrite_df', 'upsert_df'])
 @pytest.mark.parametrize('meta', [None, {}, {'v': 99, 'owner': 'replacement'}])
-def test_row_writes_preserve_unknown_unless_record_explicitly_replaced(tmp_path, operation, meta):
+def test_row_writes_preserve_unknown_and_reject_explicit_metadata(tmp_path, operation, meta):
     db = FolderDB(str(tmp_path))
     db.set_meta_slot_bytes(160)
     path, slot = seed(db)
     data = {'b': {'v': 3}}
     if operation.endswith(('ldf', '_df')):
         data = pd.DataFrame({'v': [3]}, index=['b'])
-    if operation in ('save_jsonl', 'save_jsonldf'):
-        module = jdf if operation.endswith('ldf') else jf
-        getattr(module, operation)(path, data, meta=meta, slot_bytes=160)
-    elif operation in ('update_jsonl', 'update_jsonldf'):
-        module = jdf if operation.endswith('ldf') else jf
-        getattr(module, operation)(path, data, meta=meta)
-    else:
-        getattr(db, operation)('table', data, meta=meta)
+    before = snapshot(tmp_path)
+    expected_error = (nullcontext() if meta is None else
+                      pytest.raises(ValueError, match='unsupported envelope version 99'))
+    with expected_error:
+        if operation in ('save_jsonl', 'save_jsonldf'):
+            module = jdf if operation.endswith('ldf') else jf
+            getattr(module, operation)(path, data, meta=meta, slot_bytes=160)
+        elif operation in ('update_jsonl', 'update_jsonldf'):
+            module = jdf if operation.endswith('ldf') else jf
+            getattr(module, operation)(path, data, meta=meta)
+        else:
+            getattr(db, operation)('table', data, meta=meta)
+    if meta is not None:
+        assert snapshot(tmp_path) == before
+        return
     info = metaslot.inspect_file(path)
-    if meta is None:
-        assert info.version == 99 and info.raw_line == slot and info.record is None
-    else:
-        assert info.version == 1 and info.record == meta
+    assert info.version == 99 and info.raw_line == slot and info.record is None
     expected = {'b': {'v': 3}}
     if operation.startswith(('upsert', 'update')):
         expected = {**ROWS, **expected}
@@ -94,17 +100,25 @@ def test_unsafe_shrink_preserves_all_files_and_live_configuration(tmp_path, oper
     assert db.meta_slot_bytes == 160
 
 
-@pytest.mark.parametrize('folder_operation', [False, True])
-def test_explicit_clear_replaces_unknown_envelope_without_changing_rows(tmp_path, folder_operation):
+@pytest.mark.parametrize('operation', ['clear_meta', 'write_jsonl_meta', 'write_slot'])
+@pytest.mark.parametrize('index_state', ['valid', 'missing', 'corrupt'])
+def test_metadata_edits_reject_unknown_before_index_recovery(tmp_path, operation, index_state):
     db = FolderDB(str(tmp_path))
     db.set_meta_slot_bytes(160)
     path, _ = seed(db)
-    before = (tmp_path/'table.jsonl').read_bytes()[160:]
-    if folder_operation:
-        db.clear_meta('table')
-    else:
-        jf.write_jsonl_meta(path, None)
-    info = metaslot.inspect_file(path)
-    assert info.version == 1 and info.record is None and info.width == 160
-    assert (tmp_path/'table.jsonl').read_bytes()[160:] == before
-    assert jf.select_line_jsonl(path, 'a') == {'a': {'v': 1}}
+    index = tmp_path / 'table.jsonl.idx'
+    if index_state == 'missing':
+        index.unlink()
+    elif index_state == 'corrupt':
+        index.write_bytes(b'broken index')
+    before = snapshot(tmp_path)
+    records = (None,) if operation == 'clear_meta' else (None, {}, {'owner': 'replacement'})
+    for meta in records:
+        with pytest.raises(ValueError, match='unsupported envelope version 99'):
+            if operation == 'clear_meta':
+                db.clear_meta('table')
+            elif operation == 'write_jsonl_meta':
+                jf.write_jsonl_meta(path, meta)
+            else:
+                metaslot.write_slot(path, meta)
+        assert snapshot(tmp_path) == before

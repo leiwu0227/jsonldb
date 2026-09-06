@@ -150,6 +150,10 @@ dictionary replaces it after the rows are written. `read_meta` retrieves it;
 `clear_meta` removes it. Both preserve table timezone. Consumer metadata may
 contain its own `timezone` key without special meaning.
 
+For an unknown envelope version, explicit metadata replacement or clearing raises
+`ValueError` before changing rows, the slot, or its index. Ordinary writes with
+`meta=None`, linting, and slot resizing preserve the opaque envelope.
+
 `get_dict_with_meta` and `get_df_with_meta` return a named tuple with `.meta` and
 `.rows`, reading metadata first. Missing tables return `None` plus an empty row
 container. This ordering does not make the read transactional.

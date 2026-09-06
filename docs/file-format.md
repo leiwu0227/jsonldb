@@ -40,7 +40,10 @@ trailing padding spaces:
 - The physical slot has a fixed **byte** width, including padding and newline.
 
 An unknown envelope version is preserved opaquely and excluded from rows; it is
-not interpreted as current consumer metadata. A damaged recognizable slot is
+not interpreted as current consumer metadata. Explicit metadata replacement or
+clearing raises `ValueError` before file or index mutation. Row writes without
+metadata replacement, linting, and resizing preserve the opaque envelope.
+A damaged recognizable slot is
 also excluded from rows. Recognizably damaged timezone declarations are refused
 by mutation/repair; a completely erased declaration cannot be distinguished
 from intentional absence. Never infer a replacement timezone from the machine.

@@ -167,11 +167,17 @@ def read_slot(file_path: str) -> Optional[Any]:
     return inspect_file(file_path).record
 
 
+def _check_metadata_version(info: Optional[SlotInfo]) -> None:
+    if info is not None and info.is_unknown_version:
+        raise ValueError('cannot edit metadata with unsupported envelope version %s' % info.version)
+
+
 def write_slot(file_path: str, record: Optional[dict]) -> None:
     """Fit-check and overwrite an existing slot without changing its width."""
     info = inspect_file(file_path)
     if not info.is_slot:
         raise ValueError("metadata slot is not enabled for this file")
+    _check_metadata_version(info)
     encoded = _encode_slot(record, info.width, info.timezone)
     with open(file_path, 'rb+') as f:
         f.seek(0)

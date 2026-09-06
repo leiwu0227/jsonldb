@@ -63,7 +63,7 @@ tombstones; lint compacts the physical file. Supply both range bounds.
 | --- | --- |
 | `set_meta_slot_bytes(width=4096)` | Enable/resize slots across tables, preflight fit before migration. |
 | `read_meta(name)` | Consumer record or `None`. |
-| `clear_meta(name)` | Clear consumer data, preserve timezone; missing table is a no-op. |
+| `clear_meta(name)` | Clear consumer data, preserve timezone; unknown envelope versions raise `ValueError`; missing table is a no-op. |
 | `read_timezone(name)` | Canonical fixed offset or `None` for unspecified/missing. |
 | `set_timezone(name, timezone)` | Set/remove offset on an existing empty known-version slotted table; same offset is idempotent. |
 | `get_dbmeta()` | Statistics dictionary keyed by literal table-name strings. |
@@ -75,6 +75,9 @@ Malformed known-version timezone declarations raise rather than returning an
 inferred value. Setters return `None`; `None` as a timezone requests removal.
 Consumer metadata and timezone are separate; [usage](usage.md#consumer-metadata)
 and [file format](file-format.md) describe their rules.
+Writes supplying a metadata dictionary reject unknown envelope versions with
+`ValueError` before modifying rows, metadata, or indexes. `meta=None` preserves
+the envelope during row writes.
 
 ### Discovery, layout and maintenance
 
@@ -122,7 +125,8 @@ Additional file-store functions:
   indexes. `build_jsonl_index(path, warn_invalid=True)` explicitly rebuilds it;
   `ensure_index_exists(path)` handles missing, empty and stale indexes.
 - `read_jsonl_meta(path)` / `write_jsonl_meta(path, meta)`: read/publish a slot
-  record; write requires a slot and preserves timezone.
+  record; write requires a slot, rejects unknown envelope versions (including
+  clearing with `None`), and preserves timezone.
 - `read_jsonl_timezone(path)` / `write_jsonl_timezone(path, timezone)`:
   table timezone access, with the same lifecycle rules as `FolderDB`.
 - `migrate_jsonl_slot(path, slot_bytes)`: resize/insert a slot; return whether the

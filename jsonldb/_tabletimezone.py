@@ -88,6 +88,8 @@ def prepare(rows, timezone, timespec, serialize):
 
 def save_slots(info, meta, slot_bytes):
     """Fit both publications; the initial slot already declares interpretation."""
+    if meta is not None:
+        metaslot._check_metadata_version(info)
     timezone = info.timezone if info is not None else None
     existing = info if info is not None and info.is_slot else None
     width = existing.width if slot_bytes is None and existing else slot_bytes
@@ -109,6 +111,7 @@ def metadata_bytes(path, meta):
     info = metaslot.inspect_file(path)
     if not info.is_slot:
         raise ValueError('metadata slot is not enabled for this file')
+    metaslot._check_metadata_version(info)
     return metaslot._encode_slot(meta, info.width, info.timezone)
 
 
