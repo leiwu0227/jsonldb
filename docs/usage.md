@@ -189,6 +189,9 @@ the maintenance call to finish the recorded operation. A temporary hidden
 keep it with the database until recovery completes. Older library versions are
 not supported after migration.
 
+An open that successfully resumes interrupted moves records `hierarchy_resumed`
+in `.jsonldb/integrity.log`. Clean opens do not emit that finding.
+
 If `h.meta` is missing or damaged, recovery honors an explicit maximum or uses
 the deepest observed visible table directory depth. With no nested tables and
 no explicit maximum, it falls back to flat mode. It infers a consistent delimiter

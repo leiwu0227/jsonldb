@@ -295,13 +295,13 @@ class FolderDB:
             finally:
                 if os.path.exists(temporary):
                     os.remove(temporary)
-            self._resume_hierarchy()
+            self._resume_hierarchy(recovery=False)
             return True
         except BaseException:
             self.use_hierarchy, self.hierarchy_depth, self.delimiter = previous
             raise
 
-    def _resume_hierarchy(self):
+    def _resume_hierarchy(self, *, recovery=True):
         """Finish a pending move set, including indexes separated by interruption."""
         journal = os.path.join(self.folder_path, '.hierarchy.pending')
         if not os.path.lexists(journal):
@@ -337,6 +337,11 @@ class FolderDB:
         self.build_dbmeta()
         self.delete_empty_folders()
         os.remove(journal)
+        if recovery:
+            logger.warning(
+                'resumed and completed interrupted hierarchy migration for %s at maximum %d',
+                self.folder_path, depth,
+                extra={"jsonldb_file": journal, "jsonldb_kind": "hierarchy_resumed"})
         logger.info('hierarchy reconciliation completed for %s at maximum %d',
                     self.folder_path, depth)
         return True

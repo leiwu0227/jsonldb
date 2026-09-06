@@ -223,3 +223,34 @@ def test_invalid_maximum_rejected_before_moving_data(tmp_path, depth):
     with pytest.raises(ValueError, match='positive integer'):
         FolderDB(str(tmp_path), hierarchy_depth=depth)
     assert _files(tmp_path) == before
+
+
+def test_open_reports_only_successfully_completed_pending_migration(tmp_path, monkeypatch):
+    db = FolderDB(str(tmp_path), hierarchy_depth=1)
+    db.overwrite_dict('a.b.c', {'row': {'value': 1}})
+    rename = os.rename
+
+    def interrupt(old, new):
+        if str(old).endswith('.idx'):
+            raise OSError('injected index move interruption')
+        return rename(old, new)
+
+    report = tmp_path / '.jsonldb' / 'integrity.log'
+    with monkeypatch.context() as patch:
+        patch.setattr(os, 'rename', interrupt)
+        with pytest.raises(OSError, match='injected'):
+            db.lint_hierarchy(2)
+        with pytest.raises(OSError, match='injected'):
+            FolderDB(str(tmp_path))
+        assert 'hierarchy_resumed' not in report.read_text()
+
+    reopened = FolderDB(str(tmp_path))
+    lines = report.read_text().splitlines()
+    assert len(lines) == 2
+    assert 'kind=hierarchy_resumed' in lines[1]
+    assert str(tmp_path / '.hierarchy.pending') in lines[1]
+    assert 'maximum 2' in lines[1]
+    assert reopened.get_dict('a.b.c') == {'a.b.c': {'row': {'value': 1}}}
+    assert not (tmp_path / '.hierarchy.pending').exists()
+    FolderDB(str(tmp_path))
+    assert len(report.read_text().splitlines()) == 1
