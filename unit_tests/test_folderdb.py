@@ -386,8 +386,8 @@ def test_hierarchical_file_operations(db_folder, sample_data):
     db.upsert_dict("region.south.products", data_dict)
 
     # Verify files were created in correct folders
-    assert os.path.exists(os.path.join(db.folder_path, "region", "north", "users", "region.north.users.jsonl"))
-    assert os.path.exists(os.path.join(db.folder_path, "region", "south", "products", "region.south.products.jsonl"))
+    assert os.path.exists(os.path.join(db.folder_path, "region", "north", "region.north.users.jsonl"))
+    assert os.path.exists(os.path.join(db.folder_path, "region", "south", "region.south.products.jsonl"))
 
 @pytest.mark.parametrize('writer', [
     'overwrite_dict', 'upsert_dict', 'overwrite_df', 'upsert_df',
@@ -406,7 +406,7 @@ def test_custom_delimiter_suffix_round_trip(tmp_path, writer, name):
 
     getattr(db, writer)(name, content)
 
-    path = tmp_path / 'a' / 'b' / 'a-b.jsonl'
+    path = tmp_path / 'a' / 'a-b.jsonl'
     assert path.is_file()
     assert db._get_file_path('a-b') == db._get_file_path('a-b.jsonl') == str(path)
     assert not (tmp_path / 'a' / 'b.jsonl').exists()
@@ -503,20 +503,14 @@ def test_empty_folder_pruning_preserves_hidden_trees(tmp_path, monkeypatch, oper
         assert db.get_dict('group.table') == {'group.table': {'row': {'value': 1}}}
 
 
-def test_hierarchical_validation(db_folder):
-    """Test validation of hierarchical paths."""
+def test_short_names_are_valid_in_hierarchy(db_folder):
     db = FolderDB(db_folder, hierarchy_depth=3)
+    for name in ('short', 'only.one', 'this.is.valid'):
+        assert db.validate_name(name)
+        db.upsert_df(name, pd.DataFrame({'value': [1]}, index=['row']))
+        assert db.get_df([name])[name].loc['row', 'value'] == 1
+    assert sorted(db.get_file_list()) == ['only.one', 'short', 'this.is.valid']
 
-    # Test invalid path (not enough delimiters)
-    with pytest.raises(ValueError, match=r"Name must contain at least \d+ '.' delimiters"):
-        db.upsert_df("invalid_no_hierarchy", pd.DataFrame())
-
-    # Test invalid path (too few delimiters)
-    with pytest.raises(ValueError, match=r"Name must contain at least \d+ '.' delimiters"):
-        db.upsert_df("only.one", pd.DataFrame())
-
-    # Test valid path
-    db.upsert_df("this.is.valid", pd.DataFrame())
 
 def test_hierarchical_search(db_folder, sample_data):
     """Test searching files in hierarchical mode."""

@@ -164,12 +164,41 @@ Windows device names such as `CON`, `NUL`, `COM1` and `LPT1` are excluded as fil
 stems, including with extensions, and as hierarchy directories. Existing tables
 keep access under their historical names. Low-level APIs accept file paths.
 
-Open with `FolderDB(path, hierarchy_depth=2)` to organize `prices.us.AAPL` at
-`prices/us/prices.us.AAPL.jsonl`. Names need at least `depth - 1` delimiters.
-The default delimiter is `.`; saved settings live in `h.meta`. Opening with a
-different explicit depth reorganizes tables. Names invalid for the target depth
-are quarantined under `.invalid_tickers`. `reprocess_invalid_tickers()` can
-restore tables that become valid later.
+`hierarchy_depth` is the maximum number of nested directories. Split the name
+on the configured delimiter (default `.`), exclude its final segment, and use up
+to that many prefixes. The filename retains the complete table name. For example,
+with `FolderDB(path, hierarchy_depth=6)`:
+
+| Table | Relative file path |
+| --- | --- |
+| `a` | `a.jsonl` |
+| `a.b.c` | `a/b/a.b.c.jsonl` |
+| `a.b.c.d.e.f.g.h` | `a/b/c/d/e/f/a.b.c.d.e.f.g.h.jsonl` |
+
+Short names are valid, and names longer than the maximum are also valid. Flat
+mode keeps all tables at the root. Saved settings live in `h.meta`; keep this
+file because existing tables do not always reveal the configured maximum.
+
+Opening automatically migrates older hierarchy layouts, even with an omitted or
+unchanged depth. A different explicit positive maximum reorganizes visible tables.
+Table bytes and embedded metadata are preserved, and indexes move alongside.
+Collisions and unsafe destinations stop the operation before any planned move.
+Moves are not transactional: after an interruption, reopen the database or repeat
+the maintenance call to finish the recorded operation. A temporary hidden
+`.hierarchy.pending` file retains the intended settings and unfinished moves;
+keep it with the database until recovery completes. Older library versions are
+not supported after migration.
+
+If `h.meta` is missing or damaged, recovery honors an explicit maximum or uses
+the deepest observed visible table directory depth. With no nested tables and
+no explicit maximum, it falls back to flat mode. It infers a consistent delimiter
+from directory/name prefixes, defaulting to `.` when there is no evidence, and
+rejects contradictory prefixes. The open report identifies inferred settings;
+they need not equal the lost original maximum.
+
+Previously quarantined tables remain hidden under `.invalid_tickers` until
+`reprocess_invalid_tickers()` explicitly restores safe names, including short
+ones. Restoration refuses to overwrite existing tables; unsafe names stay put.
 
 ## Deletion and maintenance
 

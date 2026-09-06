@@ -1,0 +1,291 @@
+{
+  "version": 1,
+  "kind": "standalone_assignment_candidate",
+  "completeness": "complete",
+  "identity": "53d70aa71e40cce406edac60611d80d34b3646a2d951235a9eb683c9cde0f8f6",
+  "assignment": {
+    "id": "00052",
+    "folder": "00052_implement-maximum-hierarchy-depth-with-leaf-excl"
+  },
+  "implementation_execution": {
+    "version": 1,
+    "configured_mode": "auto",
+    "effective_mode": "inline",
+    "source": "auto-default",
+    "reason": null,
+    "owner": "foreground-agent",
+    "frozen_at": "2026-09-06T11:04:09.318Z"
+  },
+  "contract": {
+    "path": ".specdev/assignments/00052_implement-maximum-hierarchy-depth-with-leaf-excl/brainstorm/contract.md",
+    "hash": "7d5a3609300db40d7df62bb3c8434ac41d0f1c729c2f991282b65bcbd11f8538"
+  },
+  "acceptance": {
+    "total": 5,
+    "items": [
+      {
+        "id": "AC-1",
+        "evidence": "Mixed-depth dictionary/DataFrame, suffix, custom delimiter, discovery/deletion, historical-name and read-no-directory tests in the 552-test focused run.",
+        "result": "passed"
+      },
+      {
+        "id": "AC-2",
+        "evidence": "Legacy unchanged/omitted-depth migration checks preserve bytes, inode, indexes, embedded metadata and paths; explicit depth increase/decrease and stable reopen covered.",
+        "result": "passed"
+      },
+      {
+        "id": "AC-3",
+        "evidence": "Updated hierarchy recovery and mixed-root/nested tests cover explicit and inferred maximum, custom delimiter, empty/flat fallback, hidden exclusions and failure reports.",
+        "result": "passed"
+      },
+      {
+        "id": "AC-4",
+        "evidence": "Collision preflight and injected index/table/control/metadata failures cover retries through open and maintenance; safe quarantine restoration and missing-index rebuilding covered.",
+        "result": "passed"
+      },
+      {
+        "id": "AC-5",
+        "evidence": "API, usage, file-format and portability docs plus notebook updated; check_evidence.py passes with 1095 source lines, Python 3.8 and notebook syntax.",
+        "result": "passed"
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 5,
+      "failed": 0,
+      "blocked": 0,
+      "missing": 0
+    }
+  },
+  "verification": {
+    "total": 5,
+    "items": [
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest unit_tests/test_folderdb.py unit_tests/test_table_names.py unit_tests/test_hierarchy_recovery.py unit_tests/test_visible_hierarchy_paths.py unit_tests/test_max_hierarchy.py unit_tes...",
+        "revision": "working-tree@c2dbf85ab76a437bde66eeac8cd8bdb24188b502",
+        "scope": "552 passed across 13 focused hierarchy and affected folder-operation modules.",
+        "status": "passed",
+        "duration_ms": 2850,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 .specdev/assignments/00052_implement-maximum-hierarchy-depth-with-leaf-excl/implementation/check_evidence.py",
+        "revision": "working-tree@c2dbf85ab76a437bde66eeac8cd8bdb24188b502",
+        "scope": "Source cap, Python 3.8 syntax, notebook syntax and whitespace passed.",
+        "status": "passed",
+        "duration_ms": 100,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest unit_tests/test_folderdb.py unit_tests/test_table_names.py unit_tests/test_hierarchy_recovery.py unit_tests/test_visible_hierarchy_paths.py -q --tb=short",
+        "revision": "working-tree@c2dbf85ab76a437bde66eeac8cd8bdb24188b502",
+        "scope": "298 passed; 27 obsolete fixed-depth expectations subsequently updated.",
+        "status": "failed",
+        "duration_ms": 1710,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 2,
+        "superseded": 1,
+        "history_counts": {
+          "passed": 0,
+          "failed": 2,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest unit_tests/test_folderdb.py unit_tests/test_table_names.py unit_tests/test_hierarchy_recovery.py unit_tests/test_visible_hierarchy_paths.py unit_tests/test_max_hierarchy.py -q --tb=...",
+        "revision": "working-tree@c2dbf85ab76a437bde66eeac8cd8bdb24188b502",
+        "scope": "355 passed; four overly strict derived-statistics timestamp assertions narrowed to table/configuration stability.",
+        "status": "failed",
+        "duration_ms": 1720,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 0,
+          "failed": 1,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 2,
+      "failed": 3,
+      "skipped": 0,
+      "missing": 0
+    },
+    "by_role": {
+      "qualification": {
+        "passed": 0,
+        "failed": 3,
+        "skipped": 0,
+        "missing": 0
+      },
+      "authoritative_acceptance": {
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      }
+    },
+    "raw": {
+      "total": 5,
+      "counts": {
+        "passed": 2,
+        "failed": 3,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 0,
+          "failed": 3,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 2,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "effective": {
+      "total": 4,
+      "counts": {
+        "passed": 2,
+        "failed": 2,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 0,
+          "failed": 2,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 2,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "superseded": 1,
+    "authoritative_evidence": [
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest unit_tests/test_folderdb.py unit_tests/test_table_names.py unit_tests/test_hierarchy_recovery.py unit_tests/test_visible_hierarchy_paths.py unit_tests/test_max_hierarchy.py unit_tes...",
+        "revision": "working-tree@c2dbf85ab76a437bde66eeac8cd8bdb24188b502",
+        "status": "passed"
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 .specdev/assignments/00052_implement-maximum-hierarchy-depth-with-leaf-excl/implementation/check_evidence.py",
+        "revision": "working-tree@c2dbf85ab76a437bde66eeac8cd8bdb24188b502",
+        "status": "passed"
+      }
+    ],
+    "authoritative_evidence_omitted": 0
+  },
+  "changed_project_paths": {
+    "count": 10,
+    "groups": [
+      {
+        "name": "docs",
+        "count": 4,
+        "paths": [
+          "docs/api.md",
+          "docs/file-format.md",
+          "docs/portability-and-git.md",
+          "docs/usage.md"
+        ],
+        "omitted": 0
+      },
+      {
+        "name": "examples",
+        "count": 1,
+        "paths": [
+          "examples/02_portable_datasets.ipynb"
+        ],
+        "omitted": 0
+      },
+      {
+        "name": "jsonldb",
+        "count": 1,
+        "paths": [
+          "jsonldb/folderdb.py"
+        ],
+        "omitted": 0
+      },
+      {
+        "name": "unit_tests",
+        "count": 4,
+        "paths": [
+          "unit_tests/test_folderdb.py",
+          "unit_tests/test_hierarchy_recovery.py",
+          "unit_tests/test_max_hierarchy.py",
+          "unit_tests/test_visible_hierarchy_paths.py"
+        ],
+        "omitted": 0
+      }
+    ],
+    "omitted_groups": 0
+  },
+  "unresolved_risks": {
+    "status": "present",
+    "items": [
+      "As approved: no concurrent writers, no downgrade compatibility, and inferred",
+      "settings may differ from lost settings. Preserve `.hierarchy.pending` with an",
+      "interrupted database until reopen completes its operation. No full suite run."
+    ],
+    "source": "canonical_section"
+  },
+  "artifacts": {
+    "contract": {
+      "path": ".specdev/assignments/00052_implement-maximum-hierarchy-depth-with-leaf-excl/brainstorm/contract.md",
+      "exists": true,
+      "digest": "7d5a3609300db40d7df62bb3c8434ac41d0f1c729c2f991282b65bcbd11f8538"
+    },
+    "plan": {
+      "path": ".specdev/assignments/00052_implement-maximum-hierarchy-depth-with-leaf-excl/design/plan.md",
+      "exists": true,
+      "digest": "ced709ab3d5408cf4076ed8cd229e9f4942003121bd436759da498fe0084960e"
+    },
+    "progress": {
+      "path": ".specdev/assignments/00052_implement-maximum-hierarchy-depth-with-leaf-excl/implementation/progress.json",
+      "exists": true,
+      "digest": "2302d7b0a36222bf4e069131f749fcb71d2233c0ace56fc69c27d09f19660328"
+    },
+    "outcome": {
+      "path": ".specdev/assignments/00052_implement-maximum-hierarchy-depth-with-leaf-excl/outcome.md",
+      "exists": true,
+      "digest": "6bfae5705a485a94a7b7dbbf51399abdf4e6fb64988f074605bdc3cc498d1369"
+    }
+  },
+  "issues": [],
+  "issues_omitted": 0
+}

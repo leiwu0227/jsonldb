@@ -1,0 +1,31 @@
+{
+  "callId": "D00003",
+  "status": "active",
+  "graphId": "discussion-lifecycle",
+  "graphVersion": "2.1.0",
+  "packagePath": "workflows/discussion-lifecycle@2.1.0",
+  "position": {
+    "graph": "discussion-lifecycle",
+    "node": "finalize"
+  },
+  "input": {
+    "id": "D00003",
+    "path": ".specdev/discussions/D00003_assess-whether-internal-optimizations-can-double",
+    "description": "Assess whether internal optimizations can double performance without changing the public interface",
+    "start_revision": "231ecdf5e727c9fa6e9312649e2c886f603c1e24"
+  },
+  "outputs": {
+    "brainstorm": {
+      "proposal": ".specdev/discussions/D00003_assess-whether-internal-optimizations-can-double/brainstorm/proposal.md",
+      "design": ".specdev/discussions/D00003_assess-whether-internal-optimizations-can-double/brainstorm/design.md",
+      "artifacts": [
+        "brainstorm/proposal.md",
+        "brainstorm/design.md",
+        "brainstorm/evidence.md",
+        "brainstorm/probe.py"
+      ]
+    }
+  },
+  "createdAt": "2026-09-05T04:43:20.000Z",
+  "updatedAt": "2026-09-05T04:47:21.574Z"
+}

@@ -1,0 +1,10 @@
+{
+  "proposal": ".specdev/discussions/D00003_assess-whether-internal-optimizations-can-double/brainstorm/proposal.md",
+  "design": ".specdev/discussions/D00003_assess-whether-internal-optimizations-can-double/brainstorm/design.md",
+  "artifacts": [
+    "brainstorm/proposal.md",
+    "brainstorm/design.md",
+    "brainstorm/evidence.md",
+    "brainstorm/probe.py"
+  ]
+}

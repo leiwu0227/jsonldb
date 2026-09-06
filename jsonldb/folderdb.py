@@ -6,6 +6,8 @@ Each table is stored in a separate JSONL file.
 import os
 import logging
 import re
+import orjson
+import tempfile
 import pandas as pd
 from typing import Dict, List, Optional, Any, NamedTuple
 from datetime import datetime
@@ -52,6 +54,7 @@ class FolderDB:
         
         Args:
             folder_path: Path to the folder where the database files will be stored
+            hierarchy_depth: Positive maximum directory depth; the leaf stays in the filename.
             
         Raises:
             FileNotFoundError: If the folder doesn't exist
@@ -77,6 +80,9 @@ class FolderDB:
         self.invalid_tickers_path = os.path.join(
             self.folder_path, ".invalid_tickers")
 
+        if hierarchy_depth is not None:
+            self._validate_depth(hierarchy_depth)
+        resumed = self._resume_hierarchy()
         hmeta, canonical = (_load_control(self.hmeta_path, "hierarchy")
                             if os.path.exists(self.hmeta_path) else ({}, False))
         valid_hierarchy = (
@@ -84,26 +90,25 @@ class FolderDB:
             and isinstance(hmeta.get('delimiter'), str) and bool(hmeta['delimiter'])
             and type(hmeta.get('hierarchy_depth')) is int
             and hmeta['hierarchy_depth'] >= int(hmeta['use_hierarchy']))
-        hierarchy_recovered = False
-        if valid_hierarchy:
-            self.use_hierarchy = hmeta["use_hierarchy"]
-            self.delimiter = hmeta["delimiter"]
-            self.hierarchy_depth = hmeta["hierarchy_depth"]
-            if not canonical:
-                self.build_hmeta()
-
-            if hierarchy_depth is not None and self.hierarchy_depth != hierarchy_depth: 
-                #current hierarchy depth is not the same as the one provided, so we need to lint the hierarchy
-                self.lint_hierarchy(hierarchy_depth)
-        else:
-            try:
-                hierarchy_recovered = self._recover_hierarchy(hierarchy_depth)
-            except (ValueError, OSError) as exc:
-                logger.warning("hierarchy recovery failed for %s: %s",
-                               self.hmeta_path, exc,
-                               extra={"jsonldb_file": self.hmeta_path,
-                                      "jsonldb_kind": "hierarchy_recovery_failed"})
-                raise
+        hierarchy_recovered = resumed
+        try:
+            if valid_hierarchy:
+                self.use_hierarchy = hmeta["use_hierarchy"]
+                self.delimiter = hmeta["delimiter"]
+                self.hierarchy_depth = hmeta["hierarchy_depth"]
+                if hierarchy_depth is not None or self.use_hierarchy:
+                    depth = self.hierarchy_depth if hierarchy_depth is None else hierarchy_depth
+                    tables = self._hierarchy_tables()
+                    hierarchy_recovered |= self._organize_hierarchy(tables, depth)
+                if not canonical:
+                    self.build_hmeta()
+            else:
+                hierarchy_recovered |= self._recover_hierarchy(hierarchy_depth)
+        except (ValueError, OSError) as exc:
+            logger.warning("hierarchy reconciliation failed for %s: %s", self.hmeta_path, exc,
+                           extra={"jsonldb_file": self.hmeta_path,
+                                  "jsonldb_kind": "hierarchy_recovery_failed"})
+            raise
 
         # Configuration is per-instance state; never mutate module globals.
         # Retain unknown settings when rewriting the protected control file.
@@ -178,114 +183,162 @@ class FolderDB:
                            "jsonldb_kind": "mixed_timespec"},
                 )
 
-    def _recover_hierarchy(self, requested_depth: Optional[int]) -> bool:
-        """Infer lost controls, preflight every move, then publish settings last."""
+    @staticmethod
+    def _validate_depth(depth):
+        if type(depth) is not int or depth < 1:
+            raise ValueError('Hierarchy level must be a positive integer')
+
+    def _hierarchy_tables(self):
+        """Scan visible regular tables without following directory symlinks."""
         def scan_error(error):
             raise error
-
-        tables, directories = [], []
+        tables = []
         for root, dirs, files in os.walk(self.folder_path, onerror=scan_error):
             dirs[:] = sorted(d for d in dirs if not d.startswith('.')
                              and not os.path.islink(os.path.join(root, d)))
             relative = os.path.relpath(root, self.folder_path)
             parts = [] if relative == '.' else relative.split(os.sep)
-            if parts:
-                directories.append(root)
             for filename in sorted(files):
                 source = os.path.join(root, filename)
-                if (filename.endswith('.jsonl') and os.path.isfile(source)
-                        and not os.path.islink(source)):
+                if filename.endswith('.jsonl'):
+                    if os.path.islink(source) or not os.path.isfile(source):
+                        raise ValueError('hierarchy table is not a regular file: %s' % source)
                     tables.append((filename[:-6], source, parts))
+        return tables
 
+    def _recover_hierarchy(self, requested_depth: Optional[int]) -> bool:
+        """Recover an inferred maximum, never claiming to know lost settings."""
+        tables = self._hierarchy_tables()
         damaged = os.path.exists(self.hmeta_path)
         depths = sorted({len(parts) for _, _, parts in tables})
         if not damaged and not any(depths) and requested_depth is None:
             return False
-        depth = min(depths, default=0)
-        if requested_depth is not None:
-            if type(requested_depth) is not int or requested_depth < 1:
-                raise ValueError('Hierarchy level must be a positive integer')
-            depth = requested_depth
-            if not damaged and not any(depths):
-                # Explicit creation on a flat folder retains ordinary reorganization.
-                logger.warning('regenerated missing control file %s', self.hmeta_path,
-                               extra={"jsonldb_file": self.hmeta_path,
-                                      "jsonldb_kind": "control_regenerated"})
-                self.lint_hierarchy(depth)
-                return True
-
-        # Intersect separators that reproduce every observed directory prefix.
-        # The shortest match avoids treating whole name segments as delimiters.
+        depth = max(depths, default=0) if requested_depth is None else requested_depth
         candidates = None
-        if depth:
-            for name, source, parts in tables:
-                if not parts or (len(parts) == 1 and name == parts[0]):
-                    continue
-                separators = set()
-                if name.startswith(parts[0]):
-                    tail = name[len(parts[0]):]
-                    for length in range(1, len(tail)):
-                        separator = tail[:length]
-                        segments = name.split(separator)
-                        if all(segments) and segments[:len(parts)] == parts:
-                            separators.add(separator)
-                candidates = (separators if candidates is None
-                              else candidates & separators)
-                if not candidates:
-                    raise ValueError('contradictory hierarchy prefixes at %s' % source)
-        delimiter = min(candidates, key=len) if candidates else '.'
-        self.use_hierarchy, self.hierarchy_depth, self.delimiter = bool(depth), depth, delimiter
-
-        moves, destinations = [], set()
-        for name, source, _ in tables:
-            index_path = source + '.idx'
-            if os.path.lexists(index_path) and (not os.path.isfile(index_path)
-                                               or os.path.islink(index_path)):
-                raise ValueError('hierarchy recovery index is not a regular file: %s' % index_path)
-            if not self.validate_name(name):
-                raise ValueError('recovered depth %d would exclude table %s' % (depth, source))
-            if depth and any(not part or part.startswith('.')
-                             for part in name.split(delimiter)[:depth]):
-                raise ValueError('unsafe hierarchy prefix in %s' % source)
-            target = self._get_file_path(name)
-            if target in destinations:
-                raise ValueError('hierarchy recovery collision at %s' % target)
-            destinations.add(target)
-            if source == target:
+        for name, source, parts in tables:
+            if not parts or (len(parts) == 1 and name == parts[0]):
                 continue
-            parent = os.path.abspath(os.path.dirname(target))
-            while parent != os.path.abspath(self.folder_path):
-                if os.path.lexists(parent) and (not os.path.isdir(parent) or os.path.islink(parent)):
-                    raise ValueError('hierarchy recovery directory collision at %s' % parent)
-                parent = os.path.dirname(parent)
-            for old, new in ((source, target), (source + '.idx', target + '.idx')):
-                if os.path.lexists(new):
-                    raise ValueError('hierarchy recovery collision at %s' % new)
-                if os.path.lexists(old):
-                    moves.append((old, new))
+            separators = set()
+            if name.startswith(parts[0]):
+                tail = name[len(parts[0]):]
+                for length in range(1, len(tail)):
+                    separator = tail[:length]
+                    segments = name.split(separator)
+                    if all(segments) and segments[:len(parts)] == parts:
+                        separators.add(separator)
+            candidates = separators if candidates is None else candidates & separators
+            if not candidates:
+                raise ValueError('contradictory hierarchy prefixes at %s' % source)
+        delimiter = min(candidates, key=lambda value: (len(value), value)) if candidates else '.'
+        self._organize_hierarchy(tables, depth, delimiter, force=True)
+        logger.warning(
+            'recovered hierarchy for %s: source=%s observed_depths=%s depth=%d '
+            'delimiter=%r tables=%d maximum=%s', self.hmeta_path,
+            'invalid' if damaged else 'missing', depths, depth, delimiter, len(tables),
+            'inferred (original unknown)' if requested_depth is None else 'explicit',
+            extra={"jsonldb_file": self.hmeta_path, "jsonldb_kind": "hierarchy_recovered"})
+        return True
 
-        for source, target in moves:
-            os.makedirs(os.path.dirname(target), exist_ok=True)
-            if os.path.lexists(target):
-                raise ValueError('hierarchy recovery collision at %s' % target)
-            os.rename(source, target)
-        if self.use_hierarchy:
+    def _check_move_path(self, path, quarantine=False):
+        """Reject traversal, hidden destinations and non-directory ancestors."""
+        root = os.path.abspath(self.folder_path)
+        absolute = os.path.abspath(path)
+        relative = os.path.relpath(absolute, root)
+        parts = relative.split(os.sep)
+        if (os.path.commonpath([root, absolute]) != root
+                or any(part.startswith('.') for i, part in enumerate(parts)
+                       if not (quarantine and i == 0 and part == '.invalid_tickers'))):
+            raise ValueError('unsafe hierarchy path: %s' % path)
+        parent = os.path.dirname(absolute)
+        while parent != root:
+            if os.path.lexists(parent) and (os.path.islink(parent) or not os.path.isdir(parent)):
+                raise ValueError('hierarchy directory collision at %s' % parent)
+            parent = os.path.dirname(parent)
+        if os.path.lexists(path) and (os.path.islink(path) or not os.path.isfile(path)):
+            raise ValueError('hierarchy table or index is not a regular file: %s' % path)
+
+    def _organize_hierarchy(self, tables, depth, delimiter=None, force=False):
+        """Preflight all moves, record their intent, then perform retryable renames."""
+        previous = self.use_hierarchy, self.hierarchy_depth, self.delimiter
+        self.use_hierarchy, self.hierarchy_depth = bool(depth), depth
+        self.delimiter = self.delimiter if delimiter is None else delimiter
+        moves, destinations = [], set()
+        try:
+            for name, source, _ in tables:
+                if not self.validate_name(name):
+                    raise ValueError('unsafe hierarchy prefix in %s' % source)
+                target = self._get_file_path(name)
+                if target in destinations:
+                    raise ValueError('hierarchy collision at %s' % target)
+                destinations.add(target)
+                for old, new in ((source, target), (source + '.idx', target + '.idx')):
+                    self._check_move_path(old, quarantine=True)
+                    self._check_move_path(new)
+                    if os.path.abspath(old) == os.path.abspath(new):
+                        continue
+                    if os.path.lexists(new):
+                        raise ValueError('hierarchy collision at %s' % new)
+                    if os.path.exists(old):
+                        moves.append([os.path.relpath(old, self.folder_path),
+                                      os.path.relpath(new, self.folder_path)])
+            changed = previous != (self.use_hierarchy, depth, self.delimiter)
+            if not moves and not changed and not force:
+                return False
+            pending = dict(depth=depth, delimiter=self.delimiter, moves=moves)
+            journal = os.path.join(self.folder_path, '.hierarchy.pending')
+            with tempfile.NamedTemporaryFile(dir=self.folder_path, prefix='.hierarchy-',
+                                             delete=False) as stream:
+                temporary = stream.name
+                stream.write(orjson.dumps(pending))
+            try:
+                os.replace(temporary, journal)
+            finally:
+                if os.path.exists(temporary):
+                    os.remove(temporary)
+            self._resume_hierarchy()
+            return True
+        except BaseException:
+            self.use_hierarchy, self.hierarchy_depth, self.delimiter = previous
+            raise
+
+    def _resume_hierarchy(self):
+        """Finish a pending move set, including indexes separated by interruption."""
+        journal = os.path.join(self.folder_path, '.hierarchy.pending')
+        if not os.path.lexists(journal):
+            return False
+        if os.path.islink(journal) or not os.path.isfile(journal):
+            raise ValueError('unsafe hierarchy journal')
+        with open(journal, 'rb') as stream:
+            pending = orjson.loads(stream.read())
+        depth, delimiter = pending['depth'], pending['delimiter']
+        if type(depth) is not int or depth < 0 or not isinstance(delimiter, str) or not delimiter:
+            raise ValueError('invalid pending hierarchy settings')
+        moves = []
+        for source, target in pending['moves']:
+            old, new = (os.path.join(self.folder_path, value) for value in (source, target))
+            self._check_move_path(old, quarantine=True)
+            self._check_move_path(new)
+            if os.path.exists(old) == os.path.exists(new):
+                raise ValueError('pending hierarchy collision or missing file at %s' % new)
+            moves.append((old, new))
+        for old, new in moves:
+            if os.path.exists(old):
+                os.makedirs(os.path.dirname(new), exist_ok=True)
+                if os.path.lexists(new):
+                    raise ValueError('hierarchy collision at %s' % new)
+                os.rename(old, new)
+        self.use_hierarchy, self.hierarchy_depth, self.delimiter = bool(depth), depth, delimiter
+        if depth:
             self.build_hmeta()
         else:
-            # Absence of h.meta is the canonical flat configuration.
             for path in (self.hmeta_path, self.hmeta_path + '.idx'):
                 if os.path.exists(path):
                     os.remove(path)
-        for directory in reversed(directories):
-            try:
-                os.rmdir(directory)
-            except OSError:
-                pass
-        logger.warning(
-            'recovered hierarchy for %s: source=%s observed_depths=%s depth=%d delimiter=%r tables=%d',
-            self.hmeta_path, 'invalid' if damaged else 'missing', depths,
-            depth, delimiter, len(tables),
-            extra={"jsonldb_file": self.hmeta_path, "jsonldb_kind": "hierarchy_recovered"})
+        self.build_dbmeta()
+        self.delete_empty_folders()
+        os.remove(journal)
+        logger.info('hierarchy reconciliation completed for %s at maximum %d',
+                    self.folder_path, depth)
         return True
 
     def build_hmeta(self) -> None:
@@ -354,29 +407,14 @@ class FolderDB:
 
 
     def validate_name(self, name: str) -> bool:
-        """
-        Validate a file name according to the current mode.
-        
-        Args:
-            name: Name of the file to validate
-            
-        Returns:
-            bool: True if the name is valid, False otherwise
-        """
-        if not self.use_hierarchy:
-            return True
-            
-        # Remove .jsonl extension if present
-        if name.endswith('.jsonl'):
-            name = name[:-6]
-            
-        # Count delimiters
-        delimiter_count = name.count(self.delimiter)
-        
-        # In hierarchy mode, name must contain at least hierarchy_depth-1 delimiters
-        # e.g., for depth=3: "users.level1.level2" has 2 delimiters
-        return delimiter_count >= self.hierarchy_depth - 1
+        """Check hierarchy directory components; short names are always deep enough.
 
+        New table creation additionally enforces portable filename restrictions.
+        """
+        stem = name[:-6] if name.endswith('.jsonl') else name
+        parts = stem.split(self.delimiter)[:-1][:self.hierarchy_depth] if self.use_hierarchy else []
+        return all(part and not part.startswith('.') and '/' not in part and '\\' not in part
+                   for part in parts)
 
     def __str__(self) -> str:
         """Return a string representation of the database."""
@@ -415,8 +453,8 @@ class FolderDB:
         if self.use_hierarchy:
             if name.endswith('.jsonl'):
                 name = name[:-6]
-            # Take first hierarchy_depth parts for the path
-            parts = name.split(self.delimiter)[:self.hierarchy_depth]
+            # The final segment belongs only to the full-name filename.
+            parts = name.split(self.delimiter)[:-1][:self.hierarchy_depth]
             return os.path.join(self.folder_path, *parts)
         return self.folder_path
 
@@ -438,8 +476,6 @@ class FolderDB:
 
     def _get_file_path(self, name: str) -> str:
         """Get the full path for a JSONL file (read-only, no folder creation)"""
-        if self.use_hierarchy and not self.validate_name(name):
-            raise ValueError(f"Invalid hierarchical name '{name}'. Name must contain at least {self.hierarchy_depth-1} '{self.delimiter}' delimiters")
         folder_path = self._get_hierarchy_path(name)
         if name.endswith('.jsonl'):
             return os.path.join(folder_path, name)
@@ -459,7 +495,7 @@ class FolderDB:
         """Apply portable creation rules without excluding historical tables."""
         stem = name[:-6] if name.endswith('.jsonl') else name
         segments = stem.split(self.delimiter) if self.use_hierarchy else [stem]
-        components = [stem] + (segments[:self.hierarchy_depth] if self.use_hierarchy else [])
+        components = [stem] + (segments[:-1][:self.hierarchy_depth] if self.use_hierarchy else [])
         reserved = {'CON', 'PRN', 'AUX', 'NUL'}
         reserved.update('%s%d' % (prefix, n) for prefix in ('COM', 'LPT') for n in range(1, 10))
         if (re.fullmatch(r'[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*', stem) is None
@@ -1020,180 +1056,30 @@ class FolderDB:
             self.delete_empty_folders()
 
     def lint_hierarchy(self, hierarchy_depth: int) -> None:
-        """
-        Reorganize JSONL files according to hierarchy levels and move invalid files to .invalid_tickers.
-        
-        Args:
-            hierarchy_depth: Target hierarchy depth
-        """
-
-        if hierarchy_depth < 1:
-            raise ValueError("Hierarchy level must be positive")
-
-        import shutil
-            
-        logger.info("organizing %s for hierarchy level %d",
-                    self.folder_path, hierarchy_depth)
-            
-        self.use_hierarchy = True
-        self.hierarchy_depth = hierarchy_depth
-
-
-        # Create .invalid_tickers folder if it doesn't exist
-        if not os.path.exists(self.invalid_tickers_path):
-            os.makedirs(self.invalid_tickers_path, exist_ok=True)
-        
-        # Get all JSONL files in the root folder and immediate subdirectories
-        all_files = []
-        for root, dirs, files in os.walk(self.folder_path, topdown=True):
-            # Skip hidden/system directories (starting with '.')
-            dirs[:] = [d for d in dirs if not d.startswith('.')]
-            for file in files:
-                if file.endswith('.jsonl'):
-                    file_path = os.path.join(root, file)
-                    name = os.path.splitext(file)[0]
-                    all_files.append((name, file_path))
-        
-        valid_files = []
-        invalid_files = []
-        
-        # Categorize files as valid or invalid
-        for name, file_path in all_files:
-            if self.validate_name(name):
-                valid_files.append((name, file_path))
-            else:
-                invalid_files.append((name, file_path))
-        
-        logger.info("found %d valid files and %d invalid files in %s",
-                    len(valid_files), len(invalid_files), self.folder_path)
-        
-        # Move invalid files to .invalid_tickers folder
-        for name, file_path in invalid_files:
-            try:
-                dest_path = os.path.join(self.invalid_tickers_path, os.path.basename(file_path))
-                if file_path != dest_path:  # Avoid moving file to itself
-                    shutil.move(file_path, dest_path)
-                    logger.info("moved invalid file %s to %s",
-                                file_path, dest_path)
-                    
-                    # Also move .idx file if it exists
-                    idx_path = file_path + '.idx'
-                    if os.path.exists(idx_path):
-                        idx_dest = dest_path + '.idx'
-                        shutil.move(idx_path, idx_dest)
-            except Exception as e:
-                logger.warning("could not move invalid file %s: %s",
-                               file_path, e)
-        
-        # Reorganize valid files according to hierarchy
-        for name, file_path in valid_files:
-            try:
-                target_dir = self._get_hierarchy_path(name)
-                target_file = os.path.join(target_dir, os.path.basename(file_path))
-                
-                # Skip if file is already in correct location
-                if file_path == target_file:
-                    continue
-                    
-                # Create target directory if needed
-                self.create_folder(target_dir)
-                
-                # Move JSONL file
-                shutil.move(file_path, target_file)
-                logger.info("moved %s to %s", file_path, target_file)
-                
-                # Move .idx file if it exists
-                idx_path = file_path + '.idx'
-                if os.path.exists(idx_path):
-                    idx_target = target_file + '.idx'
-                    shutil.move(idx_path, idx_target)
-                    
-            except Exception as e:
-                logger.warning("could not move valid file %s: %s",
-                               file_path, e)
-        
-        # Clean up empty directories
-        self.delete_empty_folders()
-        
-        # Rebuild metadata to reflect new structure
-        self.build_dbmeta()
-        self.build_hmeta()
-        
-        logger.info("hierarchy organization completed for %s", self.folder_path)
+        """Reorganize visible tables to a positive maximum depth, retaining short names."""
+        self._validate_depth(hierarchy_depth)
+        self._resume_hierarchy()
+        self._organize_hierarchy(self._hierarchy_tables(), hierarchy_depth, force=True)
 
     def reprocess_invalid_tickers(self) -> None:
-        """
-        Reprocess files in .invalid_tickers folder and move any that now match naming convention.
-        """
-        import shutil
-        
+        """Explicitly restore safe quarantined names without overwriting any table."""
+        self._resume_hierarchy()
         if not os.path.exists(self.invalid_tickers_path):
-            logger.info("no invalid-tickers folder found at %s",
-                        self.invalid_tickers_path)
             return
-            
-        # Get all JSONL files in .invalid_tickers folder
-        invalid_files = []
-        for file in os.listdir(self.invalid_tickers_path):
-            if file.endswith('.jsonl'):
-                file_path = os.path.join(self.invalid_tickers_path, file)
-                name = os.path.splitext(file)[0]
-                invalid_files.append((name, file_path))
-        
-        if not invalid_files:
-            logger.info("no files found in %s", self.invalid_tickers_path)
-            return
-            
-        logger.info("found %d files to reprocess in %s",
-                    len(invalid_files), self.invalid_tickers_path)
-        
-        now_valid_files = []
-        still_invalid_files = []
-        
-        # Check each file against current naming rules
-        for name, file_path in invalid_files:
-            if self.validate_name(name):
-                now_valid_files.append((name, file_path))
-            else:
-                still_invalid_files.append((name, file_path))
-        
-        logger.info("%d files in %s are now valid; %d remain invalid",
-                    len(now_valid_files), self.invalid_tickers_path,
-                    len(still_invalid_files))
-        
-        # Move now-valid files to appropriate hierarchy folders
-        for name, file_path in now_valid_files:
-            try:
-                target_dir = self._get_hierarchy_path(name)
-                target_file = os.path.join(target_dir, os.path.basename(file_path))
-                
-                # Create target directory if needed
-                self.create_folder(target_dir)
-                
-                # Move JSONL file
-                shutil.move(file_path, target_file)
-                logger.info("moved %s to %s", file_path, target_file)
-                
-                # Move .idx file if it exists (but don't build new one yet)
-                idx_path = file_path + '.idx'
-                if os.path.exists(idx_path):
-                    idx_target = target_file + '.idx'
-                    shutil.move(idx_path, idx_target)
-                else:
-                    # Build index for newly valid file
-                    build_jsonl_index(target_file)
-                
-                # Update metadata for this file
-                self.update_dbmeta(name)
-                    
-            except Exception as e:
-                logger.warning("could not move file %s: %s", file_path, e)
-        
-        # Rebuild metadata to include newly valid files
-        if now_valid_files:
-            self.build_dbmeta()
-            
-        logger.info("reprocessing completed for %s", self.invalid_tickers_path)
+        if os.path.islink(self.invalid_tickers_path):
+            raise ValueError('unsafe quarantine directory')
+        tables = self._hierarchy_tables()
+        restored = []
+        for filename in sorted(os.listdir(self.invalid_tickers_path)):
+            if filename.endswith('.jsonl'):
+                name = filename[:-6]
+                try:
+                    self._validate_new_table_name(name)
+                except ValueError:
+                    continue
+                restored.append((name, os.path.join(self.invalid_tickers_path, filename), []))
+        if restored:
+            self._organize_hierarchy(tables + restored, self.hierarchy_depth, force=True)
 
     def delete_empty_folders(self) -> None:
         """Prune empty visible directories without entering hidden trees."""

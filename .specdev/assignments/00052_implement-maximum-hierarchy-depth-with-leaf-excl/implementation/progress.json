@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "T-1",
+      "status": "completed"
+    },
+    {
+      "id": "T-2",
+      "status": "completed"
+    },
+    {
+      "id": "T-3",
+      "status": "completed"
+    }
+  ],
+  "selected_guides": {
+    "implementation": [],
+    "review": []
+  },
+  "verification": [
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest unit_tests/test_folderdb.py unit_tests/test_table_names.py unit_tests/test_hierarchy_recovery.py unit_tests/test_visible_hierarchy_paths.py -q --tb=short",
+      "scope": "Initial collection: indentation error from edit script; repaired before execution.",
+      "status": "failed",
+      "duration_ms": 700,
+      "role": "qualification",
+      "revision": "working-tree@c2dbf85ab76a437bde66eeac8cd8bdb24188b502"
+    },
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest unit_tests/test_folderdb.py unit_tests/test_table_names.py unit_tests/test_hierarchy_recovery.py unit_tests/test_visible_hierarchy_paths.py -q --tb=short",
+      "scope": "298 passed; 27 obsolete fixed-depth expectations subsequently updated.",
+      "status": "failed",
+      "duration_ms": 1710,
+      "role": "qualification",
+      "revision": "working-tree@c2dbf85ab76a437bde66eeac8cd8bdb24188b502"
+    },
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest unit_tests/test_folderdb.py unit_tests/test_table_names.py unit_tests/test_hierarchy_recovery.py unit_tests/test_visible_hierarchy_paths.py unit_tests/test_max_hierarchy.py -q --tb=short",
+      "scope": "355 passed; four overly strict derived-statistics timestamp assertions narrowed to table/configuration stability.",
+      "status": "failed",
+      "duration_ms": 1720,
+      "role": "qualification",
+      "revision": "working-tree@c2dbf85ab76a437bde66eeac8cd8bdb24188b502"
+    },
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest unit_tests/test_folderdb.py unit_tests/test_table_names.py unit_tests/test_hierarchy_recovery.py unit_tests/test_visible_hierarchy_paths.py unit_tests/test_max_hierarchy.py unit_tests/test_clear_configuration.py unit_tests/test_metadata_upkeep.py unit_tests/test_reports.py unit_tests/test_durability_atomicity.py unit_tests/test_index_cache.py unit_tests/test_write_statistics.py unit_tests/test_repair_reporting.py unit_tests/test_roadmap_compliance.py -q --tb=short",
+      "scope": "552 passed across 13 focused hierarchy and affected folder-operation modules.",
+      "status": "passed",
+      "duration_ms": 2850,
+      "role": "authoritative_acceptance",
+      "revision": "working-tree@c2dbf85ab76a437bde66eeac8cd8bdb24188b502"
+    },
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 .specdev/assignments/00052_implement-maximum-hierarchy-depth-with-leaf-excl/implementation/check_evidence.py",
+      "scope": "Source cap, Python 3.8 syntax, notebook syntax and whitespace passed.",
+      "status": "passed",
+      "duration_ms": 100,
+      "role": "authoritative_acceptance",
+      "revision": "working-tree@c2dbf85ab76a437bde66eeac8cd8bdb24188b502"
+    }
+  ],
+  "deviations": [],
+  "follow_up": "none",
+  "selected_guide_versions": {
+    "implementation": [],
+    "review": []
+  }
+}

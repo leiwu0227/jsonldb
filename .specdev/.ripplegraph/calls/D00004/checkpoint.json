@@ -1,0 +1,29 @@
+{
+  "callId": "D00004",
+  "status": "active",
+  "graphId": "discussion-lifecycle",
+  "graphVersion": "2.1.0",
+  "packagePath": "workflows/discussion-lifecycle@2.1.0",
+  "position": {
+    "graph": "discussion-lifecycle",
+    "node": "finalize"
+  },
+  "input": {
+    "id": "D00004",
+    "path": ".specdev/discussions/D00004_explore-hierarchy-as-a-maximum-depth-and-support",
+    "description": "Explore hierarchy as a maximum depth and support shallower paths",
+    "start_revision": "e69beb35dea83e5cf7839ddd9c70964608efe3be"
+  },
+  "outputs": {
+    "brainstorm": {
+      "proposal": ".specdev/discussions/D00004_explore-hierarchy-as-a-maximum-depth-and-support/brainstorm/proposal.md",
+      "design": ".specdev/discussions/D00004_explore-hierarchy-as-a-maximum-depth-and-support/brainstorm/design.md",
+      "artifacts": [
+        "brainstorm/proposal.md",
+        "brainstorm/design.md"
+      ]
+    }
+  },
+  "createdAt": "2026-09-06T10:32:23.101Z",
+  "updatedAt": "2026-09-06T10:33:15.104Z"
+}

@@ -1,0 +1,86 @@
+{
+  "runId": "assignment-lifecycle-20260906T10474193",
+  "status": "completed",
+  "rootGraph": "assignment-lifecycle",
+  "workflow": {
+    "id": "specdev-workspace",
+    "version": "1.0.0"
+  },
+  "position": {
+    "graph": "assignment-lifecycle",
+    "node": "done"
+  },
+  "createdAt": "2026-09-06T10:47:41.941Z",
+  "updatedAt": "2026-09-06T11:17:54.956Z",
+  "outputs": {
+    "create-assignment": {
+      "id": "00052",
+      "name": "00052_implement-maximum-hierarchy-depth-with-leaf-excl",
+      "path": ".specdev/assignments/00052_implement-maximum-hierarchy-depth-with-leaf-excl",
+      "description": "Implement maximum hierarchy depth with leaf-excluding paths and legacy layout compatibility",
+      "review_policy": {
+        "brainstorm": "optional",
+        "implementation": "required"
+      }
+    },
+    "brainstorm": {
+      "contract": ".specdev/assignments/00052_implement-maximum-hierarchy-depth-with-leaf-excl/brainstorm/contract.md",
+      "contract_hash": "7d5a3609300db40d7df62bb3c8434ac41d0f1c729c2f991282b65bcbd11f8538"
+    },
+    "approve-contract": {
+      "approved": true,
+      "contract_hash": "7d5a3609300db40d7df62bb3c8434ac41d0f1c729c2f991282b65bcbd11f8538",
+      "actor": "user",
+      "approved_at": "2026-09-06T11:04:08.974Z",
+      "review_override": false,
+      "review_policy": {
+        "brainstorm": "optional",
+        "implementation": "required"
+      },
+      "revision": "c2dbf85ab76a437bde66eeac8cd8bdb24188b502"
+    },
+    "design": {
+      "plan": ".specdev/assignments/00052_implement-maximum-hierarchy-depth-with-leaf-excl/design/plan.md",
+      "attempt": "inline-foreground"
+    },
+    "implementation": {
+      "progress": ".specdev/assignments/00052_implement-maximum-hierarchy-depth-with-leaf-excl/implementation/progress.json",
+      "outcome": ".specdev/assignments/00052_implement-maximum-hierarchy-depth-with-leaf-excl/outcome.md",
+      "attempt": "inline-foreground"
+    },
+    "implementation-review": {
+      "approved": true,
+      "verdict": ".specdev/assignments/00052_implement-maximum-hierarchy-depth-with-leaf-excl/review/implementation-verdict.md",
+      "attempt": "Attempt-00087",
+      "disposition": "approved"
+    }
+  },
+  "gateDecisions": {
+    "approve-contract": {
+      "approved": true,
+      "contract_hash": "7d5a3609300db40d7df62bb3c8434ac41d0f1c729c2f991282b65bcbd11f8538",
+      "actor": "user",
+      "approved_at": "2026-09-06T11:04:08.974Z",
+      "review_override": false,
+      "review_policy": {
+        "brainstorm": "optional",
+        "implementation": "required"
+      },
+      "revision": "c2dbf85ab76a437bde66eeac8cd8bdb24188b502"
+    }
+  },
+  "graphSource": {
+    "kind": "package",
+    "graphId": "assignment-lifecycle",
+    "graphVersion": "2.4.0",
+    "packagePath": "workflows/assignment-lifecycle@2.4.0"
+  },
+  "stack": [],
+  "frameCounter": 0,
+  "finalOutput": {
+    "approved": true,
+    "verdict": ".specdev/assignments/00052_implement-maximum-hierarchy-depth-with-leaf-excl/review/implementation-verdict.md",
+    "attempt": "Attempt-00087",
+    "disposition": "approved"
+  }
+}

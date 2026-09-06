@@ -10,7 +10,9 @@ the library does not automatically initialize repositories, commit or synchroniz
 2. Copy the directory, including `config.meta`, `h.meta` when present, and any
    quarantined data under `.invalid_tickers`. An archive must include hidden paths
    if you want those tables and diagnostic reports preserved.
-3. Open the destination with its existing hierarchy settings. Refresh `db.meta`
+3. Open the destination with its existing hierarchy settings. Older layouts migrate
+   automatically; any `.hierarchy.pending` record must travel with an interrupted
+   database so open can finish its recorded moves. Refresh `db.meta`
    with `build_dbmeta()` to update informational paths after relocation.
 
 ```python

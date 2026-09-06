@@ -1,0 +1,8 @@
+{
+  "proposal": ".specdev/discussions/D00004_explore-hierarchy-as-a-maximum-depth-and-support/brainstorm/proposal.md",
+  "design": ".specdev/discussions/D00004_explore-hierarchy-as-a-maximum-depth-and-support/brainstorm/design.md",
+  "artifacts": [
+    "brainstorm/proposal.md",
+    "brainstorm/design.md"
+  ]
+}

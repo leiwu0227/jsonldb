@@ -15,7 +15,7 @@ Internal team use.
 - **Index-driven reads:** Each `.jsonl` file has a companion `.idx` file mapping linekeys to byte offsets for O(1) lookups and range queries
 - **Sorted keys:** Records are kept sorted by linekey; bisect is used for O(log n) range selection on sorted index keys
 - **In-place updates:** Updates that fit in the existing line space are written in-place; oversized updates append and blank the old line
-- **Hierarchical storage:** Optional `hierarchy_depth` splits files into subdirectories based on dot-delimited key prefixes (e.g. `A.B.ticker.jsonl` → `A/B/ticker.jsonl`)
+- **Hierarchical storage:** The approved [hierarchy design](roadmap/designs/folder_database/hierarchical_layout.md) treats optional `hierarchy_depth` as the maximum number of nested directories. Split table names on the configured delimiter (default `.`), exclude the final segment from directories, and preserve the full filename (e.g. at maximum depth 6, `A.B.ticker.jsonl` → `A/B/A.B.ticker.jsonl`). Short names are valid; single-segment names live at the database root. Preserve hierarchy controls because the configured maximum cannot always be inferred from existing tables.
 - **Metadata files:** `db.meta` (per-table stats), `h.meta` (hierarchy config), `config.meta` (runtime config like time precision)
 - **Modular imports:** `vercontrol` (Git wrapper) and `visual` (Bokeh/Matplotlib) are lazy-loaded to avoid pulling heavy deps unnecessarily
 

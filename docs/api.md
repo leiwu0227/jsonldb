@@ -6,7 +6,7 @@ operations by purpose; [the usage guide](usage.md) provides runnable examples.
 ## FolderDB
 
 `FolderDB(folder_path, hierarchy_depth=None)` opens an **existing** directory.
-Pass a string path. An explicit positive hierarchy depth creates or changes the
+Pass a string path. An explicit positive maximum hierarchy depth creates or changes the
 layout; omission uses persisted settings or recovery inference. Timespec is
 configured through `config.meta`, not a constructor argument.
 
@@ -82,10 +82,10 @@ and [file format](file-format.md) describe their rules.
 | --- | --- |
 | `get_file_list()` | Table names without `.jsonl`; hierarchy discovery excludes hidden directories. |
 | `search_file_list(regex)` | Regex search over discovered names. |
-| `validate_name(name)` | Existing hierarchy-depth check; creation applies additional filename restrictions. |
+| `validate_name(name)` | Check safe hierarchy directory components; short names are valid and creation applies additional filename restrictions. |
 | `lint_db(force=False)` | Verify/compact tables and write `.jsonldb/lint.log`. |
-| `lint_hierarchy(hierarchy_depth)` | Reorganize to a positive depth; invalid names are quarantined. |
-| `reprocess_invalid_tickers()` | Restore quarantined tables now valid for the layout. |
+| `lint_hierarchy(hierarchy_depth)` | Reorganize to a positive maximum depth; short names remain visible; collisions raise. |
+| `reprocess_invalid_tickers()` | Explicitly restore safe quarantined tables, including short names, without overwriting destinations. |
 | `delete_empty_folders()` | Prune empty visible directories. |
 | `build_configmeta()` / `build_hmeta()` | Persist live configuration/hierarchy settings; normal callers use the higher-level operations. |
 | `create_folder(folder_path)` | Ensure a directory exists; does not configure a database. |

@@ -31,7 +31,7 @@ def test_visible_invalid_tickers_substring_and_hidden_exclusion(tmp_path, placem
         assert db.get_file_list() == ['region.table']
     else:
         db.lint_hierarchy(2)
-        target = root/'region'/'table'/'region.table.jsonl'
+        target = root/'region'/'region.table.jsonl'
         assert target.read_bytes() == table_bytes
         assert not source.exists()
         assert db.get_file_list() == ['region.table']

@@ -98,12 +98,13 @@ rebuilt from its table; it is not a second source of observations.
 | --- | --- | --- |
 | `*.jsonl` | Observations and optional per-table slot. | Yes. |
 | `config.meta` | Precision and optional slot width; may retain other settings. | Yes. |
-| `h.meta` | Hierarchy mode, delimiter and depth, when enabled. | Yes. |
+| `h.meta` | Hierarchy mode, delimiter and maximum directory depth, when enabled. | Yes. |
 | `db.meta` | Per-table paths, key bounds, counts, size and lint status. | Rebuildable statistics. |
 | `*.idx` | Derived indexes for tables/control files. | Rebuildable. |
 | `.jsonldb/integrity.log` | Findings from the most recent open. | Optional diagnostic history. |
 | `.jsonldb/lint.log` | Findings from the most recent lint. | Optional diagnostic history. |
-| `.invalid_tickers/` | Quarantined tables with names invalid for a hierarchy. | Yes, if any data remains there. |
+| `.hierarchy.pending` | Temporary intent record for interrupted hierarchy moves. | Yes, while present. |
+| `.invalid_tickers/` | Previously quarantined tables awaiting explicit safe-name restoration. | Yes, if any data remains there. |
 
 Control files use keyed JSONL records without metadata slots. Configuration and
 hierarchy are meaningful settings; keeping them avoids relying on recovery guesses.

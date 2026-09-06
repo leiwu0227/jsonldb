@@ -36,6 +36,8 @@ def test_recovers_missing_or_invalid_controls_without_rewriting_tables(tmp_path,
     assert (db.use_hierarchy, db.hierarchy_depth, db.delimiter) == (True, 2, '-')
     assert db.get_dict('a-b') == {'a-b': {'row': {'value': 1}}}
     assert db.read_meta('a-b') == {'owner': 1}
+    assert not path.exists()
+    path = tmp_path / 'a' / 'a-b.jsonl'
     assert (path.read_bytes(), path.stat().st_ino, path.stat().st_mtime_ns) == before
     assert db.get_dbmeta()['a-b']['path'] == str(path)
     assert jsonlfile.load_jsonl(str(tmp_path / 'h.meta')) == {
@@ -43,6 +45,7 @@ def test_recovers_missing_or_invalid_controls_without_rewriting_tables(tmp_path,
     assert (tmp_path / 'h.meta.idx').is_file()
     report = _report(tmp_path)
     assert 'kind=hierarchy_recovered' in report
+    assert 'maximum=inferred (original unknown)' in report
     assert 'observed_depths=[2] depth=2' in report
     assert "delimiter='-'" in report
 
@@ -65,7 +68,7 @@ def test_infers_delimiter_from_directory_and_filename_prefixes(tmp_path, delimit
     assert db.get_dict(name) == {name: {'row': {'value': 1}}}
 
 
-def test_mixed_depths_choose_shallowest_and_preserve_hidden_trees(tmp_path):
+def test_mixed_depths_choose_deepest_and_preserve_hidden_trees(tmp_path):
     shallow = _table(tmp_path, 'a/a-x.jsonl')
     deep = _table(tmp_path, 'b/y/b-y-z.jsonl', 2)
     before = deep.read_bytes()
@@ -79,9 +82,9 @@ def test_mixed_depths_choose_shallowest_and_preserve_hidden_trees(tmp_path):
 
     db = FolderDB(str(tmp_path) + os.sep)
 
-    assert (db.hierarchy_depth, db.delimiter) == (1, '-')
-    moved = tmp_path / 'b' / 'b-y-z.jsonl'
-    assert shallow.is_file() and not deep.exists()
+    assert (db.hierarchy_depth, db.delimiter) == (2, '-')
+    moved = deep
+    assert shallow.is_file() and deep.is_file()
     assert moved.read_bytes() == before
     assert moved.with_suffix('.jsonl.idx').read_bytes() == index_before
     assert sorted(db.get_file_list()) == ['a-x', 'b-y-z']
@@ -90,19 +93,16 @@ def test_mixed_depths_choose_shallowest_and_preserve_hidden_trees(tmp_path):
     assert hidden_empty.is_dir()
     assert (tmp_path / '.invalid_tickers' / 'duplicate.jsonl').is_file()
     assert (tmp_path / '.external' / 'duplicate.jsonl').is_file()
-    assert 'observed_depths=[1, 2] depth=1' in _report(tmp_path)
+    assert 'observed_depths=[1, 2] depth=2' in _report(tmp_path)
     assert FolderDB(str(tmp_path)).get_dict() == db.get_dict()
 
 
-@pytest.mark.parametrize('layout', ['empty', 'root', 'mixed'])
+@pytest.mark.parametrize('layout', ['empty', 'root'])
 def test_recovers_flat_layout_and_removes_invalid_hierarchy_control(tmp_path, layout):
     expected = {}
     if layout != 'empty':
         _table(tmp_path, 'root.jsonl')
         expected['root'] = {'row': {'value': 1}}
-    if layout == 'mixed':
-        _table(tmp_path, 'a/b/a-b.jsonl', 2)
-        expected['a-b'] = {'row': {'value': 2}}
     (tmp_path / 'h.meta').write_bytes(TORN_CONTROL)
     (tmp_path / 'h.meta.idx').write_bytes(b'{"hierarchy":0}')
 
@@ -119,21 +119,23 @@ def test_recovers_flat_layout_and_removes_invalid_hierarchy_control(tmp_path, la
 @pytest.mark.parametrize('conflict', ['duplicate', 'index', 'directory', 'prefix'])
 def test_recovery_preflights_conflicts_before_moving_any_table(tmp_path, conflict):
     _table(tmp_path, 'a/a-x.jsonl')
-    deep = _table(tmp_path, 'b/y/b-y-z.jsonl', 2)
+    deep = _table(tmp_path, 'b/b-y-z.jsonl', 2)
+    _table(tmp_path, 'c/d/c-d-e.jsonl', 4)
+    (tmp_path / 'b' / 'y').mkdir()
     if conflict == 'duplicate':
-        _table(tmp_path, 'b/b-y-z.jsonl', 3)
+        _table(tmp_path, 'b/y/b-y-z.jsonl', 3)
     elif conflict == 'index':
-        (tmp_path / 'b' / 'b-y-z.jsonl.idx').write_bytes(b'keep this index')
+        (tmp_path / 'b' / 'y' / 'b-y-z.jsonl.idx').write_bytes(b'keep this index')
     elif conflict == 'directory':
-        # Root data forces flattening, where this directory blocks a table.
+        # A directory blocks the new canonical file destination.
         _table(tmp_path, 'root.jsonl')
-        (tmp_path / 'b-y-z.jsonl').mkdir()
+        (tmp_path / 'b' / 'y' / 'b-y-z.jsonl').mkdir()
     else:
         _table(tmp_path, 'wrong/place/other-name.jsonl', 3)
     (tmp_path / 'h.meta').write_bytes(TORN_CONTROL)
     before = {p: p.read_bytes() for p in tmp_path.rglob('*') if p.is_file()}
 
-    with pytest.raises(ValueError, match='collision|contradictory'):
+    with pytest.raises(ValueError, match='collision|contradictory|not a regular file'):
         FolderDB(str(tmp_path))
 
     assert deep.is_file()
@@ -155,7 +157,8 @@ def test_explicit_depth_is_honored_without_losing_inferred_delimiter(tmp_path):
 @pytest.mark.parametrize('failure', ['index_move', 'control_publish'])
 def test_interrupted_recovery_can_be_retried(tmp_path, monkeypatch, failure):
     _table(tmp_path, 'a/a-x.jsonl')
-    source = _table(tmp_path, 'b/y/b-y-z.jsonl', 2)
+    source = _table(tmp_path, 'b/b-y-z.jsonl', 2)
+    _table(tmp_path, 'c/d/c-d-e.jsonl', 3)
     raw = source.read_bytes()
     (tmp_path / 'h.meta').write_bytes(TORN_CONTROL)
     real_rename, real_replace = os.rename, os.replace
@@ -174,10 +177,10 @@ def test_interrupted_recovery_can_be_retried(tmp_path, monkeypatch, failure):
 
     db = FolderDB(str(tmp_path))
 
-    assert (tmp_path / 'b' / 'b-y-z.jsonl').read_bytes() == raw
+    assert (tmp_path / 'b' / 'y' / 'b-y-z.jsonl').read_bytes() == raw
     assert db.get_dict('b-y-z') == {'b-y-z': {'row': {'value': 2}}}
     assert db.read_meta('b-y-z') == {'owner': 2}
-    assert set(db.get_dbmeta()) == {'a-x', 'b-y-z'}
+    assert set(db.get_dbmeta()) == {'a-x', 'b-y-z', 'c-d-e'}
 
 
 def test_valid_controls_do_not_trigger_layout_inference(tmp_path, monkeypatch):
@@ -195,15 +198,16 @@ def test_valid_controls_do_not_trigger_layout_inference(tmp_path, monkeypatch):
     assert (tmp_path / 'h.meta').read_bytes() == control
 
 
-def test_explicit_hierarchy_creation_retains_quarantine_behavior(tmp_path):
+def test_explicit_hierarchy_creation_retains_short_tables(tmp_path):
     _table(tmp_path, 'a.b.jsonl')
     invalid = _table(tmp_path, 'short.jsonl', 2)
     before = invalid.read_bytes()
 
     db = FolderDB(str(tmp_path), hierarchy_depth=2)
 
-    assert db.get_file_list() == ['a.b']
-    assert (tmp_path / '.invalid_tickers' / 'short.jsonl').read_bytes() == before
+    assert sorted(db.get_file_list()) == ['a.b', 'short']
+    assert (tmp_path / 'short.jsonl').read_bytes() == before
+    assert not (tmp_path / '.invalid_tickers').exists()
 
 
 def test_unreadable_directory_aborts_recovery_before_publication(tmp_path, monkeypatch):

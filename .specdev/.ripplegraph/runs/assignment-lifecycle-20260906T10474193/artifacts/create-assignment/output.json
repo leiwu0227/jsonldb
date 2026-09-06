@@ -1,0 +1,10 @@
+{
+  "id": "00052",
+  "name": "00052_implement-maximum-hierarchy-depth-with-leaf-excl",
+  "path": ".specdev/assignments/00052_implement-maximum-hierarchy-depth-with-leaf-excl",
+  "description": "Implement maximum hierarchy depth with leaf-excluding paths and legacy layout compatibility",
+  "review_policy": {
+    "brainstorm": "optional",
+    "implementation": "required"
+  }
+}
