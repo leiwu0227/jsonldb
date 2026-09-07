@@ -50,7 +50,7 @@ def save_jsonldf(jsonl_file_path: str, df: pd.DataFrame,
     )
 
 def load_jsonldf(jsonl_file_path: str, timespec: Optional[str] = None,
-                 auto_deserialize: bool = True) -> pd.DataFrame:
+                 auto_deserialize: bool = True, *, strict: bool = False) -> pd.DataFrame:
     """Load JSONL file into a DataFrame using line keys as index.
     
     Args:
@@ -61,7 +61,7 @@ def load_jsonldf(jsonl_file_path: str, timespec: Optional[str] = None,
     """
     # Load JSONL data
     records_dict = load_jsonl(
-        jsonl_file_path, auto_deserialize=auto_deserialize, timespec=timespec)
+        jsonl_file_path, auto_deserialize=auto_deserialize, timespec=timespec, strict=strict)
     
     if not records_dict:
         # Return empty DataFrame
@@ -92,7 +92,8 @@ def select_jsonldf(
     lower_key: Optional[Any] = None,
     upper_key: Optional[Any] = None,
     auto_deserialize: bool = True,
-    timespec: Optional[str] = None
+    timespec: Optional[str] = None,
+    *, strict: bool = False,
 ) -> pd.DataFrame:
     """
     Select records from JSONL file within a specified key range.
@@ -115,7 +116,7 @@ def select_jsonldf(
         lower_key=lower_key,
         upper_key=upper_key,
         auto_deserialize=auto_deserialize,
-        timespec=timespec
+        timespec=timespec, strict=strict
     )
     
     # Convert to DataFrame

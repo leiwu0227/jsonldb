@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "T-1",
+      "status": "completed"
+    },
+    {
+      "id": "T-2",
+      "status": "completed"
+    },
+    {
+      "id": "T-3",
+      "status": "completed"
+    },
+    {
+      "id": "T-4",
+      "status": "completed"
+    }
+  ],
+  "selected_guides": {
+    "implementation": [
+      "api-security",
+      "frontend"
+    ],
+    "review": []
+  },
+  "selected_guide_versions": {
+    "implementation": [
+      {
+        "id": "api-security",
+        "version": "1"
+      },
+      {
+        "id": "frontend",
+        "version": "1"
+      }
+    ],
+    "review": []
+  },
+  "verification": [
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest unit_tests/test_strict_reads.py -q --tb=short",
+      "scope": "82 passed, four fixture failures: out-of-range serializer input and incorrect missing-range exception expectation; corrected fixtures without product changes.",
+      "status": "failed",
+      "duration_ms": 1110,
+      "role": "qualification",
+      "revision": "working-tree@794cbf937307ca67ab3b8aabbb09a29daa7ae3b3"
+    },
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest unit_tests/test_strict_reads.py unit_tests/test_jsonlfile.py unit_tests/test_jsonldf.py unit_tests/test_folderdb.py unit_tests/test_index_cache.py unit_tests/test_metaslot.py unit_tests/test_table_timezone.py unit_tests/test_timezone_recovery.py unit_tests/test_unknown_metadata_writes.py unit_tests/test_reports.py -q --tb=short",
+      "scope": "509 passed across ten focused read, wrapper, cache, metadata, timezone, and report modules.",
+      "status": "passed",
+      "duration_ms": 2760,
+      "role": "authoritative_acceptance",
+      "revision": "working-tree@794cbf937307ca67ab3b8aabbb09a29daa7ae3b3"
+    },
+    {
+      "command": ".specdev/cache/bin/python-runtime-env python3 .specdev/assignments/00053_implement-opt-in-strict-handling-of-encountered/implementation/check_evidence.py",
+      "scope": "All three source caps, Python 3.8 syntax, whitespace, and published design preservation pass.",
+      "status": "passed",
+      "duration_ms": 100,
+      "role": "authoritative_acceptance",
+      "revision": "working-tree@794cbf937307ca67ab3b8aabbb09a29daa7ae3b3"
+    }
+  ],
+  "deviations": [],
+  "follow_up": "none"
+}

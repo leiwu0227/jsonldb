@@ -33,16 +33,28 @@ operations may partially complete before an error.
 
 | Method | Return |
 | --- | --- |
-| `get_dict(names=None, lower_key=None, upper_key=None, auto_deserialize=True)` | `{name: {key: record}}`. |
-| `get_df(names=None, lower_key=None, upper_key=None, auto_deserialize=True)` | `{name: DataFrame}`. |
-| `get_dict_with_meta(name, lower_key=None, upper_key=None, auto_deserialize=True)` | Named tuple: `.meta`, `.rows` dictionary. |
-| `get_df_with_meta(name, lower_key=None, upper_key=None, auto_deserialize=True)` | Named tuple: `.meta`, `.rows` DataFrame. |
+| `get_dict(names=None, lower_key=None, upper_key=None, auto_deserialize=True, *, strict=False)` | `{name: {key: record}}`. |
+| `get_df(names=None, lower_key=None, upper_key=None, auto_deserialize=True, *, strict=False)` | `{name: DataFrame}`. |
+| `get_dict_with_meta(name, lower_key=None, upper_key=None, auto_deserialize=True, *, strict=False)` | Named tuple: `.meta`, `.rows` dictionary. |
+| `get_df_with_meta(name, lower_key=None, upper_key=None, auto_deserialize=True, *, strict=False)` | Named tuple: `.meta`, `.rows` DataFrame. |
 
 Use lists for `names`; `get_dict` also accepts one string. Omitted names discover
 all tables. A missing table is omitted from multi-table results; DataFrame reads
 warn. The `_with_meta` methods return `None` plus an empty container when missing.
 Range endpoints are inclusive; both omitted means a sequential full load.
 Recognized datetime keys become naive datetimes unless deserialization is disabled.
+
+All row readers accept keyword-only `strict=False`. With `True`, encountered
+malformed JSON, invalid keyed-row shapes, unreadable selected observations, and
+indexed-key mismatches raise `ValueError` with the path, location when available,
+and reason. Failures propagate through wrappers and multi-table calls without a
+partial return. Missing-table behavior remains unchanged.
+
+Full reads inspect all observation rows; indexed reads inspect their selections.
+Strictness adds no completeness scan or index verification. Existing index
+rebuilding may still skip damaged observations, so strict indexed reads cannot
+detect damage previously excluded from the index, including with a warm cache.
+Slot classification and filesystem error behavior remain unchanged.
 
 ### Deleting
 
@@ -103,8 +115,8 @@ Default `timespec=None` falls back to the file module's default of seconds.
 | Purpose | `jsonlfile` | `jsonldf` |
 | --- | --- | --- |
 | Save | `save_jsonl(path, rows, timespec=None, meta=None, slot_bytes=None)` | `save_jsonldf(path, df, timespec=None, meta=None, slot_bytes=None)` |
-| Load | `load_jsonl(path, auto_deserialize=True, timespec=None)` | `load_jsonldf(path, timespec=None, auto_deserialize=True)` |
-| Range | `select_jsonl(path, lower_key=None, upper_key=None, auto_deserialize=True, timespec=None)` | `select_jsonldf(path, lower_key=None, upper_key=None, auto_deserialize=True, timespec=None)` |
+| Load | `load_jsonl(path, auto_deserialize=True, timespec=None, *, strict=False)` | `load_jsonldf(path, timespec=None, auto_deserialize=True, *, strict=False)` |
+| Range | `select_jsonl(path, lower_key=None, upper_key=None, auto_deserialize=True, timespec=None, *, strict=False)` | `select_jsonldf(path, lower_key=None, upper_key=None, auto_deserialize=True, timespec=None, *, strict=False)` |
 | Upsert existing | `update_jsonl(path, rows, timespec=None, meta=None)` | `update_jsonldf(path, df, timespec=None, meta=None)` |
 | Delete keys | `delete_jsonl(path, keys, timespec=None)` | `delete_jsonldf(path, keys, timespec=None)` |
 | Lint | `lint_jsonl(path, force=False, slot_bytes=None)` | `lint_jsonldf(path, force=False, slot_bytes=None)` |
@@ -115,12 +127,14 @@ of `timespec` and `auto_deserialize` differs between the two load functions.
 Only save creates files; low-level update requires an existing table. Reads
 return dictionaries/DataFrames, writes return `None`, and lint returns whether
 the file existed. Missing load/select/update/delete paths raise. Malformed data
-rows are skipped with logging on reads; lint may remove them.
+rows are skipped with logging by default; `strict=True` raises on encountered
+row errors. Lint may remove damage.
 
 Additional file-store functions:
 
-- `select_line_jsonl(path, linekey, auto_deserialize=True, timespec=None)`:
-  indexed point read; absent/unreadable key returns `{}`.
+- `select_line_jsonl(path, linekey, auto_deserialize=True, timespec=None, *, strict=False)`:
+  indexed point read; absent keys return `{}`. Unreadable/mismatched selected
+  observations raise in strict mode and are skipped by default.
 - `load_index(path)`: independent mutable index, recovering missing/invalid/stale
   indexes. `build_jsonl_index(path, warn_invalid=True)` explicitly rebuilds it;
   `ensure_index_exists(path)` handles missing, empty and stale indexes.

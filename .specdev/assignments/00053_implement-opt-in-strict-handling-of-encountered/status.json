@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "id": "00053",
+  "kind": "change",
+  "description": "Implement opt-in strict handling of encountered row-read errors across file, DataFrame, and FolderDB APIs",
+  "run_id": "assignment-lifecycle-20260907T06322205",
+  "created_at": "2026-09-07T06:32:22.058Z",
+  "review_policy": {
+    "brainstorm": "optional",
+    "implementation": "required"
+  },
+  "updated_at": "2026-09-07T06:49:47.651Z",
+  "review_policy_frozen_at": "2026-09-07T06:39:34.395Z",
+  "approved_at": "2026-09-07T06:39:34.395Z",
+  "git_boundary": {
+    "version": 1,
+    "starting_git_commit_hash": "794cbf937307ca67ab3b8aabbb09a29daa7ae3b3",
+    "starting_branch": "master",
+    "starting_worktree": "clean",
+    "adopted_path_count": 0,
+    "established_at": "2026-09-07T06:39:34.808Z"
+  },
+  "implementation_execution": {
+    "version": 1,
+    "configured_mode": "auto",
+    "effective_mode": "inline",
+    "source": "auto-default",
+    "reason": null,
+    "owner": "foreground-agent",
+    "frozen_at": "2026-09-07T06:39:34.770Z"
+  },
+  "status": "completed",
+  "completed_at": "2026-09-07T06:49:47.593Z",
+  "activity": {
+    "attempt_count": 2,
+    "orchestration_attempt_count": 0,
+    "provider_attempt_count": 2,
+    "provider_attempts": {
+      "total": 2,
+      "completed": 2,
+      "failed": 0,
+      "blocked": 0,
+      "interrupted": 0,
+      "running": 0
+    },
+    "elapsed_ms": 613198,
+    "agent_duration_ms": 292677,
+    "provider_reported_tokens": null
+  },
+  "delivery_phase": "ready",
+  "delivery_prepared_at": "2026-09-07T06:49:47.651Z"
+}

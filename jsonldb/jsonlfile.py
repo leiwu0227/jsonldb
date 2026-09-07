@@ -189,6 +189,17 @@ def _warn_invalid_row(jsonl_file_path: str, offset: int, line: bytes) -> None:
         extra={"jsonldb_file": jsonl_file_path, "jsonldb_offset": offset, "jsonldb_kind": "invalid_json"},
     )
 
+def _read_failure(path, offset, line, error, strict):
+    if strict:
+        raise ValueError(f"invalid observation in {path} at byte {offset}: {error}") from error
+    _warn_invalid_row(path, offset, line)
+
+
+def _check_read_offset(path, offset):
+    if type(offset) is not int or not 0 <= offset <= sys.maxsize:
+        raise ValueError(f"invalid observation in {path} at byte {offset!r}: invalid indexed offset")
+
+
 def _atomic_write_bytes(file_path: str, content: bytes) -> None:
     """Write complete bytes to a same-directory temporary, then replace."""
     directory = os.path.dirname(os.path.abspath(file_path))
@@ -222,7 +233,6 @@ def build_jsonl_index(jsonl_file_path: str, warn_invalid: bool = True) -> None:
     if not os.path.exists(jsonl_file_path):
         raise FileNotFoundError(f"JSONL file not found: {jsonl_file_path}")
 
-    # Handle empty file case
     if os.path.getsize(jsonl_file_path) == 0:
         _write_index(jsonl_file_path, index_dict)
         return
@@ -255,7 +265,6 @@ def build_jsonl_index(jsonl_file_path: str, warn_invalid: bool = True) -> None:
 
                     current_pos = next_pos
 
-        # Save index (OPT_SORT_KEYS sorts on dump)
         _write_index(jsonl_file_path, index_dict)
 
     except OSError as e:
@@ -615,13 +624,7 @@ def save_jsonl_atomic(jsonl_file_path: str, db_dict: DataDict,
 
 
 def migrate_jsonl_slot(jsonl_file_path: str, slot_bytes: int) -> bool:
-    """Atomically give one table ``slot_bytes`` while preserving its contents.
-
-    The table is replaced before its derived index. A retry rebuilds the index
-    even when the table already has the target width, which repairs an
-    interruption between those two publication boundaries without rewriting
-    the conforming table.
-    """
+    """Atomically resize a slot; an unchanged-width retry still rebuilds its index."""
     _invalidate_index_cache(jsonl_file_path)
     info = metaslot.inspect_file(jsonl_file_path)
     slot = metaslot._preserve_slot(info, slot_bytes)
@@ -653,8 +656,8 @@ def migrate_jsonl_slot(jsonl_file_path: str, slot_bytes: int) -> bool:
             pass
         raise
 
-def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True, timespec: Optional[str] = None) -> DataDict:
-    """Stream rows, skipping slots and malformed lines; optionally convert datetime keys."""
+def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True, timespec: Optional[str] = None, *, strict: bool = False) -> DataDict:
+    """Stream rows; strict mode raises on encountered damage, otherwise log and skip."""
     if not os.path.exists(jsonl_file_path):
         raise FileNotFoundError(f"JSONL file not found: {jsonl_file_path}")
 
@@ -674,11 +677,9 @@ def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True, timespec: Op
 
                 try:
                     linekey, value = _parse_row(line)
-                    _store_with_key(
-                        result_dict, linekey, value, auto_deserialize, timespec
-                    )
-                except (orjson.JSONDecodeError, ValueError, TypeError):
-                    _warn_invalid_row(jsonl_file_path, offset, raw_line)
+                    _store_with_key(result_dict, linekey, value, auto_deserialize, timespec)
+                except (orjson.JSONDecodeError, ValueError, TypeError) as error:
+                    _read_failure(jsonl_file_path, offset, raw_line, error, strict)
                 offset += len(raw_line)
 
         return result_dict
@@ -701,28 +702,25 @@ def _load_legacy_rows(jsonl_file_path: str) -> dict:
     return result
 
 
-def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, upper_key: Optional[LineKey] = None, auto_deserialize: bool = True, timespec: Optional[str] = None) -> DataDict:
+def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, upper_key: Optional[LineKey] = None, auto_deserialize: bool = True, timespec: Optional[str] = None, *, strict: bool = False) -> DataDict:
     """Read an inclusive key range in key order; omitted bounds load all rows."""
-    # If both keys are None, return all records
     if lower_key is None and upper_key is None:
-        return load_jsonl(jsonl_file_path, auto_deserialize, timespec)
+        return load_jsonl(jsonl_file_path, auto_deserialize, timespec, strict=strict)
 
     if lower_key is not None:
         lower_key = _tabletimezone.bound(jsonl_file_path, lower_key, timespec, serialize_linekey)
     if upper_key is not None:
         upper_key = _tabletimezone.bound(jsonl_file_path, upper_key, timespec, serialize_linekey)
     if lower_key == upper_key:
-        return select_line_jsonl(jsonl_file_path, lower_key, auto_deserialize, timespec)
+        return select_line_jsonl(jsonl_file_path, lower_key, auto_deserialize, timespec, strict=strict)
 
     try:
         # Load index (self-heals an empty/corrupt .idx)
         index_dict, all_keys = _read_cached_index(jsonl_file_path, with_keys=True)
 
-        # If no keys in index, return empty dict
         if not index_dict:
             return {}
 
-        # Set default values if None
         if lower_key is None:
             lower_key = all_keys[0]   # index keys are stored sorted
         if upper_key is None:
@@ -730,11 +728,13 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
 
         lower_key = serialize_linekey(lower_key, timespec)
         upper_key = serialize_linekey(upper_key, timespec)
-        # Use bisect for O(log n) range selection
         lo = bisect_left(all_keys, lower_key)
         hi = bisect_right(all_keys, upper_key)
         selected_linekeys = all_keys[lo:hi]
 
+        if strict:
+            for key in selected_linekeys:
+                _check_read_offset(jsonl_file_path, index_dict[key])
         # Read in offset order for sequential I/O
         offset_key_pairs = sorted(
             [(index_dict[k], k) for k in selected_linekeys]
@@ -749,10 +749,9 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
                     if parsed_key != linekey:
                         raise ValueError("key mismatch")
                     raw_results[linekey] = value
-                except (orjson.JSONDecodeError, ValueError, KeyError, TypeError):
-                    _warn_invalid_row(jsonl_file_path, offset, line)
+                except (orjson.JSONDecodeError, ValueError, KeyError, TypeError) as error:
+                    _read_failure(jsonl_file_path, offset, line, error, strict)
 
-        # Rebuild in sorted key order with deserialization
         result_dict = {}
         for linekey in selected_linekeys:
             if linekey in raw_results:
@@ -770,8 +769,9 @@ def select_line_jsonl(
     linekey: LineKey,
     auto_deserialize: bool = True,
     timespec: Optional[str] = None,
+    *, strict: bool = False,
 ) -> DataDict:
-    """Seek one indexed row; missing or malformed records return an empty dictionary."""
+    """Seek one indexed row; strict mode raises on encountered damage, never on absence."""
     linekey = _tabletimezone.key(jsonl_file_path, linekey, timespec, serialize_linekey)
 
     # Read the index file (self-heals an empty/corrupt .idx)
@@ -784,6 +784,8 @@ def select_line_jsonl(
 
     with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
         offset = index_dict[linekey]
+        if strict:
+            _check_read_offset(jsonl_file_path, offset)
         line = b''
         try:
             f.seek(offset)
@@ -791,11 +793,9 @@ def select_line_jsonl(
             parsed_key, value = _parse_row(line.strip())
             if parsed_key != linekey:
                 raise ValueError("key mismatch")
-            _store_with_key(
-                result_dict, linekey, value, auto_deserialize, timespec
-            )
-        except (orjson.JSONDecodeError, ValueError, KeyError, TypeError):
-            _warn_invalid_row(jsonl_file_path, offset, line)
+            _store_with_key(result_dict, linekey, value, auto_deserialize, timespec)
+        except (orjson.JSONDecodeError, ValueError, KeyError, TypeError) as error:
+            _read_failure(jsonl_file_path, offset, line, error, strict)
             return {}
 
     return result_dict

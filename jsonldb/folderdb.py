@@ -629,6 +629,7 @@ class FolderDB:
         lower_key: Optional[Any] = None,
         upper_key: Optional[Any] = None,
         auto_deserialize: bool = True,
+        *, strict: bool = False,
     ) -> Dict[str, pd.DataFrame]:
         """
         Get DataFrames from multiple JSONL files within a key range.
@@ -649,7 +650,7 @@ class FolderDB:
         for name in names:
             file_path = self._get_file_path(name)
             if os.path.exists(file_path):
-                result[name] = select_jsonldf(file_path, lower_key, upper_key, auto_deserialize, timespec=self.timespec)
+                result[name] = select_jsonldf(file_path, lower_key, upper_key, auto_deserialize, timespec=self.timespec, strict=strict)
             else:
                 logger.warning("file not found: %s", file_path)
         return result
@@ -660,6 +661,7 @@ class FolderDB:
         lower_key: Optional[Any] = None,
         upper_key: Optional[Any] = None,
         auto_deserialize: bool = True,
+        *, strict: bool = False,
     ) -> TableWithMeta:
         """Read one table's metadata first, followed by its DataFrame rows."""
         file_path = self._get_file_path(name)
@@ -668,7 +670,7 @@ class FolderDB:
         meta = self.read_meta(name)
         rows = select_jsonldf(
             file_path, lower_key, upper_key, auto_deserialize,
-            timespec=self.timespec,
+            timespec=self.timespec, strict=strict,
         )
         return TableWithMeta(meta, rows)
 
@@ -731,6 +733,7 @@ class FolderDB:
         lower_key: Optional[Any] = None,
         upper_key: Optional[Any] = None,
         auto_deserialize: bool = True,
+        *, strict: bool = False,
     ) -> Dict[str, Dict[str, Dict[str, Any]]]:
         """
         Get dictionaries from multiple JSONL files within a key range.
@@ -754,7 +757,7 @@ class FolderDB:
         for name in names:
             file_path = self._get_file_path(name)
             if os.path.exists(file_path):
-                result[name] = select_jsonl(file_path, lower_key, upper_key, auto_deserialize, timespec=self.timespec)
+                result[name] = select_jsonl(file_path, lower_key, upper_key, auto_deserialize, timespec=self.timespec, strict=strict)
         return result
 
     def get_dict_with_meta(
@@ -763,6 +766,7 @@ class FolderDB:
         lower_key: Optional[Any] = None,
         upper_key: Optional[Any] = None,
         auto_deserialize: bool = True,
+        *, strict: bool = False,
     ) -> TableWithMeta:
         """Read one table's metadata first, followed by its dictionary rows."""
         file_path = self._get_file_path(name)
@@ -771,7 +775,7 @@ class FolderDB:
         meta = self.read_meta(name)
         rows = select_jsonl(
             file_path, lower_key, upper_key, auto_deserialize,
-            timespec=self.timespec,
+            timespec=self.timespec, strict=strict,
         )
         return TableWithMeta(meta, rows)
 

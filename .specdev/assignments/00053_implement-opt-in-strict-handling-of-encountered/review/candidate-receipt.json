@@ -1,0 +1,251 @@
+{
+  "version": 1,
+  "kind": "standalone_assignment_candidate",
+  "completeness": "complete",
+  "identity": "2740f8010383c0147baf087f711318d1c51d69740a22cf947a0153af1f1227ef",
+  "assignment": {
+    "id": "00053",
+    "folder": "00053_implement-opt-in-strict-handling-of-encountered"
+  },
+  "implementation_execution": {
+    "version": 1,
+    "configured_mode": "auto",
+    "effective_mode": "inline",
+    "source": "auto-default",
+    "reason": null,
+    "owner": "foreground-agent",
+    "frozen_at": "2026-09-07T06:39:34.770Z"
+  },
+  "contract": {
+    "path": ".specdev/assignments/00053_implement-opt-in-strict-handling-of-encountered/brainstorm/contract.md",
+    "hash": "bc000917a44fd2a394f0d82ffa040ce61f8d749106d3e8ace4fe8e8cca242658"
+  },
+  "acceptance": {
+    "total": 3,
+    "items": [
+      {
+        "id": "AC-1",
+        "evidence": "Strict regression cases cover malformed JSON, invalid shapes, UTF-8 damage, key mismatch, tombstone/EOF selections, invalid selected offsets, diagnostics, unchanged observation bytes, and explicit repair followed by success; within 509 p...",
+        "result": "passed"
+      },
+      {
+        "id": "AC-2",
+        "evidence": "Focused coverage verifies all nine public signatures, positional calls, wrapper and multi-table failure propagation, missing/empty results, padding/slots/tombstones, key ordering and datetime conversion; existing read/metadata/timezone c...",
+        "result": "passed"
+      },
+      {
+        "id": "AC-3",
+        "evidence": "Missing, permissively rebuilt, and warm indexes preserve the omission boundary; warm-read guards prohibit a full load, rebuild, or index reload and count only selected row parses. Public API/usage explain the same limitation. Static chec...",
+        "result": "passed"
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 3,
+      "failed": 0,
+      "blocked": 0,
+      "missing": 0
+    }
+  },
+  "verification": {
+    "total": 3,
+    "items": [
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest unit_tests/test_strict_reads.py unit_tests/test_jsonlfile.py unit_tests/test_jsonldf.py unit_tests/test_folderdb.py unit_tests/test_index_cache.py unit_tests/test_metaslot.py unit_t...",
+        "revision": "working-tree@794cbf937307ca67ab3b8aabbb09a29daa7ae3b3",
+        "scope": "509 passed across ten focused read, wrapper, cache, metadata, timezone, and report modules.",
+        "status": "passed",
+        "duration_ms": 2760,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 .specdev/assignments/00053_implement-opt-in-strict-handling-of-encountered/implementation/check_evidence.py",
+        "revision": "working-tree@794cbf937307ca67ab3b8aabbb09a29daa7ae3b3",
+        "scope": "All three source caps, Python 3.8 syntax, whitespace, and published design preservation pass.",
+        "status": "passed",
+        "duration_ms": 100,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest unit_tests/test_strict_reads.py -q --tb=short",
+        "revision": "working-tree@794cbf937307ca67ab3b8aabbb09a29daa7ae3b3",
+        "scope": "82 passed, four fixture failures: out-of-range serializer input and incorrect missing-range exception expectation; corrected fixtures without product changes.",
+        "status": "failed",
+        "duration_ms": 1110,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 0,
+          "failed": 1,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 2,
+      "failed": 1,
+      "skipped": 0,
+      "missing": 0
+    },
+    "by_role": {
+      "qualification": {
+        "passed": 0,
+        "failed": 1,
+        "skipped": 0,
+        "missing": 0
+      },
+      "authoritative_acceptance": {
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      }
+    },
+    "raw": {
+      "total": 3,
+      "counts": {
+        "passed": 2,
+        "failed": 1,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 0,
+          "failed": 1,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 2,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "effective": {
+      "total": 3,
+      "counts": {
+        "passed": 2,
+        "failed": 1,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 0,
+          "failed": 1,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 2,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "superseded": 0,
+    "authoritative_evidence": [
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest unit_tests/test_strict_reads.py unit_tests/test_jsonlfile.py unit_tests/test_jsonldf.py unit_tests/test_folderdb.py unit_tests/test_index_cache.py unit_tests/test_metaslot.py unit_t...",
+        "revision": "working-tree@794cbf937307ca67ab3b8aabbb09a29daa7ae3b3",
+        "status": "passed"
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 .specdev/assignments/00053_implement-opt-in-strict-handling-of-encountered/implementation/check_evidence.py",
+        "revision": "working-tree@794cbf937307ca67ab3b8aabbb09a29daa7ae3b3",
+        "status": "passed"
+      }
+    ],
+    "authoritative_evidence_omitted": 0
+  },
+  "changed_project_paths": {
+    "count": 6,
+    "groups": [
+      {
+        "name": "docs",
+        "count": 2,
+        "paths": [
+          "docs/api.md",
+          "docs/usage.md"
+        ],
+        "omitted": 0
+      },
+      {
+        "name": "jsonldb",
+        "count": 3,
+        "paths": [
+          "jsonldb/folderdb.py",
+          "jsonldb/jsonldf.py",
+          "jsonldb/jsonlfile.py"
+        ],
+        "omitted": 0
+      },
+      {
+        "name": "unit_tests",
+        "count": 1,
+        "paths": [
+          "unit_tests/test_strict_reads.py"
+        ],
+        "omitted": 0
+      }
+    ],
+    "omitted_groups": 0
+  },
+  "unresolved_risks": {
+    "status": "present",
+    "items": [
+      "The agreed limitations remain: index rebuilding may omit damage, and unvisited observations are outside indexed strict reads. Concurrent reads are not transactional snapshots. Source caps remain binding: file store 950/950, adapter 145/1..."
+    ],
+    "source": "canonical_section"
+  },
+  "artifacts": {
+    "contract": {
+      "path": ".specdev/assignments/00053_implement-opt-in-strict-handling-of-encountered/brainstorm/contract.md",
+      "exists": true,
+      "digest": "bc000917a44fd2a394f0d82ffa040ce61f8d749106d3e8ace4fe8e8cca242658"
+    },
+    "plan": {
+      "path": ".specdev/assignments/00053_implement-opt-in-strict-handling-of-encountered/design/plan.md",
+      "exists": true,
+      "digest": "ff0f81ba2f09a514cb3664eab5a0b1efa95be41e83357f360daa458189595498"
+    },
+    "progress": {
+      "path": ".specdev/assignments/00053_implement-opt-in-strict-handling-of-encountered/implementation/progress.json",
+      "exists": true,
+      "digest": "44a9a4409f5a90a835ec864a4489d2dd2c49ce6b8faa82ea5285646437aaf836"
+    },
+    "outcome": {
+      "path": ".specdev/assignments/00053_implement-opt-in-strict-handling-of-encountered/outcome.md",
+      "exists": true,
+      "digest": "f1c122651070c704bcc246ad1067fb40925f3e7e131b01f92584f71381422e98"
+    }
+  },
+  "issues": [],
+  "issues_omitted": 0
+}

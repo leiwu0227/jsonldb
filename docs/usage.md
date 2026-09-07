@@ -40,6 +40,36 @@ bounds select one key. With both bounds omitted, loading follows physical file
 order, which may differ from timestamp order after updates. Use a bounded range
 or sort the result when chronological order is required.
 
+## Strict handling of encountered read errors
+
+Use `strict=True` when a read should fail instead of skipping an encountered
+malformed observation:
+
+```python
+rows = db.get_dict(
+    ["prices"], lower_key="2026-06-05", upper_key="2026-06-10",
+    auto_deserialize=False, strict=True,
+)
+```
+
+Dictionary, DataFrame, metadata-plus-rows, and single-file row reads all support
+this keyword-only option. Default reads remain permissive. Strict reads raise
+`ValueError` for malformed JSON, invalid keyed-row shapes, unreadable selected
+observations, or indexed-key mismatches, with the file identity, location when
+available, and reason. A multi-table call raises if any visited table fails;
+read tables separately when failures need independent handling.
+
+Full reads inspect every observation row. Point and range reads inspect only
+their indexed selections and add no full-table validation scan. Index handling
+is unchanged: rebuilding may skip damage, and a later strict indexed read can
+still report that observation as absent. This remains true with a warm cache;
+a successful strict read does not prove that nothing was omitted.
+
+Missing observations and tables retain their usual behavior. Sequential reads
+skip blank tombstones and first-line metadata slots; a selected index entry
+pointing to a blank line or EOF fails. Strictness does not validate metadata or
+repair observations. After explicit repair, rerun the read.
+
 ## pandas
 
 ```python
