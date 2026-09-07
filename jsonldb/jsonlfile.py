@@ -1,6 +1,4 @@
-"""
-Core JSONL file operations for JSONLDB.
-"""
+"""Core JSONL file operations for JSONLDB."""
 
 import os
 import logging
@@ -19,12 +17,10 @@ from . import metaslot, _tabletimezone
 
 
 logger = logging.getLogger(__name__)
-# Buffer size for file operations (50MB)
 BUFFER_SIZE: int = 1024 * 1024 * 50
 TIME_SPEC = 'seconds'  #or seconds/microseconds
 REMOVED_DETAIL_BYTES = 160
 
-# Type aliases for better readability
 LineKey = Union[str, dt.datetime]
 DataDict = Dict[str, dict]
 IndexDict = Dict[str, int]
@@ -252,7 +248,7 @@ def build_jsonl_index(jsonl_file_path: str, warn_invalid: bool = True) -> None:
                         continue
 
                     line = raw_line.strip()
-                    if not line:  # Skip empty lines
+                    if not line:
                         current_pos = next_pos
                         continue
 
@@ -530,15 +526,27 @@ def detect_timespec(linekey: str) -> Optional[str]:
     return None
 
 def _store_with_key(result_dict: DataDict, linekey: str, value: dict,
-                    auto_deserialize: bool, timespec: Optional[str] = None) -> None:
-    """Store a row, optionally converting datetime-looking keys at the requested precision."""
+                    auto_deserialize: bool, timespec: Optional[str] = None) -> LineKey:
+    """Store a row and return its possibly converted key."""
     if auto_deserialize and _is_datetime_string(linekey, timespec):
         try:
-            result_dict[deserialize_linekey(linekey, "datetime")] = value
-            return
+            linekey = deserialize_linekey(linekey, "datetime")
         except ValueError:
             pass
     result_dict[linekey] = value
+    return linekey
+
+
+def _ordered_rows(rows, serialized_keys):
+    """Check logical order once; retain original spellings of converted keys."""
+    previous = None
+    key_text = lambda key: serialized_keys.get(key, key)
+    for text in map(key_text, rows) if serialized_keys else rows:
+        if previous is not None and previous > text:
+            return {key: rows[key] for key in sorted(rows, key=key_text if serialized_keys else None)}
+        previous = text
+    return rows
+
 
 def _fast_dumps(obj: dict) -> bytes:
     """Serialize with NumPy support and a trailing newline."""
@@ -657,11 +665,12 @@ def migrate_jsonl_slot(jsonl_file_path: str, slot_bytes: int) -> bool:
         raise
 
 def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True, timespec: Optional[str] = None, *, strict: bool = False) -> DataDict:
-    """Stream rows; strict mode raises on encountered damage, otherwise log and skip."""
+    """Stream all observations, apply strictness, and return ascending serialized-key order."""
     if not os.path.exists(jsonl_file_path):
         raise FileNotFoundError(f"JSONL file not found: {jsonl_file_path}")
 
     result_dict: DataDict = {}
+    serialized_keys = {}
 
     try:
         with open(jsonl_file_path, 'rb', buffering=BUFFER_SIZE) as f:
@@ -677,12 +686,14 @@ def load_jsonl(jsonl_file_path: str, auto_deserialize: bool = True, timespec: Op
 
                 try:
                     linekey, value = _parse_row(line)
-                    _store_with_key(result_dict, linekey, value, auto_deserialize, timespec)
+                    stored = _store_with_key(result_dict, linekey, value, auto_deserialize, timespec)
+                    if stored != linekey:
+                        serialized_keys[stored] = linekey
                 except (orjson.JSONDecodeError, ValueError, TypeError) as error:
                     _read_failure(jsonl_file_path, offset, raw_line, error, strict)
                 offset += len(raw_line)
 
-        return result_dict
+        return _ordered_rows(result_dict, serialized_keys)
 
     except OSError as e:
         raise OSError(f"Failed to load JSONL file {jsonl_file_path}: {str(e)}")
@@ -715,7 +726,6 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
         return select_line_jsonl(jsonl_file_path, lower_key, auto_deserialize, timespec, strict=strict)
 
     try:
-        # Load index (self-heals an empty/corrupt .idx)
         index_dict, all_keys = _read_cached_index(jsonl_file_path, with_keys=True)
 
         if not index_dict:
@@ -755,10 +765,7 @@ def select_jsonl(jsonl_file_path: str, lower_key: Optional[LineKey] = None, uppe
         result_dict = {}
         for linekey in selected_linekeys:
             if linekey in raw_results:
-                _store_with_key(
-                    result_dict, linekey, raw_results[linekey],
-                    auto_deserialize, timespec
-                )
+                _store_with_key(result_dict, linekey, raw_results[linekey], auto_deserialize, timespec)
         return result_dict
 
     except OSError as e:
@@ -774,7 +781,6 @@ def select_line_jsonl(
     """Seek one indexed row; strict mode raises on encountered damage, never on absence."""
     linekey = _tabletimezone.key(jsonl_file_path, linekey, timespec, serialize_linekey)
 
-    # Read the index file (self-heals an empty/corrupt .idx)
     index_dict, _ = _read_cached_index(jsonl_file_path)
 
     if linekey not in index_dict:
@@ -823,7 +829,6 @@ def _update_jsonl(jsonl_file_path, update_dict, timespec=None, meta=None,
     encoded_meta = _tabletimezone.metadata_bytes(jsonl_file_path, meta) if meta is not None else None
 
     try:
-        # Load index (self-heals an empty/corrupt .idx)
         index = load_index(jsonl_file_path)
 
         updates = []
@@ -857,13 +862,11 @@ def _update_jsonl(jsonl_file_path, update_dict, timespec=None, meta=None,
 
             for pos, line, old_len in updates:
                 if len(line) < old_len:
-                    # Pad before the newline so the record keeps its exact old
-                    # length and the line stays newline-terminated
+                    # Padding preserves both the old length and terminal newline.
                     line = line[:-1] + b' ' * (old_len - len(line)) + b'\n'
                 f.seek(pos)
                 f.write(line)
 
-            # Apply appends
             if appends:
                 f.seek(append_pos)
                 for linekey, line in appends:
@@ -898,13 +901,10 @@ def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey], timespec: Option
     else:
         _validate_row_keys({key: {} for key in linekeys}, timespec)
     try:
-        # Load index (self-heals an empty/corrupt .idx)
         index = load_index(jsonl_file_path)
 
-        # Process deletions
         linekeys = [serialize_linekey(key, timespec) for key in linekeys]
 
-        # Use regular file operations like update_jsonl
         with open(jsonl_file_path, 'rb+', buffering=BUFFER_SIZE) as f:
             for linekey in linekeys:
                 if linekey in index:

@@ -1,0 +1,294 @@
+{
+  "version": 1,
+  "kind": "standalone_assignment_candidate",
+  "completeness": "complete",
+  "identity": "a233ddc7388f80dffef406de14a65395a7a9f83d5a85bd7e54d217684a1cb60f",
+  "assignment": {
+    "id": "00054",
+    "folder": "00054_return-ascending-serialized-key-order-by-default"
+  },
+  "implementation_execution": {
+    "version": 1,
+    "configured_mode": "auto",
+    "effective_mode": "inline",
+    "source": "auto-default",
+    "reason": null,
+    "owner": "foreground-agent",
+    "frozen_at": "2026-09-07T07:38:45.614Z"
+  },
+  "contract": {
+    "path": ".specdev/assignments/00054_return-ascending-serialized-key-order-by-default/brainstorm/contract.md",
+    "hash": "1d95829b411d4fe3533df52acf19e66876eaf0465c72b0736264bee10f70c1b8"
+  },
+  "acceptance": {
+    "total": 3,
+    "items": [
+      {
+        "id": "AC-1",
+        "evidence": "558 focused tests passed; 41 ordering cases passed again after adding stronger mixed-type alias-spelling assertions. Coverage includes full/bounded/one-sided wrapper parity, duplicate and conversion-collision winners, fields/nulls/nestin...",
+        "result": "passed"
+      },
+      {
+        "id": "AC-2",
+        "evidence": "Strict tests prove full reads reject physical damage omitted from warm indexes, while indexed point/range/either one-sided bound bypass the full-read ordering helper. Table byte snapshots remain unchanged. Existing strict/cache/metadata/...",
+        "result": "passed"
+      },
+      {
+        "id": "AC-3",
+        "evidence": "Fast-path identity/no-sort checks and inversion/value-sharing tests pass. Sixty fresh-process baseline/final trials record elapsed time and peak RSS for sorted/backfilled/shuffled date and datetime workloads, validate returned values and...",
+        "result": "passed"
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 3,
+      "failed": 0,
+      "blocked": 0,
+      "missing": 0
+    }
+  },
+  "verification": {
+    "total": 6,
+    "items": [
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest unit_tests/test_ordered_reads.py unit_tests/test_strict_reads.py unit_tests/test_jsonlfile.py unit_tests/test_jsonldf.py unit_tests/test_folderdb.py unit_tests/test_index_cache.py u...",
+        "revision": "working-tree@a55e844fe9f372bf04c49f93ccf3757d3f5bbd24",
+        "scope": "558 passed across 12 focused ordering/read/wrapper/cache/metadata/timezone modules.",
+        "status": "passed",
+        "duration_ms": 6810,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest unit_tests/test_ordered_reads.py -q --tb=short",
+        "revision": "working-tree@a55e844fe9f372bf04c49f93ccf3757d3f5bbd24",
+        "scope": "41 passed after strengthening serialized-spelling collision order assertions; product code unchanged.",
+        "status": "passed",
+        "duration_ms": 290,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 .specdev/assignments/00054_return-ascending-serialized-key-order-by-default/implementation/benchmark.py",
+        "revision": "working-tree@a55e844fe9f372bf04c49f93ccf3757d3f5bbd24",
+        "scope": "60 isolated trials; final-code timings, peak RSS, all values/key conversion/ascending output, and unchanged file hashes recorded. Duration approximates main run from baseline snapshot to result publication.",
+        "status": "passed",
+        "duration_ms": 53473,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 .specdev/assignments/00054_return-ascending-serialized-key-order-by-default/implementation/check_evidence.py",
+        "revision": "working-tree@a55e844fe9f372bf04c49f93ccf3757d3f5bbd24",
+        "scope": "Documentation-only review repair: removed contradictory physical-order guidance and documented existing datetime-alias collision limitation. Source/static/design-preservation checks pass; code and prior runtime/performance evidence uncha...",
+        "status": "passed",
+        "duration_ms": 100,
+        "role": "authoritative_acceptance",
+        "role_source": "explicit",
+        "attempts": 2,
+        "superseded": 1,
+        "history_counts": {
+          "passed": 2,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest unit_tests/test_ordered_reads.py unit_tests/test_strict_reads.py -q --tb=short",
+        "revision": "working-tree@a55e844fe9f372bf04c49f93ccf3757d3f5bbd24",
+        "scope": "127 passed: initial ordering and strictness qualification.",
+        "status": "passed",
+        "duration_ms": 510,
+        "role": "qualification",
+        "role_source": "explicit",
+        "attempts": 1,
+        "superseded": 0,
+        "history_counts": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    ],
+    "omitted": 0,
+    "counts": {
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "missing": 0
+    },
+    "by_role": {
+      "qualification": {
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      },
+      "authoritative_acceptance": {
+        "passed": 5,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      }
+    },
+    "raw": {
+      "total": 6,
+      "counts": {
+        "passed": 6,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 5,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "effective": {
+      "total": 5,
+      "counts": {
+        "passed": 5,
+        "failed": 0,
+        "skipped": 0,
+        "missing": 0
+      },
+      "by_role": {
+        "qualification": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        },
+        "authoritative_acceptance": {
+          "passed": 4,
+          "failed": 0,
+          "skipped": 0,
+          "missing": 0
+        }
+      }
+    },
+    "superseded": 1,
+    "authoritative_evidence": [
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest unit_tests/test_ordered_reads.py unit_tests/test_strict_reads.py unit_tests/test_jsonlfile.py unit_tests/test_jsonldf.py unit_tests/test_folderdb.py unit_tests/test_index_cache.py u...",
+        "revision": "working-tree@a55e844fe9f372bf04c49f93ccf3757d3f5bbd24",
+        "status": "passed"
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 -m pytest unit_tests/test_ordered_reads.py -q --tb=short",
+        "revision": "working-tree@a55e844fe9f372bf04c49f93ccf3757d3f5bbd24",
+        "status": "passed"
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 .specdev/assignments/00054_return-ascending-serialized-key-order-by-default/implementation/benchmark.py",
+        "revision": "working-tree@a55e844fe9f372bf04c49f93ccf3757d3f5bbd24",
+        "status": "passed"
+      },
+      {
+        "command": ".specdev/cache/bin/python-runtime-env python3 .specdev/assignments/00054_return-ascending-serialized-key-order-by-default/implementation/check_evidence.py",
+        "revision": "working-tree@a55e844fe9f372bf04c49f93ccf3757d3f5bbd24",
+        "status": "passed"
+      }
+    ],
+    "authoritative_evidence_omitted": 0
+  },
+  "changed_project_paths": {
+    "count": 5,
+    "groups": [
+      {
+        "name": "docs",
+        "count": 2,
+        "paths": [
+          "docs/api.md",
+          "docs/usage.md"
+        ],
+        "omitted": 0
+      },
+      {
+        "name": "jsonldb",
+        "count": 1,
+        "paths": [
+          "jsonldb/jsonlfile.py"
+        ],
+        "omitted": 0
+      },
+      {
+        "name": "unit_tests",
+        "count": 2,
+        "paths": [
+          "unit_tests/test_ordered_reads.py",
+          "unit_tests/test_strict_reads.py"
+        ],
+        "omitted": 0
+      }
+    ],
+    "omitted_groups": 0
+  },
+  "unresolved_risks": {
+    "status": "present",
+    "items": [
+      "Sorting costs remain layout-dependent. One-million-row date-key medians increased by approximately 7% sorted, 31% backfilled, and 68% shuffled. Datetime conversion requires retaining original serialized spellings, increasing peak memory..."
+    ],
+    "source": "canonical_section"
+  },
+  "artifacts": {
+    "contract": {
+      "path": ".specdev/assignments/00054_return-ascending-serialized-key-order-by-default/brainstorm/contract.md",
+      "exists": true,
+      "digest": "1d95829b411d4fe3533df52acf19e66876eaf0465c72b0736264bee10f70c1b8"
+    },
+    "plan": {
+      "path": ".specdev/assignments/00054_return-ascending-serialized-key-order-by-default/design/plan.md",
+      "exists": true,
+      "digest": "7d81ed52b5f17075481f0d58d15b43319b00f3a65efa7d6c60d6204a4824854d"
+    },
+    "progress": {
+      "path": ".specdev/assignments/00054_return-ascending-serialized-key-order-by-default/implementation/progress.json",
+      "exists": true,
+      "digest": "338b99c5b2c0e3fcd3a1224f5a0cc98ab522e4aef55aa3f1743bba96cb62ffa6"
+    },
+    "outcome": {
+      "path": ".specdev/assignments/00054_return-ascending-serialized-key-order-by-default/outcome.md",
+      "exists": true,
+      "digest": "0edd80743400b1e3dfc852393185eecf3f2769470c1c20cc5e1941be0d3c4ace"
+    }
+  },
+  "issues": [],
+  "issues_omitted": 0
+}

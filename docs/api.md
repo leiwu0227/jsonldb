@@ -42,6 +42,9 @@ Use lists for `names`; `get_dict` also accepts one string. Omitted names discove
 all tables. A missing table is omitted from multi-table results; DataFrame reads
 warn. The `_with_meta` methods return `None` plus an empty container when missing.
 Range endpoints are inclusive; both omitted means a sequential full load.
+All row results now use ascending serialized-key order by default, including
+full reads and either one-sided bound. Full reads no longer expose physical
+iteration order; there is no ordering flag. Wrappers preserve this order.
 Recognized datetime keys become naive datetimes unless deserialization is disabled.
 
 All row readers accept keyword-only `strict=False`. With `True`, encountered
@@ -54,7 +57,11 @@ Full reads inspect all observation rows; indexed reads inspect their selections.
 Strictness adds no completeness scan or index verification. Existing index
 rebuilding may still skip damaged observations, so strict indexed reads cannot
 detect damage previously excluded from the index, including with a warm cache.
-Slot classification and filesystem error behavior remain unchanged.
+Slot classification and filesystem error behavior remain unchanged. Full reads
+resolve duplicate keys using their last valid physical occurrence before
+ordering. Already ordered results take a linear check; disordered results
+require sorting and a new dictionary of shared record references. Point/range
+reads retain their existing indexed ordering without this full-read check.
 
 ### Deleting
 

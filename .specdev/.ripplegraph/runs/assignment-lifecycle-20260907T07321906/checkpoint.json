@@ -1,0 +1,90 @@
+{
+  "runId": "assignment-lifecycle-20260907T07321906",
+  "status": "completed",
+  "rootGraph": "assignment-lifecycle",
+  "workflow": {
+    "id": "specdev-workspace",
+    "version": "1.0.0"
+  },
+  "position": {
+    "graph": "assignment-lifecycle",
+    "node": "done"
+  },
+  "createdAt": "2026-09-07T07:32:19.071Z",
+  "updatedAt": "2026-09-07T07:51:41.907Z",
+  "outputs": {
+    "create-assignment": {
+      "id": "00054",
+      "name": "00054_return-ascending-serialized-key-order-by-default",
+      "path": ".specdev/assignments/00054_return-ascending-serialized-key-order-by-default",
+      "description": "Return ascending serialized-key order by default for full reads while preserving strictness, duplicate resolution, and indexed read performance",
+      "review_policy": {
+        "brainstorm": "optional",
+        "implementation": "required"
+      }
+    },
+    "brainstorm": {
+      "contract": ".specdev/assignments/00054_return-ascending-serialized-key-order-by-default/brainstorm/contract.md",
+      "contract_hash": "1d95829b411d4fe3533df52acf19e66876eaf0465c72b0736264bee10f70c1b8"
+    },
+    "approve-contract": {
+      "approved": true,
+      "contract_hash": "1d95829b411d4fe3533df52acf19e66876eaf0465c72b0736264bee10f70c1b8",
+      "actor": "user",
+      "approved_at": "2026-09-07T07:38:45.219Z",
+      "review_override": false,
+      "review_policy": {
+        "brainstorm": "optional",
+        "implementation": "required"
+      },
+      "revision": "a55e844fe9f372bf04c49f93ccf3757d3f5bbd24"
+    },
+    "design": {
+      "plan": ".specdev/assignments/00054_return-ascending-serialized-key-order-by-default/design/plan.md",
+      "attempt": "inline-foreground"
+    },
+    "implementation": {
+      "progress": ".specdev/assignments/00054_return-ascending-serialized-key-order-by-default/implementation/progress.json",
+      "outcome": ".specdev/assignments/00054_return-ascending-serialized-key-order-by-default/outcome.md",
+      "attempt": "inline-foreground"
+    },
+    "implementation-review": {
+      "approved": true,
+      "verdict": ".specdev/assignments/00054_return-ascending-serialized-key-order-by-default/review/implementation-verdict.md",
+      "attempt": "Attempt-00092",
+      "disposition": "approved"
+    },
+    "repair": {
+      "attempt": "inline-foreground",
+      "result": ".specdev/assignments/00054_return-ascending-serialized-key-order-by-default/implementation/repair-result.md"
+    }
+  },
+  "gateDecisions": {
+    "approve-contract": {
+      "approved": true,
+      "contract_hash": "1d95829b411d4fe3533df52acf19e66876eaf0465c72b0736264bee10f70c1b8",
+      "actor": "user",
+      "approved_at": "2026-09-07T07:38:45.219Z",
+      "review_override": false,
+      "review_policy": {
+        "brainstorm": "optional",
+        "implementation": "required"
+      },
+      "revision": "a55e844fe9f372bf04c49f93ccf3757d3f5bbd24"
+    }
+  },
+  "graphSource": {
+    "kind": "package",
+    "graphId": "assignment-lifecycle",
+    "graphVersion": "2.4.0",
+    "packagePath": "workflows/assignment-lifecycle@2.4.0"
+  },
+  "stack": [],
+  "frameCounter": 0,
+  "finalOutput": {
+    "approved": true,
+    "verdict": ".specdev/assignments/00054_return-ascending-serialized-key-order-by-default/review/implementation-verdict.md",
+    "attempt": "Attempt-00092",
+    "disposition": "approved"
+  }
+}

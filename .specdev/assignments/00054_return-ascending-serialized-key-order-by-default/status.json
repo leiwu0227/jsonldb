@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "id": "00054",
+  "kind": "change",
+  "description": "Return ascending serialized-key order by default for full reads while preserving strictness, duplicate resolution, and indexed read performance",
+  "run_id": "assignment-lifecycle-20260907T07321906",
+  "created_at": "2026-09-07T07:32:19.076Z",
+  "review_policy": {
+    "brainstorm": "optional",
+    "implementation": "required"
+  },
+  "updated_at": "2026-09-07T07:51:43.099Z",
+  "review_policy_frozen_at": "2026-09-07T07:38:45.219Z",
+  "approved_at": "2026-09-07T07:38:45.219Z",
+  "git_boundary": {
+    "version": 1,
+    "starting_git_commit_hash": "a55e844fe9f372bf04c49f93ccf3757d3f5bbd24",
+    "starting_branch": "master",
+    "starting_worktree": "clean",
+    "adopted_path_count": 0,
+    "established_at": "2026-09-07T07:38:45.651Z"
+  },
+  "implementation_execution": {
+    "version": 1,
+    "configured_mode": "auto",
+    "effective_mode": "inline",
+    "source": "auto-default",
+    "reason": null,
+    "owner": "foreground-agent",
+    "frozen_at": "2026-09-07T07:38:45.614Z"
+  },
+  "status": "completed",
+  "completed_at": "2026-09-07T07:51:42.158Z",
+  "activity": {
+    "attempt_count": 3,
+    "orchestration_attempt_count": 0,
+    "provider_attempt_count": 3,
+    "provider_attempts": {
+      "total": 3,
+      "completed": 3,
+      "failed": 0,
+      "blocked": 0,
+      "interrupted": 0,
+      "running": 0
+    },
+    "elapsed_ms": 776939,
+    "agent_duration_ms": 356432,
+    "provider_reported_tokens": null
+  },
+  "delivery_phase": "ready",
+  "delivery_prepared_at": "2026-09-07T07:51:43.099Z"
+}

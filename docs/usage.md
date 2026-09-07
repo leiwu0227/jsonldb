@@ -36,9 +36,37 @@ for either dictionary or DataFrame reads; omit names to read all discovered tabl
 A missing table is omitted; DataFrame reads also log a warning.
 
 Ranges include both endpoints. Omit one bound to use the first or last key; equal
-bounds select one key. With both bounds omitted, loading follows physical file
-order, which may differ from timestamp order after updates. Use a bounded range
-or sort the result when chronological order is required.
+bounds select one key. With both bounds omitted, loading still scans the whole file but returns
+ascending serialized-key order. Full and bounded reads therefore share ordering
+for canonical timestamp keys, even after out-of-order updates.
+
+## Consistent observation order
+
+All row reads return each table's observations in ascending serialized-key
+order. Canonical date keys are chronological; arbitrary strings retain lexical
+order (`"10"` precedes `"2"`). Returned keys still follow `auto_deserialize`.
+This is an intentional change for full reads, which previously exposed physical
+file order. There is no sorting option to enable.
+
+Full reads scan the physical file, applying `strict` and retaining the last
+valid value for each duplicate key, then check logical key order. Already
+ascending results need a linear check and no sorting; otherwise the keys are
+sorted and dictionary order rebuilt while reusing record values. Sorting takes
+O(N log N) comparisons in the general case and additional memory. Reads do not
+rewrite or lint the table. A linted file normally takes the already-ordered path
+until later writes disturb its order.
+
+A supplied start, end, or both retains the indexed range path. Its results are
+already ordered, so it adds no full-table order check or redundant result sort.
+DataFrame and metadata-plus-rows wrappers inherit the same observation order.
+The order of table names, record fields, and DataFrame columns is unchanged.
+
+If distinct stored key spellings deserialize to the same datetime, existing
+collision behavior is preserved: full reads keep the last valid physical value
+and order it by that winning spelling; indexed reads resolve selected spellings
+in their existing lexical traversal. Their collapsed value/order can therefore
+differ. Use canonical key spellings, or `auto_deserialize=False` to retain the
+distinct stored keys.
 
 ## Strict handling of encountered read errors
 

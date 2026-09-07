@@ -120,7 +120,7 @@ def test_slots_padding_tombstones_and_empty_records_keep_existing_meaning(tmp_pa
     path.write_bytes(slot + b'   \n{"z":{}}   \n\n{"a":{"v":1}}\n')
     jf.build_jsonl_index(str(path))
     before = path.read_bytes()
-    assert list(jf.load_jsonl(str(path), False, strict=True)) == ['z', 'a']
+    assert list(jf.load_jsonl(str(path), False, strict=True)) == ['a', 'z']
     assert list(jf.select_jsonl(str(path), 'a', 'z', False, strict=True)) == ['a', 'z']
     assert jf.select_line_jsonl(str(path), 'missing', strict=True) == {}
     assert path.read_bytes() == before
