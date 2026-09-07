@@ -26,7 +26,9 @@ Two families with identical shapes, one for dictionaries and one for DataFrames:
 | `get_*` | Select an inclusive key range from one or many tables; no names means all tables. |
 | `get_*_with_meta` | One table: a named tuple of `meta` and `rows`, read record first. |
 
-Plural forms take a `{name: content}` mapping and loop; results are keyed by table name. A missing table is omitted from a dictionary read, reported for a DataFrame read, and returned as `None` plus an empty container by the `_with_meta` pair.
+Plural writes take `{name: content}` mappings; read results use table names. Missing tables are omitted from dictionary reads, reported for DataFrame reads, and yield `None` plus empty rows with metadata.
+
+Dictionary, DataFrame, and `_with_meta` reads forward keyword-only `strict=False` using the [file-store contract](jsonl_file_store/strict_reads.md); strict failures propagate without a partial return.
 
 Record operations: `read_meta` returns the record or `None`, `clear_meta` blanks it, `set_meta_slot_bytes` records the folder's slot width and rewrites every table to it, refusing to shrink below any existing record. Any code needing record and rows reads the record first; the `_with_meta` pair makes that order unmissable.
 

@@ -24,9 +24,9 @@ Saves and upserts validate record shapes and reserved keys before mutation. With
 | Operation | Behaviour | Cost |
 |---|---|---|
 | save | Rewrite the file from a dict in the order given, with a slot when enabled; write a fresh sorted index. An empty dict yields an empty table. | O(n) |
-| load | Stream the whole file into a dict, skipping the slot, blank and malformed lines. | O(n) |
+| load | Stream the whole file into a dict, skipping slots and blanks; malformed rows follow the read policy. | O(n) |
 | select range | Bisect the sorted index keys for an inclusive `[lower, upper]` range, read the chosen lines in file order, return them in key order. An omitted bound means the table's first or last key. Both omitted is a plain load; equal bounds is a single-key lookup. | O(log n + k) |
-| select one | Index lookup, seek, parse. A missing or unreadable key returns an empty dict. | O(1) |
+| select one | Index lookup, seek, parse. Missing keys return an empty dict; damage follows the read policy. | O(1) |
 | update (upsert) | Per key: overwrite in place if the new line fits, else append and blank the old line; unknown keys append. Slot rewritten in place when a record is given. Index written once at the end. | O(k) writes |
 | delete | Tombstone each listed line and drop its key from the index. | O(k) writes |
 
@@ -49,7 +49,7 @@ Rows are written directly to the target file. Python's buffer is flushed between
 ## Error policy
 
 - A missing file on load, select, update, or delete raises; only save creates files.
-- Reads never raise on a torn line. Every read path, including the range read, skips it and reports it through `logging`; only lint removes it.
+- Default reads skip malformed rows with logging. Opt-in [strict reads](jsonl_file_store/strict_reads.md) raise on encountered row errors; only lint removes damage.
 - Filesystem errors are re-raised with the path added to the message.
 
 ## Configuration

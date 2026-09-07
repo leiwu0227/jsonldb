@@ -6,7 +6,7 @@ The cache belongs to the file store. Folder and DataFrame consumers benefit thro
 
 ## Ownership
 
-An entry retains a key-to-offset dictionary and, when range reads need it, an immutable ordered key sequence. It contains no row values or open file handles. Key conversion and row validation remain the responsibility of each read, preserving ordering, datetime behavior, metadata-slot invisibility, and warnings.
+An entry retains a key-to-offset dictionary and, when range reads need it, an immutable ordered key sequence. It contains no row values or open file handles. Key conversion and row validation remain the responsibility of each read, preserving ordering, datetime behavior, metadata-slot invisibility, and the [read error policy](strict_reads.md). Cache reuse does not establish that index construction omitted no damaged rows.
 
 Cached indexes are private read snapshots. Public index loads and writers continue receiving independent mutable dictionaries. Read hits neither copy the dictionary nor reconstruct an already retained key sequence. Writers do not populate the cache from their mutable indexes; a read following a write may reload it.
 

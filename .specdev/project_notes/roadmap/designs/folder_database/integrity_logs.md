@@ -1,6 +1,6 @@
 # Integrity Logs
 
-The library repairs and skips damage rather than raising: torn rows are skipped, indexes rebuilt, control files regenerated, line one reclassified. Those repairs are silent unless someone watches process output. Two small report files make them visible after the fact, so that after a crash and relaunch a user can see what the library found and what lint removed without configuring anything.
+By default, the library repairs and skips damage rather than raising: torn rows are skipped, indexes rebuilt, control files regenerated, line one reclassified. Those repairs are silent unless someone watches process output. Two small report files make them visible after the fact, so that after a crash and relaunch a user can see what the library found and what lint removed without configuring anything.
 
 ## Files
 
@@ -31,11 +31,11 @@ Nothing appends across runs, so each file is bounded by one run's findings and n
 
 ## Transport
 
-The file-level module reports anomalies through Python `logging`, with the file path in the message, and knows nothing about the report files. `FolderDB` captures those records during open and lint and writes the reports. Standard output is never used; print statements are retired as a rule. A host that wants ordinary reads and writes reported on disk configures its own handler.
+The file-level module reports anomalies through Python `logging`, with the file path in the message, and knows nothing about the report files. `FolderDB` captures those records during open and lint and writes the reports. Standard output is never used; print statements are retired as a rule. A host that wants ordinary reads and writes reported on disk configures its own handler. Opt-in [strict reads](../jsonl_file_store/strict_reads.md) deliver encountered row errors as exceptions; callers need no logging handler to receive them. Index rebuilding retains its existing warning behavior.
 
 ## Limits
 
-The open report covers control files and whatever open rebuilt; it is a record of what open saw, not of the folder's health. Damage in any table appears in `lint.log` after `lint_db(force=True)`, or in process logging the first time the table is read. The two files together are the post-crash inventory; either alone is not.
+The open report covers control files and whatever open rebuilt; it is a record of what open saw, not of the folder's health. Damage in any table appears in `lint.log` after `lint_db(force=True)`, or when a read encounters it, through process logging by default or a strict-read exception. The two files together are the post-crash inventory; either alone is not.
 
 ## Source targets
 

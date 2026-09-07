@@ -6,7 +6,7 @@ JSONLDB is an embedded, file-based database for Python. A database is an ordinar
 
 - **Database = folder.** A `FolderDB` opens an existing directory and coordinates every table inside it.
 - **Table = `.jsonl` file.** Tables are named by the caller; the name becomes the file stem.
-- **Row = one line of the form `{"<linekey>": {record}}`.** A JSON object with exactly one top-level key, the serialized linekey, whose value is the record dictionary. Lines that fail to parse are skipped on read and removed by lint, which records them; other shapes are ignored.
+- **Row = one line of the form `{"<linekey>": {record}}`.** A JSON object with exactly one top-level key, the serialized linekey, whose value is the record dictionary. Default reads skip malformed rows; [strict reads](jsonl_file_store/strict_reads.md) raise on encountered row errors. Lint removes damage.
 - **Optional record = line one.** A table may reserve its first line as a fixed-width slot holding one opaque metadata record under the reserved key `_meta`. The metadata-slot note owns that design.
 
 The `.jsonl` file is the source of truth for table contents. Indexes and table statistics are derived and can be rebuilt. Database settings also record user choices: the configured maximum hierarchy depth cannot always be inferred from existing tables. Preserve control files to retain those choices.

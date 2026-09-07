@@ -14,6 +14,8 @@ The index must be unique because linekeys are unique; saving a DataFrame with du
 
 Save, load, update (upsert), select by range, delete by keys, and lint mirror the file store one to one. Save requires a unique index; the others accept whatever the file store accepts. Column order is not a contract: records are dictionaries, and a table whose rows carry different column sets produces missing values on load.
 
+Row reads accept keyword-only `strict=False` and forward it to the [file-store read policy](jsonl_file_store/strict_reads.md). Encountered row errors propagate in strict mode instead of producing a partial DataFrame. Existing positional arguments and empty-result behavior remain unchanged.
+
 ## Why not a richer layer
 
 Value fidelity is deliberately limited to what JSON expresses. Numbers, text, booleans, nulls, lists, and nested objects round-trip; pandas-specific dtypes such as categoricals or timezone-aware timestamps are not restored on load. Callers that need exact dtypes reapply them after loading. Keeping the adapter thin means every storage guarantee is stated once, in the file-store note, and the adapter cannot drift from it.
