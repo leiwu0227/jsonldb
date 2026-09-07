@@ -12,7 +12,7 @@ A failed read returns no successful partial result. For a multi-table call, an e
 
 ## Scope of inspection
 
-A full read examines all physical observation rows. An indexed point or range read examines its selected rows. Missing keys and empty selections preserve their existing results; strictness does not require an observation to exist. Existing missing-table behavior is preserved at each API layer.
+A full read examines all physical observation rows before [ordering its logical result](ordered_reads.md). Ordering must never substitute an indexed selection for that scan: doing so could hide damage previously omitted from the index. An indexed point or range read, including either one-sided bound, examines its selected rows. Missing keys and empty selections preserve their existing results; strictness does not require an observation to exist. Existing missing-table behavior is preserved at each API layer.
 
 Blank tombstones and trailing-space padding remain normal representation. Sequential reads retain existing first-line metadata-slot classification and exclusion. Strictness adds no metadata-envelope interpretation, consumer schema validation, or datetime-key validation.
 

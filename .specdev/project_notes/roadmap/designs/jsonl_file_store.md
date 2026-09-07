@@ -24,13 +24,13 @@ Saves and upserts validate record shapes and reserved keys before mutation. With
 | Operation | Behaviour | Cost |
 |---|---|---|
 | save | Rewrite the file from a dict in the order given, with a slot when enabled; write a fresh sorted index. An empty dict yields an empty table. | O(n) |
-| load | Stream the whole file into a dict, skipping slots and blanks; malformed rows follow the read policy. | O(n) |
+| load | Stream all observations, resolve duplicates, and return ascending key order; skip slots/blanks and apply the read policy. | O(n) ordered; O(n log n) otherwise |
 | select range | Bisect the sorted index keys for an inclusive `[lower, upper]` range, read the chosen lines in file order, return them in key order. An omitted bound means the table's first or last key. Both omitted is a plain load; equal bounds is a single-key lookup. | O(log n + k) |
 | select one | Index lookup, seek, parse. Missing keys return an empty dict; damage follows the read policy. | O(1) |
 | update (upsert) | Per key: overwrite in place if the new line fits, else append and blank the old line; unknown keys append. Slot rewritten in place when a record is given. Index written once at the end. | O(k) writes |
 | delete | Tombstone each listed line and drop its key from the index. | O(k) writes |
 
-Range bounds are compared as serialized strings, so the same lexical ordering that governs the index governs selection.
+All reads return ascending serialized-key order by default; [Ordered Reads](jsonl_file_store/ordered_reads.md) defines full-read checking, duplicate resolution, and costs.
 
 ## Index-driven and sequential paths
 

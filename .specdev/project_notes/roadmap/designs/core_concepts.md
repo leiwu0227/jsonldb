@@ -15,13 +15,13 @@ The `.jsonl` file is the source of truth for table contents. Indexes and table s
 
 A linekey is the row identity. Callers pass strings or `datetime` objects; other values are coerced through `str`. Datetimes are stored as ISO 8601 text at a precision the database fixes once, the **timespec**: `seconds` or `microseconds`. Reads recognize datetime-looking keys at that precision and hand back `datetime` objects when asked.
 
-Keys are ordered by the lexical order of their serialized text, which is why one timespec is fixed per database: uniform ISO text sorts chronologically, mixed precision does not. Numeric keys are ordered as text too, so `"10"` sorts before `"2"`; callers who need numeric order must zero-pad.
+Keys are ordered by the lexical order of their serialized text, which is why one timespec is fixed per database: uniform ISO text sorts chronologically, mixed precision does not. Numeric keys are ordered as text too, so `"10"` sorts before `"2"`; callers who need numeric order must zero-pad. [All reads](jsonl_file_store/ordered_reads.md) return observations in this order, independently of physical layout and supplied bounds.
 
 ## The derived index
 
 Each table carries a sidecar `<table>.jsonl.idx` mapping every serialized linekey to the byte offset of its line, starting after the slot when one exists. The index is always written with keys sorted, so reading its keys yields the table's logical order without touching the data file. Range queries bisect the sorted keys and seek directly to the selected lines.
 
-The index is disposable. It is rebuilt whenever it is missing, empty, unparseable, or older than its data file, and every read goes through one loader that performs that healing. Consequently the data file's physical order may lag its logical order.
+The index is disposable. It is rebuilt whenever it is missing, empty, unparseable, or older than its data file, and indexed reads share one loader that performs that healing. Consequently the data file's physical order may lag its logical order.
 
 ## Mutation strategy
 

@@ -7,6 +7,7 @@ The adapter lets callers work in pandas while the file store stays dictionary-ba
 - The DataFrame **index** becomes the linekeys. Each row becomes the record dictionary keyed by column name.
 - On the way back, the loaded dictionary becomes a DataFrame with linekeys as its index, so a datetime-keyed table returns a datetime index when auto-deserialization is on.
 - An empty result is an empty DataFrame, never `None`.
+- Full, range, and metadata-plus-rows results preserve the file store's [ascending observation order](jsonl_file_store/ordered_reads.md). Adapters do not sort again; column order and dtype restoration remain separate concerns.
 
 The index must be unique because linekeys are unique; saving a DataFrame with duplicate index values is rejected up front rather than silently collapsing rows.
 

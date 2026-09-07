@@ -23,7 +23,7 @@ Two families with identical shapes, one for dictionaries and one for DataFrames:
 |---|---|
 | `overwrite_*` | Replace the table wholesale; `meta=` sets its record. |
 | `upsert_*` | Update existing keys in place and add new ones; create the table if absent; `meta=None` keeps the record, a dict replaces it after the rows. |
-| `get_*` | Select an inclusive key range from one or many tables; no names means all tables. |
+| `get_*` | Read tables in ascending [observation order](jsonl_file_store/ordered_reads.md), with inclusive optional bounds; omitted names select all tables. |
 | `get_*_with_meta` | One table: a named tuple of `meta` and `rows`, read record first. |
 
 Plural writes take `{name: content}` mappings; read results use table names. Missing tables are omitted from dictionary reads, reported for DataFrame reads, and yield `None` plus empty rows with metadata.
