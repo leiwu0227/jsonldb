@@ -84,6 +84,7 @@ def test_retry_partial_unlink(table, monkeypatch, failure):
     assert not path.exists()
     assert not Path(str(path) + '.idx').exists()
     assert 'err.sample' not in db.get_dbmeta()
+    assert not path.parent.exists()
     before = {p: p.read_bytes() for p in Path(db.folder_path).rglob('*') if p.is_file()}
     db.delete_file_keys('err.sample', ['2026-01-01'], remove_if_empty=True)
     assert before == {p: p.read_bytes() for p in Path(db.folder_path).rglob('*') if p.is_file()}
@@ -98,3 +99,92 @@ def test_default_deletion_preserves_metadata_and_opt_in_noop(table):
     before = path.read_bytes()
     db.delete_file_keys('err.sample', ['2026-01-01'], remove_if_empty=True)
     assert path.read_bytes() == before
+
+
+@pytest.mark.parametrize('ranged', [False, True])
+@pytest.mark.parametrize('remove_if_empty', [False, True])
+def test_retry_reconciles_metadata_without_rewriting_healthy_state(
+        table, monkeypatch, ranged, remove_if_empty):
+    db, path = table
+    def delete():
+        if ranged:
+            db.delete_file_range('err.sample', '2026-01-01', '2026-01-01',
+                                 remove_if_empty=remove_if_empty)
+        else:
+            db.delete_file_keys('err.sample.jsonl', ['2026-01-01'],
+                                remove_if_empty=remove_if_empty)
+    original = db._update_dbmeta
+    def fail(*args, **kwargs):
+        raise OSError('injected metadata refresh')
+    monkeypatch.setattr(db, '_update_dbmeta', fail)
+    with pytest.raises(OSError, match='injected'):
+        delete()
+    monkeypatch.setattr(db, '_update_dbmeta', original)
+    calls = []
+    load = jsonlfile.load_index
+    def counted(file):
+        if str(file) == str(path):
+            calls.append(file)
+        return load(file)
+    monkeypatch.setattr(jsonlfile, 'load_index', counted)
+    before = path.read_bytes()
+    delete()
+    assert len(calls) == 1
+    entry = db.get_dbmeta()['err.sample']
+    assert (entry['count'], entry['min_index'], entry['max_index']) == (
+        2, '2026-01-02', '2026-01-03')
+    assert path.read_bytes() == before
+    monkeypatch.setattr(db, '_update_dbmeta', fail)
+    delete()  # A healthy retry must not publish metadata again.
+
+
+@pytest.mark.parametrize('ranged', [False, True])
+def test_no_match_preserves_empty_table_and_repairs_stats(table, monkeypatch, ranged):
+    db, path = table
+    original = db._update_dbmeta
+    def fail(*args, **kwargs):
+        raise OSError('injected metadata refresh')
+    monkeypatch.setattr(db, '_update_dbmeta', fail)
+    with pytest.raises(OSError, match='injected'):
+        db.delete_file_range('err.sample', '2026-01-01', '2026-01-03')
+    monkeypatch.setattr(db, '_update_dbmeta', original)
+    before = path.read_bytes()
+    if ranged:
+        db.delete_file_range('err.sample', '2026-01-01', '2026-01-03', remove_if_empty=True)
+    else:
+        db.delete_file_keys('err.sample', ['2026-01-01'], remove_if_empty=True)
+    assert path.read_bytes() == before
+    entry = db.get_dbmeta()['err.sample']
+    assert entry['count'] == 0
+    assert entry['min_index'] is entry['max_index'] is None
+
+
+def test_public_and_metadata_deletion_skip_unused_statistics(table, monkeypatch):
+    db, path = table
+    def fail(*args, **kwargs):
+        raise AssertionError('Unrequested statistics')
+    monkeypatch.setattr(jsonlfile, '_index_stats', fail)
+    jsonlfile.delete_jsonl(str(path), ['2026-01-01'])
+    db.delete_file('err.sample')
+    assert not path.exists()
+    assert 'err.sample' not in db.get_dbmeta()
+
+
+def test_cleanup_only_prunes_ancestors_and_retries_missing_leaf(tmp_path, monkeypatch):
+    db = FolderDB(str(tmp_path), hierarchy_depth=2)
+    db.overwrite_dict('group.branch.table', {'row': {}})
+    path = Path(db._get_file_path('group.branch.table'))
+    unrelated = tmp_path / 'unrelated' / 'empty'
+    unrelated.mkdir(parents=True)
+    hidden = tmp_path / '.hidden' / 'empty'
+    hidden.mkdir(parents=True)
+    path.unlink()
+    Path(str(path) + '.idx').unlink()
+    path.parent.rmdir()
+    def fail(*args, **kwargs):
+        raise AssertionError('Deletion must not scan unrelated directories')
+    monkeypatch.setattr('os.walk', fail)
+    db.delete_file('group.branch.table')
+    assert not (tmp_path / 'group').exists()
+    assert unrelated.is_dir() and hidden.is_dir() and tmp_path.is_dir()
+    db.delete_file('group.branch.table')  # Repeated cleanup remains safe.

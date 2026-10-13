@@ -494,7 +494,7 @@ def test_empty_folder_pruning_preserves_hidden_trees(tmp_path, monkeypatch, oper
     assert all(path.is_dir() for path in hidden_paths)
     assert sentinel.read_bytes() == b'{"hidden":{"value":1}}\n'
     assert not any(part.startswith('.') for parts in scanned for part in parts)
-    assert not (tmp_path / 'unused').exists()
+    assert (tmp_path / 'unused').exists() == (operation == 'delete')
     assert (tmp_path / 'visible').is_dir()
     assert tmp_path.is_dir()
     if operation in ('delete', 'clear'):

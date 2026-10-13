@@ -801,23 +801,43 @@ class FolderDB:
         """Remove a table and its sidecars, including after a partial removal."""
         file_path = self._get_file_path(name)
         jsonlfile._invalidate_index_cache(file_path)
-        removed = False
         for path in (file_path, file_path + '.idx'):
             try:
                 os.remove(path)
-                removed = True
             except FileNotFoundError:
                 pass
         self.delete_dbmeta(name)
-        if removed and self.use_hierarchy:
-            self.delete_empty_folders()
+        if self.use_hierarchy:
+            self._prune_table_folders(file_path)
 
-    def _finish_deletion(self, name, stats, remove_if_empty):
-        if stats is not None:
-            if remove_if_empty and stats["count"] == 0:
-                self.delete_file(name)
-            else:
-                self._update_dbmeta(self._get_file_name(name), stats=stats)
+    def _prune_table_folders(self, file_path):
+        """Retry cleanup along this table's visible ancestors, never above the root."""
+        root = os.path.abspath(self.folder_path)
+        directory = os.path.dirname(os.path.abspath(file_path))
+        relative = os.path.relpath(directory, root)
+        if any(part.startswith('.') for part in relative.split(os.sep)):
+            return
+        while directory != root:
+            try:
+                os.rmdir(directory)
+            except FileNotFoundError:
+                pass
+            except OSError:
+                break
+            directory = os.path.dirname(directory)
+
+    def _finish_deletion(self, name, result, remove_if_empty):
+        changed, stats = result
+        if changed and remove_if_empty and stats["count"] == 0:
+            self.delete_file(name)
+            return
+        name = name[:-6] if name.endswith('.jsonl') else name
+        if not changed and os.path.exists(self.dbmeta_path):
+            current = jsonlfile.select_line_jsonl(
+                self.dbmeta_path, name, auto_deserialize=False).get(name, {})
+            if all(current.get(key) == value for key, value in stats.items()):
+                return
+        self._update_dbmeta(name, stats=stats)
 
     def delete_file_keys(self, name: str, keys: List[str], *,
                          remove_if_empty: bool = False) -> None:
@@ -829,9 +849,9 @@ class FolderDB:
             if remove_if_empty:
                 self.delete_file(name)
             return
-        stats = jsonlfile._delete_jsonl(file_path, keys, self.timespec,
-                                       remove_if_empty=remove_if_empty)
-        self._finish_deletion(name, stats, remove_if_empty)
+        result = jsonlfile._delete_jsonl(file_path, keys, self.timespec,
+                                       remove_if_empty=remove_if_empty, with_stats=True)
+        self._finish_deletion(name, result, remove_if_empty)
 
     def delete_file_range(self, name: str, lower_key: Any, upper_key: Any, *,
                           remove_if_empty: bool = False) -> None:
@@ -847,9 +867,9 @@ class FolderDB:
         lower_str = serialize_linekey(lower_key, self.timespec)
         upper_str = serialize_linekey(upper_key, self.timespec)
         keys = [key for key in index if lower_str <= key <= upper_str]
-        stats = jsonlfile._delete_jsonl(file_path, keys, self.timespec, index=index,
-                                       remove_if_empty=remove_if_empty)
-        self._finish_deletion(name, stats, remove_if_empty)
+        result = jsonlfile._delete_jsonl(file_path, keys, self.timespec, index=index,
+                                       remove_if_empty=remove_if_empty, with_stats=True)
+        self._finish_deletion(name, result, remove_if_empty)
 
     def delete_range(self, names: List[str], lower_key: Any, upper_key: Any) -> None:
         """
