@@ -1,10 +1,10 @@
 # Folder Database
 
-`FolderDB` is the public entry point. It turns a directory into a database of named tables and is the only layer that knows table names, folder layout, per-database configuration, metadata, and reports. Every data operation resolves a name to a path, applies the database settings, and delegates downward.
+`FolderDB` turns a directory into a database of named tables. It owns naming, layout, configuration, metadata, and reports. Data operations resolve paths, apply settings, and delegate to the file store.
 
 ## Opening a database
 
-The directory must already exist; the library never creates the root. Opening reads the control files (`h.meta`, `config.meta`, `db.meta`), restores missing controls where possible, and can reorganize tables when a different maximum hierarchy depth is requested or correct a timespec that disagrees with the data. Adopting the maximum-depth layout must also preserve access to older tables when the requested depth is unchanged. [Hierarchical Layout](folder_database/hierarchical_layout.md) owns placement, recovery, and migration requirements. Opening preserves table contents; whatever it regenerated or skipped is recorded in `.jsonldb/integrity.log`.
+The root directory must already exist. Opening reads control files, restores missing controls where possible, and can reorganize tables or correct a timespec that disagrees with the data. [Hierarchical Layout](folder_database/hierarchical_layout.md) owns placement, recovery, and migration, including access to older layouts at unchanged depth. Opening preserves table contents and records recovery in `.jsonldb/integrity.log`.
 
 ## Table naming and paths
 
@@ -13,11 +13,11 @@ A table name is a string without the `.jsonl` suffix; the suffix is tolerated an
 - a **read resolver** that maps a name to a path without creating anything, used by every query and delete; and
 - a **write resolver** that also creates intermediate folders, used by saves and upserts.
 
-This split guarantees that reading a non-existent table leaves no trace on disk. Discovery includes both root-level and nested `.jsonl` files in hierarchy mode, skipping hidden directories; a regex search over the names serves group operations.
+Reads of missing tables leave no disk trace. Discovery includes both root-level and nested `.jsonl` files in hierarchy mode, skipping hidden directories; a regex search over the names serves group operations.
 
 ## Data operations
 
-Two families with identical shapes, one for dictionaries and one for DataFrames:
+Dictionary and DataFrame operations share these shapes:
 
 | Verb | Meaning |
 |---|---|
@@ -36,11 +36,13 @@ Every save and upsert finishes by refreshing that table's entry in `db.meta`.
 
 ## Delete operations
 
-- Delete specific keys from one table, or an inclusive key range from one or several tables. Range bounds are serialized with the database timespec so datetime bounds match stored keys. The record is preserved.
-- Delete a whole table, removing its data and index and pruning folders it leaves empty.
-- With `force=True`, remove tables and their indexes under non-hidden folders, preserve `config.meta` and `h.meta` with their indexes, and reset `db.meta` to a canonical empty indexed table. The live instance retains its configuration. Without `force=True`, only warn.
+Key deletion accepts a batch; range deletion uses inclusive bounds interpreted with database precision and table timezone. Default deletion leaves tombstones and preserves the table and its consumer metadata.
 
-Key and range deletes leave tombstones; table deletion and clearing remove files.
+Single-table key and range deletion accept keyword-only `remove_if_empty=False`. Opting in removes the table when the request deletes its last rows. Empty key batches and requests matching no rows preserve an already-empty table. A batch reuses one table index for selection, mutation, and statistics, without scanning row history. Partial deletion publishes one reduced index; final removal avoids publishing an empty table or index.
+
+Whole-table deletion removes data, index, and the table's database metadata entry, then prunes empty visible folders. Cleanup is retryable after partial completion, including when the data file is already absent. A failed unlink must leave final rows recoverable for retry. Cleanup does not provide a transaction or rollback. [Metadata and Timespec](folder_database/metadata_and_timespec.md) owns statistics refresh and retry consistency.
+
+With `force=True`, clearing removes visible tables and indexes, preserves configuration and hierarchy controls, and resets `db.meta` to an empty indexed table. The instance retains its configuration. Without force, only warn.
 
 ## Maintenance
 
@@ -52,7 +54,7 @@ Printing a database renders `db.meta`: sizes, row counts, key ranges, lint statu
 
 ## Design choices and trade-offs
 
-- **Per-instance configuration.** Timespec and slot width live on the instance and are passed explicitly on every call. Two databases with different settings coexist in one process; an earlier design mutated a module global, which leaked precision between databases.
+- **Per-instance configuration.** Timespec and slot width live on the instance and are passed explicitly on every call. Independent settings let databases coexist in one process.
 - **Metadata as JSONL.** Control files reuse the table format and file-store functions, gaining indexing and lint for free at the cost of an `.idx` each.
 - **No locking.** Concurrent writers to one database are not coordinated, matching the single-owner deployment model. Reads concurrent with a publish are not serialized; the record-first order bounds what they can see.
 

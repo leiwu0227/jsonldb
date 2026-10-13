@@ -1,6 +1,6 @@
 # Metadata and Timespec
 
-Beside its tables, a database keeps two small control files recording what the library needs to know about the database as a whole: `config.meta` for settings and `db.meta` for per-table statistics. Both are JSONL files in the ordinary record format, read and written with the file store, and never carry a metadata slot.
+A database keeps settings in `config.meta` and per-table statistics in `db.meta`. Both control files use the ordinary JSONL record format and have no metadata slot.
 
 ## Settings in `config.meta`
 
@@ -25,11 +25,15 @@ One record per table: name and resolved path; smallest and largest key, from the
 
 ### Refresh policy
 
-- **Incremental.** Saves, upserts, and key deletes refresh that one table's record. Saves and upserts reuse statistics from the successful write, avoiding a reread of the published table index. These statistics match the published index and file size. Refresh remains synchronous for each table; a later metadata failure does not roll back the table. Explicit refresh, rebuild, and lint derive statistics from disk and retain recovery behavior.
-- **On open.** If `db.meta` is missing, or the folder was modified after `db.meta` was written, every table is re-measured. Folder modification time changes only when entries are added or removed at the root, so this catches external file drops in flat mode and misses edits to existing files, which is accepted.
-- **On lint.** Database lint rewrites the whole file and marks every surviving table as linted.
+- **Incremental.** Saves, upserts, and key or range deletes refresh the affected table synchronously. They reuse statistics from the resulting index and file size, avoiding an index reread or row-history scan. Collect statistics only when a caller needs them. Explicit refresh, rebuild, and lint retain disk-based recovery.
+- **On open.** Missing metadata or detected folder changes trigger rebuilding. Directory modification times detect entry additions and removals, including in hierarchy folders, but do not reliably detect edits to existing table contents.
+- **On lint.** Database lint rewrites the whole file and marks surviving tables as linted.
 
-Table deletion and range deletion do not refresh statistics; they rely on the open-time check or the next lint. Measuring a table with no index builds the index first. A database with no tables has an intentionally empty `db.meta` rather than none.
+Whole-table deletion removes its statistics entry, including during retry when the data file is already absent. Missing `db.meta` does not trigger a database rebuild solely to delete an entry.
+
+A metadata failure does not roll back a completed table mutation. Retrying a partial deletion must reconcile statistics with surviving rows even when the requested keys are already absent. This recovery must preserve the no-match table-retention rule in [Folder Database](../folder_database.md). The design requires consistent retry results without prescribing a recovery mechanism.
+
+Measuring a table with no index builds the index first. A database with no tables has an intentionally empty `db.meta` rather than none.
 
 ## Atomic control files
 
