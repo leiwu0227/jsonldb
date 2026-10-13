@@ -798,64 +798,58 @@ class FolderDB:
         self.build_dbmeta()
 
     def delete_file(self, name: str) -> None:
-        """
-        Delete a JSONL file.
-
-        Args:
-            name: Name of the JSONL file
-        """
+        """Remove a table and its sidecars, including after a partial removal."""
         file_path = self._get_file_path(name)
-        if os.path.exists(file_path):
-            os.remove(file_path)
-            if os.path.exists(file_path + '.idx'):
-                os.remove(file_path + '.idx')
-            if self.use_hierarchy:
-                self.delete_empty_folders()
+        jsonlfile._invalidate_index_cache(file_path)
+        removed = False
+        for path in (file_path, file_path + '.idx'):
+            try:
+                os.remove(path)
+                removed = True
+            except FileNotFoundError:
+                pass
         self.delete_dbmeta(name)
+        if removed and self.use_hierarchy:
+            self.delete_empty_folders()
 
-    def delete_file_keys(self, name: str, keys: List[str]) -> None:
-        """
-        Delete specific keys from a JSONL file.
+    def _finish_deletion(self, name, stats, remove_if_empty):
+        if stats is not None:
+            if remove_if_empty and stats["count"] == 0:
+                self.delete_file(name)
+            else:
+                self._update_dbmeta(self._get_file_name(name), stats=stats)
 
-        Args:
-            name: Name of the JSONL file
-            keys: List of keys to delete
-        """
-        file_path = self._get_file_path(name)
-        if os.path.exists(file_path):
-            delete_jsonl(file_path, keys, self.timespec)
-            self.update_dbmeta(self._get_file_name(name))
-
-    def delete_file_range(self, name: str, lower_key: Any, upper_key: Any) -> None:
-        """
-        Delete all keys within a range from a JSONL file.
-
-        Args:
-            name: Name of the JSONL file
-            lower_key: Lower bound of the key range
-            upper_key: Upper bound of the key range
-        """
+    def delete_file_keys(self, name: str, keys: List[str], *,
+                         remove_if_empty: bool = False) -> None:
+        """Delete exact keys in one index publication; optionally remove an empty table."""
+        if not keys:
+            return
         file_path = self._get_file_path(name)
         if not os.path.exists(file_path):
+            if remove_if_empty:
+                self.delete_file(name)
             return
-            
+        stats = jsonlfile._delete_jsonl(file_path, keys, self.timespec,
+                                       remove_if_empty=remove_if_empty)
+        self._finish_deletion(name, stats, remove_if_empty)
+
+    def delete_file_range(self, name: str, lower_key: Any, upper_key: Any, *,
+                          remove_if_empty: bool = False) -> None:
+        """Delete a range using the same index for selection, mutation and statistics."""
+        file_path = self._get_file_path(name)
         lower_key = jsonlfile._tabletimezone.bound(file_path, lower_key, self.timespec, serialize_linekey)
         upper_key = jsonlfile._tabletimezone.bound(file_path, upper_key, self.timespec, serialize_linekey)
-        # Read the index only after timezone bounds have passed validation.
+        if not os.path.exists(file_path):
+            if remove_if_empty:
+                self.delete_file(name)
+            return
         index = jsonlfile.load_index(file_path)
-            
-        # Filter keys within range (bounds must use the same serialization as
-        # stored keys — str(datetime) uses a space, isoformat uses 'T')
         lower_str = serialize_linekey(lower_key, self.timespec)
         upper_str = serialize_linekey(upper_key, self.timespec)
-        keys_to_delete = [
-            key for key in index.keys()
-            if lower_str <= key <= upper_str
-        ]
-        
-        if keys_to_delete:
-            delete_jsonl(file_path, keys_to_delete, self.timespec)
-            self.update_dbmeta(name)
+        keys = [key for key in index if lower_str <= key <= upper_str]
+        stats = jsonlfile._delete_jsonl(file_path, keys, self.timespec, index=index,
+                                       remove_if_empty=remove_if_empty)
+        self._finish_deletion(name, stats, remove_if_empty)
 
     def delete_range(self, names: List[str], lower_key: Any, upper_key: Any) -> None:
         """
@@ -989,7 +983,7 @@ class FolderDB:
         Delete the metadata for a specific JSONL file in db.meta.
         """
         if not os.path.exists(self.dbmeta_path):
-            self.build_dbmeta()
+            return
         meta_key = name[:-6] if name.endswith('.jsonl') else name
         delete_jsonl(self.dbmeta_path, [meta_key])
     

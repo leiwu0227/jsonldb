@@ -893,34 +893,44 @@ def _update_jsonl(jsonl_file_path, update_dict, timespec=None, meta=None,
 
 def delete_jsonl(jsonl_file_path: str, linekeys: List[LineKey], timespec: Optional[str] = None) -> None:
     """Blank selected rows without moving others, then publish the reduced index."""
-    _invalidate_index_cache(jsonl_file_path)
+    _delete_jsonl(jsonl_file_path, linekeys, timespec)
+
+
+def _delete_jsonl(jsonl_file_path, linekeys, timespec=None, *, index=None,
+                  remove_if_empty=False):
+    """Return changed-table stats, or None for no change; zero count requests removal.
+
+    With remove_if_empty, leave the final rows intact until the caller removes the
+    file. A failed unlink can then retry from the original index without a journal.
+    """
     timezone = _tabletimezone.read(jsonl_file_path)
     if timezone is not None:
         linekeys = [k for k, _ in _tabletimezone.prepare(
             {key: {} for key in linekeys}, timezone, timespec, serialize_linekey)()]
     else:
         _validate_row_keys({key: {} for key in linekeys}, timespec)
-    try:
+    if index is None:
         index = load_index(jsonl_file_path)
-
-        linekeys = [serialize_linekey(key, timespec) for key in linekeys]
-
+    selected = {serialize_linekey(key, timespec) for key in linekeys} & index.keys()
+    if not selected:
+        return None
+    _invalidate_index_cache(jsonl_file_path)
+    if remove_if_empty and len(selected) == len(index):
+        return {"count": 0}
+    try:
         with open(jsonl_file_path, 'rb+', buffering=BUFFER_SIZE) as f:
-            for linekey in linekeys:
-                if linekey in index:
-                    f.seek(index[linekey])
-                    line = f.readline()
-                    if not line.endswith(b'\n'):
-                        line += b'\n'
-
-                    f.seek(index[linekey])
-                    f.write(b' ' * (len(line) - 1) + b'\n')
-                    del index[linekey]
-
+            for linekey in selected:
+                f.seek(index[linekey])
+                line = f.readline()
+                if not line.endswith(b'\n'):
+                    line += b'\n'
+                f.seek(index[linekey])
+                f.write(b' ' * (len(line) - 1) + b'\n')
+                del index[linekey]
         _write_index(jsonl_file_path, index)
-
     except OSError as e:
         raise OSError(f"Failed to delete from JSONL file {jsonl_file_path}: {str(e)}")
+    return _index_stats(jsonl_file_path, index)
 
 
 def read_jsonl_meta(jsonl_file_path: str):
