@@ -7,6 +7,21 @@ from jsonldb import jsonlfile
 from jsonldb.folderdb import FolderDB
 
 
+def _track_index_loads(monkeypatch, path):
+    calls = []
+    original = jsonlfile.load_index
+    def load(file):
+        if str(file) == str(path):
+            calls.append(file)
+        return original(file)
+    monkeypatch.setattr(jsonlfile, 'load_index', load)
+    return calls
+
+
+def _fail_metadata_refresh(*args, **kwargs):
+    raise OSError('injected metadata refresh')
+
+
 @pytest.fixture
 def table(tmp_path):
     db = FolderDB(str(tmp_path), hierarchy_depth=1)
@@ -20,13 +35,7 @@ def table(tmp_path):
 @pytest.mark.parametrize('ranged', [False, True])
 def test_single_index_and_no_empty_rewrite(table, monkeypatch, ranged):
     db, path = table
-    calls = []
-    original = jsonlfile.load_index
-    def load(file):
-        if str(file) == str(path):
-            calls.append(file)
-        return original(file)
-    monkeypatch.setattr(jsonlfile, 'load_index', load)
+    calls = _track_index_loads(monkeypatch, path)
     def forbidden(*args, **kwargs):
         raise AssertionError('No full-history scan or empty table rewrite')
     monkeypatch.setattr(jsonlfile, 'load_jsonl', forbidden)
@@ -48,13 +57,7 @@ def test_single_index_and_no_empty_rewrite(table, monkeypatch, ranged):
 
 def test_partial_batch_preserves_gaps_and_updates_stats_once(table, monkeypatch):
     db, path = table
-    calls = []
-    original = jsonlfile.load_index
-    def load(file):
-        if str(file) == str(path):
-            calls.append(file)
-        return original(file)
-    monkeypatch.setattr(jsonlfile, 'load_index', load)
+    calls = _track_index_loads(monkeypatch, path)
     db.delete_file_keys('err.sample', ['2026-01-01', '2026-01-03'], remove_if_empty=True)
     assert len(calls) == 1
     assert db.get_dict(['err.sample']) == {'err.sample': {'2026-01-02': {'error': 'b'}}}
@@ -114,19 +117,11 @@ def test_retry_reconciles_metadata_without_rewriting_healthy_state(
             db.delete_file_keys('err.sample.jsonl', ['2026-01-01'],
                                 remove_if_empty=remove_if_empty)
     original = db._update_dbmeta
-    def fail(*args, **kwargs):
-        raise OSError('injected metadata refresh')
-    monkeypatch.setattr(db, '_update_dbmeta', fail)
+    monkeypatch.setattr(db, '_update_dbmeta', _fail_metadata_refresh)
     with pytest.raises(OSError, match='injected'):
         delete()
     monkeypatch.setattr(db, '_update_dbmeta', original)
-    calls = []
-    load = jsonlfile.load_index
-    def counted(file):
-        if str(file) == str(path):
-            calls.append(file)
-        return load(file)
-    monkeypatch.setattr(jsonlfile, 'load_index', counted)
+    calls = _track_index_loads(monkeypatch, path)
     before = path.read_bytes()
     delete()
     assert len(calls) == 1
@@ -134,7 +129,7 @@ def test_retry_reconciles_metadata_without_rewriting_healthy_state(
     assert (entry['count'], entry['min_index'], entry['max_index']) == (
         2, '2026-01-02', '2026-01-03')
     assert path.read_bytes() == before
-    monkeypatch.setattr(db, '_update_dbmeta', fail)
+    monkeypatch.setattr(db, '_update_dbmeta', _fail_metadata_refresh)
     delete()  # A healthy retry must not publish metadata again.
 
 
@@ -142,9 +137,7 @@ def test_retry_reconciles_metadata_without_rewriting_healthy_state(
 def test_no_match_preserves_empty_table_and_repairs_stats(table, monkeypatch, ranged):
     db, path = table
     original = db._update_dbmeta
-    def fail(*args, **kwargs):
-        raise OSError('injected metadata refresh')
-    monkeypatch.setattr(db, '_update_dbmeta', fail)
+    monkeypatch.setattr(db, '_update_dbmeta', _fail_metadata_refresh)
     with pytest.raises(OSError, match='injected'):
         db.delete_file_range('err.sample', '2026-01-01', '2026-01-03')
     monkeypatch.setattr(db, '_update_dbmeta', original)
