@@ -1,56 +1,56 @@
 # Metadata and Timespec
 
-A database keeps settings in `config.meta` and per-table statistics in `db.meta`. Both control files use the ordinary JSONL record format and have no metadata slot.
+A database keeps settings in `config.meta` and table statistics in `db.meta`. Both use ordinary JSONL records without metadata slots. Statistics inform consumers; they do not replace table observations.
 
 ## Settings in `config.meta`
 
-**Timespec** fixes how datetime linekeys are serialized for the whole database: `seconds` or `microseconds`. A database opened without one receives the library default of seconds; a different precision is chosen by writing `config.meta` before the first open. Uniform precision and a shared fixed offset make timestamp text order chronological. Mixing precisions in one table breaks range selection silently, which is why the value is a database property rather than a per-call option.
+**Timespec** fixes datetime linekey precision for the database: `seconds` or `microseconds`. Opening without configuration selects seconds. Another precision requires configuration before the first open. Uniform precision and a shared fixed offset make timestamp text order chronological. Mixed precision breaks range selection, so precision is a database property.
 
-**Slot width** is recorded by the explicit width operation, which also rewrites every table to that width. Its presence makes the folder slot-enabled: new tables get a slot of that width at creation and lint repairs any table that deviates. Its absence leaves every file untouched. Readers never consult it; they measure line one. The metadata-slot note owns the rest.
+**Slot width** is recorded by the explicit width operation, which rewrites every table. Its presence enables slots: new tables receive that width, and lint repairs deviations. Its absence leaves files untouched. Readers measure line one instead of consulting configuration. The metadata-slot note owns the remaining behavior.
 
-Timezone is an optional per-table envelope property, separate from database precision and consumer metadata. [Table Timezone](../jsonl_file_store/table_timezone.md) defines normalization, validation, and lifecycle. It is not inferred from configuration or precision repair.
+Timezone is an optional table envelope property, separate from precision and consumer metadata. [Table Timezone](../jsonl_file_store/table_timezone.md) owns normalization, validation, and lifecycle. Configuration and precision repair do not infer timezone.
 
 ### Timespec repair on open
 
-Because an earlier version held the timespec in a shared module variable, a database could be written at one precision while its configuration said another. Open checks for that disagreement in two stages, cheapest first:
-
-1. Look at the minimum and maximum keys recorded in `db.meta`. If a datetime-looking boundary key has a precision other than the configured one, continue; otherwise stop with no extra I/O.
-2. Scan every indexed table's keys and collect the precisions found. If exactly one is present and it differs, rewrite `config.meta` to match and warn. If more than one is present, keep the configuration and warn that the data is mixed; repairing mixed data is a caller decision.
-
-The staged check keeps the healthy case free of index scans while healing the contaminated case automatically.
+Earlier versions could write a precision that disagreed with configuration. Opening checks recorded minimum and maximum keys first. If a datetime-looking boundary disagrees, it scans indexed table keys. One consistent differing precision causes configuration repair and a warning. Mixed precisions leave configuration unchanged and produce a warning; the caller decides how to repair them. Healthy boundaries require no extra index scan.
 
 ## Table statistics in `db.meta`
 
-One record per table: name and resolved path; smallest and largest key, from the sorted index; file size and record count; whether and when the table was linted. Statistics are informational. No read or write path consults them, so a stale `db.meta` can misreport but never corrupt.
+Each table record holds its name, resolved path, smallest and largest sorted keys, file size, row count, and lint status and time. Stale statistics can misreport table contents but do not determine data operations.
 
 ### Refresh policy
 
-- **Incremental.** Saves, upserts, and key or range deletes refresh the affected table synchronously. They reuse statistics from the resulting index and file size, avoiding an index reread or row-history scan. Collect statistics only when a caller needs them. Explicit refresh, rebuild, and lint retain disk-based recovery.
-- **On open.** Missing metadata or detected folder changes trigger rebuilding. Directory modification times detect entry additions and removals, including in hierarchy folders, but do not reliably detect edits to existing table contents.
-- **On lint.** Database lint rewrites the whole file and marks surviving tables as linted.
+- **Incremental.** Saves, upserts, and key or range deletes synchronously refresh the affected table. They reuse resulting index statistics and file size without rereading the index or scanning row history. Collect statistics only when needed. Explicit refresh, rebuild, and lint retain disk-based recovery.
+- **On open.** Missing metadata or detected folder changes trigger rebuilding. Directory modification times detect entry changes, including hierarchy folders, but do not reliably detect changes to existing contents.
+- **On lint.** Database lint rewrites metadata and marks surviving tables as linted.
 
-Whole-table deletion removes its statistics entry, including during retry when the data file is already absent. Missing `db.meta` does not trigger a database rebuild solely to delete an entry.
+Whole-table deletion removes its entry, including retries after the data file disappears. Deleting an entry does not rebuild missing database metadata.
 
-A metadata failure does not roll back a completed table mutation. Retrying a partial deletion must reconcile statistics with surviving rows even when the requested keys are already absent. This recovery must preserve the no-match table-retention rule in [Folder Database](../folder_database.md). The design requires consistent retry results without prescribing a recovery mechanism.
+Metadata failure does not roll back completed table mutations. Retrying partial deletion reconciles statistics with surviving rows, even when requested keys are already absent. Recovery preserves the no-match table-retention rule in [Folder Database](../folder_database.md).
 
-Measuring a table with no index builds the index first. A database with no tables has an intentionally empty `db.meta` rather than none.
+Measuring a table without an index builds it. A database without tables has an intentionally empty `db.meta`.
+
+### Passive statistics reads
+
+Consumers can request existing metadata without building it. Default reads retain build-if-missing behavior. Passive mode returns an explicit unavailable result when `db.meta` is absent.
+
+Statistics describe the last published persisted state across the full table history. Count means stored rows, not populated fields. Pending consumer cache changes are excluded. An available empty summary has count zero and null bounds. A missing entry means unavailable, not proof of an empty table.
+
+Passive reads do not rebuild metadata or indexes, scan table observations, create files, or flush changes. Malformed or unreadable metadata fails the read without returning partial statistics or implying zero counts. Default error handling remains unchanged.
+
+This guarantee applies to reads on existing instances. Opening retains recovery behavior. Passive reads add no locking or cross-table snapshot guarantee. Cost scales with metadata read, potentially covering every table. Consumers own selection, key-bound interpretation, and display calculations.
 
 ## Atomic control files
 
-`config.meta` and `h.meta` are single-record files written rarely. They are written through a temporary file and an atomic replace so that open can never meet a torn control file; a torn `h.meta` would otherwise make a hierarchy database fail to open. `db.meta` is written often and in place, and a torn line there costs only one table's statistics until the next rebuild.
+Rarely written `config.meta` and `h.meta` use temporary files and atomic replacement to prevent torn controls on open. Frequently written `db.meta` uses in-place updates. Torn lines can make statistics unavailable until rebuilding.
 
-## Reports
+## Reports and inspection
 
-A hidden `.jsonldb/` folder holds `integrity.log`, replaced by every open, and `lint.log`, replaced by every lint. The integrity-logs note defines them.
-
-## Inspection
-
-The printed form of a database renders `db.meta`: table sizes, counts, key ranges, and lint status, without opening any table.
+The hidden `.jsonldb/` folder holds `integrity.log`, replaced on open, and `lint.log`, replaced on lint. The integrity-logs note owns reports. Printing renders metadata sizes, counts, ranges, and lint status without opening tables.
 
 ## Trade-offs
 
-- Storing metadata as JSONL keeps one file format, at the cost of an `.idx` per control file and of `db.meta` writes going through the in-place update path.
-- Repairing the timespec on open makes opening slightly more expensive on a large database with datetime keys, in exchange for never operating on a misconfigured database.
+JSONL metadata reuses one format but needs control-file indexes and in-place statistics updates. Automatic precision repair adds opening cost when boundaries disagree, while preserving the cheap healthy path.
 
 ## Source target
 
