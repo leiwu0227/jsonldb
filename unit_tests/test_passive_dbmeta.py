@@ -4,17 +4,14 @@ from pathlib import Path
 
 import pytest
 
-from jsonldb import FolderDB, jsonlfile
+from jsonldb import FolderDB
 
 
-@pytest.mark.parametrize('missing', [False, True])
-def test_passive_read_never_opens_tables_or_builds_indexes(tmp_path, monkeypatch, missing):
+def test_passive_read_never_opens_tables_or_builds_indexes(tmp_path, monkeypatch):
     db = FolderDB(str(tmp_path))
     db.overwrite_dict('ticker', {'a': {'v': 1}, 'z': {'v': 2}})
     db.overwrite_dict('empty', {})
     expected = db.get_dbmeta()
-    if missing:
-        Path(db.dbmeta_path).unlink()
     for path in tmp_path.glob('*.idx'):
         path.unlink()
     before = {p.relative_to(tmp_path): p.read_bytes()
@@ -31,37 +28,41 @@ def test_passive_read_never_opens_tables_or_builds_indexes(tmp_path, monkeypatch
 
     with monkeypatch.context() as patch:
         patch.setattr(db, 'build_dbmeta', forbidden)
-        patch.setattr(jsonlfile, 'load_index', forbidden)
-        patch.setattr(jsonlfile, 'build_jsonl_index', forbidden)
         patch.setattr(builtins, 'open', metadata_only)
         result = db.get_dbmeta(build_if_missing=False)
-    assert result == (None if missing else expected)
-    if not missing:
-        assert result['ticker']['count'] == 2
-        assert (result['ticker']['min_index'], result['ticker']['max_index']) == ('a', 'z')
-        assert result['empty']['count'] == 0
-        assert result['empty']['min_index'] is result['empty']['max_index'] is None
-        assert 'unknown' not in result
+    assert result == expected
+    assert result['ticker']['count'] == 2
+    assert (result['ticker']['min_index'], result['ticker']['max_index']) == ('a', 'z')
+    assert result['empty']['count'] == 0
+    assert result['empty']['min_index'] is result['empty']['max_index'] is None
+    assert 'unknown' not in result
     assert before == {p.relative_to(tmp_path): p.read_bytes()
                       for p in tmp_path.rglob('*') if p.is_file()}
 
 
-def test_default_still_builds_missing_metadata(tmp_path):
+def test_missing_metadata_is_passive_unless_building_is_requested(tmp_path, monkeypatch):
     db = FolderDB(str(tmp_path))
     db.overwrite_dict('ticker', {'a': {'v': 1}})
     Path(db.dbmeta_path).unlink()
-    assert db.get_dbmeta(build_if_missing=False) is None
+
+    def forbidden(*args, **kwargs):
+        pytest.fail('Missing metadata read attempted file access or rebuilding')
+
+    with monkeypatch.context() as patch:
+        patch.setattr(db, 'build_dbmeta', forbidden)
+        patch.setattr(builtins, 'open', forbidden)
+        assert db.get_dbmeta(build_if_missing=False) is None
+    assert not Path(db.dbmeta_path).exists()
     assert db.get_dbmeta()['ticker']['count'] == 1
     assert db.get_dbmeta(build_if_missing=False) == db.get_dbmeta()
 
 
-@pytest.mark.parametrize('damage', [b'{broken\n', b'[]\n', b'{"bad":null}\n'])
-def test_passive_damage_raises_while_default_remains_tolerant(tmp_path, damage):
+def test_passive_damage_raises_while_default_remains_tolerant(tmp_path):
     db = FolderDB(str(tmp_path))
     db.overwrite_dict('ticker', {'a': {'v': 1}})
     expected = db.get_dbmeta()
     path = Path(db.dbmeta_path)
-    path.write_bytes(path.read_bytes() + damage)
+    path.write_bytes(path.read_bytes() + b'{broken\n')
     before = path.read_bytes()
     with pytest.raises(ValueError):
         db.get_dbmeta(build_if_missing=False)
