@@ -987,16 +987,23 @@ class FolderDB:
         # Save metadata using jsonlfile
         save_jsonl(self.dbmeta_path, metadata)
 
-    def get_dbmeta(self) -> Dict[str, Any]:
+    def get_dbmeta(self, *, build_if_missing: bool = True) -> Optional[Dict[str, Any]]:
         """
-        Get the database metadata as a dictionary.
+        Get published database statistics, optionally without building them.
+
+        With build_if_missing=False, missing metadata returns None and malformed
+        metadata raises instead of returning partial statistics. This read does
+        not build indexes or flush data; opening FolderDB still performs recovery.
         
         Returns:
-            Dictionary containing metadata for all JSONL files in the database
+            Metadata keyed by table name, or None when unavailable in passive mode.
         """
         if not os.path.exists(self.dbmeta_path):
+            if not build_if_missing:
+                return None
             self.build_dbmeta()
-        return load_jsonl(self.dbmeta_path, auto_deserialize=False)
+        return load_jsonl(self.dbmeta_path, auto_deserialize=False,
+                          strict=not build_if_missing)
     
     def delete_dbmeta(self, name: str) -> None:
         """

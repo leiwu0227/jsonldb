@@ -85,10 +85,18 @@ tombstones; lint compacts the physical file. Supply both range bounds.
 | `clear_meta(name)` | Clear consumer data, preserve timezone; unknown envelope versions raise `ValueError`; missing table is a no-op. |
 | `read_timezone(name)` | Canonical fixed offset or `None` for unspecified/missing. |
 | `set_timezone(name, timezone)` | Set/remove offset on an existing empty known-version slotted table; same offset is idempotent. |
-| `get_dbmeta()` | Statistics dictionary keyed by literal table-name strings. |
+| `get_dbmeta(*, build_if_missing=True)` | Published statistics keyed by literal table-name strings. Passive mode (`False`) returns `None` if metadata is absent and raises on malformed or unreadable metadata. |
 | `update_dbmeta(name, linted=False)` | Measure and refresh one existing table from disk. |
 | `build_dbmeta()` | Rebuild all discovered table statistics. |
 | `delete_dbmeta(name)` | Remove only a statistics entry; leaves the table intact. |
+
+Passive statistics reads operate on existing instances without rebuilding metadata
+or indexes, reading table histories, creating files, or flushing changes. Opening
+`FolderDB` still performs normal recovery. Statistics cover the full persisted
+history and exclude pending consumer cache changes. An empty summary has count
+zero and null bounds; a missing entry means unavailable. Reads cover the metadata
+file and provide no cross-table transactional snapshot. Default calls retain
+their existing build and tolerant parsing behavior.
 
 Malformed known-version timezone declarations raise rather than returning an
 inferred value. Setters return `None`; `None` as a timezone requests removal.
